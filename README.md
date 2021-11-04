@@ -1,2 +1,3 @@
-# b.i.o.
-The Biological Input-Output library
+# B.I.O -- The Biological Input-Output library
+
+
