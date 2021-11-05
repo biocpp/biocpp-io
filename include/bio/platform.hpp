@@ -23,13 +23,13 @@
 
 // C++ standard [required]
 #ifdef __cplusplus
-    static_assert(__cplusplus >= 201709, "B.I.O. requires C++20, make sure that you have set -std=c++20.");
+static_assert(__cplusplus >= 201709, "B.I.O. requires C++20, make sure that you have set -std=c++20.");
 #else
-#   error "This is not a C++ compiler."
+#    error "This is not a C++ compiler."
 #endif
 
 #if __has_include(<version>)
-#   include <version>
+#    include <version>
 #endif
 
 // ============================================================================
@@ -38,18 +38,18 @@
 
 // B.I.O. [required]
 #if __has_include(<bio/version.hpp>)
-#   include <bio/version.hpp>
+#    include <bio/version.hpp>
 #else
-#   error B.I.O. include directory not set correctly. Forgot to add -I ${INSTALLDIR}/include to your CXXFLAGS?
+#    error B.I.O. include directory not set correctly. Forgot to add -I ${INSTALLDIR}/include to your CXXFLAGS?
 #endif
 
 // SeqAn3 [required]
 #if __has_include(<seqan3/version.hpp>)
-#   include <seqan3/version.hpp>
-    static_assert(seqan3::seqan3_version_major == 3, "SeqAn >= 3.1 is required by B.I.O..");
-    static_assert(seqan3::seqan3_version_minor >= 1, "SeqAn >= 3.1 is required by B.I.O..");
+#    include <seqan3/version.hpp>
+static_assert(seqan3::seqan3_version_major == 3, "SeqAn >= 3.1 is required by B.I.O..");
+static_assert(seqan3::seqan3_version_minor >= 1, "SeqAn >= 3.1 is required by B.I.O..");
 #else
-#   error The SeqAn3 library was not included.
+#    error The SeqAn3 library was not included.
 #endif
 
 // ============================================================================
@@ -59,5 +59,5 @@
 // Doxygen related
 // this macro is a NO-OP unless doxygen parses it, in which case it resolves to the argument
 #ifndef BIO_DOXYGEN_ONLY
-#   define BIO_DOXYGEN_ONLY(x)
+#    define BIO_DOXYGEN_ONLY(x)
 #endif
