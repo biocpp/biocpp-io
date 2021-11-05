@@ -50,3 +50,7 @@ add_subdirectories ()
 list_missing_unit_tests()
 # this does not work, yet:
 #list_unused_unit_tests ()
+
+# Top-level tests
+
+bio_test(record_test.cpp)
