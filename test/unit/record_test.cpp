@@ -44,7 +44,7 @@ TEST(fields, usage)
     EXPECT_TRUE(default_fields::contains(bio::field::id));
     EXPECT_TRUE(default_fields::contains(bio::field::qual));
     EXPECT_EQ(default_fields::index_of(bio::field::seq), 0ul);
-    EXPECT_EQ(default_fields::index_of(bio::field::id),  1ul);
+    EXPECT_EQ(default_fields::index_of(bio::field::id), 1ul);
     EXPECT_EQ(default_fields::index_of(bio::field::qual), 2ul);
 }
 
@@ -54,19 +54,16 @@ TEST(fields, usage)
 
 struct record : public ::testing::Test
 {
-    using ids          = seqan3::vtag_t<bio::field::id, bio::field::seq>;
-    using record_type  = bio::record<ids, std::string, seqan3::dna4_vector>;
+    using ids         = seqan3::vtag_t<bio::field::id, bio::field::seq>;
+    using record_type = bio::record<ids, std::string, seqan3::dna4_vector>;
 };
 
 TEST_F(record, definition_tuple_traits)
 {
-    EXPECT_TRUE((std::is_same_v<typename record_type::base_type,
-                                std::tuple<std::string, seqan3::dna4_vector>>));
+    EXPECT_TRUE((std::is_same_v<typename record_type::base_type, std::tuple<std::string, seqan3::dna4_vector>>));
 
-    EXPECT_TRUE((std::is_same_v<std::tuple_element_t<0, record_type>,
-                                std::string>));
-    EXPECT_TRUE((std::is_same_v<std::tuple_element_t<1, record_type>,
-                                seqan3::dna4_vector>));
+    EXPECT_TRUE((std::is_same_v<std::tuple_element_t<0, record_type>, std::string>));
+    EXPECT_TRUE((std::is_same_v<std::tuple_element_t<1, record_type>, seqan3::dna4_vector>));
     EXPECT_EQ(std::tuple_size_v<record_type>, 2ul);
 
     EXPECT_TRUE(seqan3::tuple_like<record_type>);
@@ -112,35 +109,35 @@ TEST_F(record, get_by_member)
 TEST_F(record, make_record1)
 {
     std::string s   = "MY ID";
-    auto vec        = "ACGT"_dna4;
+    auto        vec = "ACGT"_dna4;
 
-    auto r          = bio::make_record<seqan3::vtag_t<bio::field::id, bio::field::seq>>(s, vec);
+    auto r = bio::make_record<seqan3::vtag_t<bio::field::id, bio::field::seq>>(s, vec);
     EXPECT_TRUE((std::same_as<decltype(r), record::record_type>));
 }
 
 TEST_F(record, make_record2)
 {
     std::string s   = "MY ID";
-    auto vec        = "ACGT"_dna4;
+    auto        vec = "ACGT"_dna4;
 
-    auto r          = bio::make_record(seqan3::vtag<bio::field::id, bio::field::seq>, s, vec);
+    auto r = bio::make_record(seqan3::vtag<bio::field::id, bio::field::seq>, s, vec);
     EXPECT_TRUE((std::same_as<decltype(r), record::record_type>));
 }
 
 TEST_F(record, tie_record1)
 {
     std::string s   = "MY ID";
-    auto vec        = "ACGT"_dna4;
+    auto        vec = "ACGT"_dna4;
 
-    auto r          = bio::tie_record<seqan3::vtag_t<bio::field::id, bio::field::seq>>(s, vec);
+    auto r = bio::tie_record<seqan3::vtag_t<bio::field::id, bio::field::seq>>(s, vec);
     EXPECT_TRUE((std::same_as<decltype(r), bio::record<record::ids, std::string &, std::vector<seqan3::dna4> &>>));
 }
 
 TEST_F(record, tie_record2)
 {
     std::string s   = "MY ID";
-    auto vec        = "ACGT"_dna4;
+    auto        vec = "ACGT"_dna4;
 
-    auto r          = bio::tie_record(seqan3::vtag<bio::field::id, bio::field::seq>, s, vec);
+    auto r = bio::tie_record(seqan3::vtag<bio::field::id, bio::field::seq>, s, vec);
     EXPECT_TRUE((std::same_as<decltype(r), bio::record<record::ids, std::string &, std::vector<seqan3::dna4> &>>));
 }
