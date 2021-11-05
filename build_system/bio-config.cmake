@@ -201,19 +201,20 @@ endif ()
 # Require C++ Concepts
 # ----------------------------------------------------------------------------
 
-set (CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
+#set (CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
 
-set (CXXSTD_TEST_SOURCE
-    "static_assert (__cpp_concepts >= 201507);
-    int main() {}")
+#set (CXXSTD_TEST_SOURCE
+    #"static_assert (__cpp_concepts >= 201507);
+    #int main() {}")
 
-check_cxx_source_compiles ("${CXXSTD_TEST_SOURCE}" BIO_CONCEPTS)
+#set (CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} ${BIO_CXX_FLAGS}")
+#check_cxx_source_compiles ("${CXXSTD_TEST_SOURCE}" BIO_CONCEPTS)
 
-if (BIO_CONCEPTS_FLAG)
-    bio_config_print ("C++ Concepts support:       builtin")
-else ()
-    bio_config_error ("B.I.O. requires C++ Concepts, but your compiler does not support them.")
-endif ()
+#if (BIO_CONCEPTS_FLAG)
+    #bio_config_print ("C++ Concepts support:       builtin")
+#else ()
+    #bio_config_error ("B.I.O. requires C++ Concepts, but your compiler does not support them.")
+#endif ()
 
 # ----------------------------------------------------------------------------
 # thread support (pthread, windows threads)
@@ -237,12 +238,13 @@ endif ()
 # Require SeqAn3
 # ----------------------------------------------------------------------------
 
-check_include_file_cxx (seqan3/version.hpp _BIO_HAVE_SEQAN3)
+find_package (SeqAn3 REQUIRED QUIET
+              HINTS ${CMAKE_CURRENT_LIST_DIR}/../submodules/seqan3/build_system)
 
-if (_BIO_HAVE_SEQAN3)
-    seqan3_config_print ("Required dependency:        SeqAn3 found.")
+if (SEQAN3_FOUND)
+    bio_config_print ("Required dependency:        SeqAn3 found.")
 else ()
-    seqan3_config_error ("The SeqAn3 library is required, but wasn't found. Get it from https://github.com/seqan/seqan3")
+    bio_config_print ("The SeqAn3 library is required, but wasn't found. Get it from https://github.com/seqan/seqan3")
 endif ()
 
 # ----------------------------------------------------------------------------
@@ -315,7 +317,7 @@ endif ()
 # ----------------------------------------------------------------------------
 
 set (CXXSTD_TEST_SOURCE
-     "#include <bio/core/platform.hpp>
+     "#include <bio/platform.hpp>
      int main() {}")
 
 # using try_compile instead of check_cxx_source_compiles to capture output in case of failure
