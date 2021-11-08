@@ -16,6 +16,7 @@
 
 #include <bio/stream/compression.hpp>
 #include <bio/stream/detail/make_stream.hpp>
+#include <bio/stream/transparent_ostream.hpp>
 
 #include "data.hpp"
 
@@ -26,9 +27,16 @@ void regular()
 
     {
         std::ofstream of{filename.get_path()};
-        stream_t ogzf{of};
-
-        ogzf << uncompressed << std::flush;
+        if constexpr (std::same_as<stream_t, bio::transparent_ostream>)
+        {
+            stream_t ogzf{of, {.compression = f}};
+            ogzf << uncompressed << std::flush;
+        }
+        else
+        {
+            stream_t ogzf{of};
+            ogzf << uncompressed << std::flush;
+        }
     }
 
     std::ifstream fi{filename.get_path(), std::ios::binary};
@@ -48,9 +56,16 @@ void type_erased()
     {
         std::ofstream of{filename.get_path()};
 
-        std::unique_ptr<std::ostream> ogzf{new stream_t{of}};
-
-        *ogzf << uncompressed << std::flush;
+        if constexpr (std::same_as<stream_t, bio::transparent_ostream>)
+        {
+            std::unique_ptr<std::ostream> ogzf{new stream_t{of, {.compression = f}}};
+            *ogzf << uncompressed << std::flush;
+        }
+        else
+        {
+            std::unique_ptr<std::ostream> ogzf{new stream_t{of}};
+            *ogzf << uncompressed << std::flush;
+        }
     }
 
     std::ifstream fi{filename.get_path(), std::ios::binary};
