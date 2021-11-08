@@ -6,7 +6,6 @@
 // shipped with this file and also available at: https://github.com/seqan/bio/blob/master/LICENSE.md
 // -----------------------------------------------------------------------------------------------------
 
-
 /*!\file
  * \brief Provides stream compression utilities.
  * \author Rene Rahn <rene.rahn AT fu-berlin.de>
