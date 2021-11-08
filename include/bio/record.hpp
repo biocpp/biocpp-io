@@ -18,6 +18,7 @@
 #include <bio/platform.hpp>
 
 #include <seqan3/core/detail/template_inspection.hpp>
+#include <seqan3/utility/tag.hpp>
 #include <seqan3/utility/type_list/type_list.hpp>
 
 namespace bio
@@ -73,7 +74,7 @@ enum class field : uint64_t
     genotypes,
     /*_private*/
 
-    // User defined field aliases .. ...........................................
+    // User defined field aliases
     user_defined = uint64_t{1} << 32, //!< Identifier for user defined file formats and specialisations.
 };
 
@@ -239,6 +240,10 @@ public:
 
 } // namespace bio
 
+//-------------------------------------------------------------------------------
+// tuple traits
+//-------------------------------------------------------------------------------
+
 namespace std
 {
 
@@ -267,6 +272,10 @@ struct tuple_element<elem_no, bio::record<field_ids, field_types...>>
 };
 
 } // namespace std
+
+//-------------------------------------------------------------------------------
+// bio::get
+//-------------------------------------------------------------------------------
 
 namespace bio
 {
@@ -310,6 +319,14 @@ auto const && get(record<field_ids, field_types...> const && r)
 }
 //!\}
 
+//-------------------------------------------------------------------------------
+// make_record
+//-------------------------------------------------------------------------------
+
+/*!\name Create a record from the arguments.
+ * \relates bio::record
+ * \{
+ */
 //!\brief Create a bio::record and deduce type from arguments (like std::make_tuple for std::tuple).
 template <typename field_ids_t, typename... field_type_ts>
 constexpr auto make_record(field_type_ts &... fields) -> record<field_ids_t, field_type_ts...>
@@ -324,7 +341,16 @@ constexpr auto make_record(seqan3::vtag_t<field_ids...>, field_type_ts &... fiel
 {
     return {fields...};
 }
+//!\}
 
+//-------------------------------------------------------------------------------
+// tie_record
+//-------------------------------------------------------------------------------
+
+/*!\name Create a record from references to the arguments.
+ * \relates bio::record
+ * \{
+ */
 //!\brief Create a bio::record of references (like std::tie for std::tuple).
 template <typename field_ids_t, typename... field_type_ts>
 constexpr auto tie_record(field_type_ts &... fields) -> record<field_ids_t, field_type_ts &...>
@@ -339,5 +365,6 @@ constexpr auto tie_record(seqan3::vtag_t<field_ids...>, field_type_ts &... field
 {
     return {fields...};
 }
+//!\}
 
 } // namespace bio
