@@ -15,22 +15,18 @@
 #include <seqan3/utility/tag.hpp>
 
 #include <bio/stream/compression.hpp>
+#include <bio/stream/detail/make_stream.hpp>
 
-template <typename T>
-class ostream : public ::testing::Test
-{};
+#include "data.hpp"
 
-inline std::string const uncompressed{"The quick brown fox jumps over the lazy dog"};
-
-TYPED_TEST_SUITE_P(ostream);
-
-TYPED_TEST_P(ostream, output)
+template <bio::compression_format f, typename stream_t = typename bio::detail::compression_stream<f>::ostream>
+void regular()
 {
     seqan3::test::tmp_filename filename{"ostream_test"};
 
     {
         std::ofstream of{filename.get_path()};
-        TypeParam ogzf{of};
+        stream_t ogzf{of};
 
         ogzf << uncompressed << std::flush;
     }
@@ -38,20 +34,21 @@ TYPED_TEST_P(ostream, output)
     std::ifstream fi{filename.get_path(), std::ios::binary};
     std::string buffer{std::istreambuf_iterator<char>{fi}, std::istreambuf_iterator<char>{}};
 
-    if constexpr (TestFixture::zero_out_os_byte)
+    if constexpr (f == bio::compression_format::bgzf)
         buffer[9] = '\x00'; // zero-out the OS byte.
 
-    EXPECT_EQ(buffer, TestFixture::compressed);
+    EXPECT_EQ(buffer, compressed<f>);
 }
 
-TYPED_TEST_P(ostream, output_type_erased)
+template <bio::compression_format f, typename stream_t = typename bio::detail::compression_stream<f>::ostream>
+void type_erased()
 {
     seqan3::test::tmp_filename filename{"ostream_test"};
 
     {
         std::ofstream of{filename.get_path()};
 
-        std::unique_ptr<std::ostream> ogzf{new TypeParam{of}};
+        std::unique_ptr<std::ostream> ogzf{new stream_t{of}};
 
         *ogzf << uncompressed << std::flush;
     }
@@ -59,10 +56,9 @@ TYPED_TEST_P(ostream, output_type_erased)
     std::ifstream fi{filename.get_path(), std::ios::binary};
     std::string buffer{std::istreambuf_iterator<char>{fi}, std::istreambuf_iterator<char>{}};
 
-    if constexpr (TestFixture::zero_out_os_byte)
+    if constexpr (f == bio::compression_format::bgzf)
         buffer[9] = '\x00'; // zero-out the OS byte.
 
-    EXPECT_EQ(buffer, TestFixture::compressed);
+    EXPECT_EQ(buffer, compressed<f>);
 }
 
-REGISTER_TYPED_TEST_SUITE_P(ostream, output, output_type_erased);

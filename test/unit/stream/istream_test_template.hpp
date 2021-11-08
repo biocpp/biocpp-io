@@ -15,47 +15,42 @@
 #include <seqan3/utility/tag.hpp>
 
 #include <bio/stream/compression.hpp>
+#include <bio/stream/detail/make_stream.hpp>
 
-template <typename T>
-class istream : public ::testing::Test
-{};
+#include "data.hpp"
 
-inline std::string const uncompressed{"The quick brown fox jumps over the lazy dog"};
-
-TYPED_TEST_SUITE_P(istream);
-
-TYPED_TEST_P(istream, input)
+template <bio::compression_format f, typename stream_t = typename bio::detail::compression_stream<f>::istream>
+void regular()
 {
     seqan3::test::tmp_filename filename{"istream_test"};
 
     {
         std::ofstream fi{filename.get_path()};
 
-        fi << TestFixture::compressed;
+        fi << compressed<f>;
     }
 
     std::ifstream fi{filename.get_path(), std::ios::binary};
-    TypeParam comp{fi};
+    stream_t comp{fi};
     std::string buffer{std::istreambuf_iterator<char>{comp}, std::istreambuf_iterator<char>{}};
 
     EXPECT_EQ(buffer, uncompressed);
 }
 
-TYPED_TEST_P(istream, input_type_erased)
+template <bio::compression_format f, typename stream_t = typename bio::detail::compression_stream<f>::istream>
+void type_erased()
 {
     seqan3::test::tmp_filename filename{"istream_test"};
 
     {
         std::ofstream fi{filename.get_path()};
 
-        fi << TestFixture::compressed;
+        fi << compressed<f>;
     }
 
     std::ifstream fi{filename.get_path(), std::ios::binary};
-    std::unique_ptr<std::istream> comp{new TypeParam{fi}};
+    std::unique_ptr<std::istream> comp{new stream_t{fi}};
     std::string buffer{std::istreambuf_iterator<char>{*comp}, std::istreambuf_iterator<char>{}};
 
     EXPECT_EQ(buffer, uncompressed);
 }
-
-REGISTER_TYPED_TEST_SUITE_P(istream, input, input_type_erased);
