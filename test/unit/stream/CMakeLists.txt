@@ -10,3 +10,6 @@ if (ZLIB_FOUND)
     bio_test(bgzf_istream_test.cpp)
     bio_test(bgzf_ostream_test.cpp)
 endif ()
+
+bio_test(transparent_istream_test.cpp)
+bio_test(transparent_ostream_test.cpp)
