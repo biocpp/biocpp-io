@@ -80,11 +80,8 @@ public:
     int_type overflow(int_type c);
 
     std::streamsize flush(int flush_mode);
-    int             get_zerr() const
-    {
-        return m_err;
-    };
-    uint64_t get_in_size() const
+    int             get_zerr() const { return m_err; };
+    uint64_t        get_in_size() const
     {
         return ((uint64_t)m_bzip2_stream.total_in_hi32 << 32) + m_bzip2_stream.total_in_lo32;
     }
@@ -287,10 +284,7 @@ public:
         this->init(&m_buf);
     };
 
-    bzip2_streambuf_type * rdbuf()
-    {
-        return &m_buf;
-    };
+    bzip2_streambuf_type * rdbuf() { return &m_buf; };
 
 private:
     bzip2_streambuf_type m_buf;
@@ -334,10 +328,8 @@ public:
 
 #ifdef _WIN32
 private:
-    void _Add_vtordisp1()
-    {} // Required to avoid VC++ warning C4250
-    void _Add_vtordisp2()
-    {} // Required to avoid VC++ warning C4250
+    void _Add_vtordisp1() {} // Required to avoid VC++ warning C4250
+    void _Add_vtordisp2() {} // Required to avoid VC++ warning C4250
 #endif
 };
 

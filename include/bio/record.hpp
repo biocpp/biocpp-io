@@ -115,15 +115,9 @@ private:
     //!\brief Auxiliary functions for clear().
     template <typename t>
         //!\cond
-        requires requires(t & v)
-        {
-            v.clear();
-        }
+        requires requires(t & v) { v.clear(); }
     //!\endcond
-    static constexpr void clear_element(t & v) noexcept(noexcept(v.clear()))
-    {
-        v.clear();
-    }
+    static constexpr void clear_element(t & v) noexcept(noexcept(v.clear())) { v.clear(); }
 
     //!\overload
     template <typename t>
@@ -136,16 +130,10 @@ private:
     static constexpr auto expander = [](auto &... args) { (clear_element(args), ...); };
 
     //!\brief Get the base_type.
-    base_type & to_base()
-    {
-        return static_cast<base_type &>(*this);
-    }
+    base_type & to_base() { return static_cast<base_type &>(*this); }
 
     //!\brief Get the base_type.
-    base_type const & to_base() const
-    {
-        return static_cast<base_type const &>(*this);
-    }
+    base_type const & to_base() const { return static_cast<base_type const &>(*this); }
 
 public:
     /*!\name Constructors, destructor and assignment
@@ -165,10 +153,7 @@ public:
     static_assert(sizeof...(field_types) == field_ids::size, "You must give as many IDs as types to bio::record.");
 
     //!\brief Clears containers that provide `.clear()` and (re-)initialises all other elements with `= {}`.
-    void clear() noexcept(noexcept(std::apply(expander, std::declval<record &>())))
-    {
-        std::apply(expander, *this);
-    }
+    void clear() noexcept(noexcept(std::apply(expander, std::declval<record &>()))) { std::apply(expander, *this); }
 
     /*!\name Get accessors
      * \{
@@ -206,15 +191,9 @@ public:
 
 //!\brief A macro that defines all getter functions for fields contained in bio::record.
 #define BIO_RECORD_MEMBER(F)                                                                                           \
-    decltype(auto) F() noexcept(noexcept(get<field::F>()))                                                             \
-    {                                                                                                                  \
-        return get<field::F>();                                                                                        \
-    }                                                                                                                  \
+    decltype(auto) F() noexcept(noexcept(get<field::F>())) { return get<field::F>(); }                                 \
                                                                                                                        \
-    decltype(auto) F() const noexcept(noexcept(get<field::F>()))                                                       \
-    {                                                                                                                  \
-        return get<field::F>();                                                                                        \
-    }
+    decltype(auto) F() const noexcept(noexcept(get<field::F>())) { return get<field::F>(); }
 
     /*!\name Member accessors
      * \{

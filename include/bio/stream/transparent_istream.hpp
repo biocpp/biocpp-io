@@ -123,13 +123,9 @@ private:
     //!\brief The type of the internal stream pointers. Allows dynamically setting ownership management.
     using stream_ptr_t = std::unique_ptr<std::basic_istream<char>, std::function<void(std::basic_istream<char> *)>>;
     //!\brief Stream deleter that does nothing (no ownership assumed).
-    static void stream_deleter_noop(std::basic_istream<char> *)
-    {}
+    static void stream_deleter_noop(std::basic_istream<char> *) {}
     //!\brief Stream deleter with default behaviour (ownership assumed).
-    static void stream_deleter_default(std::basic_istream<char> * ptr)
-    {
-        delete ptr;
-    }
+    static void stream_deleter_default(std::basic_istream<char> * ptr) { delete ptr; }
 
     //!\brief The primary stream is the user provided stream or the file stream if constructed from filename.
     stream_ptr_t primary_stream{nullptr, stream_deleter_noop};
@@ -223,8 +219,7 @@ public:
     /*!\name Constructors, destructor and assignment
      * \{
      */
-    transparent_istream() : std::basic_istream<char>{}
-    {}                                                                     //!< Default.
+    transparent_istream() : std::basic_istream<char>{} {}
     transparent_istream(transparent_istream const &) = delete;             //!< Deleted.
     transparent_istream & operator=(transparent_istream &&) = default;     //!< Defaulted.
     transparent_istream & operator=(transparent_istream const &) = delete; //!< Defaulted.
@@ -289,10 +284,7 @@ public:
     //!\}
 
     //!\brief The filename this object was created from; empty if this object was not created from a file.
-    std::filesystem::path const & filename()
-    {
-        return filename_;
-    }
+    std::filesystem::path const & filename() { return filename_; }
 
     /*!\brief The filename this object was created from without compression-specific suffix.
      *
@@ -303,10 +295,7 @@ public:
      *
      * If this object was not created from a file, an empty path is returned.
      */
-    std::filesystem::path const & truncated_filename()
-    {
-        return truncated_filename_;
-    }
+    std::filesystem::path const & truncated_filename() { return truncated_filename_; }
 };
 
 } // namespace bio

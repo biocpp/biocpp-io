@@ -29,24 +29,21 @@ namespace bio
 struct unhandled_extension_error : std::invalid_argument
 {
     //!\brief Constructor that forwards the exception string.
-    unhandled_extension_error(std::string const & s) : std::invalid_argument{s}
-    {}
+    unhandled_extension_error(std::string const & s) : std::invalid_argument{s} {}
 };
 
 //!\brief Thrown if there is an unspecified filesystem or stream error while opening, e.g. permission problem.
 struct file_open_error : std::runtime_error
 {
     //!\brief Constructor that forwards the exception string.
-    file_open_error(std::string const & s) : std::runtime_error{s}
-    {}
+    file_open_error(std::string const & s) : std::runtime_error{s} {}
 };
 
 //!\brief Thrown if there is a parse error, such as reading an unexpected character from an input stream.
 struct parse_error : std::runtime_error
 {
     //!\brief Constructor that forwards the exception string.
-    parse_error(std::string const & s) : std::runtime_error{s}
-    {}
+    parse_error(std::string const & s) : std::runtime_error{s} {}
 };
 
 //!\brief Thrown if there is an io error in low level io operations such as in std::basic_streambuf operations.
@@ -66,8 +63,7 @@ struct io_error : std::ios_base::failure
 struct unexpected_end_of_input : std::runtime_error
 {
     //!\brief Constructor that forwards the exception string.
-    unexpected_end_of_input(std::string const & s) : std::runtime_error{s}
-    {}
+    unexpected_end_of_input(std::string const & s) : std::runtime_error{s} {}
 };
 
 // ----------------------------------------------------------------------------
@@ -78,8 +74,7 @@ struct unexpected_end_of_input : std::runtime_error
 struct format_error : std::invalid_argument
 {
     //!\brief Constructor that forwards the exception string.
-    format_error(std::string const & s) : std::invalid_argument{s}
-    {}
+    format_error(std::string const & s) : std::invalid_argument{s} {}
 };
 
 } // namespace bio

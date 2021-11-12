@@ -79,15 +79,9 @@ public:
     int_type underflow();
 
     // returns the compressed input istream
-    istream_reference get_istream()
-    {
-        return m_istream;
-    }
+    istream_reference get_istream() { return m_istream; }
     // returns the zlib stream structure
-    z_stream & get_zip_stream()
-    {
-        return m_zip_stream;
-    }
+    z_stream &        get_zip_stream() { return m_zip_stream; }
 
 private:
     void            put_back_from_zip_stream();
@@ -242,10 +236,7 @@ public:
     }
 
     // returns the underlying unzip istream object
-    unzip_streambuf_type * rdbuf()
-    {
-        return &m_buf;
-    }
+    unzip_streambuf_type * rdbuf() { return &m_buf; }
 
 private:
     unzip_streambuf_type m_buf;
@@ -300,10 +291,8 @@ public:
 
 #ifdef _WIN32
 private:
-    void _Add_vtordisp1()
-    {} // Required to avoid VC++ warning C4250
-    void _Add_vtordisp2()
-    {} // Required to avoid VC++ warning C4250
+    void _Add_vtordisp1() {} // Required to avoid VC++ warning C4250
+    void _Add_vtordisp2() {} // Required to avoid VC++ warning C4250
 #endif
 };
 
