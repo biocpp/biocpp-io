@@ -67,13 +67,9 @@ public:
 
     struct ScopedLock
     {
-        ScopedLock(std::function<void()> complete_fn) : completion(std::move(complete_fn))
-        {}
+        ScopedLock(std::function<void()> complete_fn) : completion(std::move(complete_fn)) {}
 
-        ~ScopedLock()
-        {
-            completion();
-        }
+        ~ScopedLock() { completion(); }
 
         std::function<void()> completion;
     };
@@ -90,8 +86,7 @@ public:
     {
         ostream_reference ostream;
 
-        BufferWriter(ostream_reference ostream) : ostream(ostream)
-        {}
+        BufferWriter(ostream_reference ostream) : ostream(ostream) {}
 
         bool operator()(OutputBuffer const & outputBuffer)
         {
@@ -295,10 +290,7 @@ public:
     }
 
     // returns a reference to the output stream
-    ostream_reference get_ostream() const
-    {
-        return serializer.worker.ostream;
-    };
+    ostream_reference get_ostream() const { return serializer.worker.ostream; };
 };
 
 // --------------------------------------------------------------------------
@@ -326,30 +318,15 @@ public:
     };
 
     // returns the underlying zip ostream object
-    bgzf_streambuf_type * rdbuf()
-    {
-        return &m_buf;
-    };
+    bgzf_streambuf_type * rdbuf() { return &m_buf; };
     // returns the bgzf error state
-    int get_zerr() const
-    {
-        return m_buf.get_err();
-    };
+    int                   get_zerr() const { return m_buf.get_err(); };
     // returns the uncompressed data crc
-    long get_crc() const
-    {
-        return m_buf.get_crc();
-    };
+    long                  get_crc() const { return m_buf.get_crc(); };
     // returns the compressed data size
-    long get_out_size() const
-    {
-        return m_buf.get_out_size();
-    };
+    long                  get_out_size() const { return m_buf.get_out_size(); };
     // returns the uncompressed data size
-    long get_in_size() const
-    {
-        return m_buf.get_in_size();
-    };
+    long                  get_in_size() const { return m_buf.get_in_size(); };
 
 private:
     bgzf_streambuf_type m_buf;
@@ -389,18 +366,13 @@ public:
         return *this;
     };
 
-    ~basic_bgzf_ostream()
-    {
-        this->rdbuf()->addFooter();
-    }
+    ~basic_bgzf_ostream() { this->rdbuf()->addFooter(); }
 
 private:
     static void put_long(ostream_reference out_, unsigned long x_);
 #ifdef _WIN32
-    void _Add_vtordisp1()
-    {} // Required to avoid VC++ warning C4250
-    void _Add_vtordisp2()
-    {} // Required to avoid VC++ warning C4250
+    void _Add_vtordisp1() {} // Required to avoid VC++ warning C4250
+    void _Add_vtordisp2() {} // Required to avoid VC++ warning C4250
 #endif
 };
 

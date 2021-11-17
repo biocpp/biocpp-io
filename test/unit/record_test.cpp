@@ -106,16 +106,7 @@ TEST_F(record, get_by_member)
     EXPECT_RANGE_EQ(r.seq(), "ACGT"_dna4);
 }
 
-TEST_F(record, make_record1)
-{
-    std::string s   = "MY ID";
-    auto        vec = "ACGT"_dna4;
-
-    auto r = bio::make_record<seqan3::vtag_t<bio::field::id, bio::field::seq>>(s, vec);
-    EXPECT_TRUE((std::same_as<decltype(r), record::record_type>));
-}
-
-TEST_F(record, make_record2)
+TEST_F(record, make_record)
 {
     std::string s   = "MY ID";
     auto        vec = "ACGT"_dna4;
@@ -124,16 +115,7 @@ TEST_F(record, make_record2)
     EXPECT_TRUE((std::same_as<decltype(r), record::record_type>));
 }
 
-TEST_F(record, tie_record1)
-{
-    std::string s   = "MY ID";
-    auto        vec = "ACGT"_dna4;
-
-    auto r = bio::tie_record<seqan3::vtag_t<bio::field::id, bio::field::seq>>(s, vec);
-    EXPECT_TRUE((std::same_as<decltype(r), bio::record<record::ids, std::string &, std::vector<seqan3::dna4> &>>));
-}
-
-TEST_F(record, tie_record2)
+TEST_F(record, tie_record)
 {
     std::string s   = "MY ID";
     auto        vec = "ACGT"_dna4;

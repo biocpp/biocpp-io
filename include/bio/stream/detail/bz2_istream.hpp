@@ -73,18 +73,9 @@ public:
 
     int_type underflow();
 
-    istream_reference get_istream()
-    {
-        return m_istream;
-    };
-    bz_stream & get_bzip2_stream()
-    {
-        return m_bzip2_stream;
-    };
-    int get_zerr() const
-    {
-        return m_err;
-    };
+    istream_reference get_istream() { return m_istream; };
+    bz_stream &       get_bzip2_stream() { return m_bzip2_stream; };
+    int               get_zerr() const { return m_err; };
 
 private:
     std::streamsize unbzip2_from_stream(char_type *, std::streamsize);
@@ -230,10 +221,7 @@ public:
         this->init(&m_buf);
     };
 
-    unbzip2_streambuf_type * rdbuf()
-    {
-        return &m_buf;
-    };
+    unbzip2_streambuf_type * rdbuf() { return &m_buf; };
 
 private:
     unbzip2_streambuf_type m_buf;
@@ -267,10 +255,8 @@ public:
       istream_type(bzip2_istreambase_type::rdbuf()){};
 #ifdef _WIN32
 private:
-    void _Add_vtordisp1()
-    {} // Required to avoid VC++ warning C4250
-    void _Add_vtordisp2()
-    {} // Required to avoid VC++ warning C4250
+    void _Add_vtordisp1() {} // Required to avoid VC++ warning C4250
+    void _Add_vtordisp2() {} // Required to avoid VC++ warning C4250
 #endif
 };
 

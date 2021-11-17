@@ -1,7 +1,7 @@
 message (STATUS "Configuring user doc.")
 
 set (BIO_DOXYGEN_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}")
-#set (BIO_DOXYGEN_EXCLUDE_SYMBOLS "detail bio::simd") #/""
+set (BIO_DOXYGEN_EXCLUDE_SYMBOLS "bio::detail") #/""
 set (BIO_DOXYGEN_PREDEFINED_NDEBUG "-NDEBUG") #/""
 set (BIO_DOXYGEN_ENABLED_SECTIONS "") #/"DEV"
 set (BIO_DOXYGEN_EXTRACT_PRIVATE "NO") #/"YES":

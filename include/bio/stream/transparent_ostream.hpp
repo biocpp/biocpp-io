@@ -29,6 +29,7 @@ namespace bio
 {
 
 //!\brief Options that can be provided to bio::transparent_ostream.
+//!\ingroup stream
 struct transparent_ostream_options
 {
     //!\brief Size of the buffer used when opening a file from a filename.
@@ -78,7 +79,7 @@ struct transparent_ostream_options
 };
 
 /*!\brief A std::ostream that automatically detects compressed streams and transparently decompresses them.
- *
+ * \ingroup stream
  * \details
  *
  * This is a c++ iostream compatible type that transparently compresses streams, i.e. depending on run-time arguments
@@ -140,13 +141,9 @@ private:
     //!\brief The type of the internal stream pointers. Allows dynamically setting ownership management.
     using stream_ptr_t = std::unique_ptr<std::basic_ostream<char>, std::function<void(std::basic_ostream<char> *)>>;
     //!\brief Stream deleter that does nothing (no ownership assumed).
-    static void stream_deleter_noop(std::basic_ostream<char> *)
-    {}
+    static void stream_deleter_noop(std::basic_ostream<char> *) {}
     //!\brief Stream deleter with default behaviour (ownership assumed).
-    static void stream_deleter_default(std::basic_ostream<char> * ptr)
-    {
-        delete ptr;
-    }
+    static void stream_deleter_default(std::basic_ostream<char> * ptr) { delete ptr; }
 
     //!\brief The primary stream is the user provided stream or the file stream if constructed from filename.
     stream_ptr_t primary_stream{nullptr, stream_deleter_noop};
@@ -236,8 +233,7 @@ public:
      * \{
      */
     //!\brief Manually defined default constructor that behaves as expected.
-    transparent_ostream() : std::basic_ostream<char>{}
-    {}
+    transparent_ostream() : std::basic_ostream<char>{} {}                  //!< Call default constructor of base.
     transparent_ostream(transparent_ostream const &) = delete;             //!< Defaulted.
     transparent_ostream & operator=(transparent_ostream const &) = delete; //!< Defaulted.
     // TODO double check that this works:
@@ -312,10 +308,7 @@ public:
     }
 
     //!\brief The filename this object was created from; empty if this object was not created from a file.
-    std::filesystem::path const & filename()
-    {
-        return filename_;
-    }
+    std::filesystem::path const & filename() { return filename_; }
 
     /*!\brief The filename this object was created from without compression-specific suffix.
      *
@@ -326,10 +319,7 @@ public:
      *
      * If this object was not created from a file, an empty path is returned.
      */
-    std::filesystem::path const & truncated_filename()
-    {
-        return truncated_filename_;
-    }
+    std::filesystem::path const & truncated_filename() { return truncated_filename_; }
 };
 
 } // namespace bio

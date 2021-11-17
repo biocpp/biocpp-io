@@ -323,10 +323,7 @@ public:
     }
 
     // returns the underlying zip ostream object
-    zip_streambuf_type * rdbuf()
-    {
-        return &m_buf;
-    }
+    zip_streambuf_type * rdbuf() { return &m_buf; }
 
 private:
     zip_streambuf_type m_buf;
@@ -403,10 +400,8 @@ public:
 
 #ifdef _WIN32
 private:
-    void _Add_vtordisp1()
-    {} // Required to avoid VC++ warning C4250
-    void _Add_vtordisp2()
-    {} // Required to avoid VC++ warning C4250
+    void _Add_vtordisp1() {} // Required to avoid VC++ warning C4250
+    void _Add_vtordisp2() {} // Required to avoid VC++ warning C4250
 #endif
 };
 

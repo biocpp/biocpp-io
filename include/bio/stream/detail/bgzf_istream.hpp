@@ -81,13 +81,9 @@ private:
         io_error *        error;
         off_type          fileOfs;
 
-        Serializer(istream_reference istream) : istream(istream), error(NULL), fileOfs(0u)
-        {}
+        Serializer(istream_reference istream) : istream(istream), error(NULL), fileOfs(0u) {}
 
-        ~Serializer()
-        {
-            delete error;
-        }
+        ~Serializer() { delete error; }
     };
 
     Serializer serializer;
@@ -507,10 +503,7 @@ public:
     }
 
     // returns the compressed input istream
-    istream_reference get_istream()
-    {
-        return serializer.istream;
-    };
+    istream_reference get_istream() { return serializer.istream; };
 };
 
 // --------------------------------------------------------------------------
@@ -535,31 +528,16 @@ public:
     };
 
     // returns the underlying decompression bgzf istream object
-    decompression_bgzf_streambuf_type * rdbuf()
-    {
-        return &m_buf;
-    };
+    decompression_bgzf_streambuf_type * rdbuf() { return &m_buf; };
 
     // returns the bgzf error state
-    int get_zerr() const
-    {
-        return m_buf.get_zerr();
-    };
+    int  get_zerr() const { return m_buf.get_zerr(); };
     // returns the uncompressed data crc
-    long get_crc() const
-    {
-        return m_buf.get_crc();
-    };
+    long get_crc() const { return m_buf.get_crc(); };
     // returns the uncompressed data size
-    long get_out_size() const
-    {
-        return m_buf.get_out_size();
-    };
+    long get_out_size() const { return m_buf.get_out_size(); };
     // returns the compressed data size
-    long get_in_size() const
-    {
-        return m_buf.get_in_size();
-    };
+    long get_in_size() const { return m_buf.get_in_size(); };
 
 private:
     decompression_bgzf_streambuf_type m_buf;
@@ -591,21 +569,12 @@ public:
       m_gbgzf_data_size(0){};
 
     // returns true if it is a gzip file
-    bool is_gzip() const
-    {
-        return m_is_gzip;
-    };
+    bool is_gzip() const { return m_is_gzip; };
     // return data size check
-    bool check_data_size() const
-    {
-        return this->get_out_size() == m_gbgzf_data_size;
-    };
+    bool check_data_size() const { return this->get_out_size() == m_gbgzf_data_size; };
 
     // return the data size in the file
-    long get_gbgzf_data_size() const
-    {
-        return m_gbgzf_data_size;
-    };
+    long get_gbgzf_data_size() const { return m_gbgzf_data_size; };
 
 protected:
     static void read_long(istream_reference in_, unsigned long & x_);
@@ -616,10 +585,8 @@ protected:
 
 #ifdef _WIN32
 private:
-    void _Add_vtordisp1()
-    {} // Required to avoid VC++ warning C4250
-    void _Add_vtordisp2()
-    {} // Required to avoid VC++ warning C4250
+    void _Add_vtordisp1() {} // Required to avoid VC++ warning C4250
+    void _Add_vtordisp2() {} // Required to avoid VC++ warning C4250
 #endif
 };
 
