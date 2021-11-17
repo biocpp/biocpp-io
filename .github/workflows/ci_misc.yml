@@ -109,7 +109,7 @@ jobs:
         run: |
           mkdir bio-build
           cd bio-build
-          cmake ../bio/test/${{ matrix.build }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_CXX_FLAGS="${{ matrix.cxx_flags }}" -DSEQAN3_VERBOSE_TESTS=OFF -DSEQAN3_BENCHMARK_MIN_TIME=0.01
+          cmake ../bio/test/${{ matrix.build }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_CXX_FLAGS="${{ matrix.cxx_flags }}" -DBIO_VERBOSE_TESTS=OFF -DBIO_BENCHMARK_MIN_TIME=0.01
           if [[ "${{ matrix.build }}" =~ ^(header|snippet)$ ]]; then
             make gtest_build
           fi
