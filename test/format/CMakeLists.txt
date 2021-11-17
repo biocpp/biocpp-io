@@ -23,4 +23,6 @@ if (NOT CLANG_FORMAT STREQUAL "CLANG_FORMAT-NOTFOUND")
     add_custom_target (format_unit_tests "find" "${CMAKE_CURRENT_SOURCE_DIR}/../unit/" "-name" "'*.cpp'" "-exec"
                        ${CLANG_FORMAT} "-style=file" "-i" "{}" "+"
                        COMMENT "Format the unit tests with clang-format.")
+else ()
+    message(FATAL_ERROR "clang-format not found. No targets made.")
 endif()
