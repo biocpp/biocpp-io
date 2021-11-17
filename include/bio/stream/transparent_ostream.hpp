@@ -130,6 +130,7 @@ private:
     transparent_ostream_options options_;
     //!\brief The stream buffer.
     std::vector<char>           stream1_buffer;
+    //!\brief The stream buffer.
     std::vector<char>           stream2_buffer;
     //!\brief Filename (if stream was opened from path).
     std::filesystem::path       filename_;

@@ -17,13 +17,11 @@
  */
 
 //!\brief The major version as MACRO.
-#define BIO_VERSION_MAJOR     0
+#define BIO_VERSION_MAJOR 0
 //!\brief The minor version as MACRO.
-#define BIO_VERSION_MINOR     1
+#define BIO_VERSION_MINOR 1
 //!\brief The patch version as MACRO.
-#define BIO_VERSION_PATCH     0
-//!\brief The release candidate number. 0 means stable release, >= 1 means release candidate.
-#define BIO_RELEASE_CANDIDATE 0
+#define BIO_VERSION_PATCH 0
 
 //!\brief The full version as MACRO (number).
 #define BIO_VERSION (BIO_VERSION_MAJOR * 10000 + BIO_VERSION_MINOR * 100 + BIO_VERSION_PATCH)
@@ -38,18 +36,8 @@
     BIO_VERSION_CSTRING_HELPER_STR(MAJOR)                                                                              \
     "." BIO_VERSION_CSTRING_HELPER_STR(MINOR) "." BIO_VERSION_CSTRING_HELPER_STR(PATCH)
 
-#if (BIO_RELEASE_CANDIDATE > 0)
-//!\brief A helper function that expands to a suitable release candidate suffix.
-#    define BIO_RELEASE_CANDIDATE_HELPER(RC) "-rc." BIO_VERSION_CSTRING_HELPER_STR(RC)
-#else
-//!\brief A helper function that expands to a suitable release candidate suffix.
-#    define BIO_RELEASE_CANDIDATE_HELPER(RC) ""
-#endif
-
 //!\brief The full version as null terminated string.
-#define BIO_VERSION_CSTRING                                                                                            \
-    BIO_VERSION_CSTRING_HELPER_FUNC(BIO_VERSION_MAJOR, BIO_VERSION_MINOR, BIO_VERSION_PATCH)                           \
-    BIO_RELEASE_CANDIDATE_HELPER(BIO_RELEASE_CANDIDATE)
+#define BIO_VERSION_CSTRING BIO_VERSION_CSTRING_HELPER_FUNC(BIO_VERSION_MAJOR, BIO_VERSION_MINOR, BIO_VERSION_PATCH)
 
 namespace bio
 {
@@ -71,4 +59,3 @@ constexpr char const * bio_version_cstring = BIO_VERSION_CSTRING;
 
 #undef BIO_VERSION_CSTRING_HELPER_STR
 #undef BIO_VERSION_CSTRING_HELPER_FUNC
-#undef BIO_RELEASE_CANDIDATE_HELPER

@@ -1,0 +1,101 @@
+PROJECT_NAME           = "b.i.o"
+PROJECT_BRIEF          = "The biological C++ library for Input and Output."
+PROJECT_LOGO           = ${BIO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/seqan_logo.png
+PROJECT_NUMBER         = ${BIO_VERSION}
+LAYOUT_FILE            = ${BIO_DOXYGEN_SOURCE_DIR}/test/documentation/DoxygenLayout.xml
+
+## PATHS
+OUTPUT_DIRECTORY       = ${BIO_DOXYGEN_OUTPUT_DIR}
+INCLUDE_PATH           = ${BIO_DOXYGEN_SOURCE_DIR}/include
+INPUT                  = ${BIO_DOXYGEN_SOURCE_DIR}/include               \
+                         ${BIO_DOXYGEN_SOURCE_DIR}/doc                   \
+                         ${BIO_DOXYGEN_SOURCE_DIR}/LICENSE
+##                       ${BIO_DOXYGEN_SOURCE_DIR}/CHANGELOG.md          \
+##                       ${BIO_DOXYGEN_SOURCE_DIR}/CODE_OF_CONDUCT.md    \
+##                       ${BIO_DOXYGEN_SOURCE_DIR}/CONTRIBUTING.md
+STRIP_FROM_PATH        = ${BIO_DOXYGEN_SOURCE_DIR}/include
+STRIP_FROM_INC_PATH    = ${BIO_DOXYGEN_SOURCE_DIR}/include
+EXAMPLE_PATH           = ${BIO_DOXYGEN_SOURCE_DIR}
+IMAGE_PATH             = ${BIO_DOXYGEN_SOURCE_DIR}/doc \
+                         ${BIO_DOXYGEN_SOURCE_DIR}/test/documentation
+
+## DOT SUPPORT
+HAVE_DOT               = ${BIO_DOXYGEN_HAVE_DOT}
+DOT_NUM_THREADS        = ${BIO_DOXYGEN_DOT_NUM_THREADS}
+DOT_IMAGE_FORMAT       = svg
+DOT_GRAPH_MAX_NODES    = 500
+INTERACTIVE_SVG        = ${BIO_DOXYGEN_HAVE_DOT}
+
+## MISC OPTIONS
+GENERATE_LATEX         = NO
+USE_MATHJAX            = ${BIO_DOXYGEN_USE_MATHJAX}
+HTML_TIMESTAMP         = YES
+EXT_LINKS_IN_WINDOW    = YES
+RECURSIVE              = YES
+DISABLE_INDEX          = YES
+GENERATE_TREEVIEW      = YES
+INLINE_INHERITED_MEMB  = NO
+COLLABORATION_GRAPH    = NO
+TEMPLATE_RELATIONS     = YES
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+SKIP_FUNCTION_MACROS   = NO
+SORT_BRIEF_DOCS        = YES
+TOC_INCLUDE_HEADINGS   = 2
+HTML_EXTRA_STYLESHEET  = ${BIO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/seqan3.css
+HTML_FOOTER            = ${BIO_DOXYGEN_OUTPUT_DIR}/bio_footer.html
+INPUT_ENCODING         = UTF-8
+EXTRA_PACKAGES         = {amsfonts}
+
+PREDEFINED             = "CEREAL_SERIALIZE_FUNCTION_NAME=serialize" \
+                         "CEREAL_LOAD_FUNCTION_NAME=load" \
+                         "CEREAL_SAVE_FUNCTION_NAME=save" \
+                         "CEREAL_LOAD_MINIMAL_FUNCTION_NAME=load_minimal" \
+                         "CEREAL_SAVE_MINIMAL_FUNCTION_NAME=save_minimal" \
+                         "BIO_DOXYGEN_ONLY(x)= x" \
+                         "${BIO_DOXYGEN_PREDEFINED_NDEBUG}"
+
+##EXPAND_AS_DEFINED      = BIO_RECORD_MEMBER
+
+TAGFILES               += "${BIO_DOXYGEN_STD_TAGFILE}=https://en.cppreference.com/w/"
+
+EXCLUDE_SYMBOLS        = bio::contrib
+
+FORMULA_FONTSIZE       = 14
+HTML_DYNAMIC_SECTIONS  = YES
+
+## detect headers without extensions (in std module)
+EXTENSION_MAPPING      = .no_extension=C++
+FILE_PATTERNS          = *
+EXCLUDE_PATTERNS       = */doc/*.cpp
+
+## Developer VS user mode
+EXTRACT_PRIVATE        = ${BIO_DOXYGEN_EXTRACT_PRIVATE}
+ENABLED_SECTIONS       = ${BIO_DOXYGEN_ENABLED_SECTIONS}
+EXCLUDE_SYMBOLS        += ${BIO_DOXYGEN_EXCLUDE_SYMBOLS}
+
+## Custom doxygen commands
+ALIASES += tutorial_head{4}="<table><tr><th>Difficulty</th><td>\1</td></tr><tr><th>Duration</th><td>\2</td></tr><tr><th>Prerequisite tutorials</th><td>\3</td></tr><tr><th>Recommended reading</th><td>\4</td></tr></table>"
+
+ALIASES += assignment{1}="\htmlonly <div class=\"assignment\"><h4>\1</h4><div class=\"assignment_content\">\endhtmlonly"
+ALIASES += endassignment="\htmlonly</div></div>\endhtmlonly"
+
+ALIASES += solution="\htmlonly <div class=\"solution\"> <details><summary><b>Solution</b></summary> \endhtmlonly"
+ALIASES += endsolution="\htmlonly </details> </div> \endhtmlonly"
+
+ALIASES += hint="\htmlonly <div class=\"assignment\"> <details><summary><b>Hint</b></summary> \endhtmlonly"
+ALIASES += endhint="\htmlonly </details> </div> \endhtmlonly"
+
+ALIASES += strike{1}="\htmlonly<div style='color:red;text-decoration:line-through'>\1</div>\endhtmlonly"
+
+ALIASES += startcollapsible{1}="\htmlonly<details class=\"seqan\"><summary class = \"seqan\">\1</summary>\endhtmlonly"
+ALIASES += endcollapsible="\htmlonly</details>\endhtmlonly"
+
+ALIASES += header_file{1}="\htmlonly<b>Header File</b><br><div style='text-indent:3em;'><code>#include\endhtmlonly <\1>\htmlonly</code></div>\endhtmlonly"
+
+### Extra files that we can link to
+
+HTML_EXTRA_FILES       += ${BIO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/version.js
+HTML_EXTRA_FILES       += ${BIO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/version.php
+${BIO_DOXYFILE_OPTION_POWERED_BY_VERCEL}

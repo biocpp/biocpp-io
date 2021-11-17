@@ -234,6 +234,7 @@ inline bool header_matches_dyn(compression_format const format, std::string_view
 // read_magic_header
 //-------------------------------------------------------------------------------
 
+//!\brief Read the compression header.
 inline std::string read_magic_header(std::istream & istr)
 {
     std::string ret;
