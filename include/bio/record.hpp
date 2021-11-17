@@ -29,6 +29,9 @@ namespace bio
 // ----------------------------------------------------------------------------
 
 /*!\brief An enumerator for the fields used in file formats.
+ * \ingroup bio
+ *
+ * \details
  *
  * Some of the fields are shared between formats.
  *
@@ -84,8 +87,10 @@ enum class field : uint64_t
 
 /*!\brief The class template that file records are based on; behaves like an std::tuple.
  * \implements seqan3::tuple_like
+ * \ingroup bio
  * \tparam field_types The types of the fields in this record as a seqan3::type_list.
  * \tparam field_ids   A seqan3::vtag_t type with bio::field IDs corresponding to field_types.
+ * \details
  *
  * This class template behaves just like an std::tuple, with the exception that it provides an additional
  * get-interface that takes a bio::field identifier. The traditional get interfaces (via index and
@@ -114,7 +119,7 @@ public:
 private:
     //!\brief Auxiliary functions for clear().
     template <typename t>
-        //!\cond
+        //!\cond REQ
         requires requires(t & v) { v.clear(); }
     //!\endcond
     static constexpr void clear_element(t & v) noexcept(noexcept(v.clear())) { v.clear(); }
@@ -174,7 +179,9 @@ public:
 
     //!\brief Get a specific field by it's field id.
     template <field f>
+        //!\cond REQ
         requires(field_ids::contains(f))
+    //!\endcond
     decltype(auto) get() noexcept(noexcept(std::get<field_ids::index_of(f)>(to_base())))
     {
         return std::get<field_ids::index_of(f)>(to_base());
@@ -182,7 +189,9 @@ public:
 
     //!\brief Get a specific field by it's field id.
     template <field f>
+        //!\cond REQ
         requires(field_ids::contains(f))
+    //!\endcond
     decltype(auto) get() const noexcept(noexcept(std::get<field_ids::index_of(f)>(to_base())))
     {
         return std::get<field_ids::index_of(f)>(to_base());
@@ -195,7 +204,7 @@ public:
                                                                                                                        \
     decltype(auto) F() const noexcept(noexcept(get<field::F>())) { return get<field::F>(); }
 
-    /*!\name Member accessors
+    /*\name Member accessors
      * \{
      */
     BIO_RECORD_MEMBER(seq)
@@ -220,7 +229,7 @@ public:
     BIO_RECORD_MEMBER(filter)
     BIO_RECORD_MEMBER(info)
     BIO_RECORD_MEMBER(genotypes)
-    //!\}
+    //\}
 #undef BIO_RECORD_MEMBER
 };
 
@@ -271,7 +280,6 @@ namespace bio
  * \relates bio::record
  * \{
  */
-
 //!\brief Free function get() for bio::record based on bio::field.
 template <field f, typename field_ids, typename... field_types>
 auto & get(record<field_ids, field_types...> & r)
@@ -305,50 +313,46 @@ auto const && get(record<field_ids, field_types...> const && r)
 }
 //!\}
 
+// Implementation note: for some reason, the following is already "related" do bio::record
+/*!\name Convenience functions for creating bio::record.
+ * \{
+ */
 //-------------------------------------------------------------------------------
 // make_record
 //-------------------------------------------------------------------------------
 
-/*!\name Create a record from the arguments.
- * \{
+/*!\brief Create a bio::record and deduce type from arguments (like std::make_tuple for std::tuple).
+ * \details
+ *
+ * ### Example
+ *
+ * TODO
  */
-//!\brief Create a bio::record and deduce type from arguments (like std::make_tuple for std::tuple).
-template <typename field_ids_t, typename... field_type_ts>
-constexpr auto make_record(field_type_ts &... fields) -> record<field_ids_t, field_type_ts...>
-{
-    return {fields...};
-}
-
-//!\brief Create a bio::record and deduce type from arguments (like std::make_tuple for std::tuple).
 template <auto... field_ids, typename... field_type_ts>
 constexpr auto make_record(seqan3::vtag_t<field_ids...>, field_type_ts &... fields)
   -> record<seqan3::vtag_t<field_ids...>, field_type_ts...>
 {
     return {fields...};
 }
-//!\}
 
 //-------------------------------------------------------------------------------
 // tie_record
 //-------------------------------------------------------------------------------
 
-/*!\name Create a record from references to the arguments.
- * \{
+/*!\brief Create a bio::record of references (like std::tie for std::tuple).
+ * \details
+ *
+ * ### Example
+ *
+ * TODO
  */
-//!\brief Create a bio::record of references (like std::tie for std::tuple).
-template <typename field_ids_t, typename... field_type_ts>
-constexpr auto tie_record(field_type_ts &... fields) -> record<field_ids_t, field_type_ts &...>
-{
-    return {fields...};
-}
-
-//!\brief Create a bio::record of references (like std::tie for std::tuple).
 template <auto... field_ids, typename... field_type_ts>
 constexpr auto tie_record(seqan3::vtag_t<field_ids...>, field_type_ts &... fields)
   -> record<seqan3::vtag_t<field_ids...>, field_type_ts &...>
 {
     return {fields...};
 }
+
 //!\}
 
 } // namespace bio

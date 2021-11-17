@@ -21,6 +21,10 @@
 namespace bio
 {
 
+/*!\addtogroup bio
+ * \{
+ */
+
 // ----------------------------------------------------------------------------
 // file open exceptions
 // ----------------------------------------------------------------------------
@@ -76,5 +80,7 @@ struct format_error : std::invalid_argument
     //!\brief Constructor that forwards the exception string.
     format_error(std::string const & s) : std::invalid_argument{s} {}
 };
+
+//!\}
 
 } // namespace bio

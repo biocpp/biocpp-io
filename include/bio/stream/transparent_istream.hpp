@@ -29,6 +29,7 @@ namespace bio
 {
 
 //!\brief Options that can be provided to bio::transparent_istream.
+//!\ingroup stream
 struct transparent_istream_options
 {
     //!\brief Size of the buffer used when opening a file from a filename.
@@ -64,7 +65,7 @@ struct transparent_istream_options
 };
 
 /*!\brief A std::istream that automatically detects compressed streams and transparently decompresses them.
- *
+ * \ingroup stream
  * \details
  *
  * This is a c++ iostream compatible type that transparently decompresses compressed streams, i.e. you can open
@@ -219,7 +220,7 @@ public:
     /*!\name Constructors, destructor and assignment
      * \{
      */
-    transparent_istream() : std::basic_istream<char>{} {}
+    transparent_istream() : std::basic_istream<char>{} {}                  //!< Call default constructor of base.
     transparent_istream(transparent_istream const &) = delete;             //!< Deleted.
     transparent_istream & operator=(transparent_istream &&) = default;     //!< Defaulted.
     transparent_istream & operator=(transparent_istream const &) = delete; //!< Defaulted.

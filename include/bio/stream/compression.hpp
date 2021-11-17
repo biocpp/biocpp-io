@@ -26,7 +26,7 @@ namespace bio
 {
 
 //!\brief Possible formats for stream (de-)compression.
-//!\ingroup io
+//!\ingroup stream
 enum class compression_format
 {
     none,   //!< No compression.
@@ -39,7 +39,7 @@ enum class compression_format
 
 /*!\brief Traits of the compression formats.
  * \tparam format The bio::compression_format whose traits are provided.
- * \ingroup io
+ * \ingroup stream
  *
  * \details
  *
@@ -69,6 +69,7 @@ struct compression_traits
 
 /*!\brief Traits for the bio::compression_format::bgzf.
  * \see bio::compression_traits
+ * \ingroup stream
  */
 template <>
 struct compression_traits<compression_format::bgzf> : compression_traits<compression_format::none>
@@ -95,6 +96,7 @@ struct compression_traits<compression_format::bgzf> : compression_traits<compres
 };
 
 /*!\brief Traits for the bio::compression_format::gz.
+ * \ingroup stream
  * \see bio::compression_traits
  */
 template <>
@@ -116,6 +118,7 @@ struct compression_traits<compression_format::gz> : compression_traits<compressi
 };
 
 /*!\brief Traits for the bio::compression_format::bz2.
+ * \ingroup stream
  * \see bio::compression_traits
  */
 template <>
@@ -137,6 +140,7 @@ struct compression_traits<compression_format::bz2> : compression_traits<compress
 };
 
 /*!\brief Traits for the bio::compression_format::zstd.
+ * \ingroup stream
  * \see bio::compression_traits
  */
 template <>
@@ -164,6 +168,7 @@ namespace bio::detail
 //-------------------------------------------------------------------------------
 
 //!\brief By default, the given argument is just compared with the stored magic header.
+//!\ingroup stream
 template <compression_format format>
 constexpr bool header_matches(std::string_view const to_compare)
 {
@@ -171,6 +176,7 @@ constexpr bool header_matches(std::string_view const to_compare)
 }
 
 //!\brief For bio::compression_format::bgzf not all values are compared.
+//!\ingroup stream
 template <>
 constexpr bool header_matches<compression_format::bgzf>(std::string_view const to_compare)
 {
@@ -189,6 +195,7 @@ constexpr bool header_matches<compression_format::bgzf>(std::string_view const t
 }
 
 //!\brief Header matches "none" if it doesn't match any known compression.
+//!\ingroup stream
 template <>
 constexpr bool header_matches<compression_format::none>(std::string_view const to_compare)
 {
@@ -198,6 +205,7 @@ constexpr bool header_matches<compression_format::none>(std::string_view const t
 }
 
 //!\brief Header matches "none" if it doesn't match any known compression.
+//!\ingroup stream
 template <>
 constexpr bool header_matches<compression_format::detect>(std::string_view)
 {
@@ -209,6 +217,7 @@ constexpr bool header_matches<compression_format::detect>(std::string_view)
 //-------------------------------------------------------------------------------
 
 //!\brief A runtime-dispatching version of bio::detail::header_matches.
+//!\ingroup stream
 inline bool header_matches_dyn(compression_format const format, std::string_view const to_compare)
 {
     switch (format)
@@ -235,6 +244,7 @@ inline bool header_matches_dyn(compression_format const format, std::string_view
 //-------------------------------------------------------------------------------
 
 //!\brief Read the compression header.
+//!\ingroup stream
 inline std::string read_magic_header(std::istream & istr)
 {
     std::string ret;
@@ -261,7 +271,7 @@ inline std::string read_magic_header(std::istream & istr)
 //-------------------------------------------------------------------------------
 
 /*!\brief Deduce bio::compression_format from a magic header string.
- *
+ * \ingroup stream
  * \details
  *
  * Note that this function checks BGZF before GZ, since the latter's magic header is a prefix of the former's.
@@ -285,7 +295,7 @@ inline compression_format detect_format_from_magic_header(std::string_view const
 //-------------------------------------------------------------------------------
 
 /*!\brief Deduce bio::compression_format from a filename extension.
- *
+ * \ingroup stream
  * \details
  *
  * Note that this function checks BGZF before GZ which means that it always selects BGZF for the extension ".gz".

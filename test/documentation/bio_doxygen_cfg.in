@@ -1,5 +1,5 @@
-PROJECT_NAME           = "b.i.o"
-PROJECT_BRIEF          = "The biological C++ library for Input and Output."
+PROJECT_NAME           = "B.I.O."
+PROJECT_BRIEF          = "The Biological Input and Output library."
 PROJECT_LOGO           = ${BIO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/seqan_logo.png
 PROJECT_NUMBER         = ${BIO_VERSION}
 LAYOUT_FILE            = ${BIO_DOXYGEN_SOURCE_DIR}/test/documentation/DoxygenLayout.xml
