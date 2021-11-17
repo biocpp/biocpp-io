@@ -109,6 +109,7 @@ struct compression_stream<compression_format::zstd> : compression_stream<compres
 // make_istream
 //-------------------------------------------------------------------------------
 
+//!\brief Creates an input stream by forwarding the given arguments.
 template <compression_format format, typename... args_t>
 std::istream * make_istream(args_t &&... args)
 {
@@ -128,6 +129,7 @@ std::istream * make_istream(args_t &&... args)
 // make_ostream
 //-------------------------------------------------------------------------------
 
+//!\brief Creates an output stream by forwarding the given arguments.
 template <compression_format format, typename... args_t>
 std::ostream * make_ostream(args_t &&... args)
 {

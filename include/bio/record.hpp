@@ -99,14 +99,14 @@ enum class field : uint64_t
  *
  * This is how it works:
  *
- * \include test/snippet/io/record_2.cpp
+ * \todo include test/snippet/io/record_2.cpp
  */
 template <typename field_ids_, typename... field_types>
 struct record : std::tuple<field_types...>
 {
 public:
-    using field_types_list = seqan3::type_list<field_types...>;
-    using field_ids        = field_ids_;
+    using field_types_list = seqan3::type_list<field_types...>; //!< The field types as a type_list.
+    using field_ids        = field_ids_;                        //!< The field ids corresponding to the field_types.
 
     //!\brief A specialisation of std::tuple.s
     using base_type = std::tuple<field_types...>;
@@ -135,11 +135,13 @@ private:
     //!\brief A lambda function that expands a pack and calls `clear_element` on every argument in the pack.
     static constexpr auto expander = [](auto &... args) { (clear_element(args), ...); };
 
+    //!\brief Get the base_type.
     base_type & to_base()
     {
         return static_cast<base_type &>(*this);
     }
 
+    //!\brief Get the base_type.
     base_type const & to_base() const
     {
         return static_cast<base_type const &>(*this);
@@ -171,18 +173,21 @@ public:
     /*!\name Get accessors
      * \{
      */
+    //!\brief Get a specific field by it's position.
     template <size_t i>
     decltype(auto) get() noexcept(noexcept(std::get<i>(to_base())))
     {
         return std::get<i>(to_base());
     }
 
+    //!\brief Get a specific field by it's position.
     template <size_t i>
     decltype(auto) get() const noexcept(noexcept(std::get<i>(std::as_const(to_base()))))
     {
         return std::get<i>(to_base());
     }
 
+    //!\brief Get a specific field by it's field id.
     template <field f>
         requires(field_ids::contains(f))
     decltype(auto) get() noexcept(noexcept(std::get<field_ids::index_of(f)>(to_base())))
@@ -190,6 +195,7 @@ public:
         return std::get<field_ids::index_of(f)>(to_base());
     }
 
+    //!\brief Get a specific field by it's field id.
     template <field f>
         requires(field_ids::contains(f))
     decltype(auto) get() const noexcept(noexcept(std::get<field_ids::index_of(f)>(to_base())))
@@ -198,6 +204,7 @@ public:
     }
     //!\}
 
+//!\brief A macro that defines all getter functions for fields contained in bio::record.
 #define BIO_RECORD_MEMBER(F)                                                                                           \
     decltype(auto) F() noexcept(noexcept(get<field::F>()))                                                             \
     {                                                                                                                  \
@@ -324,7 +331,6 @@ auto const && get(record<field_ids, field_types...> const && r)
 //-------------------------------------------------------------------------------
 
 /*!\name Create a record from the arguments.
- * \relates bio::record
  * \{
  */
 //!\brief Create a bio::record and deduce type from arguments (like std::make_tuple for std::tuple).
@@ -348,7 +354,6 @@ constexpr auto make_record(seqan3::vtag_t<field_ids...>, field_type_ts &... fiel
 //-------------------------------------------------------------------------------
 
 /*!\name Create a record from references to the arguments.
- * \relates bio::record
  * \{
  */
 //!\brief Create a bio::record of references (like std::tie for std::tuple).
