@@ -19,6 +19,8 @@
 #include <ranges>
 #include <string_view>
 
+#include <seqan3/utility/concept/exposition_only/core_language.hpp>
+
 #include <bio/platform.hpp>
 
 namespace bio::detail
@@ -55,6 +57,43 @@ std::to_chars_result to_chars(char * first, char * last, auto in)
         return {.ptr = first + count, .ec{}};
     }
 }
+
+/*!\brief Turn a string into a number.
+ * \param[in] input The input string.
+ * \param[out] number The variable holding the result.
+ * \throws std::runtime_error If there was an error during conversion.
+ * \details
+ *
+ * Relies on std::from_chars to efficiently convert but accepts std::string_view and throws on error so
+ * there is no return value that needs to be checked.
+ */
+void string_to_number(std::string_view const input, seqan3::arithmetic auto & number)
+{
+    std::from_chars_result res = std::from_chars(input.data(), input.data() + input.size(), number);
+    if (res.ec != std::errc{} || res.ptr != input.data() + input.size())
+        throw std::runtime_error{std::string{"Could not convert \""} + std::string{input} + "\" into a number."};
+}
+
+/*!\brief Convert something to a string.
+ * \details
+ *
+ * ### Attention
+ *
+ * This function is not efficient. Do not use it in performance-critical code.
+ */
+std::string to_string(auto && in)
+{
+    using in_t = std::remove_cvref_t<decltype(in)>;
+    if constexpr (seqan3::arithmetic<in_t>)
+        return std::to_string(in);
+    else if constexpr (std::same_as<in_t, std::string>)
+        return in;
+    else if constexpr (std::constructible_from<std::string, in_t>)
+        return std::string{in};
+    else
+        static_assert(std::constructible_from<std::string, in_t>, "Type cannot be converted to string");
+}
+
 //!\}
 
 } // namespace bio::detail
