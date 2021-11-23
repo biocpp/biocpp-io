@@ -252,7 +252,13 @@ public:
             return record_.line;
     }
     //!\brief Arrow operator.
-    pointer operator->() const { return &**this; }
+    pointer operator->() const
+    {
+        if constexpr (record_kind_ == plain_io::record_kind::line_and_fields)
+            return &record_;
+        else
+            return &record_.line;
+    }
 
     /*!\brief Show the character behind the current record.
      * \details
