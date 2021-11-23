@@ -261,18 +261,21 @@ public:
     }
 
     /*!\brief Show the character behind the current record.
+     * \throws io_error If the stream is at end.
      * \details
+     *
      * ### ATTENTION
      * Calling this function may invalidate the current record!
-     *
-     * Undefined behaviour if the stream is at end!
      */
     char peak()
     {
         assert(stream_buf != nullptr);
+
         if (stream_buf->gptr() == stream_buf->egptr())
             stream_buf->underflow();
-        assert(stream_buf->gptr() != stream_buf->egptr());
+        if (stream_buf->gptr() == stream_buf->egptr())
+            throw io_error{"Cannot peak() into stream if the stream is EOF."};
+
         return *stream_buf->gptr();
     }
     //!\}
