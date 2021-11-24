@@ -79,27 +79,11 @@ struct transparent_istream_options
  *
  * ### Example
  *
- * ```cpp
- * std::string buffer;
- *
- * bio::transparent_istream s1{"my_file.txt"};      // behaves like std::ifstream
- * s1 >> buffer;
- *
- * bio::transparent_istream s2{"my_file.txt.gz"};   // file is transparently decompressed
- * s2 >> buffer;
- *
- * bio::transparent_istream s3{std::cin};           // wrap standard input
- * s3 >> buffer;
- * ```
+ * \snippet test/snippet/stream/transparent_istream.cpp construction
  *
  * Do not use extra threads for decompression:
  *
- * ```cpp
- * std::string buffer;
- *
- * bio::transparent_istream s1{"my_file.txt.gz", { .threads = 1} };
- * s1 >> buffer;
- * ```
+ * \snippet test/snippet/stream/transparent_istream.cpp decompression
  */
 class transparent_istream : public std::basic_istream<char>
 {
