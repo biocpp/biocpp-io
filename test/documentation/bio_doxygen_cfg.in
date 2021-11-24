@@ -56,7 +56,7 @@ PREDEFINED             = "CEREAL_SERIALIZE_FUNCTION_NAME=serialize" \
                          "BIO_DOXYGEN_ONLY(x)= x" \
                          "${BIO_DOXYGEN_PREDEFINED_NDEBUG}"
 
-##EXPAND_AS_DEFINED      = BIO_RECORD_MEMBER
+EXPAND_AS_DEFINED      = BIO_RECORD_MEMBER
 
 TAGFILES               += "${BIO_DOXYGEN_STD_TAGFILE}=https://en.cppreference.com/w/"
 

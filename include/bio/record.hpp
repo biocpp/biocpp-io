@@ -200,11 +200,13 @@ public:
 
 //!\brief A macro that defines all getter functions for fields contained in bio::record.
 #define BIO_RECORD_MEMBER(F)                                                                                           \
+    /*!\brief Return the bio::field F if available.*/                                                                  \
     decltype(auto) F() noexcept(noexcept(get<field::F>())) { return get<field::F>(); }                                 \
-                                                                                                                       \
+    /*!\brief Return the bio::field F if available. [const-qualified version] */                                       \
     decltype(auto) F() const noexcept(noexcept(get<field::F>())) { return get<field::F>(); }
 
-    /*\name Member accessors
+    /*!\name Member accessors
+     * \brief This is the same as calling #get<field::X>(); functions are only defined if record has that element.
      * \{
      */
     BIO_RECORD_MEMBER(seq)
@@ -229,7 +231,7 @@ public:
     BIO_RECORD_MEMBER(filter)
     BIO_RECORD_MEMBER(info)
     BIO_RECORD_MEMBER(genotypes)
-    //\}
+    //!\}
 #undef BIO_RECORD_MEMBER
 };
 
