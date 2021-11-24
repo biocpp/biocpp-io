@@ -237,6 +237,21 @@ public:
 
 } // namespace bio
 
+namespace bio::detail
+{
+
+//!\brief Implementation for bio::detail::record_from_typelist.
+template <typename field_ids_t, typename... field_types>
+auto record_from_typelist_impl(field_ids_t const &, seqan3::type_list<field_types...>)
+  -> record<field_ids_t, field_types...>;
+
+//!\brief Easy metaprogramming to get the type of a record from type_list of the field_types.
+template <typename field_ids_t, typename field_types_list_t>
+using record_from_typelist =
+  decltype(record_from_typelist_impl(std::declval<field_ids_t>(), std::declval<field_types_list_t>()));
+
+} // namespace bio::detail
+
 //-------------------------------------------------------------------------------
 // tuple traits
 //-------------------------------------------------------------------------------
