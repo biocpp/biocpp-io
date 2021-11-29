@@ -40,9 +40,9 @@ bio::seq_io::reader_options options
 //![example_advanced2]
 bio::seq_io::reader_options options
 {
-    .field_ids   = seqan3::vtag<bio::field::seq>,
-    .field_types = seqan3::ttag<std::string>,
-    .formats     = seqan3::ttag<bio::fasta>
+    .field_ids   = bio::vtag<bio::field::seq>,
+    .field_types = bio::ttag<std::string>,
+    .formats     = bio::ttag<bio::fasta>
 };
 //![example_advanced2]
 }

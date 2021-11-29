@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include <seqan3/utility/tag.hpp>
+#include <bio/misc.hpp>
 
 #include <bio/record.hpp>
 
@@ -22,6 +22,6 @@ namespace bio::seq_io
 
 //!\brief Default fields for seqan3::seq_io::reader_options.
 //!\ingroup seq_io
-inline constexpr auto default_field_ids = seqan3::vtag<field::id, field::seq, field::qual>;
+inline constexpr auto default_field_ids = vtag<field::id, field::seq, field::qual>;
 
 } // namespace bio::seq_io

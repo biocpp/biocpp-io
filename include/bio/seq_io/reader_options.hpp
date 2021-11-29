@@ -16,13 +16,13 @@
 #include <string>
 #include <vector>
 
+#include <bio/misc.hpp>
 #include <seqan3/alphabet/adaptation/char.hpp>
 #include <seqan3/alphabet/aminoacid/aa27.hpp>
 #include <seqan3/alphabet/concept.hpp>
 #include <seqan3/alphabet/nucleotide/dna5.hpp>
 #include <seqan3/alphabet/quality/phred63.hpp>
 #include <seqan3/alphabet/views/char_to.hpp>
-#include <seqan3/utility/tag.hpp>
 #include <seqan3/utility/views/to.hpp>
 
 #include <bio/format/fasta.hpp>
@@ -58,19 +58,19 @@ inline constexpr auto field_types = []()
 {
     if constexpr (ownership == bio::ownership::deep)
     {
-        return seqan3::ttag<std::string,
-                            std::conditional_t<std::same_as<seq_alph_t, char>, std::string, std::vector<seq_alph_t>>,
-                            std::conditional_t<std::same_as<qual_alph_t, char>, std::string, std::vector<qual_alph_t>>>;
+        return ttag<std::string,
+                    std::conditional_t<std::same_as<seq_alph_t, char>, std::string, std::vector<seq_alph_t>>,
+                    std::conditional_t<std::same_as<qual_alph_t, char>, std::string, std::vector<qual_alph_t>>>;
     }
     else
     {
-        return seqan3::ttag<std::string_view,
-                            std::conditional_t<std::same_as<seq_alph_t, char>,
-                                               std::string_view,
-                                               decltype(std::string_view{} | seqan3::views::char_to<seq_alph_t>)>,
-                            std::conditional_t<std::same_as<qual_alph_t, char>,
-                                               std::string_view,
-                                               decltype(std::string_view{} | seqan3::views::char_to<qual_alph_t>)>>;
+        return ttag<std::string_view,
+                    std::conditional_t<std::same_as<seq_alph_t, char>,
+                                       std::string_view,
+                                       decltype(std::string_view{} | seqan3::views::char_to<seq_alph_t>)>,
+                    std::conditional_t<std::same_as<qual_alph_t, char>,
+                                       std::string_view,
+                                       decltype(std::string_view{} | seqan3::views::char_to<qual_alph_t>)>>;
     }
 }();
 
@@ -107,7 +107,7 @@ inline constexpr auto field_types_char = field_types<ownership::shallow, char, c
  * compatible between formats. Use at your own risk!
  */
 inline constexpr auto field_types_raw =
-  seqan3::ttag<std::span<std::byte const>, std::span<std::byte const>, std::span<std::byte const>>;
+  ttag<std::span<std::byte const>, std::span<std::byte const>, std::span<std::byte const>>;
 // TODO use seqan3::list_traits::repeat as soon as available
 
 /*!\brief Options that can be used to configure the behaviour of seqan3::am_io::reader.
@@ -163,7 +163,7 @@ struct reader_options
      */
     field_ids_t field_ids = default_field_ids;
 
-    /*!\brief The types corresponding to each field; a seqan3::ttag over the types.
+    /*!\brief The types corresponding to each field; a ttag over the types.
      *
      * \details
      *
@@ -171,13 +171,13 @@ struct reader_options
      */
     field_types_t field_types = field_types_dna;
 
-    /*!\brief The formats that input files can take; a seqan3::ttag over the types.
+    /*!\brief The formats that input files can take; a ttag over the types.
      *
      * \details
      *
      * See seqan3::am_io::reader for an overview of the the supported formats.
      */
-    formats_t formats = seqan3::ttag<fasta>;
+    formats_t formats = ttag<fasta>;
 
     //!\brief Options that are passed on to the internal stream oject.
     transparent_istream_options stream_options{};

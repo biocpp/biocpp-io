@@ -212,8 +212,8 @@ TEST(seq_io_reader, custom_field_types)
 
 TEST(seq_io_reader, custom_field_ids_structured_bindings)
 {
-    bio::seq_io::reader_options opt{.field_ids   = seqan3::vtag<bio::field::seq, bio::field::id>,
-                                    .field_types = seqan3::ttag<std::string, std::string>};
+    bio::seq_io::reader_options opt{.field_ids   = bio::vtag<bio::field::seq, bio::field::id>,
+                                    .field_types = bio::ttag<std::string, std::string>};
 
     std::istringstream  str{static_cast<std::string>(input)};
     bio::seq_io::reader reader{str, bio::fasta{}, opt};
