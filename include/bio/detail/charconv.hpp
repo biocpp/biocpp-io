@@ -58,6 +58,8 @@ std::to_chars_result to_chars(char * first, char * last, auto in)
     }
 }
 
+// TODO write append_number_to_string
+
 /*!\brief Turn a string into a number.
  * \param[in] input The input string.
  * \param[out] number The variable holding the result.

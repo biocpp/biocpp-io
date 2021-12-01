@@ -20,6 +20,7 @@
 #include <seqan3/alphabet/views/char_to.hpp> // TODO replace with char_strictly_to
 
 #include <bio/detail/charconv.hpp>
+#include <bio/detail/concept.hpp>
 #include <bio/detail/range.hpp>
 #include <bio/exception.hpp>
 #include <bio/record.hpp>
@@ -122,8 +123,7 @@ private:
     }
 
     //!\brief Parse into a numerical type.
-    template <seqan3::arithmetic parsed_field_t>
-    static void parse_field_aux(std::string_view const in, parsed_field_t & parsed_field)
+    static void parse_field_aux(std::string_view const in, seqan3::arithmetic auto & parsed_field)
     {
         detail::string_to_number(in, parsed_field);
     }
@@ -133,23 +133,20 @@ private:
      * \brief The second step in parsing consists of field-specific parsing. This is typically provided by derived_t.
      * \{
      */
-    //!\brief Default is no handler.
-    template <typename tag_type, typename parsed_field_t>
-    void parse_field(tag_type const & /**/, parsed_field_t &)
-    {
-        // TODO replace X Y and Z with actual strings generated from types.
-        static_assert(seqan3::arithmetic<parsed_field_t> /*always false*/,
-                      "Format X does not know how to parse field Y into type Z. Provide different traits or a "
-                      "custom format handler.");
-    }
-
     //!\brief Various target types have sane default implementations.
-    template <field field_id, typename parsed_field_t>
-    void parse_field(vtag_t<field_id> const & /**/, parsed_field_t & parsed_field) requires(requires {
-        derived_t::parse_field_aux(get<field_id>(to_derived()->raw_record), parsed_field);
-    })
+    template <field field_id>
+    void parse_field(vtag_t<field_id> const & /**/, auto & parsed_field)
     {
-        to_derived()->parse_field_aux(get<field_id>(to_derived()->raw_record), parsed_field);
+        if constexpr (requires { derived_t::parse_field_aux(get<field_id>(to_derived()->raw_record), parsed_field); })
+        {
+            to_derived()->parse_field_aux(get<field_id>(to_derived()->raw_record), parsed_field);
+        }
+        else
+        {
+            static_assert(seqan3::arithmetic<decltype(parsed_field)> /*always false*/,
+                          "Format X does not know how to parse field Y into type Z. Provide different traits or a "
+                          "custom format handler.");
+        }
     }
     //!\}
 

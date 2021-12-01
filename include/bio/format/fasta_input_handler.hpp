@@ -202,7 +202,7 @@ public:
 
     /*!\brief Construct with an options object.
      * \param[in,out] str The input stream.
-     * \param[in] options An object with options for the format.
+     * \param[in] options An object with options for the input handler.
      * \details
      *
      * The options argument is typically bio::seq_io::reader_options, but any object with a subset of similarly named
@@ -217,7 +217,11 @@ public:
     }
 
     //!\brief Construct with only an input stream.
-    format_input_handler(std::istream & str) : format_input_handler{str, int{}} {}
+    format_input_handler(std::istream & str) : format_input_handler
+    {
+        str, int {}
+    }
+    {}
     //!\}
 };
 

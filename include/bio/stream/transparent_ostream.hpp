@@ -233,7 +233,8 @@ public:
      * \{
      */
     //!\brief Manually defined default constructor that behaves as expected.
-    transparent_ostream() : std::basic_ostream<char>{} {}                  //!< Call default constructor of base.
+    transparent_ostream() : std::basic_ostream<char> {}
+    {}                                                                     //!< Call default constructor of base.
     transparent_ostream(transparent_ostream const &) = delete;             //!< Defaulted.
     transparent_ostream & operator=(transparent_ostream const &) = delete; //!< Defaulted.
     // TODO double check that this works:
