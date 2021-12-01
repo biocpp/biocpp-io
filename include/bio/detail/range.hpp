@@ -13,8 +13,10 @@
 
 #pragma once
 
+#include <ranges>
+#include <span>
+
 #include <seqan3/alphabet/concept.hpp>
-#include <seqan3/utility/concept/container.hpp>
 
 #include <bio/platform.hpp>
 
@@ -24,6 +26,57 @@ namespace bio::detail
 /*!\addtogroup bio
  * \{
  */
+
+// ----------------------------------------------------------------------------
+// concepts
+// ----------------------------------------------------------------------------
+
+/*!\interface bio::detail::back_insertable_with <>
+ * \extends std::ranges::output_range
+ * \tparam rng_t The container type.
+ * \tparam val_t The type to append to the container.
+ * \brief Describes range types that can grow in amortised constant time by appending an element of type val_t.
+ */
+//!\cond
+template <typename rng_t, typename val_t>
+concept back_insertable_with = std::ranges::output_range<rng_t, val_t> && requires(rng_t & v)
+{
+    v.push_back(std::declval<val_t>());
+};
+//!\endcond
+
+/*!\interface bio::detail::back_insertable <>
+ * \extends std::ranges::output_range
+ * \extends std::ranges::input_range
+ * \tparam rng_t The container type.
+ * \brief Describes range types that can grow in amortised constant time by appending an element.
+ */
+//!\cond
+template <typename rng_t>
+concept back_insertable =
+  std::ranges::input_range<rng_t> && back_insertable_with<rng_t, std::ranges::range_reference_t<rng_t>>;
+//!\endcond
+
+//!\brief A seqan3::alphabet that is **not** a character or number (any std::integral).
+template <typename t>
+concept deliberate_alphabet = seqan3::alphabet<t> && !std::integral<std::remove_cvref_t<t>>;
+
+//!\brief A range whose value type is `char`.
+template <typename t>
+concept char_range = std::ranges::range<t> && std::same_as<char, std::remove_cvref_t<std::ranges::range_value_t<t>>>;
+
+//!\brief A range whose value type is an integral type other than `char`.
+template <typename t>
+concept int_range = std::ranges::range<t> && std::integral<std::remove_cvref_t<std::ranges::range_value_t<t>>> &&
+  !std::same_as<char, std::remove_cvref_t<std::ranges::range_value_t<t>>>;
+
+//!\brief A type that is not std::span<std::byte const>.
+template <typename t>
+concept not_a_byte_span = !std::same_as<t, std::span<std::byte const>>;
+
+// ----------------------------------------------------------------------------
+// copy functions
+// ----------------------------------------------------------------------------
 
 /*!\brief Copy elements from the first range into the second range.
  * \param[in] in The range to copy from.
@@ -36,8 +89,8 @@ namespace bio::detail
  * If the input range is sized and the target range offers a `.resize()` member, this function uses
  * resize and assignment instead of back-insertion.
  */
-void sized_range_copy(std::ranges::input_range auto &&                                                   in,
-                      seqan3::back_insertable_with<std::ranges::range_reference_t<decltype(in)>> auto && out)
+void sized_range_copy(std::ranges::input_range auto &&                                           in,
+                      back_insertable_with<std::ranges::range_reference_t<decltype(in)>> auto && out)
 {
     using in_t  = decltype(in);
     using out_t = decltype(out);
@@ -63,23 +116,6 @@ void string_copy(std::string_view const in, auto & out)
     else
         sized_range_copy(in, out);
 }
-
-//!\brief A seqan3::alphabet that is **not** a character or number (any std::integral).
-template <typename t>
-concept deliberate_alphabet = seqan3::alphabet<t> && !std::integral<std::remove_cvref_t<t>>;
-
-//!\brief A range whose value type is `char`.
-template <typename t>
-concept char_range = std::ranges::range<t> && std::same_as<char, std::remove_cvref_t<std::ranges::range_value_t<t>>>;
-
-//!\brief A range whose value type is an integral type other than `char`.
-template <typename t>
-concept int_range = std::ranges::range<t> && std::integral<std::remove_cvref_t<std::ranges::range_value_t<t>>> &&
-  !std::same_as<char, std::remove_cvref_t<std::ranges::range_value_t<t>>>;
-
-//!\brief A type that is not std::span<std::byte const>.
-template <typename t>
-concept not_a_byte_span = !std::same_as<t, std::span<std::byte const>>;
 
 //!\}
 

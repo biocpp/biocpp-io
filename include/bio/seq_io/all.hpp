@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Meta-include that includes the whole Plain I/O module.
+ * \brief Meta-include that includes the whole Seq I/O module.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -15,11 +15,11 @@
 
 // TODO
 
-/*!\defgroup plain_io Plain I/O
+/*!\defgroup seq_io Seq I/O
  * \ingroup bio
  * \brief Reader and writer for plaintext and CSV/TSV files.
  */
 
-/*!\namespace bio::plain_io
- * \brief Namespace for the Plain I/O submodule.
+/*!\namespace bio::seq_io
+ * \brief Namespace for the Seq I/O submodule.
  */

@@ -14,14 +14,14 @@
 #include <seqan3/core/debug_stream.hpp>
 #include <seqan3/test/expect_range_eq.hpp>
 #include <seqan3/test/expect_same_type.hpp>
-#include <seqan3/utility/tag.hpp>
 #include <seqan3/utility/tuple/concept.hpp>
 
+#include <bio/misc.hpp>
 #include <bio/record.hpp>
 
 using seqan3::operator""_dna4;
 
-using default_fields = seqan3::vtag_t<bio::field::seq, bio::field::id, bio::field::qual>;
+using default_fields = bio::vtag_t<bio::field::seq, bio::field::id, bio::field::qual>;
 
 // This is needed for EXPECT_RANGE_EQ:
 namespace seqan3
@@ -54,7 +54,7 @@ TEST(fields, usage)
 
 struct record : public ::testing::Test
 {
-    using ids         = seqan3::vtag_t<bio::field::id, bio::field::seq>;
+    using ids         = bio::vtag_t<bio::field::id, bio::field::seq>;
     using record_type = bio::record<ids, std::string, seqan3::dna4_vector>;
 };
 
@@ -111,7 +111,7 @@ TEST_F(record, make_record)
     std::string s   = "MY ID";
     auto        vec = "ACGT"_dna4;
 
-    auto r = bio::make_record(seqan3::vtag<bio::field::id, bio::field::seq>, s, vec);
+    auto r = bio::make_record(bio::vtag<bio::field::id, bio::field::seq>, s, vec);
     EXPECT_TRUE((std::same_as<decltype(r), record::record_type>));
 }
 
@@ -120,6 +120,6 @@ TEST_F(record, tie_record)
     std::string s   = "MY ID";
     auto        vec = "ACGT"_dna4;
 
-    auto r = bio::tie_record(seqan3::vtag<bio::field::id, bio::field::seq>, s, vec);
+    auto r = bio::tie_record(bio::vtag<bio::field::id, bio::field::seq>, s, vec);
     EXPECT_TRUE((std::same_as<decltype(r), bio::record<record::ids, std::string &, std::vector<seqan3::dna4> &>>));
 }

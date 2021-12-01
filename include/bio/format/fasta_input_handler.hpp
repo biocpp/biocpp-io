@@ -100,7 +100,7 @@ private:
      * \{
      */
     //!\brief The fields that this format supports [the base class accesses this type].
-    using format_fields     = seqan3::vtag_t<field::id, field::seq>;
+    using format_fields     = vtag_t<field::id, field::seq>;
     //!\brief Type of the raw record.
     using raw_record_type   = record<format_fields, std::string_view, std::string_view>;
     //!\brief Type of the low-level iterator.
@@ -180,13 +180,10 @@ private:
      * \{
      */
     //!\brief We can prevent another copy if the user wants a string.
-    void parse_field(seqan3::vtag_t<field::id> const & /**/, std::string & parsed_field)
-    {
-        std::swap(id_buffer, parsed_field);
-    }
+    void parse_field(vtag_t<field::id> const & /**/, std::string & parsed_field) { std::swap(id_buffer, parsed_field); }
 
     //!\brief We can prevent another copy if the user wants a string.
-    void parse_field(seqan3::vtag_t<field::seq> const & /**/, std::string & parsed_field)
+    void parse_field(vtag_t<field::seq> const & /**/, std::string & parsed_field)
     {
         std::swap(seq_buffer, parsed_field);
     }

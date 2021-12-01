@@ -12,7 +12,7 @@
 #include <string>
 
 #include <seqan3/test/tmp_filename.hpp>
-#include <seqan3/utility/tag.hpp>
+#include <bio/misc.hpp>
 
 #include <bio/stream/compression.hpp>
 #include <bio/stream/detail/make_stream.hpp>

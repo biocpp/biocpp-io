@@ -26,7 +26,11 @@ namespace bio::plain_io
  * \{
  */
 
-//!\brief The value type of bio::plaintext_file_input if every line is split into fields.
+/*!\brief The value type of bio::plaintext_file_input if every line is split into fields.
+ * \details
+ *
+ * Plain I/O records are always shallow.
+ */
 struct record
 {
     //!\brief The entire line (exluding EOL characters but including delimiters).

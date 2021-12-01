@@ -18,8 +18,9 @@
 #include <bio/platform.hpp>
 
 #include <seqan3/core/detail/template_inspection.hpp>
-#include <seqan3/utility/tag.hpp>
 #include <seqan3/utility/type_list/type_list.hpp>
+
+#include <bio/misc.hpp>
 
 namespace bio
 {
@@ -89,7 +90,7 @@ enum class field : uint64_t
  * \implements seqan3::tuple_like
  * \ingroup bio
  * \tparam field_types The types of the fields in this record as a seqan3::type_list.
- * \tparam field_ids   A seqan3::vtag_t type with bio::field IDs corresponding to field_types.
+ * \tparam field_ids   A vtag_t type with bio::field IDs corresponding to field_types.
  * \details
  *
  * This class template behaves just like an std::tuple, with the exception that it provides an additional
@@ -237,6 +238,21 @@ public:
 
 } // namespace bio
 
+namespace bio::detail
+{
+
+//!\brief Implementation for bio::detail::record_from_typelist.
+template <typename field_ids_t, typename... field_types>
+auto record_from_typelist_impl(field_ids_t const &, seqan3::type_list<field_types...>)
+  -> record<field_ids_t, field_types...>;
+
+//!\brief Easy metaprogramming to get the type of a record from type_list of the field_types.
+template <typename field_ids_t, typename field_types_list_t>
+using record_from_typelist =
+  decltype(record_from_typelist_impl(std::declval<field_ids_t>(), std::declval<field_types_list_t>()));
+
+} // namespace bio::detail
+
 //-------------------------------------------------------------------------------
 // tuple traits
 //-------------------------------------------------------------------------------
@@ -331,8 +347,8 @@ auto const && get(record<field_ids, field_types...> const && r)
  * TODO
  */
 template <auto... field_ids, typename... field_type_ts>
-constexpr auto make_record(seqan3::vtag_t<field_ids...>, field_type_ts &... fields)
-  -> record<seqan3::vtag_t<field_ids...>, field_type_ts...>
+constexpr auto make_record(vtag_t<field_ids...>, field_type_ts &... fields)
+  -> record<vtag_t<field_ids...>, field_type_ts...>
 {
     return {fields...};
 }
@@ -349,8 +365,8 @@ constexpr auto make_record(seqan3::vtag_t<field_ids...>, field_type_ts &... fiel
  * TODO
  */
 template <auto... field_ids, typename... field_type_ts>
-constexpr auto tie_record(seqan3::vtag_t<field_ids...>, field_type_ts &... fields)
-  -> record<seqan3::vtag_t<field_ids...>, field_type_ts &...>
+constexpr auto tie_record(vtag_t<field_ids...>, field_type_ts &... fields)
+  -> record<vtag_t<field_ids...>, field_type_ts &...>
 {
     return {fields...};
 }

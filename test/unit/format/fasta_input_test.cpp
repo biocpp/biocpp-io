@@ -29,7 +29,7 @@ using std::literals::string_view_literals::operator""sv;
 
 struct read : public ::testing::Test
 {
-    using default_rec_t = bio::record<seqan3::vtag_t<bio::field::id, bio::field::seq>,
+    using default_rec_t = bio::record<bio::vtag_t<bio::field::id, bio::field::seq>,
                                       std::string_view,
                                       decltype(std::string_view{} | seqan3::views::char_to<seqan3::dna5>)>;
 
@@ -58,7 +58,7 @@ struct read : public ::testing::Test
 
         bio::format_input_handler<bio::fasta> input_handler{istream};
 
-        bio::record<seqan3::vtag_t<bio::field::id, bio::field::seq>, id_t, seq_t> rec;
+        bio::record<bio::vtag_t<bio::field::id, bio::field::seq>, id_t, seq_t> rec;
 
         for (unsigned i = 0; i < 3; ++i)
         {
@@ -294,7 +294,7 @@ TEST_F(read, fail_no_seq)
 //
 //     std::istringstream istream{input};
 //     bio::format_input_handler<bio::fasta> input_handler{istream};
-//     using rec_t = bio::record<seqan3::vtag_t<bio::field::id, bio::field::seq>, std::string_view,
+//     using rec_t = bio::record<bio::vtag_t<bio::field::id, bio::field::seq>, std::string_view,
 //     std::vector<seqan3::dna5>>; rec_t rec;
 //
 //     EXPECT_THROW(input_handler.parse_next_record_into(rec), seqan3::invalid_char_assignment);
