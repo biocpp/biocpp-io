@@ -24,6 +24,7 @@ macro (bio_snippet test_name_prefix snippet snippet_base_path)
 
     add_executable (${target} "${snippet_base_path}/${snippet}")
     target_link_libraries (${target} PUBLIC snippet_main bio::bio)
+    target_compile_options (${target} PUBLIC "-Wno-unused")
     set_target_properties(${target}
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${snippet_target_path}"
