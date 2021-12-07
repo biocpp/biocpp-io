@@ -1,4 +1,4 @@
-name: B.I.O. CI on Linux
+name: Unit tests on Linux
 
 on:
   push:
@@ -24,10 +24,10 @@ jobs:
     runs-on: ubuntu-20.04
     timeout-minutes: 120
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
-          - name: "Unit gcc11"
+          - name: "Release; GCC11"
             cxx: "g++-11"
             cc: "gcc-11"
             build: unit
@@ -35,7 +35,16 @@ jobs:
             build_threads: 2
             test_threads: 2
 
-          - name: "Unit gcc10"
+          - name: "Debug; ASAN; GCC11"
+            cxx: "g++-11"
+            cc: "gcc-11"
+            cxx_flags: "-fsanitize=address"
+            build: unit
+            build_type: Debug
+            build_threads: 2
+            test_threads: 2
+
+          - name: "Release; GCC10"
             cxx: "g++-10"
             cc: "gcc-10"
             build: unit
