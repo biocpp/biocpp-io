@@ -16,8 +16,6 @@
 #include <ranges>
 #include <span>
 
-#include <seqan3/alphabet/concept.hpp>
-
 #include <bio/platform.hpp>
 
 namespace bio::detail
@@ -57,10 +55,6 @@ concept back_insertable =
   std::ranges::input_range<rng_t> && back_insertable_with<rng_t, std::ranges::range_reference_t<rng_t>>;
 //!\endcond
 
-//!\brief A seqan3::alphabet that is **not** a character or number (any std::integral).
-template <typename t>
-concept deliberate_alphabet = seqan3::alphabet<t> && !std::integral<std::remove_cvref_t<t>>;
-
 //!\brief A range whose value type is `char`.
 template <typename t>
 concept char_range = std::ranges::range<t> && std::same_as<char, std::remove_cvref_t<std::ranges::range_value_t<t>>>;
@@ -70,9 +64,13 @@ template <typename t>
 concept int_range = std::ranges::range<t> && std::integral<std::remove_cvref_t<std::ranges::range_value_t<t>>> &&
   !std::same_as<char, std::remove_cvref_t<std::ranges::range_value_t<t>>>;
 
-//!\brief A type that is not std::span<std::byte const>.
-template <typename t>
-concept not_a_byte_span = !std::same_as<t, std::span<std::byte const>>;
+template <typename rng_t>
+concept vector_like = std::ranges::random_access_range<rng_t> && std::ranges::sized_range<rng_t> &&
+  std::ranges::output_range<rng_t, std::ranges::range_reference_t<rng_t>> && requires(rng_t & v)
+{
+    v.resize(3);
+    v.clear();
+};
 
 // ----------------------------------------------------------------------------
 // copy functions

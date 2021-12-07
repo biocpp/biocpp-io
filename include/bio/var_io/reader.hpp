@@ -7,88 +7,90 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::seq_io::reader.
+ * \brief Provides bio::var_io::reader.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
 #pragma once
 
-#include <string>
-#include <vector>
-
-#include <bio/misc.hpp>
-#include <seqan3/alphabet/aminoacid/aa27.hpp>
-#include <seqan3/alphabet/concept.hpp>
-#include <seqan3/alphabet/nucleotide/dna5.hpp>
-#include <seqan3/alphabet/quality/phred63.hpp>
-#include <seqan3/alphabet/views/char_to.hpp>
-#include <seqan3/utility/views/to.hpp>
+#include <filesystem>
 
 #include <bio/detail/reader_base.hpp>
-#include <bio/format/fasta_input_handler.hpp>
-#include <bio/seq_io/reader_options.hpp>
+#include <bio/format/bcf_input_handler.hpp>
+#include <bio/format/vcf_input_handler.hpp>
+#include <bio/var_io/header.hpp>
+#include <bio/var_io/reader_options.hpp>
 
-namespace bio::seq_io
+namespace bio::var_io
 {
 
 // ----------------------------------------------------------------------------
 // reader
 // ----------------------------------------------------------------------------
 
-/*!\brief A class for reading sequence files, e.g. FASTA, FASTQ.
- * \ingroup seq_io
+/*!\brief A class for reading variant files, e.g. VCF, BCF, GVCF.
+ * \tparam options_t A specialisation of bio::var_io::reader_options.
+ * \ingroup var_io
  *
  * \details
  *
  * ### Introduction
  *
- * Sequence files are the most generic and common biological files. Well-known formats include
- * FastA and FastQ, but sometimes you may also be interested in treating SAM or BAM files as sequence
- * files, discarding the alignment.
+ * Variant files are files that contain sequence variation information. Well-known formats include
+ * VCF and BCF.
  *
- * The Sequence I/O reader supports reading the following fields:
+ * The Variant I/O reader supports reading the following fields:
  *
- *   1. bio::field::seq
- *   2. bio::field::id
- *   3. bio::field::qual
+ *   1. bio::field::chrom
+ *   2. bio::field::pos
+ *   3. bio::field::id
+ *   4. bio::field::ref
+ *   5. bio::field::alt
+ *   6. bio::field::qual
+ *   7. bio::field::filter
+ *   8. bio::field::info
+ *   9. bio::field::genotypes
  *
- * And it supports the following formats:
+ * These fields correspond to the order and names defined in the VCF specification. The types and values that
+ * are returned by default also correspond to VCF specification (i.e. 1-based positions, string as strings and not
+ * as numbers) **with one exception:** the genotypes are not grouped by sample (as in the VCF format) but by
+ * genotype field (as in the BCF format).
+ * This results in  a notably better performance when reading BCF files. See below for information on how to change
+ * this.
  *
- *   1. FASTA (see also bio::fasta)
+ * This reader supports the following formats:
+ *
+ *   1. VCF (see also bio::vcf)
+ *   2. BCF (see also bio::bcf)
+ *
+ * If you only need to read VCF and not BCF and you do not want to parse the fields into high-level data structures
+ * (and simply use them as strings), you can use bio::plain_io::reader instead of this reader.
  *
  * ### Simple usage
  *
- * Iterate over a sequence file via the reader and print the record's contents:
+ * Iterate over a variant file via the reader and print "CHROM:POS:REF:ALT" for each record:
  *
- * \snippet test/snippet/seq_io/seq_io_reader.cpp simple_usage_file
+ * \snippet test/snippet/var_io/var_io_reader.cpp simple_usage_file
  *
  * Read from standard input instead of a file:
  *
- * \snippet test/snippet/seq_io/seq_io_reader.cpp simple_usage_stream
+ * \snippet test/snippet/var_io/var_io_reader.cpp simple_usage_stream
  *
- * ### Decomposed iteration
+ * ### Accessing more complex fields
  *
- * The records can be decomposed on-the-fly using
- * [structured bindings](https://en.cppreference.com/w/cpp/language/structured_binding):
+ * TODO
  *
- * \snippet test/snippet/seq_io/seq_io_reader.cpp decomposed
+ * ### Views on readers
  *
- * Note that the order of the fields is defined by bio::seq_io::default_field_ids and independent
- * of the names you give to the bindings.
+ * Print information for the first five records where quality is better than 23:
  *
- * ### Views on files
- *
- * This iterates over the first five records where the sequence length is at least 10:
- *
- * \snippet test/snippet/seq_io/seq_io_reader.cpp views
+ * \snippet test/snippet/var_io/var_io_reader.cpp views
  *
  * ### Specifying options
  *
- * This snippet demonstrates how to read sequence data as protein data and have the IDs truncated
- * at the first whitespace:
- * \snippet test/snippet/seq_io/seq_io_reader.cpp options
+ * TODO
  *
- * For more advanced options, see bio::seq_io::reader_options.
+ * For more advanced options, see bio::var_io::reader_options.
  */
 template <typename... option_args_t>
 class reader : public reader_base<reader_options<option_args_t...>>
@@ -102,6 +104,12 @@ private:
      * format_type is "inherited" as private here to avoid appearing twice in the documentation.
      * Its actual visibility is public because it is public in the base class.
      */
+    //!\brief Make the format handler visible.
+    using base_t::format_handler;
+
+    //!\brief A pointer to the header inside the format.
+    bio::var_io::header const * header_ptr = nullptr;
+
 public:
     // clang-format off
     //!\copydoc bio::reader_base::reader_base(std::filesystem::path const & filename, format_type const & fmt, options_t const & opt = options_t{})
@@ -137,6 +145,20 @@ public:
            reader_options<option_args_t...> const & opt = reader_options<option_args_t...>{}) :
       base_t{std::move(str), fmt, opt}
     {}
+
+    //!\brief Access the header.
+    bio::var_io::header const & header()
+    {
+        if (header_ptr == nullptr)
+        {
+            // ensure that the format_handler is created
+            this->begin();
+
+            header_ptr = std::visit([](auto const & handler) { return &handler.get_header(); }, format_handler);
+        }
+
+        return *header_ptr;
+    }
 };
 
-} // namespace bio::seq_io
+} // namespace bio::var_io

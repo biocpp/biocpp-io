@@ -46,7 +46,7 @@ namespace bio::seq_io
  *
  * ### Example
  *
- * \snippet test/snippet/seq_io/snippet_reader_options.cpp example_simple
+ * \snippet test/snippet/seq_io/seq_io_reader_options.cpp example_simple
  *
  * Type of the ID will be std::string, type of the sequence will be std::vector<seqan3::dna4> and
  * type of the qualities will be std::vector<seqan3::phred42>.
@@ -128,7 +128,7 @@ inline constexpr auto field_types_raw =
  * To switch from DNA reading (the default) to protein reading and activate truncating of IDs, do
  * the following:
  *
- * \snippet test/snippet/seq_io/snippet_reader_options.cpp example_simple
+ * \snippet test/snippet/seq_io/seq_io_reader_options.cpp example_simple
  *
  * It is not required to specify all options; default values are documented.
  *
@@ -143,12 +143,12 @@ inline constexpr auto field_types_raw =
  * This code switches from seqan3::dna5 to seqan3::dna4 alphabet, from seqan3::phred63 to
  * seqan3::phred42, and reduces the amount of threads used:
  *
- * \snippet test/snippet/seq_io/snippet_reader_options.cpp example_advanced1
+ * \snippet test/snippet/seq_io/seq_io_reader_options.cpp example_advanced1
  *
  * This code makes FASTA the only legal format and creates records with only the sequence field as
  * a std::string:
  *
- * \snippet test/snippet/seq_io/snippet_reader_options.cpp example_advanced2
+ * \snippet test/snippet/seq_io/seq_io_reader_options.cpp example_advanced2
  */
 template <typename field_ids_t   = std::remove_cvref_t<decltype(default_field_ids)>,
           typename field_types_t = std::remove_cvref_t<decltype(field_types_dna)>,

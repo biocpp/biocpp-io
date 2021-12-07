@@ -17,6 +17,7 @@
 #include <charconv>
 #include <concepts>
 #include <ranges>
+#include <string>
 #include <string_view>
 
 #include <seqan3/utility/concept/exposition_only/core_language.hpp>
@@ -58,6 +59,34 @@ std::to_chars_result to_chars(char * first, char * last, auto in)
     }
 }
 
+//!\brief Wrapper around standard library std::from_chars with fallback for floats on GCC10.
+std::from_chars_result from_chars(char const * first, char const * last, auto & out)
+{
+#if defined(__cpp_lib_to_chars) && (__cpp_lib_to_chars >= 201611)
+    constexpr static bool float_support = true;
+#else
+    constexpr static bool float_support = false;
+#endif
+
+    // TODO always use fast_float here.
+    if constexpr (std::integral<std::remove_cvref_t<decltype(out)>> || float_support)
+    {
+        return std::from_chars(first, last, out);
+    }
+    else
+    {
+        // THIS IS KINDA CRAZY BUT MAYBE NOT TOO BAD WITH SSO:
+        std::string buffer(first, last);
+        size_t      count = 0;
+        if constexpr (std::same_as<float &, decltype(out)>)
+            out = std::stof(buffer, &count);
+        else // double
+            out = std::stod(buffer, &count);
+
+        return {.ptr = first + count, .ec{}};
+    }
+}
+
 /*!\brief Turn a string into a number.
  * \param[in] input The input string.
  * \param[out] number The variable holding the result.
@@ -66,13 +95,17 @@ std::to_chars_result to_chars(char * first, char * last, auto in)
  *
  * Relies on std::from_chars to efficiently convert but accepts std::string_view and throws on error so
  * there is no return value that needs to be checked.
+ *
+ * TODO make this public (bio::) since it is useful for people doing plain IO
  */
 void string_to_number(std::string_view const input, seqan3::arithmetic auto & number)
 {
-    std::from_chars_result res = std::from_chars(input.data(), input.data() + input.size(), number);
+    std::from_chars_result res = from_chars(input.data(), input.data() + input.size(), number);
     if (res.ec != std::errc{} || res.ptr != input.data() + input.size())
         throw std::runtime_error{std::string{"Could not convert \""} + std::string{input} + "\" into a number."};
 }
+
+// TODO write number_to_string and append_number_to_string
 
 /*!\brief Convert something to a string.
  * \details
