@@ -67,15 +67,15 @@ enum class field : uint64_t
     /*_private*/
 
     // Fields unique to variant io
-    chrom = ref_id, //
+    chrom = ref_id, //!< CHROM field in Var I/O.
     /*pos*/
     /*id*/
-    ref   = optionals + 1,
-    alt,
+    ref   = optionals + 1, //!< REF field in Var I/O.
+    alt,                   //!< ALT field in Var I/O.
     /*qual*/
-    filter,
-    info,
-    genotypes,
+    filter,    //!< FILTER field in Var I/O.
+    info,      //!< INFO field in Var I/O.
+    genotypes, //!< GENOTYPES in Var I/O.
     /*_private*/
 
     // User defined field aliases

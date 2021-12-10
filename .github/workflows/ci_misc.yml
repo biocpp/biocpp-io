@@ -1,4 +1,4 @@
-name: B.I.O CI misc
+name: Misc
 
 on:
   push:
@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: "Snippet gcc11"
+          - name: "Snippet tests; GCC11"
             cxx: "g++-11"
             cc: "gcc-11"
             build: snippet
