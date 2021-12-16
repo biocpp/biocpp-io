@@ -259,3 +259,9 @@ TEST(seq_io_reader, decompression_stream)
     }
     EXPECT_EQ(count, 5);
 }
+
+// The following neads to cause a static assertion
+// TEST(seq_io_reader, option_fail)
+// {
+//     bio::seq_io::reader_options opt{.field_types = bio::ttag<int, int, int>};
+// }

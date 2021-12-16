@@ -72,6 +72,23 @@ concept vector_like = std::ranges::random_access_range<rng_t> && std::ranges::si
     v.clear();
 };
 
+//!\brief Helper for bio::detail::transform_view_on_string_view.
+template <typename fun_t>
+void transform_view_on_string_view_impl(std::ranges::transform_view<std::string_view, fun_t> &)
+{}
+
+/*!\interface   bio::detail::transform_view_on_string_view <>
+ * \tparam t    The query type to check.
+ * \brief       std::ranges::transform_view<std::string_view, fun_t> where fun_t is any valid functor type.
+ */
+//!\cond
+template <typename t>
+concept transform_view_on_string_view = requires
+{
+    transform_view_on_string_view_impl(std::declval<t &>());
+};
+//!\endcond
+
 // ----------------------------------------------------------------------------
 // copy functions
 // ----------------------------------------------------------------------------
