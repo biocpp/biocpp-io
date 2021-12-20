@@ -63,7 +63,7 @@ namespace bio::seq_io
 template <bio::ownership   ownership   = bio::ownership::shallow,
           seqan3::alphabet seq_alph_t  = seqan3::dna5,
           seqan3::alphabet qual_alph_t = seqan3::phred63>
-inline auto field_types = []()
+inline constinit auto field_types = []()
 {
     if constexpr (ownership == bio::ownership::deep)
     {
@@ -90,7 +90,7 @@ inline auto field_types = []()
  *
  * Configures a shallow record where sequence data is seqan3::dna5 and quality data is seqan3::phred63.
  */
-inline auto field_types_dna = field_types<>;
+inline constinit auto field_types_dna = field_types<>;
 
 /*!\brief The field types for reading protein data.
  * \tparam ownership Return shallow or deep types.
@@ -98,14 +98,14 @@ inline auto field_types_dna = field_types<>;
  *
  * Configures a shallow record where sequence data is seqan3::aa27 and quality data is seqan3::phred63.
  */
-inline auto field_types_protein = field_types<ownership::shallow, seqan3::aa27>;
+inline constinit auto field_types_protein = field_types<ownership::shallow, seqan3::aa27>;
 
 /*!\brief The field types for reading any data.
  * \details
  *
  * Configures a shallow record where sequence and quality data are plain characters.
  */
-inline auto field_types_char = field_types<ownership::shallow, char, char>;
+inline constinit auto field_types_char = field_types<ownership::shallow, char, char>;
 
 /*!\brief The field types for raw I/O.
  * \details
@@ -115,7 +115,8 @@ inline auto field_types_char = field_types<ownership::shallow, char, char>;
  * ATTENTION: The exact content of this byte-span depends on the format and is likely not
  * compatible between formats. Use at your own risk!
  */
-inline auto field_types_raw = ttag<std::span<std::byte const>, std::span<std::byte const>, std::span<std::byte const>>;
+inline constinit auto field_types_raw =
+  ttag<std::span<std::byte const>, std::span<std::byte const>, std::span<std::byte const>>;
 // TODO use seqan3::list_traits::repeat as soon as available
 
 //!\}

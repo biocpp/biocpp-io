@@ -84,7 +84,7 @@ namespace bio::var_io
  * Since some elements in the record are views, it may not be possible and/or safe to change all values.
  */
 template <ownership own = ownership::shallow>
-inline constexpr auto field_types_bcf_style =
+inline constinit auto field_types_bcf_style =
   ttag<int32_t,                                                             // field::chrom,
        int32_t,                                                             // field::pos,
        std::string_view,                                                    // field::id,
@@ -108,7 +108,7 @@ inline constexpr auto field_types_bcf_style =
  * that are otherwise not modifiable (e.g. views).
  */
 template <>
-inline constexpr auto field_types_bcf_style<ownership::deep> =
+inline constinit auto field_types_bcf_style<ownership::deep> =
   ttag<int32_t,                                            // field::chrom,
        int32_t,                                            // field::pos,
        std::string,                                        // field::id,
@@ -138,7 +138,7 @@ inline constexpr auto field_types_bcf_style<ownership::deep> =
  * Since some elements in the record are views, it may not be possible and/or safe to change all values.
  */
 template <ownership own = ownership::shallow>
-inline constexpr auto field_types_vcf_style =
+inline constinit auto field_types_vcf_style =
   ttag<std::string_view,                                                    // field::chrom,
        int32_t,                                                             // field::pos,
        std::string_view,                                                    // field::id,
@@ -158,7 +158,7 @@ inline constexpr auto field_types_vcf_style =
  * The same as bio::var_io::field_types_vcf_style, but with self-contained records.
  */
 template <>
-inline constexpr auto field_types_vcf_style<ownership::deep> =
+inline constinit auto field_types_vcf_style<ownership::deep> =
   ttag<std::string,                                // field::chrom
        int32_t,                                    // field::pos
        std::string,                                // field::id
@@ -172,7 +172,7 @@ inline constexpr auto field_types_vcf_style<ownership::deep> =
 
 //!\brief Every field is configured as a std::span of std::byte (this enables "raw" io).
 //!\ingroup var_io
-inline constexpr auto field_types_raw =
+inline constinit auto field_types_raw =
   seqan3::list_traits::concat<seqan3::list_traits::repeat<default_field_ids.size - 1, std::span<std::byte const>>,
                               seqan3::type_list<var_io::record_private_data>>{};
 
@@ -229,8 +229,8 @@ inline constexpr auto field_types_raw =
  *     * The second subelement must range-of-range over bio::var_io::dynamic_type and both
  * range-dimensions need to support back-insertion.
  */
-template <typename field_ids_t   = std::remove_cvref_t<decltype(default_field_ids)>,
-          typename field_types_t = std::remove_cvref_t<decltype(field_types_bcf_style<ownership::shallow>)>,
+template <typename field_ids_t   = decltype(default_field_ids),
+          typename field_types_t = decltype(field_types_bcf_style<ownership::shallow>),
           typename formats_t     = seqan3::type_list<vcf, bcf>>
 struct reader_options
 {

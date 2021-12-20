@@ -117,7 +117,7 @@ struct vtag_t<v, more_vs...>
  * \snippet test/snippet/snippet_tag.cpp vtag
  */
 template <auto... vs>
-inline constexpr vtag_t<vs...> vtag{};
+inline constinit vtag_t<vs...> vtag{};
 
 //-----------------------------------------------------------------------------
 // ttag
@@ -138,7 +138,7 @@ inline constexpr vtag_t<vs...> vtag{};
  * \snippet test/snippet/snippet_tag.cpp ttag
  */
 template <typename type, typename... more_types>
-inline constexpr seqan3::type_list<type, more_types...> ttag{};
+inline constinit seqan3::type_list<type, more_types...> ttag{};
 
 } // namespace bio
 
