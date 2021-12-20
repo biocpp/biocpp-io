@@ -34,7 +34,7 @@ concept tuple_of_two = requires
     std::tuple_size<t>::value;
 }
 &&std::tuple_size<t>::value == 2;
-;
+
 //!\endcond
 
 /*!\brief A type that can be converted to any reference type.

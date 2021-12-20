@@ -141,3 +141,16 @@ template <typename type, typename... more_types>
 inline constexpr seqan3::type_list<type, more_types...> ttag{};
 
 } // namespace bio
+
+namespace bio::detail
+{
+
+//!\brief Check whether a type is a specialisation of seqan3::type_list.
+template <typename t>
+inline constexpr bool is_type_list = false;
+
+//!\brief Check whether a type is a specialisation of seqan3::type_list.
+template <typename... ts>
+inline constexpr bool is_type_list<seqan3::type_list<ts...>> = true;
+
+} // namespace bio::detail

@@ -69,6 +69,12 @@ TEST_F(record, definition_tuple_traits)
     EXPECT_TRUE(seqan3::tuple_like<record_type>);
 }
 
+TEST_F(record, record_element)
+{
+    EXPECT_TRUE((std::is_same_v<bio::record_element_t<bio::field::id, record_type>, std::string>));
+    EXPECT_TRUE((std::is_same_v<bio::record_element_t<bio::field::seq, record_type>, seqan3::dna4_vector>));
+}
+
 TEST_F(record, construction)
 {
     [[maybe_unused]] record_type r{"MY ID", "ACGT"_dna4};
