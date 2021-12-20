@@ -21,6 +21,7 @@
 #include <seqan3/alphabet/views/char_to.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
 
+#include <bio/detail/misc.hpp>
 #include <bio/format/bcf.hpp>
 #include <bio/format/vcf.hpp>
 #include <bio/stream/transparent_istream.hpp>
@@ -202,6 +203,7 @@ inline constinit auto field_types_raw =
  *   * string or string_view: The ID as a string.
  * 4. bio::field::ref
  *   * string or string_view: plaintext.
+ *   * back-insertable range over seqan3::alphabet (a container with converted elements).
  *   * `decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>)`: A view
  * over a SeqAn3 alphabet. Other alphabets and/or transform views are also possible.
  * 5. bio::field::alt
@@ -259,7 +261,102 @@ struct reader_options
     //!\brief Options that are passed on to the internal stream oject.
     transparent_istream_options stream_options{};
 
-    // TODO static_assert
+private:
+    static_assert(detail::is_fields_tag<field_ids_t>, "field_ids must be a bio::vtag over bio::field.");
+
+    static_assert(detail::is_type_list<field_types_t>, "field_types must be a bio::ttag / seqan3::type_list.");
+
+    static_assert(detail::is_type_list<formats_t>, "formats must be a bio::ttag / seqan3::type_list.");
+
+    static_assert(field_ids_t::size == seqan3::list_traits::size<field_types_t>,
+                  "field_ids and field_types must have the same size.");
+
+    //!\brief Type of the record.
+    using record_t = record<field_ids_t, field_types_t>;
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::chrom) ||
+        detail::back_insertable_with<record_element_t<field::chrom, rec_t>, char> ||
+        detail::one_of<record_element_t<field::chrom, rec_t>, std::string_view, int32_t>) { return std::true_type{}; }),
+      "Requirements for the field-type of the CHROM-field not met. See documentation for bio::var_io::reader_options.");
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::pos) ||
+        std::integral<std::remove_reference_t<record_element_t<field::pos, rec_t>>>) { return std::true_type{}; }),
+      "Requirements for the field-type of the POS-field not met. See documentation for bio::var_io::reader_options.");
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::id) || detail::back_insertable_with<record_element_t<field::id, rec_t>, char> ||
+        detail::one_of<std::remove_reference_t<record_element_t<field::id, rec_t>>, std::string_view>) {
+          return std::true_type{};
+      }),
+      "Requirements for the field-type of the ID-field not met. See documentation for bio::var_io::reader_options.");
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::ref) ||
+        (detail::back_insertable<record_element_t<field::ref, rec_t>> &&
+         seqan3::alphabet<std::ranges::range_reference_t<record_element_t<field::ref, rec_t>>>) ||
+        std::same_as<std::remove_reference_t<record_element_t<field::ref, rec_t>>, std::string_view> ||
+        detail::transform_view_on_string_view<record_element_t<field::ref, rec_t>>) { return std::true_type{}; }),
+      "Requirements for the field-type of the REF-field not met. See documentation for bio::var_io::reader_options.");
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::alt) ||
+        (detail::back_insertable<record_element_t<field::alt, rec_t>> &&
+           (detail::back_insertable<std::ranges::range_reference_t<record_element_t<field::alt, rec_t>>> &&
+            seqan3::alphabet<
+              std::ranges::range_reference_t<std::ranges::range_reference_t<record_element_t<field::alt, rec_t>>>>) ||
+         std::same_as<std::remove_reference_t<std::ranges::range_reference_t<record_element_t<field::alt, rec_t>>>,
+                      std::string_view> ||
+         detail::transform_view_on_string_view<std::ranges::range_reference_t<record_element_t<field::alt, rec_t>>>)) {
+          return std::true_type{};
+      }),
+      "Requirements for the field-type of the ALT-field not met. See documentation for bio::var_io::reader_options.");
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::qual) ||
+        seqan3::arithmetic<std::remove_reference_t<record_element_t<field::qual, rec_t>>>) {
+          return std::true_type{};
+      }),
+      "Requirements for the field-type of the QUAL-field not met. See documentation for bio::var_io::reader_options.");
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::filter) ||
+        (detail::back_insertable<record_element_t<field::filter, rec_t>> &&
+         (detail::back_insertable_with<std::ranges::range_reference_t<record_element_t<field::filter, rec_t>>, char> ||
+          detail::one_of<
+            std::remove_reference_t<std::ranges::range_reference_t<record_element_t<field::filter, rec_t>>>,
+            std::string_view,
+            int32_t>))) { return std::true_type{}; }),
+      "Requirements for the field-type of the FILTER-field not met. See documentation for "
+      "bio::var_io::reader_options.");
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::info) ||
+        (detail::back_insertable<record_element_t<field::info, rec_t>> &&
+         detail::info_element_concept<
+           std::remove_reference_t<std::ranges::range_reference_t<record_element_t<field::info, rec_t>>>>)) {
+          return std::true_type{};
+      }),
+      "Requirements for the field-type of the INFO-field not met. See documentation for bio::var_io::reader_options.");
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::genotypes) ||
+        (detail::back_insertable<record_element_t<field::genotypes, rec_t>> &&
+         detail::genotype_bcf_style_concept<
+           std::remove_reference_t<std::ranges::range_reference_t<record_element_t<field::genotypes, rec_t>>>>) ||
+        detail::genotypes_vcf_style_concept<record_element_t<field::genotypes, rec_t>>) { return std::true_type{}; }),
+      "Requirements for the field-type of the GENOTYPES-field not met. See documentation for "
+      "bio::var_io::reader_options.");
 };
 
 } // namespace bio::var_io
