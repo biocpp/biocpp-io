@@ -21,8 +21,7 @@
 #include <string_view>
 #include <vector>
 
-// #include <seqan3/alphabet/views/char_strictly_to.hpp>
-#include <seqan3/alphabet/views/char_to.hpp>
+#include <seqan3/alphabet/views/char_strictly_to.hpp>
 #include <seqan3/core/debug_stream.hpp> //TODO evaluate if there is a better solution
 #include <seqan3/core/debug_stream/detail/to_string.hpp>
 #include <seqan3/core/range/type_traits.hpp>
@@ -38,6 +37,7 @@
 #include <bio/var_io/header.hpp>
 #include <bio/var_io/misc.hpp>
 #include <bio/var_io/reader_options.hpp>
+
 namespace bio
 {
 

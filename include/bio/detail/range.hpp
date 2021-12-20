@@ -73,13 +73,24 @@ concept vector_like = std::ranges::random_access_range<rng_t> && std::ranges::si
 };
 
 //!\brief Helper for bio::detail::transform_view_on_string_view.
-template <typename fun_t>
+template <std::regular_invocable<char> fun_t>
 void transform_view_on_string_view_impl(std::ranges::transform_view<std::string_view, fun_t> &)
+{}
+
+//!\brief Helper for bio::detail::transform_view_on_string_view.
+template <std::regular_invocable<char> fun1_t, std::regular_invocable<char> fun2_t>
+void transform_view_on_string_view_impl(
+  std::ranges::transform_view<std::ranges::transform_view<std::string_view, fun1_t>, fun2_t> &)
 {}
 
 /*!\interface   bio::detail::transform_view_on_string_view <>
  * \tparam t    The query type to check.
- * \brief       std::ranges::transform_view<std::string_view, fun_t> where fun_t is any valid functor type.
+ * \brief       Whether a type is a transform view (possibly nested) over std::string_view.
+ *
+ * Types must be one of:
+ *   1. std::ranges::transform_view<std::string_view, fun_t>  && std::regular_invocable<fun_t, char>
+ *   2. std::ranges::transform_view<std::ranges::transform_view<std::string_view, fun1_t>, fun2_t> &&
+ * std::regular_invocable<fun1_t, char> && std::regular_invocable<fun2_t, char>
  */
 //!\cond
 template <typename t>

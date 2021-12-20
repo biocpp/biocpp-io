@@ -22,7 +22,7 @@
 #include <seqan3/alphabet/concept.hpp>
 #include <seqan3/alphabet/nucleotide/dna5.hpp>
 #include <seqan3/alphabet/quality/phred63.hpp>
-#include <seqan3/alphabet/views/char_to.hpp>
+#include <seqan3/alphabet/views/char_strictly_to.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
 #include <seqan3/utility/views/to.hpp>
 
@@ -34,7 +34,7 @@
 #include <bio/seq_io/misc.hpp>
 #include <bio/stream/transparent_istream.hpp>
 
-// TODO replace seqan3::views::char_to with seqan3::views::char_strictly_to
+// TODO replace seqan3::views::char_strictly_to with seqan3::views::char_strictly_to
 namespace bio::seq_io
 {
 
@@ -76,10 +76,10 @@ inline constinit auto field_types = []()
         return ttag<std::string_view,
                     std::conditional_t<std::same_as<seq_alph_t, char>,
                                        std::string_view,
-                                       decltype(std::string_view{} | seqan3::views::char_to<seq_alph_t>)>,
+                                       decltype(std::string_view{} | seqan3::views::char_strictly_to<seq_alph_t>)>,
                     std::conditional_t<std::same_as<qual_alph_t, char>,
                                        std::string_view,
-                                       decltype(std::string_view{} | seqan3::views::char_to<qual_alph_t>)>>;
+                                       decltype(std::string_view{} | seqan3::views::char_strictly_to<qual_alph_t>)>>;
     }
 }();
 
@@ -223,8 +223,7 @@ private:
 
     static_assert(detail::is_type_list<formats_t>, "formats must be a bio::ttag / seqan3::type_list.");
 
-    static_assert(field_ids_t::size == seqan3::list_traits::size<field_types_t>,
-                  "field_ids and field_types must have the same size.");
+    static_assert(field_ids_t::size == field_types_t::size(), "field_ids and field_types must have the same size.");
 
     //!\brief Type of the record.
     using record_t = record<field_ids_t, field_types_t>;

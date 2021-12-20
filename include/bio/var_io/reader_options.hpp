@@ -18,7 +18,7 @@
 #include <vector>
 
 #include <seqan3/alphabet/nucleotide/dna5.hpp>
-#include <seqan3/alphabet/views/char_to.hpp>
+#include <seqan3/alphabet/views/char_strictly_to.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
 
 #include <bio/detail/misc.hpp>
@@ -38,16 +38,33 @@
 namespace bio::detail
 {
 
+/*!\interface bio::detail::info_element_concept <>
+ * \tparam t The type to check.
+ * \brief Types "similar" to bio::var_io::info_element / bio::var_io::info_element_bcf.
+ */
+//!\cond CONCEPT_DEF
 template <typename t>
 concept info_element_concept = detail::decomposable_into_two<t> &&
   (detail::char_range<detail::first_elem_t<t>> ||
    std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::is_dynamic_type<detail::second_elem_t<t>>;
+//!\endcond
 
+/*!\interface bio::detail::genotype_bcf_style_concept <>
+ * \tparam t The type to check.
+ * \brief Types "similar" to bio::var_io::genotype_element / bio::var_io::genotype_element_bcf.
+ */
+//!\cond CONCEPT_DEF
 template <typename t>
 concept genotype_bcf_style_concept = detail::decomposable_into_two<t> &&
   (detail::char_range<detail::first_elem_t<t>> ||
    std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::is_dynamic_vector_type<detail::second_elem_t<t>>;
+//!\endcond
 
+/*!\interface bio::detail::genotypes_vcf_style_concept <>
+ * \tparam t The type to check.
+ * \brief Types "similar" to bio::var_io::genotypes_vcf_style
+ */
+//!\cond CONCEPT_DEF
 template <typename t>
 concept genotypes_vcf_style_concept =
   detail::decomposable_into_two<t> && detail::back_insertable<detail::first_elem_t<t>> &&
@@ -55,7 +72,7 @@ concept genotypes_vcf_style_concept =
   detail::vector_like<detail::second_elem_t<t>> &&
   detail::vector_like<std::ranges::range_reference_t<detail::second_elem_t<t>>> &&
   detail::is_dynamic_type<std::ranges::range_value_t<std::ranges::range_reference_t<detail::second_elem_t<t>>>>;
-
+//!\endcond
 } // namespace bio::detail
 
 namespace bio::var_io
@@ -86,16 +103,16 @@ namespace bio::var_io
  */
 template <ownership own = ownership::shallow>
 inline constinit auto field_types_bcf_style =
-  ttag<int32_t,                                                             // field::chrom,
-       int32_t,                                                             // field::pos,
-       std::string_view,                                                    // field::id,
-       decltype(std::string_view{} | seqan3::views::char_to<seqan3::dna5>), // field::ref,
-       std::vector<std::string_view>,                                       // field::alt,
-       float,                                                               // field::qual,
-       std::vector<int32_t>,                                                // field::filter,
-       std::vector<info_element_bcf<ownership::shallow>>,                   // field::info,
-       std::vector<genotype_element_bcf<ownership::shallow>>,               // field::genotypes,
-       record_private_data>;                                                // field::_private
+  ttag<int32_t,                                                                      // field::chrom,
+       int32_t,                                                                      // field::pos,
+       std::string_view,                                                             // field::id,
+       decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>), // field::ref,
+       std::vector<std::string_view>,                                                // field::alt,
+       float,                                                                        // field::qual,
+       std::vector<int32_t>,                                                         // field::filter,
+       std::vector<info_element_bcf<ownership::shallow>>,                            // field::info,
+       std::vector<genotype_element_bcf<ownership::shallow>>,                        // field::genotypes,
+       record_private_data>;                                                         // field::_private
 
 /*!\brief Deep field types for variant io.
  *!\ingroup var_io
@@ -140,16 +157,16 @@ inline constinit auto field_types_bcf_style<ownership::deep> =
  */
 template <ownership own = ownership::shallow>
 inline constinit auto field_types_vcf_style =
-  ttag<std::string_view,                                                    // field::chrom,
-       int32_t,                                                             // field::pos,
-       std::string_view,                                                    // field::id,
-       decltype(std::string_view{} | seqan3::views::char_to<seqan3::dna5>), // field::ref,
-       std::vector<std::string_view>,                                       // field::alt,
-       float,                                                               // field::qual,
-       std::vector<std::string_view>,                                       // field::filter,
-       std::vector<info_element<ownership::shallow>>,                       // field::info,
-       genotypes_vcf<ownership::shallow>,                                   // field::genotypes,
-       record_private_data>;                                                // field::_private>;
+  ttag<std::string_view,                                                             // field::chrom,
+       int32_t,                                                                      // field::pos,
+       std::string_view,                                                             // field::id,
+       decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>), // field::ref,
+       std::vector<std::string_view>,                                                // field::alt,
+       float,                                                                        // field::qual,
+       std::vector<std::string_view>,                                                // field::filter,
+       std::vector<info_element<ownership::shallow>>,                                // field::info,
+       genotypes_vcf<ownership::shallow>,                                            // field::genotypes,
+       record_private_data>;                                                         // field::_private>;
 
 /*!\brief Field types for variant IO that represent VCF more closely (text IDs etc); deep variant.
  *!\ingroup var_io
@@ -223,13 +240,13 @@ inline constinit auto field_types_raw =
  *   1. A range (that supports back-insertion) over elements that are "similar" to
  * bio::var_io::genotype_element:
  *     * The elements must be decomposable into exactly two sub-elements (either `struct` or tuple).
- *     * The first subelement must be a string[_view] or `int32_t`.
+ *     * The first subelement must be a string[_view] (ID) or `int32_t` (IDX).
  *     * The second subelement must bio::var_io::dynamic_vector_type.
  *   2. Or: A type similar to bio::var_io::genotypes_vcf :
  *     * It must be decomposable into exactly two sub-elements (either `struct` or tuple).
- *     * The first subelement must be a range over string[_views] that supports back-insertion.
+ *     * The first subelement must be a range over string[_views] that supports back-insertion (FORMAT strings).
  *     * The second subelement must range-of-range over bio::var_io::dynamic_type and both
- * range-dimensions need to support back-insertion.
+ * range-dimensions need to support back-insertion (SAMPLE columns with genotype entries).
  */
 template <typename field_ids_t   = decltype(default_field_ids),
           typename field_types_t = decltype(field_types_bcf_style<ownership::shallow>),
@@ -268,8 +285,7 @@ private:
 
     static_assert(detail::is_type_list<formats_t>, "formats must be a bio::ttag / seqan3::type_list.");
 
-    static_assert(field_ids_t::size == seqan3::list_traits::size<field_types_t>,
-                  "field_ids and field_types must have the same size.");
+    static_assert(field_ids_t::size == field_types_t::size(), "field_ids and field_types must have the same size.");
 
     //!\brief Type of the record.
     using record_t = record<field_ids_t, field_types_t>;

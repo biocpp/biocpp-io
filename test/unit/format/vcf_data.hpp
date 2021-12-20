@@ -9,8 +9,8 @@
 #include <ranges>
 #include <string>
 
-// #include <seqan3/alphabet/views/char_to.hpp>
-#include <seqan3/alphabet/views/char_to.hpp>
+#include <seqan3/core/debug_stream.hpp>
+#include <seqan3/alphabet/views/char_strictly_to.hpp>
 #include <seqan3/utility/views/to.hpp>
 
 #include <bio/detail/magic_get.hpp>
@@ -202,7 +202,7 @@ R"(##fileformat=VCFv4.3
 //=============================================================================
 
 /* auxiliary stuff */
-using tf_view = decltype(std::string_view{} | seqan3::views::char_to<seqan3::dna5>);
+using tf_view = decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>);
 
 bool operator==(tf_view const & lhs, tf_view const & rhs)
 {
@@ -237,9 +237,9 @@ template <bio::ownership own>
 auto make_ref(std::string_view const str)
 {
     if constexpr (own == bio::ownership::shallow)
-        return tf_view{str, {}};
+        return tf_view{{str, {}}, {}};
     else
-        return str | seqan3::views::char_to<seqan3::dna5> | seqan3::views::to<std::vector>;
+        return str | seqan3::views::char_strictly_to<seqan3::dna5> | seqan3::views::to<std::vector>;
 }
 
 template <bio::ownership own, typename int_t = int32_t>
