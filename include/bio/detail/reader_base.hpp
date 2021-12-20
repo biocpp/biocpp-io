@@ -73,7 +73,7 @@ public:
      * \{
      */
     //!\brief The type of the record, a specialisation of bio::record; acts as a tuple of the selected field types.
-    using record_type = detail::record_from_typelist<decltype(options_t::field_ids), decltype(options_t::field_types)>;
+    using record_type = record<decltype(options_t::field_ids), decltype(options_t::field_types)>;
     //!\brief The iterator type of this view (an input iterator).
     using iterator    = detail::in_file_iterator<reader_base>;
     //!\brief The type returned by end().

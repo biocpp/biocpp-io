@@ -29,9 +29,9 @@ using std::literals::string_view_literals::operator""sv;
 
 struct read : public ::testing::Test
 {
-    using default_rec_t = bio::record<bio::vtag_t<bio::field::id, bio::field::seq>,
-                                      std::string_view,
-                                      decltype(std::string_view{} | seqan3::views::char_to<seqan3::dna5>)>;
+    using default_rec_t = bio::record<
+      bio::vtag_t<bio::field::id, bio::field::seq>,
+      seqan3::type_list<std::string_view, decltype(std::string_view{} | seqan3::views::char_to<seqan3::dna5>)>>;
 
     std::vector<std::string> ids{
       {"ID1"},
@@ -58,7 +58,7 @@ struct read : public ::testing::Test
 
         bio::format_input_handler<bio::fasta> input_handler{istream};
 
-        bio::record<bio::vtag_t<bio::field::id, bio::field::seq>, id_t, seq_t> rec;
+        bio::record<bio::vtag_t<bio::field::id, bio::field::seq>, seqan3::type_list<id_t, seq_t>> rec;
 
         for (unsigned i = 0; i < 3; ++i)
         {

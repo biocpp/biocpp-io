@@ -20,10 +20,8 @@ void field_types_bcf_style()
 {
     std::istringstream istr{std::string{example_from_spec}};
 
-    using record_t =
-      bio::detail::record_from_typelist<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
-                                        std::remove_cvref_t<decltype(bio::var_io::field_types_bcf_style<own>)>>;
-    ;
+    using record_t = bio::record<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
+                                 std::remove_cvref_t<decltype(bio::var_io::field_types_bcf_style<own>)>>;
 
     bio::format_input_handler<bio::vcf> handler{istr, bio::var_io::reader_options{}};
 
@@ -67,10 +65,8 @@ void field_types_vcf_style()
 {
     std::istringstream istr{std::string{example_from_spec}};
 
-    using record_t =
-      bio::detail::record_from_typelist<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
-                                        std::remove_cvref_t<decltype(bio::var_io::field_types_vcf_style<own>)>>;
-    ;
+    using record_t = bio::record<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
+                                 std::remove_cvref_t<decltype(bio::var_io::field_types_vcf_style<own>)>>;
 
     bio::format_input_handler<bio::vcf> handler{istr, bio::var_io::reader_options{}};
 
@@ -117,9 +113,8 @@ TEST(vcf, incomplete_header)
 
     std::istringstream istr{incomplete_header_before + example_from_spec_records};
 
-    using record_t =
-      bio::detail::record_from_typelist<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
-                                        std::remove_cvref_t<decltype(bio::var_io::field_types_vcf_style<>)>>;
+    using record_t = bio::record<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
+                                 std::remove_cvref_t<decltype(bio::var_io::field_types_vcf_style<>)>>;
 
     bio::format_input_handler<bio::vcf> handler{istr, bio::var_io::reader_options{.print_warnings = false}};
 

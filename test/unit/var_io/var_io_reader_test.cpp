@@ -231,10 +231,8 @@ TEST(var_io_reader, custom_field_types)
     std::istringstream  str{static_cast<std::string>(example_from_spec)};
     bio::var_io::reader reader{str, bio::vcf{}, opt};
 
-    EXPECT_TRUE(
-      (std::same_as<
-        std::ranges::range_value_t<decltype(reader)>,
-        bio::detail::record_from_typelist<decltype(bio::var_io::default_field_ids),
+    EXPECT_TRUE((std::same_as<std::ranges::range_value_t<decltype(reader)>,
+                              bio::record<decltype(bio::var_io::default_field_ids),
                                           decltype(bio::var_io::field_types_bcf_style<bio::ownership::deep>)>>));
 }
 

@@ -499,7 +499,7 @@ private:
     //!\brief The fields that this format supports [the base class accesses this type].
     using format_fields   = std::remove_cvref_t<decltype(var_io::default_field_ids)>;
     //!\brief Type of the raw record.
-    using raw_record_type = detail::record_from_typelist<format_fields, decltype(var_io::field_types_raw)>;
+    using raw_record_type = record<format_fields, decltype(var_io::field_types_raw)>;
 
     //!\brief The raw record.
     raw_record_type raw_record;

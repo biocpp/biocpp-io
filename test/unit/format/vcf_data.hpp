@@ -245,7 +245,7 @@ auto make_ref(std::string_view const str)
 template <bio::ownership own, typename int_t = int32_t>
 auto example_records_vcf_style()
 {
-    using record_t = bio::detail::record_from_typelist<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
+    using record_t = bio::record<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
                                  std::remove_cvref_t<decltype(bio::var_io::field_types_vcf_style<own>)>>;
 
     bio::var_io::record_private_data priv{};
@@ -269,7 +269,7 @@ auto example_records_vcf_style()
 template <bio::ownership own, typename int_t = int32_t>
 auto example_records_bcf_style()
 {
-    using record_t = bio::detail::record_from_typelist<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
+    using record_t = bio::record<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
                                  std::remove_cvref_t<decltype(bio::var_io::field_types_bcf_style<own>)>>;
 
     bio::var_io::record_private_data priv{};

@@ -227,7 +227,7 @@ private:
                   "field_ids and field_types must have the same size.");
 
     //!\brief Type of the record.
-    using record_t = detail::record_from_typelist<field_ids_t, field_types_t>;
+    using record_t = record<field_ids_t, field_types_t>;
 
     static_assert(
       detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(

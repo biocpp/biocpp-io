@@ -102,7 +102,7 @@ private:
     //!\brief The fields that this format supports [the base class accesses this type].
     using format_fields     = vtag_t<field::id, field::seq>;
     //!\brief Type of the raw record.
-    using raw_record_type   = record<format_fields, std::string_view, std::string_view>;
+    using raw_record_type   = record<format_fields, seqan3::type_list<std::string_view, std::string_view>>;
     //!\brief Type of the low-level iterator.
     using lowlevel_iterator = detail::plaintext_input_iterator<plain_io::record_kind::line>;
 
