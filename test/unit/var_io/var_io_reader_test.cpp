@@ -62,10 +62,9 @@ TEST(var_io_reader, constructor1_just_filename)
 TEST(var_io_reader, constructor1_with_opts)
 {
     bio::var_io::reader_options opt{.field_types = bio::var_io::field_types_bcf_style<>};
-    using control_t =
-      bio::var_io::reader<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
-                          std::remove_cvref_t<decltype(bio::var_io::field_types_bcf_style<bio::ownership::shallow>)>,
-                          seqan3::type_list<bio::vcf, bio::bcf>>;
+    using control_t = bio::var_io::reader<decltype(bio::var_io::default_field_ids),
+                                          decltype(bio::var_io::field_types_bcf_style<bio::ownership::shallow>),
+                                          seqan3::type_list<bio::vcf, bio::bcf>>;
 
     var_io_reader_filename_constructor(true, std::move(opt));
     EXPECT_TRUE((std::same_as<decltype(bio::var_io::reader{"", opt}), control_t>));
@@ -80,10 +79,9 @@ TEST(var_io_reader, constructor2_just_filename_direct_format)
 TEST(var_io_reader, constructor2_with_opts_direct_format)
 {
     bio::var_io::reader_options opt{.field_types = bio::var_io::field_types_bcf_style<>};
-    using control_t =
-      bio::var_io::reader<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
-                          std::remove_cvref_t<decltype(bio::var_io::field_types_bcf_style<bio::ownership::shallow>)>,
-                          seqan3::type_list<bio::vcf, bio::bcf>>;
+    using control_t = bio::var_io::reader<decltype(bio::var_io::default_field_ids),
+                                          decltype(bio::var_io::field_types_bcf_style<bio::ownership::shallow>),
+                                          seqan3::type_list<bio::vcf, bio::bcf>>;
 
     var_io_reader_filename_constructor(false, bio::vcf{}, std::move(opt));
     EXPECT_TRUE((std::same_as<decltype(bio::var_io::reader{"", bio::vcf{}, opt}), control_t>));
@@ -101,10 +99,9 @@ TEST(var_io_reader, constructor2_with_opts_format_variant)
 {
     std::variant<bio::vcf, bio::bcf> var{};
     bio::var_io::reader_options      opt{.field_types = bio::var_io::field_types_bcf_style<>};
-    using control_t =
-      bio::var_io::reader<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
-                          std::remove_cvref_t<decltype(bio::var_io::field_types_bcf_style<bio::ownership::shallow>)>,
-                          seqan3::type_list<bio::vcf, bio::bcf>>;
+    using control_t = bio::var_io::reader<decltype(bio::var_io::default_field_ids),
+                                          decltype(bio::var_io::field_types_bcf_style<bio::ownership::shallow>),
+                                          seqan3::type_list<bio::vcf, bio::bcf>>;
 
     var_io_reader_filename_constructor(false, var, std::move(opt));
     EXPECT_TRUE((std::same_as<decltype(bio::var_io::reader{"", var, std::move(opt)}), control_t>));
@@ -122,10 +119,9 @@ TEST(var_io_reader, constructor3_with_opts)
 {
     std::istringstream          str;
     bio::var_io::reader_options opt{.field_types = bio::var_io::field_types_bcf_style<>};
-    using control_t =
-      bio::var_io::reader<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
-                          std::remove_cvref_t<decltype(bio::var_io::field_types_bcf_style<bio::ownership::shallow>)>,
-                          seqan3::type_list<bio::vcf, bio::bcf>>;
+    using control_t = bio::var_io::reader<decltype(bio::var_io::default_field_ids),
+                                          decltype(bio::var_io::field_types_bcf_style<bio::ownership::shallow>),
+                                          seqan3::type_list<bio::vcf, bio::bcf>>;
 
     EXPECT_NO_THROW((bio::var_io::reader{str, bio::vcf{}, opt}));
     EXPECT_TRUE((std::same_as<decltype(bio::var_io::reader{str, bio::vcf{}, opt}), control_t>));
@@ -143,10 +139,9 @@ TEST(var_io_reader, constructor4_with_opts)
 {
     std::istringstream          str;
     bio::var_io::reader_options opt{.field_types = bio::var_io::field_types_bcf_style<>};
-    using control_t =
-      bio::var_io::reader<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
-                          std::remove_cvref_t<decltype(bio::var_io::field_types_bcf_style<bio::ownership::shallow>)>,
-                          seqan3::type_list<bio::vcf, bio::bcf>>;
+    using control_t = bio::var_io::reader<decltype(bio::var_io::default_field_ids),
+                                          decltype(bio::var_io::field_types_bcf_style<bio::ownership::shallow>),
+                                          seqan3::type_list<bio::vcf, bio::bcf>>;
 
     EXPECT_NO_THROW((bio::var_io::reader{std::move(str), bio::vcf{}, opt}));
     EXPECT_TRUE((std::same_as<decltype(bio::var_io::reader{std::move(str), bio::vcf{}, opt}), control_t>));
