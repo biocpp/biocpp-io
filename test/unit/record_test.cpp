@@ -55,7 +55,7 @@ TEST(fields, usage)
 struct record : public ::testing::Test
 {
     using ids         = bio::vtag_t<bio::field::id, bio::field::seq>;
-    using record_type = bio::record<ids, std::string, seqan3::dna4_vector>;
+    using record_type = bio::record<ids, seqan3::type_list<std::string, seqan3::dna4_vector>>;
 };
 
 TEST_F(record, definition_tuple_traits)
@@ -127,5 +127,7 @@ TEST_F(record, tie_record)
     auto        vec = "ACGT"_dna4;
 
     auto r = bio::tie_record(bio::vtag<bio::field::id, bio::field::seq>, s, vec);
-    EXPECT_TRUE((std::same_as<decltype(r), bio::record<record::ids, std::string &, std::vector<seqan3::dna4> &>>));
+    EXPECT_TRUE(
+      (std::same_as<decltype(r),
+                    bio::record<record::ids, seqan3::type_list<std::string &, std::vector<seqan3::dna4> &>>>));
 }

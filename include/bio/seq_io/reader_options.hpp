@@ -22,7 +22,7 @@
 #include <seqan3/alphabet/concept.hpp>
 #include <seqan3/alphabet/nucleotide/dna5.hpp>
 #include <seqan3/alphabet/quality/phred63.hpp>
-#include <seqan3/alphabet/views/char_to.hpp>
+#include <seqan3/alphabet/views/char_strictly_to.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
 #include <seqan3/utility/views/to.hpp>
 
@@ -34,7 +34,7 @@
 #include <bio/seq_io/misc.hpp>
 #include <bio/stream/transparent_istream.hpp>
 
-// TODO replace seqan3::views::char_to with seqan3::views::char_strictly_to
+// TODO replace seqan3::views::char_strictly_to with seqan3::views::char_strictly_to
 namespace bio::seq_io
 {
 
@@ -63,7 +63,7 @@ namespace bio::seq_io
 template <bio::ownership   ownership   = bio::ownership::shallow,
           seqan3::alphabet seq_alph_t  = seqan3::dna5,
           seqan3::alphabet qual_alph_t = seqan3::phred63>
-inline auto field_types = []()
+inline constinit auto field_types = []()
 {
     if constexpr (ownership == bio::ownership::deep)
     {
@@ -76,10 +76,10 @@ inline auto field_types = []()
         return ttag<std::string_view,
                     std::conditional_t<std::same_as<seq_alph_t, char>,
                                        std::string_view,
-                                       decltype(std::string_view{} | seqan3::views::char_to<seq_alph_t>)>,
+                                       decltype(std::string_view{} | seqan3::views::char_strictly_to<seq_alph_t>)>,
                     std::conditional_t<std::same_as<qual_alph_t, char>,
                                        std::string_view,
-                                       decltype(std::string_view{} | seqan3::views::char_to<qual_alph_t>)>>;
+                                       decltype(std::string_view{} | seqan3::views::char_strictly_to<qual_alph_t>)>>;
     }
 }();
 
@@ -90,7 +90,7 @@ inline auto field_types = []()
  *
  * Configures a shallow record where sequence data is seqan3::dna5 and quality data is seqan3::phred63.
  */
-inline auto field_types_dna = field_types<>;
+inline constinit auto field_types_dna = field_types<>;
 
 /*!\brief The field types for reading protein data.
  * \tparam ownership Return shallow or deep types.
@@ -98,14 +98,14 @@ inline auto field_types_dna = field_types<>;
  *
  * Configures a shallow record where sequence data is seqan3::aa27 and quality data is seqan3::phred63.
  */
-inline auto field_types_protein = field_types<ownership::shallow, seqan3::aa27>;
+inline constinit auto field_types_protein = field_types<ownership::shallow, seqan3::aa27>;
 
 /*!\brief The field types for reading any data.
  * \details
  *
  * Configures a shallow record where sequence and quality data are plain characters.
  */
-inline auto field_types_char = field_types<ownership::shallow, char, char>;
+inline constinit auto field_types_char = field_types<ownership::shallow, char, char>;
 
 /*!\brief The field types for raw I/O.
  * \details
@@ -115,7 +115,8 @@ inline auto field_types_char = field_types<ownership::shallow, char, char>;
  * ATTENTION: The exact content of this byte-span depends on the format and is likely not
  * compatible between formats. Use at your own risk!
  */
-inline auto field_types_raw = ttag<std::span<std::byte const>, std::span<std::byte const>, std::span<std::byte const>>;
+inline constinit auto field_types_raw =
+  ttag<std::span<std::byte const>, std::span<std::byte const>, std::span<std::byte const>>;
 // TODO use seqan3::list_traits::repeat as soon as available
 
 //!\}
@@ -222,11 +223,10 @@ private:
 
     static_assert(detail::is_type_list<formats_t>, "formats must be a bio::ttag / seqan3::type_list.");
 
-    static_assert(field_ids_t::size == seqan3::list_traits::size<field_types_t>,
-                  "field_ids and field_types must have the same size.");
+    static_assert(field_ids_t::size == field_types_t::size(), "field_ids and field_types must have the same size.");
 
     //!\brief Type of the record.
-    using record_t = detail::record_from_typelist<field_ids_t, field_types_t>;
+    using record_t = record<field_ids_t, field_types_t>;
 
     static_assert(
       detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(

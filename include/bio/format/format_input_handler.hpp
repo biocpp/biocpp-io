@@ -17,7 +17,7 @@
 #include <string_view>
 #include <vector>
 
-#include <seqan3/alphabet/views/char_to.hpp> // TODO replace with char_strictly_to
+#include <seqan3/alphabet/views/char_strictly_to.hpp>
 
 #include <bio/detail/charconv.hpp>
 #include <bio/detail/concept.hpp>
@@ -101,7 +101,19 @@ private:
     static void parse_field_aux(std::string_view const                                 in,
                                 std::ranges::transform_view<std::string_view, fun_t> & parsed_field)
     {
-        parsed_field = std::ranges::transform_view<std::string_view, fun_t>{in, fun_t{}};
+        parsed_field = {in, fun_t{}};
+    }
+
+    //!\brief Parsing into transformed string views.
+    template <typename fun1_t, typename fun2_t>
+    static void parse_field_aux(
+      std::string_view const                                                                       in,
+      std::ranges::transform_view<std::ranges::transform_view<std::string_view, fun1_t>, fun2_t> & parsed_field)
+    {
+        parsed_field = {
+          {in, fun1_t{}},
+          fun2_t{          }
+        };
     }
 
     //!\brief Parse into string-like types.
@@ -119,7 +131,7 @@ private:
     {
         using target_alph_type = std::ranges::range_value_t<parsed_field_t>;
         //         detail::sized_range_copy(in | seqan3::views::char_strictly_to<target_alph_type>,
-        detail::sized_range_copy(in | seqan3::views::char_to<target_alph_type>, parsed_field);
+        detail::sized_range_copy(in | seqan3::views::char_strictly_to<target_alph_type>, parsed_field);
     }
 
     //!\brief Parse into a numerical type.

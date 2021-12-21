@@ -96,8 +96,8 @@ void field_types_bcf_style()
     std::istringstream       istream{static_cast<std::string>(example_from_spec_bcf)};
     bio::transparent_istream str{istream};
 
-    using record_t = bio::detail::record_from_typelist<decltype(bio::var_io::default_field_ids),
-                                                       decltype(bio::var_io::field_types_bcf_style<own>)>;
+    using record_t =
+      bio::record<decltype(bio::var_io::default_field_ids), decltype(bio::var_io::field_types_bcf_style<own>)>;
 
     bio::format_input_handler<bio::bcf> handler{str, bio::var_io::reader_options{}};
 
@@ -150,8 +150,8 @@ void field_types_vcf_style()
     std::istringstream       istream{static_cast<std::string>(example_from_spec_bcf)};
     bio::transparent_istream str{istream};
 
-    using record_t = bio::detail::record_from_typelist<decltype(bio::var_io::default_field_ids),
-                                                       decltype(bio::var_io::field_types_vcf_style<own>)>;
+    using record_t =
+      bio::record<decltype(bio::var_io::default_field_ids), decltype(bio::var_io::field_types_vcf_style<own>)>;
 
     bio::format_input_handler<bio::bcf> handler{str, bio::var_io::reader_options{}};
 

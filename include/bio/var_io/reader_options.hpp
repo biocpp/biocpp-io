@@ -18,9 +18,10 @@
 #include <vector>
 
 #include <seqan3/alphabet/nucleotide/dna5.hpp>
-#include <seqan3/alphabet/views/char_to.hpp>
+#include <seqan3/alphabet/views/char_strictly_to.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
 
+#include <bio/detail/misc.hpp>
 #include <bio/format/bcf.hpp>
 #include <bio/format/vcf.hpp>
 #include <bio/stream/transparent_istream.hpp>
@@ -37,16 +38,33 @@
 namespace bio::detail
 {
 
+/*!\interface bio::detail::info_element_concept <>
+ * \tparam t The type to check.
+ * \brief Types "similar" to bio::var_io::info_element / bio::var_io::info_element_bcf.
+ */
+//!\cond CONCEPT_DEF
 template <typename t>
 concept info_element_concept = detail::decomposable_into_two<t> &&
   (detail::char_range<detail::first_elem_t<t>> ||
    std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::is_dynamic_type<detail::second_elem_t<t>>;
+//!\endcond
 
+/*!\interface bio::detail::genotype_bcf_style_concept <>
+ * \tparam t The type to check.
+ * \brief Types "similar" to bio::var_io::genotype_element / bio::var_io::genotype_element_bcf.
+ */
+//!\cond CONCEPT_DEF
 template <typename t>
 concept genotype_bcf_style_concept = detail::decomposable_into_two<t> &&
   (detail::char_range<detail::first_elem_t<t>> ||
    std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::is_dynamic_vector_type<detail::second_elem_t<t>>;
+//!\endcond
 
+/*!\interface bio::detail::genotypes_vcf_style_concept <>
+ * \tparam t The type to check.
+ * \brief Types "similar" to bio::var_io::genotypes_vcf_style
+ */
+//!\cond CONCEPT_DEF
 template <typename t>
 concept genotypes_vcf_style_concept =
   detail::decomposable_into_two<t> && detail::back_insertable<detail::first_elem_t<t>> &&
@@ -54,7 +72,7 @@ concept genotypes_vcf_style_concept =
   detail::vector_like<detail::second_elem_t<t>> &&
   detail::vector_like<std::ranges::range_reference_t<detail::second_elem_t<t>>> &&
   detail::is_dynamic_type<std::ranges::range_value_t<std::ranges::range_reference_t<detail::second_elem_t<t>>>>;
-
+//!\endcond
 } // namespace bio::detail
 
 namespace bio::var_io
@@ -84,17 +102,17 @@ namespace bio::var_io
  * Since some elements in the record are views, it may not be possible and/or safe to change all values.
  */
 template <ownership own = ownership::shallow>
-inline constexpr auto field_types_bcf_style =
-  ttag<int32_t,                                                             // field::chrom,
-       int32_t,                                                             // field::pos,
-       std::string_view,                                                    // field::id,
-       decltype(std::string_view{} | seqan3::views::char_to<seqan3::dna5>), // field::ref,
-       std::vector<std::string_view>,                                       // field::alt,
-       float,                                                               // field::qual,
-       std::vector<int32_t>,                                                // field::filter,
-       std::vector<info_element_bcf<ownership::shallow>>,                   // field::info,
-       std::vector<genotype_element_bcf<ownership::shallow>>,               // field::genotypes,
-       record_private_data>;                                                // field::_private
+inline constinit auto field_types_bcf_style =
+  ttag<int32_t,                                                                      // field::chrom,
+       int32_t,                                                                      // field::pos,
+       std::string_view,                                                             // field::id,
+       decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>), // field::ref,
+       std::vector<std::string_view>,                                                // field::alt,
+       float,                                                                        // field::qual,
+       std::vector<int32_t>,                                                         // field::filter,
+       std::vector<info_element_bcf<ownership::shallow>>,                            // field::info,
+       std::vector<genotype_element_bcf<ownership::shallow>>,                        // field::genotypes,
+       record_private_data>;                                                         // field::_private
 
 /*!\brief Deep field types for variant io.
  *!\ingroup var_io
@@ -108,7 +126,7 @@ inline constexpr auto field_types_bcf_style =
  * that are otherwise not modifiable (e.g. views).
  */
 template <>
-inline constexpr auto field_types_bcf_style<ownership::deep> =
+inline constinit auto field_types_bcf_style<ownership::deep> =
   ttag<int32_t,                                            // field::chrom,
        int32_t,                                            // field::pos,
        std::string,                                        // field::id,
@@ -138,17 +156,17 @@ inline constexpr auto field_types_bcf_style<ownership::deep> =
  * Since some elements in the record are views, it may not be possible and/or safe to change all values.
  */
 template <ownership own = ownership::shallow>
-inline constexpr auto field_types_vcf_style =
-  ttag<std::string_view,                                                    // field::chrom,
-       int32_t,                                                             // field::pos,
-       std::string_view,                                                    // field::id,
-       decltype(std::string_view{} | seqan3::views::char_to<seqan3::dna5>), // field::ref,
-       std::vector<std::string_view>,                                       // field::alt,
-       float,                                                               // field::qual,
-       std::vector<std::string_view>,                                       // field::filter,
-       std::vector<info_element<ownership::shallow>>,                       // field::info,
-       genotypes_vcf<ownership::shallow>,                                   // field::genotypes,
-       record_private_data>;                                                // field::_private>;
+inline constinit auto field_types_vcf_style =
+  ttag<std::string_view,                                                             // field::chrom,
+       int32_t,                                                                      // field::pos,
+       std::string_view,                                                             // field::id,
+       decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>), // field::ref,
+       std::vector<std::string_view>,                                                // field::alt,
+       float,                                                                        // field::qual,
+       std::vector<std::string_view>,                                                // field::filter,
+       std::vector<info_element<ownership::shallow>>,                                // field::info,
+       genotypes_vcf<ownership::shallow>,                                            // field::genotypes,
+       record_private_data>;                                                         // field::_private>;
 
 /*!\brief Field types for variant IO that represent VCF more closely (text IDs etc); deep variant.
  *!\ingroup var_io
@@ -158,7 +176,7 @@ inline constexpr auto field_types_vcf_style =
  * The same as bio::var_io::field_types_vcf_style, but with self-contained records.
  */
 template <>
-inline constexpr auto field_types_vcf_style<ownership::deep> =
+inline constinit auto field_types_vcf_style<ownership::deep> =
   ttag<std::string,                                // field::chrom
        int32_t,                                    // field::pos
        std::string,                                // field::id
@@ -172,7 +190,7 @@ inline constexpr auto field_types_vcf_style<ownership::deep> =
 
 //!\brief Every field is configured as a std::span of std::byte (this enables "raw" io).
 //!\ingroup var_io
-inline constexpr auto field_types_raw =
+inline constinit auto field_types_raw =
   seqan3::list_traits::concat<seqan3::list_traits::repeat<default_field_ids.size - 1, std::span<std::byte const>>,
                               seqan3::type_list<var_io::record_private_data>>{};
 
@@ -202,6 +220,7 @@ inline constexpr auto field_types_raw =
  *   * string or string_view: The ID as a string.
  * 4. bio::field::ref
  *   * string or string_view: plaintext.
+ *   * back-insertable range over seqan3::alphabet (a container with converted elements).
  *   * `decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>)`: A view
  * over a SeqAn3 alphabet. Other alphabets and/or transform views are also possible.
  * 5. bio::field::alt
@@ -221,16 +240,16 @@ inline constexpr auto field_types_raw =
  *   1. A range (that supports back-insertion) over elements that are "similar" to
  * bio::var_io::genotype_element:
  *     * The elements must be decomposable into exactly two sub-elements (either `struct` or tuple).
- *     * The first subelement must be a string[_view] or `int32_t`.
+ *     * The first subelement must be a string[_view] (ID) or `int32_t` (IDX).
  *     * The second subelement must bio::var_io::dynamic_vector_type.
  *   2. Or: A type similar to bio::var_io::genotypes_vcf :
  *     * It must be decomposable into exactly two sub-elements (either `struct` or tuple).
- *     * The first subelement must be a range over string[_views] that supports back-insertion.
+ *     * The first subelement must be a range over string[_views] that supports back-insertion (FORMAT strings).
  *     * The second subelement must range-of-range over bio::var_io::dynamic_type and both
- * range-dimensions need to support back-insertion.
+ * range-dimensions need to support back-insertion (SAMPLE columns with genotype entries).
  */
-template <typename field_ids_t   = std::remove_cvref_t<decltype(default_field_ids)>,
-          typename field_types_t = std::remove_cvref_t<decltype(field_types_bcf_style<ownership::shallow>)>,
+template <typename field_ids_t   = decltype(default_field_ids),
+          typename field_types_t = decltype(field_types_bcf_style<ownership::shallow>),
           typename formats_t     = seqan3::type_list<vcf, bcf>>
 struct reader_options
 {
@@ -259,7 +278,101 @@ struct reader_options
     //!\brief Options that are passed on to the internal stream oject.
     transparent_istream_options stream_options{};
 
-    // TODO static_assert
+private:
+    static_assert(detail::is_fields_tag<field_ids_t>, "field_ids must be a bio::vtag over bio::field.");
+
+    static_assert(detail::is_type_list<field_types_t>, "field_types must be a bio::ttag / seqan3::type_list.");
+
+    static_assert(detail::is_type_list<formats_t>, "formats must be a bio::ttag / seqan3::type_list.");
+
+    static_assert(field_ids_t::size == field_types_t::size(), "field_ids and field_types must have the same size.");
+
+    //!\brief Type of the record.
+    using record_t = record<field_ids_t, field_types_t>;
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::chrom) ||
+        detail::back_insertable_with<record_element_t<field::chrom, rec_t>, char> ||
+        detail::one_of<record_element_t<field::chrom, rec_t>, std::string_view, int32_t>) { return std::true_type{}; }),
+      "Requirements for the field-type of the CHROM-field not met. See documentation for bio::var_io::reader_options.");
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::pos) ||
+        std::integral<std::remove_reference_t<record_element_t<field::pos, rec_t>>>) { return std::true_type{}; }),
+      "Requirements for the field-type of the POS-field not met. See documentation for bio::var_io::reader_options.");
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::id) || detail::back_insertable_with<record_element_t<field::id, rec_t>, char> ||
+        detail::one_of<std::remove_reference_t<record_element_t<field::id, rec_t>>, std::string_view>) {
+          return std::true_type{};
+      }),
+      "Requirements for the field-type of the ID-field not met. See documentation for bio::var_io::reader_options.");
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::ref) ||
+        (detail::back_insertable<record_element_t<field::ref, rec_t>> &&
+         seqan3::alphabet<std::ranges::range_reference_t<record_element_t<field::ref, rec_t>>>) ||
+        std::same_as<std::remove_reference_t<record_element_t<field::ref, rec_t>>, std::string_view> ||
+        detail::transform_view_on_string_view<record_element_t<field::ref, rec_t>>) { return std::true_type{}; }),
+      "Requirements for the field-type of the REF-field not met. See documentation for bio::var_io::reader_options.");
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::alt) ||
+        (detail::back_insertable<record_element_t<field::alt, rec_t>> &&
+           (detail::back_insertable<std::ranges::range_reference_t<record_element_t<field::alt, rec_t>>> &&
+            seqan3::alphabet<
+              std::ranges::range_reference_t<std::ranges::range_reference_t<record_element_t<field::alt, rec_t>>>>) ||
+         std::same_as<std::remove_reference_t<std::ranges::range_reference_t<record_element_t<field::alt, rec_t>>>,
+                      std::string_view> ||
+         detail::transform_view_on_string_view<std::ranges::range_reference_t<record_element_t<field::alt, rec_t>>>)) {
+          return std::true_type{};
+      }),
+      "Requirements for the field-type of the ALT-field not met. See documentation for bio::var_io::reader_options.");
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::qual) ||
+        seqan3::arithmetic<std::remove_reference_t<record_element_t<field::qual, rec_t>>>) {
+          return std::true_type{};
+      }),
+      "Requirements for the field-type of the QUAL-field not met. See documentation for bio::var_io::reader_options.");
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::filter) ||
+        (detail::back_insertable<record_element_t<field::filter, rec_t>> &&
+         (detail::back_insertable_with<std::ranges::range_reference_t<record_element_t<field::filter, rec_t>>, char> ||
+          detail::one_of<
+            std::remove_reference_t<std::ranges::range_reference_t<record_element_t<field::filter, rec_t>>>,
+            std::string_view,
+            int32_t>))) { return std::true_type{}; }),
+      "Requirements for the field-type of the FILTER-field not met. See documentation for "
+      "bio::var_io::reader_options.");
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::info) ||
+        (detail::back_insertable<record_element_t<field::info, rec_t>> &&
+         detail::info_element_concept<
+           std::remove_reference_t<std::ranges::range_reference_t<record_element_t<field::info, rec_t>>>>)) {
+          return std::true_type{};
+      }),
+      "Requirements for the field-type of the INFO-field not met. See documentation for bio::var_io::reader_options.");
+
+    static_assert(
+      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+        !field_ids_t::contains(field::genotypes) ||
+        (detail::back_insertable<record_element_t<field::genotypes, rec_t>> &&
+         detail::genotype_bcf_style_concept<
+           std::remove_reference_t<std::ranges::range_reference_t<record_element_t<field::genotypes, rec_t>>>>) ||
+        detail::genotypes_vcf_style_concept<record_element_t<field::genotypes, rec_t>>) { return std::true_type{}; }),
+      "Requirements for the field-type of the GENOTYPES-field not met. See documentation for "
+      "bio::var_io::reader_options.");
 };
 
 } // namespace bio::var_io

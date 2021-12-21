@@ -21,8 +21,7 @@
 #include <string_view>
 #include <vector>
 
-// #include <seqan3/alphabet/views/char_strictly_to.hpp>
-#include <seqan3/alphabet/views/char_to.hpp>
+#include <seqan3/alphabet/views/char_strictly_to.hpp>
 #include <seqan3/core/debug_stream.hpp> //TODO evaluate if there is a better solution
 #include <seqan3/core/debug_stream/detail/to_string.hpp>
 #include <seqan3/core/range/type_traits.hpp>
@@ -499,7 +498,7 @@ private:
     //!\brief The fields that this format supports [the base class accesses this type].
     using format_fields   = std::remove_cvref_t<decltype(var_io::default_field_ids)>;
     //!\brief Type of the raw record.
-    using raw_record_type = detail::record_from_typelist<format_fields, decltype(var_io::field_types_raw)>;
+    using raw_record_type = record<format_fields, decltype(var_io::field_types_raw)>;
 
     //!\brief The raw record.
     raw_record_type raw_record;

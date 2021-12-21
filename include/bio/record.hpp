@@ -18,6 +18,7 @@
 #include <bio/platform.hpp>
 
 #include <seqan3/core/detail/template_inspection.hpp>
+#include <seqan3/utility/type_list/traits.hpp>
 #include <seqan3/utility/type_list/type_list.hpp>
 
 #include <bio/misc.hpp>
@@ -125,15 +126,15 @@ namespace bio
  *
  * \todo include test/snippet/io/record_2.cpp
  */
-template <typename field_ids_, typename... field_types>
-struct record : std::tuple<field_types...>
+template <typename field_ids_, typename field_types_>
+struct record : seqan3::detail::transfer_template_args_onto_t<field_types_, std::tuple>
 {
 public:
-    using field_types_list = seqan3::type_list<field_types...>; //!< The field types as a type_list.
-    using field_ids        = field_ids_;                        //!< The field ids corresponding to the field_types.
+    using field_types = field_types_; //!< The field types as a type_list.
+    using field_ids   = field_ids_;   //!< The field ids corresponding to the field_types.
 
     //!\brief A specialisation of std::tuple.s
-    using base_type = std::tuple<field_types...>;
+    using base_type = seqan3::detail::transfer_template_args_onto_t<field_types, std::tuple>;
 
 private:
     //!\brief Auxiliary functions for clear().
@@ -174,7 +175,8 @@ public:
     using base_type::base_type;
     //!\}
 
-    static_assert(sizeof...(field_types) == field_ids::size, "You must give as many IDs as types to bio::record.");
+    static_assert(seqan3::list_traits::size<field_types> == field_ids::size,
+                  "You must give as many IDs as types to bio::record.");
 
     //!\brief Clears containers that provide `.clear()` and (re-)initialises all other elements with `= {}`.
     void clear() noexcept(noexcept(std::apply(expander, std::declval<record &>()))) { std::apply(expander, *this); }
@@ -256,21 +258,6 @@ public:
 
 } // namespace bio
 
-namespace bio::detail
-{
-
-//!\brief Implementation for bio::detail::record_from_typelist.
-template <typename field_ids_t, typename... field_types>
-auto record_from_typelist_impl(field_ids_t const &, seqan3::type_list<field_types...>)
-  -> record<field_ids_t, field_types...>;
-
-//!\brief Easy metaprogramming to get the type of a record from type_list of the field_types.
-template <typename field_ids_t, typename field_types_list_t>
-using record_from_typelist =
-  decltype(record_from_typelist_impl(std::declval<field_ids_t>(), std::declval<field_types_list_t>()));
-
-} // namespace bio::detail
-
 //-------------------------------------------------------------------------------
 // tuple traits
 //-------------------------------------------------------------------------------
@@ -283,11 +270,11 @@ namespace std
  * \relates bio::record
  * \see std::tuple_size_v
  */
-template <typename field_ids, typename... field_types>
-struct tuple_size<bio::record<field_ids, field_types...>>
+template <typename field_ids, typename field_types>
+struct tuple_size<bio::record<field_ids, field_types>>
 {
     //!\brief The value member. Delegates to same value on base_type.
-    static constexpr size_t value = tuple_size_v<typename bio::record<field_ids, field_types...>::base_type>;
+    static constexpr size_t value = tuple_size_v<typename bio::record<field_ids, field_types>::base_type>;
 };
 
 /*!\brief Obtains the type of the specified element.
@@ -295,11 +282,11 @@ struct tuple_size<bio::record<field_ids, field_types...>>
  * \relates bio::record
  * \see [std::tuple_element](https://en.cppreference.com/w/cpp/utility/tuple/tuple_element)
  */
-template <size_t elem_no, typename field_ids, typename... field_types>
-struct tuple_element<elem_no, bio::record<field_ids, field_types...>>
+template <size_t elem_no, typename field_ids, typename field_types>
+struct tuple_element<elem_no, bio::record<field_ids, field_types>>
 {
     //!\brief The member type. Delegates to same type on base_type.
-    using type = std::tuple_element_t<elem_no, typename bio::record<field_ids, field_types...>::base_type>;
+    using type = std::tuple_element_t<elem_no, typename bio::record<field_ids, field_types>::base_type>;
 };
 
 } // namespace std
@@ -319,10 +306,10 @@ template <field f, typename t>
 struct record_element;
 
 //!\brief Like std::tuple_element but with bio::field on bio::record. [implementation]
-template <field f, typename field_ids, typename... field_types>
+template <field f, typename field_ids, typename field_types>
     requires(field_ids::contains(f))
-struct record_element<f, record<field_ids, field_types...>> :
-  public std::tuple_element<field_ids::index_of(f), record<field_ids, field_types...>>
+struct record_element<f, record<field_ids, field_types>> :
+  public std::tuple_element<field_ids::index_of(f), record<field_ids, field_types>>
 {};
 
 //!\brief Like std::tuple_element but with bio::field on bio::record. [type trait shortcut]
@@ -340,32 +327,32 @@ using record_element_t = typename record_element<f, t>::type;
  * \{
  */
 //!\brief Free function get() for bio::record based on bio::field.
-template <field f, typename field_ids, typename... field_types>
-auto & get(record<field_ids, field_types...> & r)
+template <field f, typename field_ids, typename field_types>
+auto & get(record<field_ids, field_types> & r)
 {
     static_assert(field_ids::contains(f), "The record does not contain the field you wish to retrieve.");
     return std::get<field_ids::index_of(f)>(r);
 }
 
 //!\overload
-template <field f, typename field_ids, typename... field_types>
-auto const & get(record<field_ids, field_types...> const & r)
+template <field f, typename field_ids, typename field_types>
+auto const & get(record<field_ids, field_types> const & r)
 {
     static_assert(field_ids::contains(f), "The record does not contain the field you wish to retrieve.");
     return std::get<field_ids::index_of(f)>(r);
 }
 
 //!\overload
-template <field f, typename field_ids, typename... field_types>
-auto && get(record<field_ids, field_types...> && r)
+template <field f, typename field_ids, typename field_types>
+auto && get(record<field_ids, field_types> && r)
 {
     static_assert(field_ids::contains(f), "The record does not contain the field you wish to retrieve.");
     return std::get<field_ids::index_of(f)>(std::move(r));
 }
 
 //!\overload
-template <field f, typename field_ids, typename... field_types>
-auto const && get(record<field_ids, field_types...> const && r)
+template <field f, typename field_ids, typename field_types>
+auto const && get(record<field_ids, field_types> const && r)
 {
     static_assert(field_ids::contains(f), "The record does not contain the field you wish to retrieve.");
     return std::get<field_ids::index_of(f)>(std::move(r));
@@ -389,7 +376,7 @@ auto const && get(record<field_ids, field_types...> const && r)
  */
 template <auto... field_ids, typename... field_type_ts>
 constexpr auto make_record(vtag_t<field_ids...>, field_type_ts &... fields)
-  -> record<vtag_t<field_ids...>, field_type_ts...>
+  -> record<vtag_t<field_ids...>, seqan3::type_list<field_type_ts...>>
 {
     return {fields...};
 }
@@ -407,7 +394,7 @@ constexpr auto make_record(vtag_t<field_ids...>, field_type_ts &... fields)
  */
 template <auto... field_ids, typename... field_type_ts>
 constexpr auto tie_record(vtag_t<field_ids...>, field_type_ts &... fields)
-  -> record<vtag_t<field_ids...>, field_type_ts &...>
+  -> record<vtag_t<field_ids...>, seqan3::type_list<field_type_ts &...>>
 {
     return {fields...};
 }

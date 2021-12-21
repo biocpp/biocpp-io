@@ -239,7 +239,7 @@ struct genotypes_vcf
 
 //!\brief Default fields for bio::var_io::reader_options.
 //!\ingroup var_io
-inline constexpr auto default_field_ids = vtag<field::chrom,
+inline constinit auto default_field_ids = vtag<field::chrom,
                                                field::pos,
                                                field::id,
                                                field::ref,
