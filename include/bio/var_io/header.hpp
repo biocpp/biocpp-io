@@ -934,19 +934,6 @@ inline std::unordered_map<std::string_view, header::format_t> const reserved_for
 };
 // clang-format on
 
-//!\brief A datastructure that contains private data of variant IO records.
-//!\ingroup var_io
-struct record_private_data
-{
-    //!\privatesection
-    //!\brief Pointer to the header
-    header const * header_ptr = nullptr;
-
-    //!\brief Defaulted three-way comparison.
-    friend bool operator==(record_private_data const &, record_private_data const &) = default;
-    // TODO pointer to bcf-record
-};
-
 } // namespace bio::var_io
 
 namespace bio::detail
