@@ -49,9 +49,11 @@ namespace bio
  *
  * The implementation target [version 2.2 of the BCF specification](https://samtools.github.io/hts-specs/VCFv4.3.pdf).
  * However, reading version 2.1 should be possible, too.
- * Little testing has been done on handling structural variants and breakend strings, but in theory the values
- * should be parsed correctly.
  *
+ * If not present, IDX values are always added to the header.
+ *
+ * Little testing has been done on handling structural variants and breakend strings, but in theory the values
+ * should be parsed correctly (as strings).
  *
  * Please report any issues you find.
  */

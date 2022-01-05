@@ -269,8 +269,8 @@ auto example_records_vcf_style()
 template <bio::ownership own, typename int_t = int32_t>
 auto example_records_bcf_style()
 {
-    using record_t = bio::record<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
-                                 std::remove_cvref_t<decltype(bio::var_io::field_types_bcf_style<own>)>>;
+    using record_t = bio::record<decltype(bio::var_io::default_field_ids),
+                                 decltype(bio::var_io::field_types_bcf_style<own>)>;
 
     bio::var_io::record_private_data priv{};
     constexpr int_t mv  = bio::var_io::missing_value<int_t>;

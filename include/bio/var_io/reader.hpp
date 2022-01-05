@@ -29,7 +29,7 @@ namespace bio::var_io
 // ----------------------------------------------------------------------------
 
 /*!\brief A class for reading variant files, e.g. VCF, BCF, GVCF.
- * \tparam options_t A specialisation of bio::var_io::reader_options.
+ * \tparam option_args_t Arguments that are forwarded to bio::var_io::reader_options.
  * \ingroup var_io
  *
  * \details

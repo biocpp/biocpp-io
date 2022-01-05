@@ -635,11 +635,7 @@ public:
     }
 
     //!\brief Construct with only an input stream.
-    format_input_handler(std::istream & str) : format_input_handler
-    {
-        str, int {}
-    }
-    {}
+    format_input_handler(std::istream & str) : format_input_handler{str, int{}} {}
     //!\}
 
     //!\brief Return a reference to the header contained in the input handler.

@@ -7,8 +7,8 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides seqan3::reader_base and corresponding traits classes.
- * \author Hannes Hauswedell <hannes.hauswedell AT fu-berlin.de>
+ * \brief Provides bio::reader_base.
+ * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
 #pragma once
@@ -44,7 +44,7 @@ namespace bio
  * of the library.
  */
 template <typename options_t>
-class reader_base
+class reader_base : public std::ranges::view_base
 {
 protected:
     //!\privatesection
@@ -52,7 +52,7 @@ protected:
      * \{
      */
     //!\brief A seqan3::type_list with the possible formats.
-    using valid_formats = std::remove_cvref_t<decltype(options_t::formats)>;
+    using valid_formats = decltype(options_t::formats);
     //!\brief The seqan3::format_input_handler corresponding to the format.
     using format_handler_type =
       seqan3::detail::transfer_template_args_onto_t<seqan3::list_traits::transform<format_input_handler, valid_formats>,

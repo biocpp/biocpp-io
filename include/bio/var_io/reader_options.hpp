@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::var_io::reader_options and various pre-defined field_types.
+ * \brief Provides bio::var_io::reader_options.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -17,8 +17,6 @@
 #include <string_view>
 #include <vector>
 
-#include <seqan3/alphabet/nucleotide/dna5.hpp>
-#include <seqan3/alphabet/views/char_strictly_to.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
 
 #include <bio/detail/misc.hpp>
@@ -30,10 +28,9 @@
 #include <bio/var_io/header.hpp>
 #include <bio/var_io/misc.hpp>
 
-/* TODO
- *
- * field_types (default) with shallow/deep switch and all VCF except GENOTYPES
- */
+//-----------------------------------------------------------------------------
+// field concepts
+//-----------------------------------------------------------------------------
 
 namespace bio::detail
 {
@@ -78,123 +75,9 @@ concept genotypes_vcf_style_concept =
 namespace bio::var_io
 {
 
-/*!\name Pre-defined field types
- * \brief These can be used to configure the behaviour of the bio::var_io::reader via bio::var_io::reader_options.
- * \{
- */
-
-/*!\brief The default field types for variant io.
- *!\ingroup var_io
- *
- * \details
- *
- * These traits define a record type with minimal memory allocations for all input formats.
- * It is the recommended record type when iterating ("streaming") over files that ca be any variant IO format.
- *
- * The "style" of the record resembles the BCF specification, i.e. contigs, FILTERs and INFO identifiers are
- * represented as numbers (not strings); and the genotypes are encoded by-genotype (not by-sample).
- * See bio::var_io::genotypes_bcf_style for more information on the latter.
- *
- * \warning Shallow types
- *
- * These records are not self-contained, i.e. they depend on caches and will become invalid when the reader moves to
- * the next record.
- * Since some elements in the record are views, it may not be possible and/or safe to change all values.
- */
-template <ownership own = ownership::shallow>
-inline constinit auto field_types_bcf_style =
-  ttag<int32_t,                                                                      // field::chrom,
-       int32_t,                                                                      // field::pos,
-       std::string_view,                                                             // field::id,
-       decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>), // field::ref,
-       std::vector<std::string_view>,                                                // field::alt,
-       float,                                                                        // field::qual,
-       std::vector<int32_t>,                                                         // field::filter,
-       std::vector<info_element_bcf<ownership::shallow>>,                            // field::info,
-       std::vector<genotype_element_bcf<ownership::shallow>>,                        // field::genotypes,
-       record_private_data>;                                                         // field::_private
-
-/*!\brief Deep field types for variant io.
- *!\ingroup var_io
- *
- * \details
- *
- * These field types result in a record that is self-contained, i.e. it does not depend on internal caches and the
- * state of the reader.
- *
- * Use these field types, if you intend to store individual records or if you need to change fields in the record
- * that are otherwise not modifiable (e.g. views).
- */
-template <>
-inline constinit auto field_types_bcf_style<ownership::deep> =
-  ttag<int32_t,                                            // field::chrom,
-       int32_t,                                            // field::pos,
-       std::string,                                        // field::id,
-       std::vector<seqan3::dna5>,                          // field::ref,
-       std::vector<std::string>,                           // field::alt,
-       float,                                              // field::qual,
-       std::vector<int32_t>,                               // field::filter,
-       std::vector<info_element_bcf<ownership::deep>>,     // field::info,
-       std::vector<genotype_element_bcf<ownership::deep>>, // field::genotypes,
-       record_private_data>;                               // field::_private
-
-/*!\brief Field types for variant IO that represent VCF more closely (text IDs etc).
- *!\ingroup var_io
- *
- * \details
- *
- * In contrast tp bio::var_io::field_types_bcf_style, these field types encode IDs as text and use
- * bio::var_io::genotypes_vcf_style to encode format/samples.
- *
- * If you know that you will be reading/writing almost exclusively VCF (and not BCF), using these field types
- * might lead to a better performance.
- *
- * \warning Shallow types
- *
- * These records are not self-contained, i.e. they depend on caches and will become invalid when the reader moves to
- * the next record.
- * Since some elements in the record are views, it may not be possible and/or safe to change all values.
- */
-template <ownership own = ownership::shallow>
-inline constinit auto field_types_vcf_style =
-  ttag<std::string_view,                                                             // field::chrom,
-       int32_t,                                                                      // field::pos,
-       std::string_view,                                                             // field::id,
-       decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>), // field::ref,
-       std::vector<std::string_view>,                                                // field::alt,
-       float,                                                                        // field::qual,
-       std::vector<std::string_view>,                                                // field::filter,
-       std::vector<info_element<ownership::shallow>>,                                // field::info,
-       genotypes_vcf<ownership::shallow>,                                            // field::genotypes,
-       record_private_data>;                                                         // field::_private>;
-
-/*!\brief Field types for variant IO that represent VCF more closely (text IDs etc); deep variant.
- *!\ingroup var_io
- *
- * \details
- *
- * The same as bio::var_io::field_types_vcf_style, but with self-contained records.
- */
-template <>
-inline constinit auto field_types_vcf_style<ownership::deep> =
-  ttag<std::string,                                // field::chrom
-       int32_t,                                    // field::pos
-       std::string,                                // field::id
-       std::vector<seqan3::dna5>,                  // field::ref
-       std::vector<std::string>,                   // field::alt
-       float,                                      // field::qual
-       std::vector<std::string>,                   // field::filter
-       std::vector<info_element<ownership::deep>>, // field::info,
-       genotypes_vcf<ownership::deep>,             // field::genotypes
-       record_private_data>;                       // field::_private
-
-//!\brief Every field is configured as a std::span of std::byte (this enables "raw" io).
-//!\ingroup var_io
-inline constinit auto field_types_raw =
-  seqan3::list_traits::concat<seqan3::list_traits::repeat<default_field_ids.size - 1, std::span<std::byte const>>,
-                              seqan3::type_list<var_io::record_private_data>>{};
-
-//!\}
+//-----------------------------------------------------------------------------
+// reader_options
+//-----------------------------------------------------------------------------
 
 /*!\brief Options that can be used to configure the behaviour of bio::var_io::reader.
  * \tparam field_ids_t   Type of the field_ids member (usually deduced).

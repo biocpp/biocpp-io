@@ -50,7 +50,7 @@ namespace bio
  * The implementation target [version 4.3 of the VCF specification](https://samtools.github.io/hts-specs/VCFv4.3.pdf).
  * However, reading version 4.2 should be possible, too.
  * Little testing has been done on handling structural variants and breakend strings, but in theory the values
- * should be parsed correctly.
+ * should be parsed correctly (as strings).
  *
  * No testing has been done on gVCF files, but in theory all values should be parsed correctly.
  *

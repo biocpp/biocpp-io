@@ -55,6 +55,8 @@ std::to_chars_result to_chars(char * first, char * last, auto in)
         if (std::string_view{first, static_cast<size_t>(count)}.find('.') != std::string_view::npos)
             while (count > 0 && first[count - 1] == '0')
                 --count;
+        if (count > 0 && first[count - 1] == '.')
+            --count;
         return {.ptr = first + count, .ec{}};
     }
 }
