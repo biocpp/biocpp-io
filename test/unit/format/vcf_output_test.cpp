@@ -15,8 +15,15 @@
 
 #include "vcf_data.hpp"
 
-template <bio::ownership own>
-void field_types_bcf_style()
+enum class style
+{
+    def,
+    vcf,
+    bcf
+};
+
+template <style s, bio::ownership own>
+void field_types()
 {
     using namespace std::literals;
 
@@ -29,7 +36,15 @@ void field_types_bcf_style()
         hdr.add_missing();
         handler.set_header(std::move(hdr));
 
-        auto recs = example_records_bcf_style<own>();
+        auto recs = []()
+        {
+            if constexpr (s == style::def)
+                return example_records_default_style<own>();
+            else if constexpr (s == style::vcf)
+                return example_records_vcf_style<own>();
+            else
+                return example_records_bcf_style<own>();
+        }();
 
         for (auto & rec : recs)
             handler.write_record(rec);
@@ -38,44 +53,32 @@ void field_types_bcf_style()
     EXPECT_EQ(ostr.str(), example_from_spec_header_regenerated_no_IDX + example_from_spec_records);
 }
 
-TEST(vcf_output, bcf_style_shallow)
+TEST(vcf_output, default_style_shallow)
 {
-    field_types_bcf_style<bio::ownership::shallow>();
+    field_types<style::def, bio::ownership::shallow>();
 }
 
-TEST(vcf_output, bcf_style_deep)
+TEST(vcf_output, default_style_deep)
 {
-    field_types_bcf_style<bio::ownership::deep>();
-}
-
-template <bio::ownership own>
-void field_types_vcf_style()
-{
-    using namespace std::literals;
-
-    std::ostringstream ostr{};
-
-    {
-        bio::format_output_handler<bio::vcf> handler{ostr, bio::var_io::writer_options{}};
-
-        bio::var_io::header hdr{example_from_spec_header};
-        handler.set_header(std::move(hdr));
-
-        auto recs = example_records_vcf_style<own>();
-
-        for (auto & rec : recs)
-            handler.write_record(rec);
-    }
-
-    EXPECT_EQ(ostr.str(), example_from_spec_header_regenerated_no_IDX + example_from_spec_records);
+    field_types<style::def, bio::ownership::deep>();
 }
 
 TEST(vcf_output, vcf_style_shallow)
 {
-    field_types_vcf_style<bio::ownership::shallow>();
+    field_types<style::vcf, bio::ownership::shallow>();
 }
 
 TEST(vcf_output, vcf_style_deep)
 {
-    field_types_vcf_style<bio::ownership::deep>();
+    field_types<style::vcf, bio::ownership::deep>();
+}
+
+TEST(vcf_output, bcf_style_shallow)
+{
+    field_types<style::bcf, bio::ownership::shallow>();
+}
+
+TEST(vcf_output, bcf_style_deep)
+{
+    field_types<style::bcf, bio::ownership::deep>();
 }

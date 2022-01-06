@@ -15,19 +15,37 @@
 
 #include "vcf_data.hpp"
 
-template <bio::ownership own>
-void field_types_bcf_style()
+enum class style
+{
+    def,
+    vcf,
+    bcf
+};
+
+template <style s, bio::ownership own>
+void field_types()
 {
     std::istringstream istr{std::string{example_from_spec}};
-
-    using record_t =
-      bio::record<decltype(bio::var_io::default_field_ids), decltype(bio::var_io::field_types_bcf_style<own>)>;
 
     bio::format_input_handler<bio::vcf> handler{istr, bio::var_io::reader_options{}};
 
     bio::var_io::record_private_data priv{&handler.get_header()};
 
-    auto recs = example_records_bcf_style<own>();
+    using fields_t = std::conditional_t<s == style::def,
+                                        decltype(bio::var_io::field_types<own>),
+                                        std::conditional_t<s == style::vcf,
+                                                           decltype(bio::var_io::field_types_vcf_style<own>),
+                                                           decltype(bio::var_io::field_types_bcf_style<own>)>>;
+    using record_t = bio::record<decltype(bio::var_io::default_field_ids), fields_t>;
+
+    std::vector<record_t> recs;
+
+    if constexpr (s == style::def)
+        recs = example_records_default_style<own>();
+    else if constexpr (s == style::vcf)
+        recs = example_records_vcf_style<own>();
+    else
+        recs = example_records_bcf_style<own>();
 
     for (auto & rec : recs)
         get<bio::field::_private>(rec) = priv;
@@ -50,59 +68,34 @@ void field_types_bcf_style()
     EXPECT_EQ(rec, recs[4]);
 }
 
-TEST(vcf, field_types_bcf_style_shallow)
+TEST(vcf, field_types_default_style_shallow)
 {
-    field_types_bcf_style<bio::ownership::shallow>();
+    field_types<style::def, bio::ownership::shallow>();
 }
 
-TEST(vcf, field_types_bcf_style_deep)
+TEST(vcf, field_types_default_style_deep)
 {
-    field_types_bcf_style<bio::ownership::deep>();
-}
-
-template <bio::ownership own>
-void field_types_vcf_style()
-{
-    std::istringstream istr{std::string{example_from_spec}};
-
-    using record_t =
-      bio::record<decltype(bio::var_io::default_field_ids), decltype(bio::var_io::field_types_vcf_style<own>)>;
-
-    bio::format_input_handler<bio::vcf> handler{istr, bio::var_io::reader_options{}};
-
-    bio::var_io::record_private_data priv{&handler.get_header()};
-
-    auto recs = example_records_vcf_style<own>();
-
-    for (auto & rec : recs)
-        get<bio::field::_private>(rec) = priv;
-
-    record_t rec;
-
-    handler.parse_next_record_into(rec);
-    EXPECT_EQ(rec, recs[0]);
-
-    handler.parse_next_record_into(rec);
-    EXPECT_EQ(rec, recs[1]);
-
-    handler.parse_next_record_into(rec);
-    EXPECT_EQ(rec, recs[2]);
-
-    handler.parse_next_record_into(rec);
-    EXPECT_EQ(rec, recs[3]);
-
-    handler.parse_next_record_into(rec);
-    EXPECT_EQ(rec, recs[4]);
+    field_types<style::def, bio::ownership::deep>();
 }
 
 TEST(vcf, field_types_vcf_style_shallow)
 {
-    field_types_vcf_style<bio::ownership::shallow>();
+    field_types<style::vcf, bio::ownership::shallow>();
 }
 
 TEST(vcf, field_types_vcf_style_deep)
 {
-    field_types_vcf_style<bio::ownership::deep>();
+    field_types<style::vcf, bio::ownership::deep>();
+}
+
+TEST(vcf, field_types_bcf_style_shallow)
+{
+    field_types<style::bcf, bio::ownership::shallow>();
+}
+
+TEST(vcf, field_types_bcf_style_deep)
+{
+    field_types<style::bcf, bio::ownership::deep>();
 }
 
 TEST(vcf, incomplete_header)

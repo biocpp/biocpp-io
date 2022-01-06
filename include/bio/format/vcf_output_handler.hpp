@@ -74,7 +74,7 @@ private:
     bool                                                                    header_has_been_written = false;
     //!\brief Pointer to header that can be owning or non-owning.
     std::unique_ptr<var_io::header const, void (*)(var_io::header const *)> header                  = {nullptr,
-                                                                                      [](var_io::header const *) {}};
+                                                                                                       [](var_io::header const *) {}};
     //!\}
 
     /*!\name Options

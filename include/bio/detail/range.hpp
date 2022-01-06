@@ -64,6 +64,15 @@ template <typename t>
 concept int_range = std::ranges::range<t> && std::integral<std::remove_cvref_t<std::ranges::range_value_t<t>>> &&
   !std::same_as<char, std::remove_cvref_t<std::ranges::range_value_t<t>>>;
 
+/*!\interface bio::detail::out_string <>
+ * \tparam rng_t The container type.
+ * \brief A range that `char` can be back-inserted to, or a string_view.
+ */
+//!\cond
+template <typename rng_t>
+concept out_string = back_insertable_with<rng_t, char> || std::same_as<rng_t &, std::string_view &>;
+//!\endcond
+
 template <typename rng_t>
 concept vector_like = std::ranges::random_access_range<rng_t> && std::ranges::sized_range<rng_t> &&
   std::ranges::output_range<rng_t, std::ranges::range_reference_t<rng_t>> && requires(rng_t & v)
@@ -135,7 +144,7 @@ void sized_range_copy(std::ranges::input_range auto &&                          
 }
 
 //!\brief Like bio::detail::sized_range_copy except that if input and output are both std::string_view, it assigns.
-void string_copy(std::string_view const in, auto & out)
+void string_copy(std::string_view const in, out_string auto & out)
 {
     if constexpr (std::same_as<decltype(out), std::string_view &>)
         out = in;

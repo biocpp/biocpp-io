@@ -164,7 +164,7 @@ TEST(var_io_reader, iteration)
         for (auto & rec : reader)
         {
             ++count;
-            EXPECT_EQ(rec.chrom(), 0);
+            EXPECT_EQ(rec.chrom(), "20");
             // only very basic check here, rest in format test
         }
         EXPECT_EQ(count, 5);
@@ -211,7 +211,7 @@ TEST(var_io_reader, get_header)
         bio::var_io::reader reader{str, bio::vcf{}};
 
         auto it = reader.begin();
-        EXPECT_EQ(it->chrom(), 0);
+        EXPECT_EQ(it->chrom(), "20");
 
         bio::var_io::header const & hdr = reader.header();
 
@@ -259,7 +259,7 @@ TEST(var_io_reader, decompression_filename)
     for (auto & rec : reader)
     {
         ++count;
-        EXPECT_EQ(rec.chrom(), 0);
+        EXPECT_EQ(rec.chrom(), "20");
         // only very basic check here, rest in format test
     }
     EXPECT_EQ(count, 5);
@@ -275,7 +275,7 @@ TEST(var_io_reader, decompression_stream)
     for (auto & rec : reader)
     {
         ++count;
-        EXPECT_EQ(rec.chrom(), 0);
+        EXPECT_EQ(rec.chrom(), "20");
         // only very basic check here, rest in format test
     }
     EXPECT_EQ(count, 5);

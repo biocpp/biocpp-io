@@ -226,7 +226,7 @@ template <typename char_t, typename agg_t>
     requires bio::detail::aggregate_of_two<std::remove_cvref_t<agg_t>>
 inline debug_stream_type<char_t> & operator<<(debug_stream_type<char_t> & s, agg_t && agg)
 {
-    s << '[' << bio::detail::get_first(agg) << ", " << bio::detail::get_first(agg) << ']';
+    s << '[' << bio::detail::get_first(agg) << ", " << bio::detail::get_second(agg) << ']';
     return s;
 }
 
@@ -243,10 +243,39 @@ auto make_ref(std::string_view const str)
 }
 
 template <bio::ownership own, typename int_t = int32_t>
+auto example_records_default_style()
+{
+    using record_t = bio::record<decltype(bio::var_io::default_field_ids),
+                                 decltype(bio::var_io::field_types<own>)>;
+
+    bio::var_io::record_private_data priv{};
+    constexpr int_t mv = bio::var_io::missing_value<int_t>;
+    using ivec          = std::vector<int32_t>;  // not int_t because dynamic_vector_type doesn have vector<int8_t>
+    using ivecvec       = std::vector<std::vector<int_t>>;
+    using fvec          = std::vector<float>;
+    using svec          = std::conditional_t<own == bio::ownership::shallow,
+                                             std::vector<std::string_view>,
+                                             std::vector<std::string>>;
+
+    // clang-format off
+    std::vector<record_t> recs{
+    {"20", 14370,   "rs6054257", make_ref<own>("G"),   {"A"},        29, {"PASS"}, {{"NS",3}, {"DP", 14}, {"AF", fvec{0.5f}}, {"DB", true}, {"H2", true}        }, { {"GT", svec{"0|0", "1|0", "1/1"}}, {"GQ", ivec{48, 48, 43}}, {"DP", ivec{1, 8, 5}}, {"HQ", ivecvec{{51,51}, {51,51}, {mv,mv} }}}, priv},
+    {"20", 17330,   ".",         make_ref<own>("T"),   {"A"},        3,  {"q10"},  {{"NS",3}, {"DP", 11}, {"AF", fvec{0.017f}}                                  }, { {"GT", svec{"0|0", "0|1", "0/0"}}, {"GQ", ivec{49,  3, 41}}, {"DP", ivec{3, 5, 3}}, {"HQ", ivecvec{{58,50}, {65, 3}          }}}, priv},
+    {"20", 1110696, "rs6040355", make_ref<own>("A"),   {"G","T"},    67, {"PASS"}, {{"NS",2}, {"DP", 10}, {"AF", fvec{0.333f,0.667f}}, {"AA", "T"}, {"DB", true}}, { {"GT", svec{"1|2", "2|1", "2/2"}}, {"GQ", ivec{21,  2, 35}}, {"DP", ivec{6, 0, 4}}, {"HQ", ivecvec{{23,27}, {18, 2}          }}}, priv},
+    {"20", 1230237, ".",         make_ref<own>("T"),   {},           47, {"PASS"}, {{"NS",3}, {"DP", 13}, {"AA", "T"}                                           }, { {"GT", svec{"0|0", "0|0", "0/0"}}, {"GQ", ivec{54, 48, 61}}, {"DP", ivec{7, 4, 2}}, {"HQ", ivecvec{{56,60}, {51,51}          }}}, priv},
+    {"20", 1234567, "microsat1", make_ref<own>("GTC"), {"G","GTCT"}, 50, {"PASS"}, {{"NS",3}, {"DP", 9 }, {"AA", "G"}                                           }, { {"GT", svec{"0/1", "0/2", "1/1"}}, {"GQ", ivec{35, 17, 40}}, {"DP", ivec{4, 2, 3}}                                             }, priv},
+    };
+    // clang-format on
+
+    return recs;
+
+}
+
+template <bio::ownership own, typename int_t = int32_t>
 auto example_records_vcf_style()
 {
-    using record_t = bio::record<std::remove_cvref_t<decltype(bio::var_io::default_field_ids)>,
-                                 std::remove_cvref_t<decltype(bio::var_io::field_types_vcf_style<own>)>>;
+    using record_t = bio::record<decltype(bio::var_io::default_field_ids),
+                                 decltype(bio::var_io::field_types_vcf_style<own>)>;
 
     bio::var_io::record_private_data priv{};
     constexpr int_t mv = bio::var_io::missing_value<int_t>;
@@ -289,7 +318,7 @@ auto example_records_bcf_style()
     {0, 1230237, ".",         make_ref<own>("T"),   {},           47, {0}, {{1,3}, {2, 13}, {4, "T"}                                     }, { {9, svec{"0|0", "0|0", "0/0"}}, {10, ivec{54, 48, 61}}, {2, ivec{7, 4, 2}}, {11, ivecvec{{56,60}, {51,51}          }}}, priv},
     {0, 1234567, "microsat1", make_ref<own>("GTC"), {"G","GTCT"}, 50, {0}, {{1,3}, {2, 9 }, {4, "G"}                                     }, { {9, svec{"0/1", "0/2", "1/1"}}, {10, ivec{35, 17, 40}}, {2, ivec{4, 2, 3}}                                           }, priv},
     };
-    // clang-format ofn
+    // clang-format on
 
     return recs;
 }

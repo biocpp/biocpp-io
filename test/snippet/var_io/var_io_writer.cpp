@@ -105,13 +105,12 @@ bio::var_io::reader{"example.bcf"} | bio::var_io::writer{"example.vcf"};
 //![inout2]
 auto pass = [] (auto & rec)
 {
-    return (rec.filter().empty() || (rec.filter().size() == 1 && rec.filter()[0] == 0));
+    return (rec.filter().empty() || (rec.filter().size() == 1 && rec.filter()[0] == "PASS"));
 };
 
 bio::var_io::reader r{"example.bcf"};
 r | std::views::filter(pass) | bio::var_io::writer{"example.vcf"};
 //![inout2]
-//TODO replace "== 0" with "== "PASS" once defaults are changed
 //TODO collapse the above once https://gcc.gnu.org/bugzilla/show_bug.cgi?id=103904 is resolved
 }
 {
@@ -120,7 +119,7 @@ bio::var_io::reader reader{"example.bcf"};
 bio::var_io::writer writer{"example5.vcf"};
 
 for (auto & rec : reader)
-    if (rec.filter().empty() || (rec.filter().size() == 1 && rec.filter()[0] == 0))
+    if (rec.filter().empty() || (rec.filter().size() == 1 && rec.filter()[0] == "PASS"))
         writer.push_back(rec);
 //![inout3]
 }

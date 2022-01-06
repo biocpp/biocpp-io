@@ -294,12 +294,6 @@ inline constinit auto default_field_ids = vtag<field::chrom,
  *(VCF-style) for performance reasons.
  *
  * See bio::var_io::genotypes_bcf_style for more information on the latter.
- *
- * \warning Shallow types
- *
- * These records are not self-contained, i.e. they depend on caches and will become invalid when the reader moves to
- * the next record.
- * Since some elements in the record are views, it may not be possible and/or safe to change all values.
  */
 template <ownership own = ownership::shallow>
 inline constinit auto field_types =
@@ -329,33 +323,12 @@ inline constinit auto field_types<ownership::deep> =
        std::vector<genotype_element<ownership::deep>>, // field::genotypes,
        record_private_data>;                           // field::_private
 
-/*!\brief A alias for bio::record that is usable with variant IO.
- * \ingroup var_io
- * \details
- *
- * This alias is provided purely for convenience. See the documentation for
- * bio::var_io::writer for an example of how to use it.
- */
-template <ownership own = ownership::deep>
-using default_record = record<decltype(default_field_ids), decltype(field_types<own>)>;
-
-/*!\brief The default field types for variant io.
+/*!\brief Alternative set of field types (BCF-style, shallow).
  *!\ingroup var_io
  *
  * \details
  *
- * These traits define a record type with minimal memory allocations for all input formats.
- * It is the recommended record type when iterating ("streaming") over files that ca be any variant IO format.
- *
- * The "style" of the record resembles the BCF specification, i.e. contigs, FILTERs and INFO identifiers are
- * represented as numbers (not strings); and the genotypes are encoded by-genotype (not by-sample).
- * See bio::var_io::genotypes_bcf_style for more information on the latter.
- *
- * \warning Shallow types
- *
- * These records are not self-contained, i.e. they depend on caches and will become invalid when the reader moves to
- * the next record.
- * Since some elements in the record are views, it may not be possible and/or safe to change all values.
+ * See bio::var_io::reader_options for when and why to choose these field types.
  */
 template <ownership own = ownership::shallow>
 inline constinit auto field_types_bcf_style =
@@ -370,16 +343,12 @@ inline constinit auto field_types_bcf_style =
        std::vector<genotype_element_bcf<ownership::shallow>>,                        // field::genotypes,
        record_private_data>;                                                         // field::_private
 
-/*!\brief Deep field types for variant io.
+/*!\brief Alternative set of field types (BCF-style, deep).
  *!\ingroup var_io
  *
  * \details
  *
- * These field types result in a record that is self-contained, i.e. it does not depend on internal caches and the
- * state of the reader.
- *
- * Use these field types, if you intend to store individual records or if you need to change fields in the record
- * that are otherwise not modifiable (e.g. views).
+ * See bio::var_io::reader_options for when and why to choose these field types.
  */
 template <>
 inline constinit auto field_types_bcf_style<ownership::deep> =
@@ -394,22 +363,12 @@ inline constinit auto field_types_bcf_style<ownership::deep> =
        std::vector<genotype_element_bcf<ownership::deep>>, // field::genotypes,
        record_private_data>;                               // field::_private
 
-/*!\brief Field types for variant IO that represent VCF more closely (text IDs etc).
+/*!\brief Alternative set of field types (VCF-style, shallow).
  *!\ingroup var_io
  *
  * \details
  *
- * In contrast tp bio::var_io::field_types_bcf_style, these field types encode IDs as text and use
- * bio::var_io::genotypes_vcf_style to encode format/samples.
- *
- * If you know that you will be reading/writing almost exclusively VCF (and not BCF), using these field types
- * might lead to a better performance.
- *
- * \warning Shallow types
- *
- * These records are not self-contained, i.e. they depend on caches and will become invalid when the reader moves to
- * the next record.
- * Since some elements in the record are views, it may not be possible and/or safe to change all values.
+ * See bio::var_io::reader_options for when and why to choose these field types.
  */
 template <ownership own = ownership::shallow>
 inline constinit auto field_types_vcf_style =
@@ -424,12 +383,12 @@ inline constinit auto field_types_vcf_style =
        genotypes_vcf<ownership::shallow>,                                            // field::genotypes,
        record_private_data>;                                                         // field::_private>;
 
-/*!\brief Field types for variant IO that represent VCF more closely (text IDs etc); deep variant.
+/*!\brief Alternative set of field types (BCF-style, deep).
  *!\ingroup var_io
  *
  * \details
  *
- * The same as bio::var_io::field_types_vcf_style, but with self-contained records.
+ * See bio::var_io::reader_options for when and why to choose these field types.
  */
 template <>
 inline constinit auto field_types_vcf_style<ownership::deep> =
@@ -451,6 +410,16 @@ inline constinit auto field_types_raw =
                               seqan3::type_list<var_io::record_private_data>>{};
 
 //!\}
+
+/*!\brief A alias for bio::record that is usable with variant IO.
+ * \ingroup var_io
+ * \details
+ *
+ * This alias is provided purely for convenience. See the documentation for
+ * bio::var_io::writer for an example of how to use it.
+ */
+template <ownership own = ownership::deep>
+using default_record = record<decltype(default_field_ids), decltype(field_types<own>)>;
 
 } // namespace bio::var_io
 
