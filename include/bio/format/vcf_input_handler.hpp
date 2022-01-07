@@ -324,7 +324,7 @@ private:
 
     //!\brief Overload for parsing INFO.
     template <detail::back_insertable parsed_field_t>
-        requires detail::info_element_concept<std::ranges::range_reference_t<parsed_field_t>>
+        requires detail::info_element_reader_concept<std::ranges::range_reference_t<parsed_field_t>>
     void parse_field(vtag_t<field::info> const & /**/, parsed_field_t & parsed_field)
     {
         using key_t   = detail::first_elem_t<std::ranges::range_reference_t<parsed_field_t>>;
@@ -439,7 +439,7 @@ private:
 
     //!\brief Overload for parsing bcf style GENOTYPES.
     template <detail::back_insertable field_t>
-        requires detail::genotype_bcf_style_concept<std::ranges::range_reference_t<field_t>>
+        requires detail::genotype_bcf_style_reader_concept<std::ranges::range_reference_t<field_t>>
     void parse_field(vtag_t<field::genotypes> const & /**/, field_t & parsed_field)
     {
         using genotype_field_t = std::ranges::range_reference_t<field_t>;
@@ -528,7 +528,8 @@ private:
     }
 
     //!\brief Overload for parsing vcf style GENOTYPES.
-    void parse_field(vtag_t<field::genotypes> const & /**/, detail::genotypes_vcf_style_concept auto & parsed_field)
+    void parse_field(vtag_t<field::genotypes> const & /**/,
+                     detail::genotypes_vcf_style_reader_concept auto & parsed_field)
     {
         size_t column_number          = file_it->fields.size();
         size_t expected_column_number = header.column_labels.size();

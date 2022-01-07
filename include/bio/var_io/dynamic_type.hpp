@@ -47,7 +47,10 @@ enum class dynamic_type_id
  * \ingroup var_io
  * \details
  *
- * TODO
+ * This variant is used to hold values for the INFO field in VCF and BCF, and for the GENOTYPES
+ * field in VCF.
+ * Since the type of such fields is determined at run-time (depends on values in header), variables
+ * of "dynamic type" can be set to different types at run-time.
  */
 template <ownership own = ownership::shallow>
 using dynamic_type =
@@ -68,7 +71,7 @@ using dynamic_type =
  * \details
  *
  * This type is similar to bio::var_io::dynamic_type except that it encodes a range of the respective types.
- * It is used for the genotype field in VCF/BCF files.
+ * It is used only to encode the genotype field in BCF files.
  *
  * It does not contain an entry for bio::var_io::dynamic_type_id::flag, because flags cannot appear in
  * the genotype field.
@@ -113,6 +116,52 @@ concept is_dynamic_type = one_of<t, var_io::dynamic_type<ownership::shallow>, va
 template <typename t>
 concept is_dynamic_vector_type =
   one_of<t, var_io::dynamic_vector_type<ownership::shallow>, var_io::dynamic_vector_type<ownership::deep>>;
+
+template <typename t>
+concept var_io_legal_type_aux =
+  std::same_as<t, char> || std::signed_integral<t> || std::floating_point<t> || std::same_as < std::decay_t<t>,
+char const * > ;
+
+/*!\interface bio::detail::var_io_legal_type <>
+ * \tparam t The type to check.
+ * \brief A type that is similar to one of the alternatives of bio::var_io::dynamic_type
+ */
+//!\cond CONCEPT_DEF
+template <typename t>
+concept var_io_legal_type = var_io_legal_type_aux<std::remove_cvref_t<t>> || std::same_as<t const &, bool const &> ||
+  (std::ranges::forward_range<t> && (var_io_legal_type_aux<std::remove_cvref_t<std::ranges::range_reference_t<t>>> ||
+                                     (std::ranges::forward_range<std::ranges::range_reference_t<t>> &&
+                                      std::same_as<char const &, std::ranges::range_reference_t<t> const &>)));
+//!\endcond
+
+/*!\interface bio::detail::var_io_legal_vector_type <>
+ * \tparam t The type to check.
+ * \brief A type that is similar to one of the alternatives of bio::var_io::dynamic_type
+ */
+//!\cond CONCEPT_DEF
+template <typename t>
+concept var_io_legal_vector_type =
+  std::ranges::forward_range<t> && var_io_legal_type<std::ranges::range_reference_t<t>> &&
+  !std::same_as<bool const &, std::ranges::range_reference_t<t>>;
+//!\endcond
+
+/*!\interface bio::detail::var_io_legal_or_dynamic <>
+ * \tparam t The type to check.
+ * \brief A type that is similar to one of the alternatives of bio::var_io::dynamic_type
+ */
+//!\cond CONCEPT_DEF
+template <typename t>
+concept var_io_legal_or_dynamic = var_io_legal_type<t> || is_dynamic_type<t>;
+//!\endcond
+
+/*!\interface bio::detail::var_io_vector_legal_or_dynamic <>
+ * \tparam t The type to check.
+ * \brief A type that is similar to one of the alternatives of bio::var_io::dynamic_type
+ */
+//!\cond CONCEPT_DEF
+template <typename t>
+concept var_io_vector_legal_or_dynamic = var_io_legal_vector_type<t> || is_dynamic_vector_type<t>;
+//!\endcond
 
 /*!\brief Initialise an object of dynamic type to a given ID.
  * \tparam     t        Type of the output

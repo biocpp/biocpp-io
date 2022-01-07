@@ -322,3 +322,205 @@ auto example_records_bcf_style()
 
     return recs;
 }
+
+auto example_records_novariant()
+{
+    using namespace std::string_view_literals;
+
+    bio::var_io::record_private_data priv{};
+    constexpr int32_t mv = bio::var_io::missing_value<int32_t>;
+    using ivec          = std::vector<int32_t>;
+    using ivecvec       = std::vector<std::vector<int32_t>>;
+    using fvec          = std::vector<float>;
+    using svec          = std::vector<std::string_view>;
+
+    auto rec0 = bio::make_record(bio::var_io::default_field_ids,
+                                 "20",
+                                 14370,
+                                 "rs6054257",
+                                 "G",
+                                 svec{"A"},
+                                 29.0,
+                                 svec{"PASS"},
+                                 std::tuple{std::pair{"NS", 3},
+                                            std::pair{"DP", 14},
+                                            std::pair{"AF", fvec{0.5f}},
+                                            std::pair{"DB", true},
+                                            std::pair{"H2", true}},
+                                 std::tuple{std::pair{"GT", svec{"0|0", "1|0", "1/1"}},
+                                            std::pair{"GQ", ivec{48, 48, 43}},
+                                            std::pair{"DP", ivec{1, 8, 5}},
+                                            std::pair{"HQ", ivecvec{{51,51}, {51,51}, {mv,mv} }}},
+                                 priv);
+
+    auto rec1 = bio::make_record(bio::var_io::default_field_ids,
+                                 "20",
+                                 17330,
+                                 ".",
+                                 "T",
+                                 svec{"A"},
+                                 3.0,
+                                 svec{"q10"},
+                                 std::tuple{std::pair{"NS", 3},
+                                            std::pair{"DP", 11},
+                                            std::pair{"AF", fvec{0.017f}}},
+                                 std::tuple{std::pair{"GT", svec{"0|0", "0|1", "0/0"}},
+                                            std::pair{"GQ", ivec{49,  3, 41}},
+                                            std::pair{"DP", ivec{3, 5, 3}},
+                                            std::pair{"HQ", ivecvec{{58,50}, {65, 3}}}},
+                                 priv);
+
+    auto rec2 = bio::make_record(bio::var_io::default_field_ids,
+                                 "20",
+                                 1110696,
+                                 "rs6040355",
+                                 "A",
+                                 svec{"G","T"},
+                                 67,
+                                 svec{"PASS"},
+                                 std::tuple{std::pair{"NS",2},
+                                            std::pair{"DP", 10},
+                                            std::pair{"AF", fvec{0.333f,0.667f}},
+                                            std::pair{"AA", "T"},
+                                            std::pair{"DB", true}},
+                                 std::tuple{std::pair{"GT", svec{"1|2", "2|1", "2/2"}},
+                                            std::pair{"GQ", ivec{21,  2, 35}},
+                                            std::pair{"DP", ivec{6, 0, 4}},
+                                            std::pair{"HQ", ivecvec{{23,27}, {18, 2}}}},
+                                 priv);
+
+    auto rec3 = bio::make_record(bio::var_io::default_field_ids,
+                                 "20",
+                                 1230237,
+                                 ".",
+                                 "T",
+                                 svec{},
+                                 47,
+                                 svec{"PASS"},
+                                 std::tuple{std::pair{"NS",3},
+                                            std::pair{"DP", 13},
+                                            std::pair{"AA", "T"} },
+                                 std::tuple{std::pair{"GT", svec{"0|0", "0|0", "0/0"}},
+                                            std::pair{"GQ", ivec{54, 48, 61}},
+                                            std::pair{"DP", ivec{7, 4, 2}},
+                                            std::pair{"HQ", ivecvec{{56,60}, {51,51}}}},
+                                 priv);
+    auto rec4 = bio::make_record(bio::var_io::default_field_ids,
+                                 "20",
+                                 1234567,
+                                 "microsat1",
+                                 "GTC",
+                                 svec{"G","GTCT"},
+                                 50,
+                                 svec{"PASS"},
+                                 std::tuple{std::pair{"NS",3},
+                                            std::pair{"DP", 9 },
+                                            std::pair{"AA", "G"}},
+                                 std::tuple{std::pair{"GT", svec{"0/1", "0/2", "1/1"}},
+                                            std::pair{"GQ", ivec{35, 17, 40}},
+                                            std::pair{"DP", ivec{4, 2, 3}}},
+                                 priv);
+
+    return std::tuple{rec0, rec1, rec2, rec3, rec4};
+}
+
+auto example_records_novariant_vcf_style_genotypes()
+{
+    using namespace std::string_view_literals;
+
+    bio::var_io::record_private_data priv{};
+    constexpr int32_t mv = bio::var_io::missing_value<int32_t>;
+    using ivec          = std::vector<int32_t>;
+    using fvec          = std::vector<float>;
+    using svec          = std::vector<std::string_view>;
+
+    auto rec0 = bio::make_record(bio::var_io::default_field_ids,
+                                 "20",
+                                 14370,
+                                 "rs6054257",
+                                 "G",
+                                 svec{"A"},
+                                 29.0,
+                                 svec{"PASS"},
+                                 std::tuple{std::pair{"NS", 3},
+                                            std::pair{"DP", 14},
+                                            std::pair{"AF", fvec{0.5f}},
+                                            std::pair{"DB", true},
+                                            std::pair{"H2", true}},
+                                 std::pair{svec{"GT", "GQ", "DP", "HQ"},
+                                           std::tuple{std::tuple{"0|0", 48,1,ivec{51,51}},
+                                                      std::tuple{"1|0",48,8,ivec{51,51}},
+                                                      std::tuple{"1/1",43,5,ivec{mv,mv}}}},
+                                 priv);
+
+    auto rec1 = bio::make_record(bio::var_io::default_field_ids,
+                                 "20",
+                                 17330,
+                                 ".",
+                                 "T",
+                                 svec{"A"},
+                                 3.0,
+                                 svec{"q10"},
+                                 std::tuple{std::pair{"NS", 3},
+                                            std::pair{"DP", 11},
+                                            std::pair{"AF", fvec{0.017f}}},
+                                 std::pair{svec{"GT", "GQ", "DP", "HQ"},
+                                           std::tuple{std::tuple{"0|0",49,3,ivec{58,50}},
+                                                      std::tuple{"0|1", 3,5,ivec{65, 3}},
+                                                      std::tuple{"0/0",41,3}}},
+                                 priv);
+
+    auto rec2 = bio::make_record(bio::var_io::default_field_ids,
+                                 "20",
+                                 1110696,
+                                 "rs6040355",
+                                 "A",
+                                 svec{"G","T"},
+                                 67,
+                                 svec{"PASS"},
+                                 std::tuple{std::pair{"NS",2},
+                                            std::pair{"DP", 10},
+                                            std::pair{"AF", fvec{0.333f,0.667f}},
+                                            std::pair{"AA", "T"},
+                                            std::pair{"DB", true}},
+                                 std::pair{svec{"GT", "GQ", "DP", "HQ"},
+                                           std::tuple{std::tuple{"1|2",21,6,ivec{23,27}},
+                                                      std::tuple{"2|1", 2,0,ivec{18, 2}},
+                                                      std::tuple{"2/2",35,4}}},
+                                 priv);
+
+    auto rec3 = bio::make_record(bio::var_io::default_field_ids,
+                                 "20",
+                                 1230237,
+                                 ".",
+                                 "T",
+                                 svec{},
+                                 47,
+                                 svec{"PASS"},
+                                 std::tuple{std::pair{"NS",3},
+                                            std::pair{"DP", 13},
+                                            std::pair{"AA", "T"} },
+                                 std::pair{svec{"GT", "GQ", "DP", "HQ"},
+                                           std::tuple{std::tuple{"0|0",54,7,ivec{56,60}},
+                                                      std::tuple{"0|0",48,4,ivec{51,51}},
+                                                      std::tuple{"0/0",61,2}}},
+                                 priv);
+    auto rec4 = bio::make_record(bio::var_io::default_field_ids,
+                                 "20",
+                                 1234567,
+                                 "microsat1",
+                                 "GTC",
+                                 svec{"G","GTCT"},
+                                 50,
+                                 svec{"PASS"},
+                                 std::tuple{std::pair{"NS",3},
+                                            std::pair{"DP", 9 },
+                                            std::pair{"AA", "G"}},
+                                 std::pair{svec{"GT", "GQ", "DP"},
+                                           std::tuple{std::tuple{"0/1",35,4},
+                                                      std::tuple{"0/2",17,2},
+                                                      std::tuple{"1/1",40,3}}},
+                                 priv);
+
+    return std::tuple{rec0, rec1, rec2, rec3, rec4};
+}

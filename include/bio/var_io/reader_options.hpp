@@ -35,35 +35,35 @@
 namespace bio::detail
 {
 
-/*!\interface bio::detail::info_element_concept <>
+/*!\interface bio::detail::info_element_reader_concept <>
  * \tparam t The type to check.
  * \brief Types "similar" to bio::var_io::info_element / bio::var_io::info_element_bcf.
  */
 //!\cond CONCEPT_DEF
 template <typename t>
-concept info_element_concept = detail::decomposable_into_two<t> &&
+concept info_element_reader_concept = detail::decomposable_into_two<t> &&
   (detail::out_string<detail::first_elem_t<t>> ||
    std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::is_dynamic_type<detail::second_elem_t<t>>;
 //!\endcond
 
-/*!\interface bio::detail::genotype_bcf_style_concept <>
+/*!\interface bio::detail::genotype_bcf_style_reader_concept <>
  * \tparam t The type to check.
  * \brief Types "similar" to bio::var_io::genotype_element / bio::var_io::genotype_element_bcf.
  */
 //!\cond CONCEPT_DEF
 template <typename t>
-concept genotype_bcf_style_concept = detail::decomposable_into_two<t> &&
+concept genotype_bcf_style_reader_concept = detail::decomposable_into_two<t> &&
   (detail::out_string<detail::first_elem_t<t>> ||
    std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::is_dynamic_vector_type<detail::second_elem_t<t>>;
 //!\endcond
 
-/*!\interface bio::detail::genotypes_vcf_style_concept <>
+/*!\interface bio::detail::genotypes_vcf_style_reader_concept <>
  * \tparam t The type to check.
  * \brief Types "similar" to bio::var_io::genotypes_vcf_style
  */
 //!\cond CONCEPT_DEF
 template <typename t>
-concept genotypes_vcf_style_concept =
+concept genotypes_vcf_style_reader_concept =
   detail::decomposable_into_two<t> && detail::back_insertable<detail::first_elem_t<t>> &&
   detail::out_string<std::ranges::range_reference_t<detail::first_elem_t<t>>> &&
   detail::vector_like<detail::second_elem_t<t>> &&
@@ -317,7 +317,7 @@ private:
       detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
         !field_ids_t::contains(field::info) ||
         (detail::back_insertable<record_element_t<field::info, rec_t>> &&
-         detail::info_element_concept<
+         detail::info_element_reader_concept<
            std::remove_reference_t<std::ranges::range_reference_t<record_element_t<field::info, rec_t>>>>)) {
           return std::true_type{};
       }),
@@ -327,9 +327,11 @@ private:
       detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
         !field_ids_t::contains(field::genotypes) ||
         (detail::back_insertable<record_element_t<field::genotypes, rec_t>> &&
-         detail::genotype_bcf_style_concept<
+         detail::genotype_bcf_style_reader_concept<
            std::remove_reference_t<std::ranges::range_reference_t<record_element_t<field::genotypes, rec_t>>>>) ||
-        detail::genotypes_vcf_style_concept<record_element_t<field::genotypes, rec_t>>) { return std::true_type{}; }),
+        detail::genotypes_vcf_style_reader_concept<record_element_t<field::genotypes, rec_t>>) {
+          return std::true_type{};
+      }),
       "Requirements for the field-type of the GENOTYPES-field not met. See documentation for "
       "bio::var_io::reader_options.");
 };

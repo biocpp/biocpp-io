@@ -759,7 +759,7 @@ private:
 
     //!\brief Reading of the INFO field.
     template <detail::back_insertable parsed_field_t>
-        requires detail::info_element_concept<std::ranges::range_reference_t<parsed_field_t>>
+        requires detail::info_element_reader_concept<std::ranges::range_reference_t<parsed_field_t>>
     void parse_field(vtag_t<field::info> const & /**/, parsed_field_t & parsed_field)
     {
         std::span<std::byte const> raw_field = get<field::info>(raw_record);
@@ -923,7 +923,7 @@ private:
 
     //!\brief Reading of the GENOTYPES field (BCF-style).
     template <detail::back_insertable field_t>
-        requires detail::genotype_bcf_style_concept<std::ranges::range_reference_t<field_t>>
+        requires detail::genotype_bcf_style_reader_concept<std::ranges::range_reference_t<field_t>>
     void parse_field(vtag_t<field::genotypes> const & /**/, field_t & parsed_field)
     {
         parse_genotypes_impl(parsed_field);
@@ -962,7 +962,8 @@ private:
     }
 
     //!\brief Reading of the GENOTYPES field (VCF-style).
-    void parse_field(vtag_t<field::genotypes> const & /**/, detail::genotypes_vcf_style_concept auto & parsed_field)
+    void parse_field(vtag_t<field::genotypes> const & /**/,
+                     detail::genotypes_vcf_style_reader_concept auto & parsed_field)
     {
         using parsed_field_t = decltype(parsed_field);
         using dyn_t = std::ranges::range_value_t<std::ranges::range_reference_t<detail::second_elem_t<parsed_field_t>>>;

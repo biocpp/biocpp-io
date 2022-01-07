@@ -97,7 +97,15 @@ private:
     static constexpr auto views_get_second =
       std::views::transform([](auto & pair) -> decltype(auto) { return detail::get_second(pair); });
 
-    //!\brief Write the elements of the range, comma-delimited.
+    //!\brief Get the size of a range or dynamic_vector_type.
+    static size_t dyn_vec_size(auto & in)
+    {
+        if constexpr (detail::is_dynamic_vector_type<std::remove_cvref_t<decltype(in)>>)
+            return std::visit([](auto & val) { return std::ranges::size(val); }, in);
+        else
+            return std::ranges::size(in);
+    }
+    //!\brief Write the elements of the rangeor tuple, char-delimited.
     void write_delimited(std::ranges::input_range auto && range, char const delim, auto && func)
     {
         if (std::ranges::empty(range))
@@ -135,8 +143,24 @@ private:
         }
     }
 
-    //!\brief Write variant.
-    void write_variant(detail::is_dynamic_type auto const & var)
+    //!\overload
+    void write_delimited(auto && tup, char const delim, auto && func)
+    {
+        if constexpr (std::tuple_size_v<std::remove_cvref_t<decltype(tup)>> == 0)
+            it = '.';
+        else
+        {
+            auto pack_for_each = [&](auto &&... args)
+            {
+                bool first_elem = true;
+                (((first_elem ? (first_elem = false, it) : it = delim), func(std::forward<decltype(args)>(args))), ...);
+            };
+            std::apply(pack_for_each, std::forward<decltype(tup)>(tup));
+        }
+    }
+
+    //!\brief Write variant or a type that is given inplace of a variant.
+    void write_variant(auto const & var)
     {
         auto visitor = [&](auto const & param)
         {
@@ -153,16 +177,77 @@ private:
                 }
             }
         };
-        std::visit(visitor, var);
+
+        if constexpr (detail::is_dynamic_type<std::remove_cvref_t<decltype(var)>>)
+            std::visit(visitor, var);
+        else
+            visitor(var);
     }
 
-    //!\brief Write variant and verify type_id.
-    void write_variant(detail::is_dynamic_type auto const & var, var_io::dynamic_type_id const type_id)
+    //!\brief Write variant or a type that is given inplace of a variant; possibly verify.
+    void write_variant(auto const & var, var_io::dynamic_type_id const type_id)
     {
-        if (static_cast<size_t>(type_id) != var.index())
-            throw format_error{"The variant was not in the proper state."}; // TODO improve text
+        if constexpr (detail::is_dynamic_type<std::remove_cvref_t<decltype(var)>>)
+        {
+            if (static_cast<size_t>(type_id) != var.index())
+                throw format_error{"The variant was not in the proper state."}; // TODO improve text
+        }
+        else
+        {
+            // TODO verify that type corresponds to the type_id given?
+        }
 
         write_variant(var);
+    }
+
+    //!\brief Write a vector variant or a type that is given in place of one.
+    void write_vector_variant(auto const &                var,
+                              std::vector<size_t> const & lengths,
+                              size_t const                i_sample,
+                              size_t const                i_field)
+    {
+        // var is always a vector and sometimes vector-of-vector
+        auto visitor = [&](auto & param)
+        {
+            using param_t     = std::remove_cvref_t<decltype(param)>;
+            using param_ref_t = std::remove_cvref_t<std::ranges::range_reference_t<param_t>>;
+
+            if (i_sample < param.size()) // param.size() is equal to lengths[i_field]
+            {
+                if (i_field > 0)
+                    it = ':';
+
+                if constexpr (std::ranges::input_range<param_ref_t> && !detail::char_range<param_ref_t>)
+                    write_delimited(param[i_sample], ',');
+                else
+                    write_field_aux(param[i_sample]);
+            }
+            else
+            {
+                // when this field and all following field for this sample are empty, omit all of them
+                bool is_trailing = true;
+                for (size_t k = i_field; k < std::ranges::size(lengths); ++k)
+                {
+                    if (i_sample < lengths[k])
+                    {
+                        is_trailing = false;
+                        break;
+                    }
+                }
+
+                if (!is_trailing)
+                {
+                    if (i_field > 0)
+                        it = ':';
+                    it = '.';
+                }
+            }
+        };
+
+        if constexpr (detail::is_dynamic_vector_type<std::remove_cvref_t<decltype(var)>>)
+            std::visit(visitor, var);
+        else
+            visitor(var);
     }
 
     //!\brief Implementation for writing the ID field.
@@ -193,36 +278,24 @@ private:
     {
         using pair_t = decltype(pair);
         using key_t  = detail::first_elem_t<pair_t>;
-        using val_t  = detail::second_elem_t<pair_t>;
 
         auto & [key, val] = pair;
 
         write_id(header->infos, header->idx_to_info_pos(), key);
 
-        if constexpr (detail::is_dynamic_type<val_t>) // all fields that aren't flags have second part
-        {
-            size_t pos = -1;
+        size_t pos = -1;
 
-            if constexpr (std::integral<key_t>)
-                pos = header->idx_to_info_pos().at(key);
-            else
-                pos = header->string_to_info_pos().at(key);
-
-            var_io::dynamic_type_id type_id = header->infos[pos].type;
-
-            if (type_id != var_io::dynamic_type_id::flag)
-            {
-                it = '=';
-                write_variant(val, type_id);
-            }
-        }
+        if constexpr (std::integral<key_t>)
+            pos = header->idx_to_info_pos().at(key);
         else
+            pos = header->string_to_info_pos().at(key);
+
+        var_io::dynamic_type_id type_id = header->infos[pos].type;
+
+        if (type_id != var_io::dynamic_type_id::flag) // all fields that aren't flags have second part
         {
-            if (!std::ranges::empty(val))
-            {
-                it = '=';
-                write_field_aux(val);
-            }
+            it = '=';
+            write_variant(val, type_id);
         }
     }
 
@@ -288,18 +361,27 @@ private:
         write_delimited(range, ';', func);
     }
 
-    //!\brief Overload for INFO; vector of pairs.
+    //!\brief Overload for INFO; range of pairs.
     template <std::ranges::input_range rng_t>
-        requires(detail::info_element_concept<std::ranges::range_reference_t<rng_t>>)
+        requires(detail::info_element_writer_concept<std::ranges::range_reference_t<rng_t>>)
     void write_field(vtag_t<field::info> /**/, rng_t & range)
     {
-        auto func = [this](auto const & field) { write_info_pair(field); };
+        auto func = [&](auto const & field) { write_info_pair(field); };
         write_delimited(range, ';', func);
+    }
+
+    //!\brief Overload for INFO; range of pairs.
+    template <typename... elem_ts>
+        requires(detail::info_element_writer_concept<elem_ts> &&...)
+    void write_field(vtag_t<field::info> /**/, std::tuple<elem_ts...> & tup) // TODO add const version
+    {
+        auto func = [&](auto const & field) { write_info_pair(field); };
+        write_delimited(tup, ';', func);
     }
 
     //!\brief Overload for GENOTYPES; genotypes_bcf_style.
     template <std::ranges::forward_range range_t>
-        requires(detail::genotype_bcf_style_concept<std::ranges::range_reference_t<range_t>>)
+        requires(detail::genotype_bcf_style_writer_concept<std::ranges::range_reference_t<range_t>>)
     void write_field(vtag_t<field::genotypes> /**/, range_t & range)
     {
         if (header->column_labels.size() <= 8)
@@ -318,67 +400,63 @@ private:
         size_t n_samples = header->column_labels.size() - 9;
 
         std::vector<size_t> lengths;
-        std::ranges::copy(
-          range | views_get_second |
-            std::views::transform([](auto const & var)
-                                  { return std::visit([](auto const & vec) { return vec.size(); }, var); }),
-          std::back_insert_iterator{lengths});
+        std::ranges::copy(range | views_get_second |
+                            std::views::transform([](auto & var) { return dyn_vec_size(var); }),
+                          std::back_insert_iterator{lengths});
 
-        for (size_t i = 0; i < n_samples; ++i) // for every sample
+        for (size_t i_sample = 0; i_sample < n_samples; ++i_sample) // for every sample
         {
-            for (size_t j = 0; j < std::ranges::size(range); ++j) // for every field
+            for (size_t i_field = 0; i_field < std::ranges::size(range); ++i_field) // for every field
+                write_vector_variant(detail::get_second(range[i_field]), lengths, i_sample, i_field);
+
+            if (i_sample < n_samples - 1)
+                it = '\t';
+        }
+    }
+
+    //!\brief Overload for GENOTYPES; genotypes_bcf_style; nonvariant
+    template <typename... elem_ts>
+        requires(detail::genotype_bcf_style_writer_concept<std::remove_cvref_t<elem_ts>> &&...)
+    void write_field(vtag_t<field::genotypes> /**/, std::tuple<elem_ts...> & tup)
+    {
+        if (header->column_labels.size() <= 8)
+            return;
+
+        /* format field */
+        auto print_format = [&](auto & pair)
+        { write_id(header->formats, header->idx_to_format_pos(), detail::get_first(pair)); };
+        write_delimited(tup, ':', print_format);
+
+        if (header->column_labels.size() <= 9)
+            return;
+
+        it = '\t';
+
+        /* sample fields */
+        size_t n_samples = header->column_labels.size() - 9;
+
+        std::vector<size_t> lengths;
+        auto                add_sizes = [&](auto const &... pairs)
+        { (lengths.push_back(dyn_vec_size(detail::get_second(pairs))), ...); };
+        std::apply(add_sizes, tup);
+
+        for (size_t i_sample = 0; i_sample < n_samples; ++i_sample) // for every sample
+        {
+            auto write_fields = [&]<typename tup_t, size_t... i_field>(tup_t const & tup,
+                                                                       std::index_sequence<i_field...>)
             {
-                auto visitor = [&](auto const & param) // this is always a vector and sometimes vector-of-vector
-                {
-                    using param_t     = std::remove_cvref_t<decltype(param)>;
-                    using param_ref_t = std::remove_cvref_t<std::ranges::range_reference_t<param_t>>;
+                (write_vector_variant(detail::get_second(std::get<i_field>(tup)), lengths, i_sample, i_field), ...);
+            };
 
-                    if (i < param.size()) // param.size() is equal to lengths[j]
-                    {
-                        if (j > 0)
-                            it = ':';
+            write_fields(tup, std::make_index_sequence<sizeof...(elem_ts)>{});
 
-                        if constexpr (std::ranges::input_range<param_ref_t> && !detail::char_range<param_ref_t>)
-                        {
-                            write_delimited(param[i], ',');
-                        }
-                        else
-                        {
-                            write_field_aux(param[i]);
-                        }
-                    }
-                    else
-                    {
-                        // when this field and all following field for this sample are empty, omit all of them
-                        bool is_trailing = true;
-                        for (size_t k = j; k < std::ranges::size(range); ++k)
-                        {
-                            if (i < lengths[k])
-                            {
-                                is_trailing = false;
-                                break;
-                            }
-                        }
-
-                        if (!is_trailing)
-                        {
-                            if (j > 0)
-                                it = ':';
-                            it = '.';
-                        }
-                    }
-                };
-
-                std::visit(visitor, detail::get_second(range[j]));
-            }
-
-            if (i < n_samples - 1)
+            if (i_sample < n_samples - 1)
                 it = '\t';
         }
     }
 
     //!\brief Overload for GENOTYPES; genotypes_vcf_style
-    void write_field(vtag_t<field::genotypes> /**/, detail::genotypes_vcf_style_concept auto & field)
+    void write_field(vtag_t<field::genotypes> /**/, detail::genotypes_vcf_style_writer_concept auto & field)
     {
         if (header->column_labels.size() <= 8)
             return;
@@ -393,6 +471,7 @@ private:
             return;
 
         /* samples */
+        // functional programming for the win! [this works for tuples and ranges!]
         auto write_var    = [&](auto const & var) { write_variant(var); };
         auto write_sample = [&](auto const & sample) { write_delimited(sample, ':', write_var); };
         write_delimited(samples, '\t', write_sample);
