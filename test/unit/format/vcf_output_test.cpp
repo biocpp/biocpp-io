@@ -25,8 +25,6 @@ enum class style
 template <style s, bio::ownership own>
 void field_types()
 {
-    using namespace std::literals;
-
     std::ostringstream ostr{};
 
     {
@@ -81,4 +79,42 @@ TEST(vcf_output, bcf_style_shallow)
 TEST(vcf_output, bcf_style_deep)
 {
     field_types<style::bcf, bio::ownership::deep>();
+}
+
+TEST(vcf_output, novariant)
+{
+    std::ostringstream ostr{};
+
+    {
+        bio::format_output_handler<bio::vcf> handler{ostr, bio::var_io::writer_options{}};
+
+        bio::var_io::header hdr{example_from_spec_header};
+        hdr.add_missing();
+        handler.set_header(std::move(hdr));
+
+        auto records = example_records_novariant(); // < records is a tuple here
+
+        std::apply([&](auto &... recs) { (handler.write_record(recs), ...); }, records);
+    }
+
+    EXPECT_EQ(ostr.str(), example_from_spec_header_regenerated_no_IDX + example_from_spec_records);
+}
+
+TEST(vcf_output, novariant_vcf_style_genotypes)
+{
+    std::ostringstream ostr{};
+
+    {
+        bio::format_output_handler<bio::vcf> handler{ostr, bio::var_io::writer_options{}};
+
+        bio::var_io::header hdr{example_from_spec_header};
+        hdr.add_missing();
+        handler.set_header(std::move(hdr));
+
+        auto records = example_records_novariant_vcf_style_genotypes(); // < records is a tuple here
+
+        std::apply([&](auto &... recs) { (handler.write_record(recs), ...); }, records);
+    }
+
+    EXPECT_EQ(ostr.str(), example_from_spec_header_regenerated_no_IDX + example_from_spec_records);
 }

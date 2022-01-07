@@ -376,7 +376,7 @@ auto const && get(record<field_ids, field_types> const && r)
  */
 template <auto... field_ids, typename... field_type_ts>
 constexpr auto make_record(vtag_t<field_ids...>, field_type_ts &&... fields)
-  -> record<vtag_t<field_ids...>, seqan3::type_list<std::remove_cvref_t<field_type_ts>...>>
+  -> record<vtag_t<field_ids...>, seqan3::type_list<std::decay_t<field_type_ts>...>>
 {
     return {std::forward<field_type_ts>(fields)...};
 }
