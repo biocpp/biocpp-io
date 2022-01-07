@@ -18,6 +18,10 @@
 #include "bcf_data.hpp"
 #include "vcf_data.hpp"
 
+//-----------------------------------------------------------------------------
+// low level stuff
+//-----------------------------------------------------------------------------
+
 TEST(bcf, iterator)
 {
     std::istringstream       istream{static_cast<std::string>(example_from_spec_bcf)};
@@ -90,107 +94,107 @@ TEST(bcf, iterator_underflow)
     EXPECT_TRUE(it == std::default_sentinel);
 }
 
-template <bio::ownership own>
-void field_types_bcf_style()
-{
-    std::istringstream       istream{static_cast<std::string>(example_from_spec_bcf)};
-    bio::transparent_istream str{istream};
+//-----------------------------------------------------------------------------
+// actual parsing
+//-----------------------------------------------------------------------------
 
-    using record_t =
-      bio::record<decltype(bio::var_io::default_field_ids), decltype(bio::var_io::field_types_bcf_style<own>)>;
+enum class style
+{
+    def,
+    vcf,
+    bcf
+};
+
+template <style s, bio::ownership own>
+void field_types()
+{
+    std::istringstream       istr{std::string{example_from_spec_bcf}};
+    bio::transparent_istream str{istr};
 
     bio::format_input_handler<bio::bcf> handler{str, bio::var_io::reader_options{}};
 
     bio::var_io::record_private_data priv{&handler.get_header()};
 
-    auto compare_recs = example_records_bcf_style<own, int8_t>();
+    using fields_t = std::conditional_t<s == style::def,
+                                        decltype(bio::var_io::field_types<own>),
+                                        std::conditional_t<s == style::vcf,
+                                                           decltype(bio::var_io::field_types_vcf_style<own>),
+                                                           decltype(bio::var_io::field_types_bcf_style<own>)>>;
+    using record_t = bio::record<decltype(bio::var_io::default_field_ids), fields_t>;
+
+    std::vector<record_t> recs;
+
+    if constexpr (s == style::def)
+        recs = example_records_default_style<own, int8_t>();
+    else if constexpr (s == style::vcf)
+        recs = example_records_vcf_style<own, int8_t>();
+    else
+        recs = example_records_bcf_style<own, int8_t>();
 
     // this workaround is pending clarification in https://github.com/samtools/hts-specs/issues/593
-    std::get<std::vector<std::vector<int8_t>>>(bio::detail::get_second(compare_recs[1].genotypes().back()))
-      .push_back({-128});
-    std::get<std::vector<std::vector<int8_t>>>(bio::detail::get_second(compare_recs[2].genotypes().back()))
-      .push_back({-128});
-    std::get<std::vector<std::vector<int8_t>>>(bio::detail::get_second(compare_recs[3].genotypes().back()))
-      .push_back({-128});
+    if constexpr (s == style::vcf)
+    {
+        bio::detail::get_second(recs[1].genotypes()).back().push_back(std::vector<int8_t>{-128});
+        bio::detail::get_second(recs[2].genotypes()).back().push_back(std::vector<int8_t>{-128});
+        bio::detail::get_second(recs[3].genotypes()).back().push_back(std::vector<int8_t>{-128});
+    }
+    else
+    {
+        std::get<std::vector<std::vector<int8_t>>>(bio::detail::get_second(recs[1].genotypes().back()))
+          .push_back({-128});
+        std::get<std::vector<std::vector<int8_t>>>(bio::detail::get_second(recs[2].genotypes().back()))
+          .push_back({-128});
+        std::get<std::vector<std::vector<int8_t>>>(bio::detail::get_second(recs[3].genotypes().back()))
+          .push_back({-128});
+    }
 
-    for (auto & rec : compare_recs)
+    for (auto & rec : recs)
         get<bio::field::_private>(rec) = priv;
 
     record_t rec;
 
     handler.parse_next_record_into(rec);
-    EXPECT_EQ(rec, compare_recs[0]);
+    EXPECT_EQ(rec, recs[0]);
 
     handler.parse_next_record_into(rec);
-    EXPECT_EQ(rec, compare_recs[1]);
+    EXPECT_EQ(rec, recs[1]);
 
     handler.parse_next_record_into(rec);
-    EXPECT_EQ(rec, compare_recs[2]);
+    EXPECT_EQ(rec, recs[2]);
 
     handler.parse_next_record_into(rec);
-    EXPECT_EQ(rec, compare_recs[3]);
+    EXPECT_EQ(rec, recs[3]);
 
     handler.parse_next_record_into(rec);
-    EXPECT_EQ(rec, compare_recs[4]);
+    EXPECT_EQ(rec, recs[4]);
 }
 
-TEST(bcf, field_types_bcf_style_shallow)
+TEST(bcf, field_types_default_style_shallow)
 {
-    field_types_bcf_style<bio::ownership::shallow>();
+    field_types<style::def, bio::ownership::shallow>();
 }
 
-TEST(bcf, field_types_bcf_style_deep)
+TEST(bcf, field_types_default_style_deep)
 {
-    field_types_bcf_style<bio::ownership::deep>();
-}
-
-template <bio::ownership own>
-void field_types_vcf_style()
-{
-    std::istringstream       istream{static_cast<std::string>(example_from_spec_bcf)};
-    bio::transparent_istream str{istream};
-
-    using record_t =
-      bio::record<decltype(bio::var_io::default_field_ids), decltype(bio::var_io::field_types_vcf_style<own>)>;
-
-    bio::format_input_handler<bio::bcf> handler{str, bio::var_io::reader_options{}};
-
-    bio::var_io::record_private_data priv{&handler.get_header()};
-
-    auto compare_recs = example_records_vcf_style<own, int8_t>();
-
-    // this workaround is pending clarification in https://github.com/samtools/hts-specs/issues/593
-    bio::detail::get_second(compare_recs[1].genotypes()).back().push_back(std::vector<int8_t>{-128});
-    bio::detail::get_second(compare_recs[2].genotypes()).back().push_back(std::vector<int8_t>{-128});
-    bio::detail::get_second(compare_recs[3].genotypes()).back().push_back(std::vector<int8_t>{-128});
-
-    for (auto & rec : compare_recs)
-        get<bio::field::_private>(rec) = priv;
-
-    record_t rec;
-
-    handler.parse_next_record_into(rec);
-    EXPECT_EQ(rec, compare_recs[0]);
-
-    handler.parse_next_record_into(rec);
-    EXPECT_EQ(rec, compare_recs[1]);
-
-    handler.parse_next_record_into(rec);
-    EXPECT_EQ(rec, compare_recs[2]);
-
-    handler.parse_next_record_into(rec);
-    EXPECT_EQ(rec, compare_recs[3]);
-
-    handler.parse_next_record_into(rec);
-    EXPECT_EQ(rec, compare_recs[4]);
+    field_types<style::def, bio::ownership::deep>();
 }
 
 TEST(bcf, field_types_vcf_style_shallow)
 {
-    field_types_vcf_style<bio::ownership::shallow>();
+    field_types<style::vcf, bio::ownership::shallow>();
 }
 
 TEST(bcf, field_types_vcf_style_deep)
 {
-    field_types_vcf_style<bio::ownership::deep>();
+    field_types<style::vcf, bio::ownership::deep>();
+}
+
+TEST(bcf, field_types_bcf_style_shallow)
+{
+    field_types<style::bcf, bio::ownership::shallow>();
+}
+
+TEST(bcf, field_types_bcf_style_deep)
+{
+    field_types<style::bcf, bio::ownership::deep>();
 }

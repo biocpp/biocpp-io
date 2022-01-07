@@ -742,7 +742,7 @@ private:
 
     //!\overload
     template <detail::back_insertable parsed_field_t>
-        requires detail::char_range<std::ranges::range_reference_t<parsed_field_t>>
+        requires detail::out_string<std::ranges::range_reference_t<parsed_field_t>>
     void parse_field(vtag_t<field::filter> const & /**/, parsed_field_t & parsed_field)
     {
         std::vector<int32_t> tmp;
@@ -786,7 +786,7 @@ private:
                                cache_ptr,
                                variant);
 
-            if constexpr (detail::char_range<decltype(id)>)
+            if constexpr (detail::out_string<decltype(id)>)
                 detail::string_copy(header.infos[header.idx_to_info_pos().at(idx)].id, id);
             else
                 id = idx;
@@ -849,11 +849,15 @@ private:
         {
             parsed_field.emplace_back();
 
-            auto & [parsed_idx, parsed_variant] = parsed_field.back();
+            auto & [id, parsed_variant] = parsed_field.back();
 
-            int32_t fmt_key                 = decode_integral(cache_ptr);
-            parsed_idx                      = fmt_key;
-            var_io::header::format_t format = header.formats[header.idx_to_format_pos().at(fmt_key)];
+            int32_t                    fmt_key = decode_integral(cache_ptr);
+            var_io::header::format_t & format  = header.formats[header.idx_to_format_pos().at(fmt_key)];
+
+            if constexpr (detail::out_string<decltype(id)>)
+                detail::string_copy(format.id, id);
+            else
+                id = fmt_key;
 
             auto [fmt_type, fmt_size] = decode_type_descriptor_byte(*cache_ptr);
             ++cache_ptr;
