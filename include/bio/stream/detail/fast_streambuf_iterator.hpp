@@ -52,12 +52,14 @@ struct stream_buffer_exposer : public std::basic_streambuf<char_t, traits_t>
     using base_t::gbump;
     using base_t::gptr;
     using base_t::underflow;
+    using base_t::setg;
 
     using base_t::epptr;
     using base_t::overflow;
     using base_t::pbase;
     using base_t::pbump;
     using base_t::pptr;
+    using base_t::setp;
     //!\endcond
 };
 
@@ -307,6 +309,7 @@ public:
             if constexpr (std::ranges::sized_range<range_type>)
             {
                 size_t const characters_to_write = std::min<size_t>(std::ranges::distance(it, end), buffer_space);
+                //TODO if input range is contiguous over char, use sputn/xsputn instead
                 auto         copy_res            = std::ranges::copy_n(it, characters_to_write, stream_buf->pptr());
                 it                               = copy_res.in;
                 stream_buf->pbump(characters_to_write);
@@ -353,7 +356,7 @@ public:
         //!\cond
         requires std::is_arithmetic_v<number_type>
     //!\endcond
-    auto write_number(number_type num)
+    void write_number(number_type num)
     {
         if (stream_buf->epptr() - stream_buf->pptr() > 150) // enough space for any number, should be likely
         {
@@ -365,6 +368,25 @@ public:
             auto res = to_chars(&buffer[0], &buffer[0] + sizeof(buffer), num);
             write_range(std::span<char>{&buffer[0], res.ptr});
         }
+    }
+
+    template <typename t>
+        requires(std::is_trivial_v<t> && !std::ranges::range<t>)
+    void write_as_binary(t const & num)
+    {
+        //TODO enforce little endian on numbers
+        std::string_view v{reinterpret_cast<char const *>(&num), sizeof(num)};
+        write_range(v);
+    }
+
+    template <std::ranges::contiguous_range rng_t>
+        requires std::ranges::sized_range<rng_t>
+    void write_as_binary(rng_t && rng)
+    {
+        //TODO enforce little endian on elements?
+        std::string_view v{reinterpret_cast<char const *>(std::ranges::data(rng)),
+                           reinterpret_cast<char const *>(std::ranges::data(rng) + std::ranges::size(rng))};
+        write_range(v);
     }
 
     /*!\brief Write `"\n"` or `"\r\n"` to the stream buffer, depending on arguments.

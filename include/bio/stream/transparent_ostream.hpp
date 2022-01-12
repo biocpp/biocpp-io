@@ -320,6 +320,12 @@ public:
      * If this object was not created from a file, an empty path is returned.
      */
     std::filesystem::path const & truncated_filename() { return truncated_filename_; }
+
+
+    std::basic_streambuf<char> * rdbuf() const
+    {
+        return secondary_stream->rdbuf();
+    }
 };
 
 } // namespace bio

@@ -726,7 +726,7 @@ private:
         }
     }
 
-    //!\brief Reading of CHROM field.
+    //!\brief Reading of QUAL field.
     void parse_field(vtag_t<field::qual> const & /**/, seqan3::arithmetic auto & parsed_field)
     {
         parsed_field = record_core->qual;
@@ -770,7 +770,7 @@ private:
             parsed_field.push_back({});
 
             auto & [id, variant] = parsed_field.back();
-            ;
+
             int32_t idx = decode_integral(cache_ptr);
 
             assert(cache_ptr < raw_field.data() + raw_field.size());

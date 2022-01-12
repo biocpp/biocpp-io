@@ -78,7 +78,7 @@ private:
     //!\brief Write chracter ranges.
     template <std::ranges::input_range rng_t>
         requires(std::convertible_to<std::ranges::range_reference_t<rng_t>, char>)
-    void write_field_aux(rng_t && range) { it->write_range(range); }
+    void write_field_aux(rng_t && range) { to_derived()->it->write_range(range); }
 
     //!\brief Write alphabet ranges.
     template <std::ranges::input_range rng_t>
@@ -92,11 +92,11 @@ private:
     void write_field_aux(std::span<std::byte const> const range)
     {
         std::string_view const v{range.data(), range.size()};
-        it->write_range(v);
+        to_derived()->it->write_range(v);
     }
 
     //!\brief Write numbers.
-    void write_field_aux(seqan3::arithmetic auto number) { it->write_number(number); }
+    void write_field_aux(seqan3::arithmetic auto number) { to_derived()->it->write_number(number); }
 
     //!\brief Write bool.
     void write_field_aux(bool)

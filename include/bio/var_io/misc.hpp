@@ -433,7 +433,7 @@ struct bcf_record_core
     int32_t  chrom         = -1; //!< CHROM as IDX.
     int32_t  pos           = -1; //!< POS.
     int32_t  rlen          = -1; //!< Not used by this implementation.
-    float    qual          = -1; //!< QUAL.
+    float    qual          = detail::missing_value<float>; //!< QUAL.
     uint16_t n_info        = 0;  //!< Number of INFOS values.
     uint16_t n_allele      = 0;  //!< Number of alleles.
     uint32_t n_sample : 24 = 0;  //!< Number of samples.
@@ -465,17 +465,33 @@ template <typename t>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor = bcf_type_descriptor::missing;
 
 //!\brief Specialisation for int8.
-template <>
-inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<int8_t> = bcf_type_descriptor::int8;
+template <std::signed_integral t>
+    requires (sizeof(t) == 1)
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::int8;
+
 //!\brief Specialisation for int16.
-template <>
-inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<int16_t> = bcf_type_descriptor::int16;
+template <std::signed_integral t>
+    requires (sizeof(t) == 2)
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::int16;
+//!\brief Specialisation for int16.
+template <std::unsigned_integral t>
+    requires (sizeof(t) == 1)
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::int16;
+
 //!\brief Specialisation for int32.
-template <>
-inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<int32_t> = bcf_type_descriptor::int32;
+template <std::signed_integral t>
+    requires (sizeof(t) >= 4)
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::int32;
+
+//!\brief Specialisation for int32.
+template <std::unsigned_integral t>
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::int32;
+
 //!\brief Specialisation for float.
 template <>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<float> = bcf_type_descriptor::float32;
+template <>
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<double> = bcf_type_descriptor::float32;
 //!\brief Specialisation for char.
 template <>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<char> = bcf_type_descriptor::char8;

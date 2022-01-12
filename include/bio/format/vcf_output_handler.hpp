@@ -20,7 +20,6 @@
 #include <bio/stream/detail/fast_streambuf_iterator.hpp>
 #include <bio/var_io/header.hpp>
 #include <bio/var_io/misc.hpp>
-#include <bio/var_io/reader_options.hpp> // TODO remove this once we have concepts for writer
 #include <bio/var_io/writer_options.hpp>
 
 namespace bio

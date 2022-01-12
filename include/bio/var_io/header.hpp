@@ -200,6 +200,12 @@ public:
     string_to_idx_t const & string_to_idx() const { return string_to_idx_; }
     //!\brief Global string to IDX mapping (contig).
     string_to_idx_t const & contig_string_to_idx() const { return contig_string_to_idx_; }
+
+    //!\brief The largest IDX value used (filter, info, format).
+    int32_t max_idx() const { return max_other_idx_; }
+    //!\brief The largest IDX value used (contig).
+    int32_t max_contig_idx() const { return max_contig_idx_; }
+
     //!\}
 
     /*!\name Update, reset and inspect
@@ -267,8 +273,8 @@ public:
     //!\brief Clear the IDX values from all header entries (sets them to -1); implicitly calls #reset_hash().
     void reset_idx()
     {
-        max_contig_idx = -1;
-        max_other_idx  = 0;
+        max_contig_idx_ = -1;
+        max_other_idx_  = 0;
 
         for (filter_t & filter : filters)
         {
@@ -378,7 +384,7 @@ private:
         ();
 
         string_to_idx_t & string_to_idx = k == entry_kind::contig ? contig_string_to_idx_ : string_to_idx_;
-        int32_t &         max_idx       = k == entry_kind::contig ? max_contig_idx : max_other_idx;
+        int32_t &         max_idx       = k == entry_kind::contig ? max_contig_idx_ : max_other_idx_;
 
         string_to_pos_t & string_to_pos = k == entry_kind::contig   ? string_to_contig_pos_
                                           : k == entry_kind::filter ? string_to_filter_pos_
@@ -439,8 +445,8 @@ private:
     string_to_idx_t string_to_idx_;        //!< Global string to IDX mapping (filter, info, format).
     string_to_idx_t contig_string_to_idx_; //!< Global string to IDX mapping (contig).
 
-    int32_t max_other_idx  = 0;  //!< The highest IDX value in use (defaults to 0, because PASS is used).
-    int32_t max_contig_idx = -1; //!< The highest contig IDX value in use (defaults to -1, because none is used).
+    int32_t max_other_idx_  = 0;  //!< The highest IDX value in use (defaults to 0, because PASS is used).
+    int32_t max_contig_idx_ = -1; //!< The highest contig IDX value in use (defaults to -1, because none is used).
     //!\}
 
     /*!\name Functions for converting to text
@@ -666,7 +672,7 @@ private:
         auto idx = new_entry.other_fields.extract("IDX");
         if (!idx.empty())
             detail::string_to_number(idx.mapped(), new_entry.idx);
-        max_other_idx = std::max(max_other_idx, new_entry.idx);
+        max_other_idx_ = std::max(max_other_idx_, new_entry.idx);
 
         if (is_info)
         {
@@ -710,7 +716,7 @@ private:
         auto idx = new_entry.other_fields.extract("IDX");
         if (!idx.empty())
             detail::string_to_number(idx.mapped(), new_entry.idx);
-        max_other_idx = std::max(max_other_idx, new_entry.idx);
+        max_other_idx_ = std::max(max_other_idx_, new_entry.idx);
 
         // PASS line was added by us before and is now swapped with user-provided
         if (filters.size() > 0 && filters.front().id == "PASS" && new_entry.id == "PASS")
@@ -749,10 +755,10 @@ private:
         /* IDX */
         auto idx = new_entry.other_fields.extract("IDX");
         if (idx.empty())
-            new_entry.idx = ++max_contig_idx;
+            new_entry.idx = ++max_contig_idx_;
         else
             detail::string_to_number(idx.mapped(), new_entry.idx);
-        max_contig_idx = std::max(max_contig_idx, new_entry.idx);
+        max_contig_idx_ = std::max(max_contig_idx_, new_entry.idx);
 
         if (string_to_contig_pos_.contains(new_entry.id))
             throw format_error{std::string{"Duplicate CONTIG ID \""} + std::string{new_entry.id} + "\" in HEADER."};
