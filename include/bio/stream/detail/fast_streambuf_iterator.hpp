@@ -371,7 +371,7 @@ public:
     }
 
     template <typename t>
-        requires(std::is_trivial_v<t> && !std::ranges::range<t>)
+        requires(std::is_trivially_copyable_v<t> && !std::ranges::range<t>)
     void write_as_binary(t const & num)
     {
         //TODO enforce little endian on numbers

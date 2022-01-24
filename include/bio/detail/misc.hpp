@@ -94,6 +94,20 @@ constexpr bool lazy_concept_checker(auto fun)
     return ret_t::value;
 }
 
+
+constexpr size_t range_or_tuple_size(std::ranges::forward_range auto && r)
+{
+    return std::ranges::distance(r);
+}
+
+template <typename tuple_t>
+    requires requires { typename std::tuple_size<std::remove_cvref_t<tuple_t>>::type; }
+constexpr size_t range_or_tuple_size(tuple_t)
+{
+    return std::tuple_size_v<tuple_t>;
+}
+
+
 //!\}
 
 } // namespace bio::detail

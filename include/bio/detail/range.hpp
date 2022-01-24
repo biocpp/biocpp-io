@@ -57,9 +57,13 @@ concept back_insertable =
 
 //!\brief A range whose value type is `char`.
 template <typename t>
-concept char_range = (std::ranges::forward_range<t> &&
-                      std::same_as<char, std::remove_cvref_t<std::ranges::range_value_t<t>>>) ||
-                     std::same_as<std::decay_t<t>, char const *>;
+concept char_range = std::ranges::forward_range<t> &&
+                      std::same_as<char, std::remove_cvref_t<std::ranges::range_value_t<t>>>;
+
+template <typename t>
+concept char_range_or_cstring = (std::ranges::forward_range<t> &&
+                                 std::same_as<char, std::remove_cvref_t<std::ranges::range_value_t<t>>>) ||
+                                 std::same_as<std::decay_t<t>, char const *>;
 
 //!\brief A range whose value type is an integral type other than `char`.
 template <typename t>

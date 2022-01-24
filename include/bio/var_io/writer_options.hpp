@@ -27,7 +27,7 @@ namespace bio::detail
 //!\cond CONCEPT_DEF
 template <typename t>
 concept info_element_writer_concept = detail::decomposable_into_two<t> &&
-  (detail::char_range<detail::first_elem_t<t>> ||
+  (detail::char_range_or_cstring<detail::first_elem_t<t>> ||
    std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::var_io_legal_or_dynamic<detail::second_elem_t<t>>;
 //!\endcond
 
@@ -38,13 +38,13 @@ concept info_element_writer_concept = detail::decomposable_into_two<t> &&
 //!\cond CONCEPT_DEF
 template <typename t>
 concept genotype_bcf_style_writer_concept = detail::decomposable_into_two<t> &&
-  (detail::char_range<detail::first_elem_t<t>> ||
+  (detail::char_range_or_cstring<detail::first_elem_t<t>> ||
    std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::var_io_vector_legal_or_dynamic<detail::second_elem_t<t>>;
 //!\endcond
 
 template <typename t>
 concept genotypes_vcf_style_format_writer_concept =
-  std::ranges::forward_range<t> && detail::char_range<std::ranges::range_reference_t<t>>;
+  std::ranges::forward_range<t> && detail::char_range_or_cstring<std::ranges::range_reference_t<t>>;
 
 template <typename t>
 concept genotypes_vcf_style_onesample_writer_concept =
@@ -103,7 +103,7 @@ struct writer_options
      * This option results in old Windows-style line-endings ("\r\n"). Since Windows supports the typical UNIX
      * line-endigns ("\n") nowadays, this option is is highly discouraged.
      *
-     * Binary formats always ignore this option.
+     * This option is ignored when writing for bio::bcf.
      */
     bool windows_eol = false;
 
@@ -118,8 +118,20 @@ struct writer_options
      * This switch turns on writing for VCF, too.
      *
      * ¹ There are two sets of IDX values: one for contigs and one for INFO, FILTER and FORMAT entries (combined).
+     *
+     * This option is always assumed to be true for bio::bcf.
      */
     bool write_IDX = false;
+
+    /*!\brief Try to use types smaller than 32bit to represent integers.
+     *
+     * \details
+     *
+     * TODO
+     *
+     * This option is ignored when writing bio::vcf.
+     */
+    bool compress_integers = false;
 
 private:
     static_assert(detail::is_type_list<formats_t>, "formats must be a bio::ttag / seqan3::type_list.");

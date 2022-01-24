@@ -122,6 +122,8 @@ struct transparent_ostream_options
 class transparent_ostream : public std::basic_ostream<char>
 {
 private:
+    using base_t = std::basic_ostream<char>;
+
     /*TODO
      * evaluate whether to use custom sized buffer on both streams
      * evaluate whether to use custom sized buffer strings passed in (what happens to stuff in old buffer?)
@@ -321,6 +323,7 @@ public:
      */
     std::filesystem::path const & truncated_filename() { return truncated_filename_; }
 
+    using base_t::rdbuf;
 
     std::basic_streambuf<char> * rdbuf() const
     {

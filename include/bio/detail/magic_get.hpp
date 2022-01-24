@@ -115,4 +115,9 @@ auto & get_second(decomposable_into_two auto & val)
 template <typename t>
 using second_elem_t = std::remove_cvref_t<decltype(get_second(std::declval<t &>()))>;
 
+constexpr size_t range_or_tuple_size(aggregate_of_two auto &&)
+{
+    return 2;
+}
+
 } // namespace bio::detail

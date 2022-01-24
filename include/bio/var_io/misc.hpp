@@ -433,7 +433,7 @@ struct bcf_record_core
     int32_t  chrom         = -1; //!< CHROM as IDX.
     int32_t  pos           = -1; //!< POS.
     int32_t  rlen          = -1; //!< Not used by this implementation.
-    float    qual          = detail::missing_value<float>; //!< QUAL.
+    float    qual          = bio::var_io::missing_value<float>; //!< QUAL.
     uint16_t n_info        = 0;  //!< Number of INFOS values.
     uint16_t n_allele      = 0;  //!< Number of alleles.
     uint32_t n_sample : 24 = 0;  //!< Number of samples.
@@ -490,11 +490,16 @@ inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_de
 //!\brief Specialisation for float.
 template <>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<float> = bcf_type_descriptor::float32;
+//!\brief Specialisation for double.
 template <>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<double> = bcf_type_descriptor::float32;
+
 //!\brief Specialisation for char.
 template <>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<char> = bcf_type_descriptor::char8;
+//!\brief Specialisation for seqan3 alphabets.
+template <detail::deliberate_alphabet t>
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::char8;
 //!\}
 //!\}
 } // namespace bio::detail

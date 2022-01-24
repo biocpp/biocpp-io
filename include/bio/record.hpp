@@ -15,12 +15,12 @@
 
 #include <tuple>
 
-#include <bio/platform.hpp>
 
 #include <seqan3/core/detail/template_inspection.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
 #include <seqan3/utility/type_list/type_list.hpp>
 
+#include <bio/detail/concept.hpp>
 #include <bio/misc.hpp>
 
 namespace bio
@@ -367,6 +367,21 @@ auto const && get(record<field_ids, field_types> const && r)
 // make_record
 //-------------------------------------------------------------------------------
 
+template <typename t>
+struct cstr_to_strview
+{
+    using type = t;
+};
+
+template <detail::decays_to<char const *> t>
+struct cstr_to_strview<t>
+{
+    using type = std::string_view;
+};
+
+template <typename t>
+using cstr_to_strview_t = typename cstr_to_strview<t>::type;
+
 /*!\brief Create a bio::record and deduce type from arguments (like std::make_tuple for std::tuple).
  * \details
  *
@@ -376,7 +391,7 @@ auto const && get(record<field_ids, field_types> const && r)
  */
 template <auto... field_ids, typename... field_type_ts>
 constexpr auto make_record(vtag_t<field_ids...>, field_type_ts &&... fields)
-  -> record<vtag_t<field_ids...>, seqan3::type_list<std::decay_t<field_type_ts>...>>
+  -> record<vtag_t<field_ids...>, seqan3::type_list<cstr_to_strview_t<std::decay_t<field_type_ts>>...>>
 {
     return {std::forward<field_type_ts>(fields)...};
 }

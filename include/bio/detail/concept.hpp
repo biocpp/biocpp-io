@@ -45,6 +45,15 @@ template <typename t>
 concept deliberate_alphabet = seqan3::alphabet<t> && !std::integral<std::remove_cvref_t<t>>;
 //!\endcond
 
+/*!\interface   bio::detail::deliberate_alphabet <>
+ * \tparam t    The query type to compare.
+ * \brief       A seqan3::alphabet that is **not** a character or a number (any std::integral).
+ */
+//!\cond
+template <typename from_t, typename to_t>
+concept decays_to = std::same_as<std::decay_t<from_t>, to_t>;
+//!\endcond
+
 //!\}
 
 } // namespace bio::detail
