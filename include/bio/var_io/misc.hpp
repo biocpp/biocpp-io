@@ -40,19 +40,12 @@ namespace bio::var_io
  */
 //!\brief Default implementation.
 template <typename t>
+//     requires false
 inline t missing_value = t{};
 
 //!\brief Specialisation for char.
 template <>
-inline constexpr char missing_value<char> = '.';
-
-//!\brief Specialisation for std::string.
-template <>
-inline std::string missing_value<std::string> = ".";
-
-//!\brief Specialisation for std::string_view.
-template <>
-inline constexpr std::string_view missing_value<std::string_view> = ".";
+inline constexpr char missing_value<char> = char{0x07};
 
 //!\brief Specialisation for integral types.
 template <typename int_t>
@@ -88,7 +81,12 @@ namespace bio::detail
  */
 //!\brief Default implementation. [not used]
 template <typename t>
+//     requires false
 inline t end_of_vector = t{};
+
+//!\brief Specialisation for char.
+template <>
+inline constexpr char end_of_vector<char> = '\0';
 
 //!\brief Specialisation for integral types.
 template <typename int_t>
@@ -501,5 +499,31 @@ inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<char> = bcf_type
 template <detail::deliberate_alphabet t>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::char8;
 //!\}
+
+/*!\name A compile-time mapping of bio::detail::bcf_type_descriptor to types
+ * \{
+ */
+
+template <bcf_type_descriptor desc>
+auto bcf_type_descriptor_2_type_impl()
+{
+    if constexpr (desc == bcf_type_descriptor::int8)
+        return int8_t{};
+    else if constexpr (desc == bcf_type_descriptor::int16)
+        return int16_t{};
+    else if constexpr (desc == bcf_type_descriptor::int32)
+        return int32_t{};
+    else if constexpr (desc == bcf_type_descriptor::char8)
+        return char{};
+    else if constexpr (desc == bcf_type_descriptor::float32)
+        return float{};
+    else
+        return;
+}
+
+template <bcf_type_descriptor desc>
+using bcf_type_descriptor_2_type = decltype(bcf_type_descriptor_2_type_impl<desc>());
+//!\}
+
 //!\}
 } // namespace bio::detail

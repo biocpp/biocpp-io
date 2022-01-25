@@ -346,6 +346,11 @@ public:
     {
         write_range(rng); // lvalue is always a safe range. return value is ignored because iterator would be dangling
     }
+
+    void write_range(char const * const cstring)
+    {
+        write_range(std::string_view{cstring});
+    }
     //!\endcond
 
     /*!\brief Writes a number to the underlying stream buffer using std::to_chars.

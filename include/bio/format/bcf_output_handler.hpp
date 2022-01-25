@@ -15,6 +15,9 @@
 
 #include <bit>
 
+#include <seqan3/utility/views/join_with.hpp>
+#include <seqan3/utility/char_operations/predicate.hpp>
+
 #include <bio/detail/magic_get.hpp>
 #include <bio/detail/misc.hpp>
 #include <bio/format/format_output_handler.hpp>
@@ -210,7 +213,7 @@ private:
         }
     }
 
-    void write_range_impl(auto & range, detail::bcf_type_descriptor const desc)
+    void write_range_impl(std::ranges::forward_range auto && range, detail::bcf_type_descriptor const desc)
     {
         using data_t = decltype(range);
         using elem_t = std::ranges::range_value_t<data_t>;
@@ -222,6 +225,10 @@ private:
                           std::ranges::sized_range<data_t>)
             {
                 it->write_as_binary(range);
+            }
+            else if constexpr (std::same_as<target_t, elem_t> && std::same_as<target_t, char>)
+            {
+                it->write_range(range);
             }
             else if constexpr (detail::deliberate_alphabet<elem_t>)
             {
@@ -261,13 +268,91 @@ private:
         }
     }
 
+    /*!\brief Write padding values to make vector have fixed size.
+     * \param[in] num  Number of padding values to write.
+     * \param[in] desc The type of values to write.
+     * \param[in] front_missing Whether to add an initial missing value [see below].
+     * \details
+     *
+     * This function adds padding values. For an existing vector, num times the detail::end_of_vector
+     * value ("EOV") is written.
+     *
+     * In the case where a vector in a vector-of-vectors is completely absent, you need to set
+     * front_missing. In that case the first value written will be bio::var_io::missing_value instead of EOV.
+     */
+    void write_range_padding(size_t num, detail::bcf_type_descriptor const desc, bool front_missing)
+    {
+        if (num == 0)
+            return;
+
+        auto func = [&] <typename target_t> (target_t)
+        {
+            if (front_missing)
+            {
+                it->write_as_binary(var_io::missing_value<target_t>);
+                --num;
+            }
+
+            //TODO this could be optimised with some manner of views::repeat_n | views::convert | views::join
+            for (size_t i = 0; i < num; ++i)
+                it->write_as_binary(detail::end_of_vector<target_t>);
+        };
+
+        switch (desc)
+        {
+            case detail::bcf_type_descriptor::char8:
+                func(char{});
+                break;
+            case detail::bcf_type_descriptor::int8:
+                func(int8_t{});
+                break;
+            case detail::bcf_type_descriptor::int16:
+                func(int16_t{});
+                break;
+            case detail::bcf_type_descriptor::int32:
+                func(int32_t{});
+                break;
+            case detail::bcf_type_descriptor::float32:
+                func(float{});
+                break;
+            default:
+                error("Trying to write an unknown type");
+        }
+    }
+
+    template <std::ranges::forward_range rng_t>
+        requires std::ranges::forward_range<std::ranges::range_reference_t<rng_t>>
+    void write_range_impl(rng_t & range, detail::bcf_type_descriptor const desc)
+    {
+        assert(desc == detail::bcf_type_descriptor::char8);
+        using alph_t = std::ranges::range_value_t<std::ranges::range_reference_t<rng_t>>;
+
+        bool first = true;
+
+        //TODO it would be good to have a views::join_with and even better one with size
+        for (auto && r : range)
+        {
+            if (first)
+                first = false;
+            else
+                it = ',';
+
+            if constexpr (std::same_as<alph_t, char>)
+                it->write_range(r);
+            else if constexpr (detail::deliberate_alphabet<alph_t>)
+                it->write_range(r | seqan3::views::to_char);
+            else
+                static_assert(std::same_as<alph_t, char>, "Can't handle this alphabet type here.");
+        }
+    }
+
     //!\brief Write single element.
     template <typename elem_t>
         requires (seqan3::alphabet<elem_t> || seqan3::arithmetic<elem_t>)
     void write_typed_data(elem_t const num, bool shrink_int)
     {
         detail::bcf_type_descriptor desc = detail::type_2_bcf_type_descriptor<elem_t>;
-        if constexpr (std::integral<elem_t>)
+        if constexpr (std::integral<elem_t> && sizeof(elem_t) > 1)
             if (shrink_int)
                 desc = smallest_int_desc(num);
 
@@ -298,8 +383,8 @@ private:
         using data_t = decltype(data);
         using elem_t = std::ranges::range_value_t<data_t>;
 
-        detail::bcf_type_descriptor desc =detail::type_2_bcf_type_descriptor<elem_t>;
-        if constexpr (std::integral<elem_t>)
+        detail::bcf_type_descriptor desc = detail::type_2_bcf_type_descriptor<elem_t>;
+        if constexpr (std::integral<elem_t> && sizeof(elem_t) > 1)
             if (shrink_int)
                 desc = smallest_int_desc(data);
 
@@ -310,14 +395,15 @@ private:
 
     template <std::ranges::forward_range data_t>
         requires detail::char_range<std::ranges::range_value_t<data_t>>
-    void write_typed_data(data_t && data, bool)
+    void write_typed_data(data_t &&, bool)
     {
         error("implement me");
     }
 
-    void write_typed_data(bool)
+    //!\brief Writing bools.
+    void write_typed_data(bool, bool)
     {
-        error("You should never end up here.");
+        write_typed_data(int8_t{1}, false);
     }
 
     //!\brief This overload adds a default argument for integer compression based on the class member.
@@ -369,7 +455,8 @@ private:
     //!\brief Overload for POS.
     void set_core_pos(std::integral auto & field)
     {
-        record_core.pos = static_cast<int32_t>(field);
+        assert(field >= 1);
+        record_core.pos = static_cast<int32_t>(field - 1); // BCF is 0-based, we are 1-based
     }
 
     //!\brief Overload for rlen.
@@ -440,7 +527,7 @@ private:
     template <std::ranges::input_range rng_t>
         requires std::ranges::forward_range<std::ranges::range_reference_t<rng_t>> // TOOD and requires
                                                                                    // write_field_aux(value)
-    void write_field(vtag_t<field::alt> /**/, rng_t & range)
+    void write_field(vtag_t<field::alt> /**/, rng_t && range)
     {
         for (auto && elem : range)
             write_field_aux(elem);
@@ -449,7 +536,7 @@ private:
     //!\brief Overload for FILTER; handles vector of numeric IDs and vector of IDX
     template <std::ranges::input_range rng_t>
         requires(!std::same_as<std::ranges::range_value_t<rng_t>, char>)
-    void write_field(vtag_t<field::filter> /**/, rng_t & range)
+    void write_field(vtag_t<field::filter> /**/, rng_t && range)
     {
         if constexpr (std::integral<std::ranges::range_value_t<rng_t>>)
         {
@@ -473,7 +560,7 @@ private:
     }
 
     //!\brief Overload for FILTER; single string or single IDX
-    void write_field(vtag_t<field::filter> /**/, auto & field)
+    void write_field(vtag_t<field::filter> /**/, auto && field)
     {
 //         std::span<decltype(field)> s{&field, 1};
         write_field(vtag<field::filter>, std::initializer_list{field}); // delegate to previous overload
@@ -519,7 +606,7 @@ private:
     //!\brief Overload for INFO; range of pairs.
     template <std::ranges::input_range rng_t>
         requires(detail::info_element_writer_concept<std::ranges::range_reference_t<rng_t>>)
-    void write_field(vtag_t<field::info> /**/, rng_t & range)
+    void write_field(vtag_t<field::info> /**/, rng_t && range)
     {
         for (auto & info_element : range)
             write_info_element(info_element);
@@ -532,6 +619,95 @@ private:
     {
         auto func = [&](auto & ... field) { (write_info_element(field), ...); };
         std::apply(func, tup);
+    }
+
+    std::pair<size_t, int32_t> get_GT_maxs(auto & range_of_strings)
+    {
+        size_t max_alleles = 0;
+        int32_t max_allele_val = 0;
+
+        for (auto && s_tmp : range_of_strings)
+        {
+            std::string_view s = detail::to_string_view(s_tmp);
+
+            int32_t buf = 0;
+            size_t n_alleles = 0;
+
+            if (s.size() % 2 != 1) // very basic sanity check, TODO improve
+                error("GT string has wrong format.");
+
+            //TODO use views::eager_split once that can handle predicates
+            for (size_t i = 0, j = 0; i <= s.size(); ++i)
+            {
+                if (i == s.size() || (seqan3::is_char<'/'> || seqan3::is_char<'|'>)(s[i]))
+                {
+                    std::string_view substr = s.substr(j, i - j);
+
+                    if (substr != ".")
+                    {
+                        detail::string_to_number(substr, buf);
+                        max_allele_val = std::max(max_allele_val, buf);
+                    }
+
+                    j = i + 1;
+                    ++n_alleles;
+                }
+            }
+
+            max_alleles = std::max(max_alleles, n_alleles);
+        }
+
+        return {max_alleles, max_allele_val};
+    }
+
+    size_t write_GT_impl(detail::char_range_or_cstring auto && gt_string_, detail::bcf_type_descriptor const desc)
+    {
+        std::string_view gt_string = detail::to_string_view(gt_string_);
+
+        bool phased = false;
+
+        size_t n_alleles = 0;
+
+        //TODO use views::eager_split once that can handle predicates
+        for (size_t i = 0, j = 0; i <= gt_string.size(); ++i)
+        {
+            if (i == gt_string.size() || (seqan3::is_char<'/'> || seqan3::is_char<'|'>)(gt_string[i]))
+            {
+                std::string_view substr = gt_string.substr(j, i - j);
+                size_t buf = 0;
+
+                if (substr != ".")
+                    detail::string_to_number(substr, buf);
+                // else it remains 0
+
+                // encode according to BCF spec
+                size_t encoded_buf = (buf + 1) << 1 | (size_t)phased;
+
+                switch (desc)
+                {
+                    case detail::bcf_type_descriptor::int8:
+                        assert(encoded_buf < std::numeric_limits<int8_t>::max());
+                        it->write_as_binary(static_cast<int8_t>(encoded_buf));
+                        break;
+                    case detail::bcf_type_descriptor::int16:
+                        assert(encoded_buf < std::numeric_limits<int16_t>::max());
+                        it->write_as_binary(static_cast<int16_t>(encoded_buf));
+                        break;
+                    case detail::bcf_type_descriptor::int32:
+                        assert(encoded_buf < std::numeric_limits<int32_t>::max());
+                        it->write_as_binary(static_cast<int32_t>(encoded_buf));
+                        break;
+                    default:
+                        error("Trying to write an unknown type.");
+                }
+
+                ++n_alleles;
+                j = i + 1;
+                phased = seqan3::is_char<'|'>(gt_string[i]);
+            }
+        }
+
+        return n_alleles;
     }
 
     void write_genotypes_element(auto & genotype)
@@ -558,6 +734,8 @@ private:
         }
         write_single_impl(idx, header_dictionary_desc);
 
+        auto & format = header->formats.at(header->idx_to_format_pos().at(idx));
+
         /* value */
         auto func = [&](auto & values)
         {
@@ -567,11 +745,10 @@ private:
 
             using alph_t = seqan3::range_innermost_value_t<values_t>;
 
-
-            if (std::ranges::size(values) != 0 && std::ranges::size(values) != record_core.n_sample)
+            if (std::ranges::size(values) > record_core.n_sample)
             {
-                error("There are ", std::ranges::size(values), " values in the genotype vector, "
-                      "but there must be exactly one per sample or none at all.");
+                error("There are ", std::ranges::size(values), " values in the genotype vector "
+                      "for field ", format.id, " which is more than the number of samples.");
             }
 
             detail::bcf_type_descriptor desc = detail::type_2_bcf_type_descriptor<alph_t>;
@@ -579,6 +756,7 @@ private:
                 if (compress_integers)
                     desc = smallest_int_desc(values);
 
+            // if there are no values, we can write the missing field and need no padding values at all
             if (std::ranges::size(values) == 0)
             {
                 write_type_descriptor(desc, 0);
@@ -587,39 +765,68 @@ private:
 
             if constexpr (std::ranges::range<value_t>)
             {
-                size_t max_length      = 1;
-                bool   all_same_length = true;
-                size_t last_length       = std::ranges::size(*std::ranges::begin(values));
-
-                for (auto & rng : values)
+                if (format.id == "GT") // this has to be handled extra, because it isn't a string
                 {
-                    size_t s = std::ranges::size(rng);
-                    if (s > max_length)
-                        max_length = std::ranges::size(rng);
-                    if (s != last_length)
-                        all_same_length = false;
-                    last_length = s;
-                }
+                    if constexpr (detail::char_range_or_cstring<value_t>)
+                    {
+                        assert(desc == detail::bcf_type_descriptor::char8);
 
-                write_type_descriptor(desc, max_length); // size refers to size per-sample
+                        auto [ max_alleles, max_allele_val ] = get_GT_maxs(values);
 
-                if (all_same_length)
-                {
-                    for (auto & rng : values)
-                        write_range_impl(rng, desc);
+                        // computation of binary value is "(allele_value + 1) << 1 | phased"
+                        // we loose one bit because of +1 and one bit because of the shift and one because of signed:
+                        if (max_allele_val <= 5)
+                            desc = detail::bcf_type_descriptor::int8;
+                        else if (max_allele_val <= 13)
+                            desc = detail::bcf_type_descriptor::int16;
+                        else
+                            desc = detail::bcf_type_descriptor::int32;
+
+                        write_type_descriptor(desc, max_alleles); // size refers to size per-sample
+
+                        for (auto & rng : values)
+                        {
+                            size_t n_alleles = write_GT_impl(rng, desc);
+
+                            // per-value padding
+                            write_range_padding(max_alleles - n_alleles, desc, false);
+                        }
+
+                        // per-sample padding
+                        for (size_t i = 0; i < record_core.n_sample - std::ranges::size(values); ++i)
+                            write_range_padding(max_alleles, desc, true);
+                    }
+                    else
+                    {
+                        error("GT field must be provided as range of strings.");
+                    }
                 }
                 else
                 {
-                    //TODO pad individual range so they all have same length
-                    error("implement me");
+                    size_t max_length = std::ranges::size(*std::ranges::max_element(values, {}, std::ranges::size));
+
+                    write_type_descriptor(desc, max_length); // size refers to size per-sample
+
+                    for (auto & rng : values)
+                    {
+                        write_range_impl(rng, desc);
+                        // per-value padding
+                        write_range_padding(max_length - std::ranges::size(rng), desc, false);
+                    }
+
+                    // per-sample padding
+                    for (size_t i = 0; i < record_core.n_sample - std::ranges::size(values); ++i)
+                        write_range_padding(max_length, desc, true);
                 }
             }
             else
             {
                 write_type_descriptor1(desc); // size refers to size per-sample, which is one, because this isn't range
                 write_range_impl(values, desc);
-            }
 
+                // per-sample padding
+                write_range_padding(record_core.n_sample - std::ranges::size(values), desc, false);
+            }
         };
 
         if constexpr (detail::is_dynamic_vector_type<value_t>)
@@ -631,7 +838,7 @@ private:
     //!\brief Overload for GENOTYPES; genotypes_bcf_style.
     template <std::ranges::forward_range range_t>
         requires(detail::genotype_bcf_style_writer_concept<std::ranges::range_reference_t<range_t>>)
-    void write_field(vtag_t<field::genotypes> /**/, range_t & range)
+    void write_field(vtag_t<field::genotypes> /**/, range_t && range)
     {
         for (auto && genotype : range)
             write_genotypes_element(genotype);
@@ -649,6 +856,28 @@ private:
     //TODO vcf-style
     //!\}
 
+    void write_header()
+    {
+        if (header == nullptr)
+            throw std::runtime_error{"You need to call set_header() on the writer/format."};
+
+        std::string vcf_header = header->to_plaintext();
+
+        // BINARY HEADER
+        it->write_range("BCF");
+        it->write_as_binary(uint8_t{2});
+        it->write_as_binary(uint8_t{2});
+        uint32_t l_text = static_cast<uint32_t>(vcf_header.size()) + 1;
+        it->write_as_binary(l_text);
+
+        it->write_range(vcf_header);
+        it = '\0';
+        header_has_been_written = true;
+
+        /* compute the smallest int type for the dictionaries */
+        header_dictionary_desc = smallest_int_desc(header->max_idx());
+    }
+
     //!\brief Write the record (supports const and non-const lvalue ref).
     void write_record_impl(auto & record)
     {
@@ -657,47 +886,16 @@ private:
         if (!header_has_been_written)
         {
             if (header == nullptr)
-            {
-                bool set = false;
-
                 if constexpr (field_ids::contains(field::_private))
-                {
                     if (var_io::header const * ptr = get<field::_private>(record).header_ptr; ptr != nullptr)
-                    {
                         set_header(*ptr);
-                        set = true;
-                    }
-                }
 
-                if (!set)
-                {
-                    throw std::runtime_error{
-                      "You need to call set_header() on the writer/format before writing a "
-                      "record."};
-                }
-            }
-
-            std::string vcf_header = header->to_plaintext();
-
-            // BINARY HEADER
-            it->write_range("BCF");
-            it->write_as_binary(uint8_t{2});
-            it->write_as_binary(uint8_t{2});
-            uint32_t l_text = static_cast<uint32_t>(vcf_header.size());
-            it->write_as_binary(l_text);
-
-            it->write_range(vcf_header);
-            it = '\0';
-            header_has_been_written = true;
-
-            /* compute the smallest int type for the dictionaries */
-            header_dictionary_desc = smallest_int_desc(header->max_idx());
+            write_header();
         }
 
         static_assert(field_ids::contains(field::chrom), "The record must contain the CHROM field.");
         static_assert(field_ids::contains(field::pos), "The record must contain the POS field.");
         static_assert(field_ids::contains(field::ref), "The record must contain the REF field.");
-
 
         /* IMPLEMENTATION NOTE:
          * A problem when writing BCF is that the first fields of the record hold the size of the record
@@ -736,6 +934,8 @@ private:
 
         if constexpr (field_ids::contains(field::alt))
             set_core_n_allele(get<field::alt>(record));
+        else
+            record_core.n_allele = 1; // the REF allele
 
         record_core.n_sample = header->column_labels.size() > 9 ? header->column_labels.size() - 9 : 0;
 
@@ -750,26 +950,27 @@ private:
         if constexpr (field_ids::contains(field::id))
             write_field(vtag<field::id>, get<field::id>(record));
         else
-            write_field(vtag<field::id>, var_io::missing_value<std::string_view>);
+            write_field(vtag<field::id>, std::string_view{});
 
         write_field(vtag<field::ref>, get<field::ref>(record));
 
         if constexpr (field_ids::contains(field::alt))
             write_field(vtag<field::alt>, get<field::alt>(record));
         else
-            write_field(vtag<field::alt>, var_io::missing_value<std::string_view>);
+            write_field(vtag<field::alt>, std::span<std::string_view>{});
 
         if constexpr (field_ids::contains(field::filter))
             write_field(vtag<field::filter>, get<field::filter>(record));
         else
-            write_field(vtag<field::filter>, var_io::missing_value<std::string_view>);
+            write_field(vtag<field::filter>, std::span<std::string_view>{});
 
         if constexpr (field_ids::contains(field::info))
             write_field(vtag<field::info>, get<field::info>(record));
         else
-            write_field(vtag<field::info>, var_io::missing_value<std::string_view>);
+            write_field(vtag<field::info>, std::span<var_io::info_element<>>{});
 
         assert(streambuf_exposer->pptr() - streambuf_exposer->pbase() - this_record_offset > 0);
+        //              (position in the buffer                              ) - (where this record starts)
         l_shared_tmp = streambuf_exposer->pptr() - streambuf_exposer->pbase() - this_record_offset;
 
         if (header->column_labels.size() > 8)
@@ -777,14 +978,14 @@ private:
             if constexpr (field_ids::contains(field::genotypes))
                 write_field(vtag<field::genotypes>, get<field::genotypes>(record));
             else
-                write_field(vtag<field::genotypes>, std::tuple<>{});
+                write_field(vtag<field::genotypes>, std::span<var_io::genotype_element<>>{});
         }
 
         l_indiv_tmp = streambuf_exposer->pptr() - streambuf_exposer->pbase() - this_record_offset - l_shared_tmp;
 
         // now we get a pointer to where l_shared and l_indiv are stored in the buffer and write them
         uint32_t * iptr = reinterpret_cast<uint32_t*>(streambuf_exposer->pbase() + this_record_offset);
-        *iptr = l_shared_tmp;
+        *iptr = l_shared_tmp - 8; // size of l_shared and l_indiv not counted
         ++iptr;
         *iptr = l_indiv_tmp;
 
@@ -811,7 +1012,6 @@ public:
     format_output_handler()                              = default;            //!< Defaulted.
     format_output_handler(format_output_handler const &) = delete;             //!< Deleted.
     format_output_handler(format_output_handler &&)      = default;            //!< Defaulted.
-    ~format_output_handler()                             = default;            //!< Defaulted.
     format_output_handler & operator=(format_output_handler const &) = delete; //!< Deleted.
     format_output_handler & operator=(format_output_handler &&) = default;     //!< Defaulted.
 
@@ -832,6 +1032,18 @@ public:
 
     //!\brief Construct with only an output stream.
     format_output_handler(std::ostream & str) : format_output_handler(str, 1) {}
+
+    ~format_output_handler()
+    {
+        // if no records were written, the header also wasn't written
+        if (!header_has_been_written)
+            write_header();
+
+        // flush stringstream to regular stream so buffer content is written to disk
+        if (streambuf_exposer->pptr() - streambuf_exposer->pbase() > 0)
+            stream->rdbuf()->sputn(streambuf_exposer->pbase(), streambuf_exposer->pptr() - streambuf_exposer->pbase());
+    }
+
     //!\}
 
     //!\brief Get the header.

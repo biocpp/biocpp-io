@@ -26,7 +26,8 @@ enum class style
 template <style s, bio::ownership own>
 void field_types()
 {
-    std::ostringstream ostr{};
+//     std::ostringstream ostr{};
+    std::ofstream ostr{"/tmp/foo.bcf", std::ios::binary};
 
     {
         bio::format_output_handler<bio::bcf> handler{ostr, bio::var_io::writer_options{}};
@@ -49,7 +50,10 @@ void field_types()
             handler.write_record(rec);
     }
 
-    EXPECT_EQ(ostr.str(), example_from_spec_header_regenerated + example_from_spec_records);
+//     EXPECT_EQ(ostr.str(), example_from_spec_bcf_unbgzf);
+
+    std::ofstream tmp{"/tmp/orig.bcf", std::ios::binary};
+    tmp.write(example_from_spec_bcf_unbgzf.data(), example_from_spec_bcf_unbgzf.size());
 }
 
 // TEST(bcf_output, default_style_shallow)
@@ -122,43 +126,51 @@ void field_types()
 
 TEST(bcf_output, prelim)
 {
-    std::ostringstream ostr{};
+//     std::ostringstream ostr{};
+    std::ofstream ostr{"/tmp/foo.bcf", std::ios::binary};
 
     {
         bio::format_output_handler<bio::bcf> handler{ostr, bio::var_io::writer_options{}};
 
         bio::var_io::header hdr{example_from_spec_header};
         hdr.add_missing();
+        hdr.column_labels.resize(hdr.column_labels.size() - 4); //remove samples
         handler.set_header(std::move(hdr));
 
-        bio::var_io::record_private_data priv{};
-        constexpr int32_t mv = bio::var_io::missing_value<int32_t>;
-        using ivec          = std::vector<int32_t>;
-        using ivecvec       = std::vector<std::vector<int32_t>>;
-        using fvec          = std::vector<float>;
-        using svec          = std::vector<std::string_view>;
+        [[maybe_unused]] bio::var_io::record_private_data priv{};
+        [[maybe_unused]] constexpr int32_t mv = bio::var_io::missing_value<int32_t>;
+        using ivec           [[maybe_unused]] = std::vector<int32_t>;
+        using ivecvec        [[maybe_unused]] = std::vector<std::vector<int32_t>>;
+        using fvec           [[maybe_unused]] = std::vector<float>;
+        using svec           [[maybe_unused]] = std::vector<std::string_view>;
 
-        auto rec0 = bio::make_record(bio::var_io::default_field_ids,
+        auto rec0 = bio::make_record(//bio::var_io::default_field_ids,
+                                     bio::vtag<bio::field::chrom,
+                                               bio::field::pos,
+                                               bio::field::id,
+                                               bio::field::ref>,
+
                                 "20",
                                 14370,
                                 "rs6054257",
-                                "G",
-                                svec{"A"},
-                                29.0,
-                                svec{"PASS"},
-                                std::tuple{std::pair{"NS", 3},
-                                        std::pair{"DP", 14},
-                                        std::pair{"AF", fvec{0.5f}},
-                                        std::pair{"DB", true},
-                                        std::pair{"H2", true}},
-                                std::tuple{std::pair{"GT", svec{"0|0", "1|0", "1/1"}},
-                                        std::pair{"GQ", ivec{48, 48, 43}},
-                                        std::pair{"DP", ivec{1, 8, 5}},
-                                        std::pair{"HQ", ivecvec{{51,51}, {51,51}, {mv,mv} }}},
-                                priv);
+                                "G");
+//                                 svec{"A"},
+//                                 29.0,
+//                                 svec{"PASS"},
+//                                 std::tuple{std::pair{"NS", 3},
+//                                         std::pair{"DP", 14},
+//                                         std::pair{"AF", fvec{0.5f}},
+//                                         std::pair{"DB", true},
+//                                         std::pair{"H2", true}},
+//                                 std::tuple{std::pair{"GT", svec{"0|0", "1|0", "1/1"}},
+//                                         std::pair{"GQ", ivec{48, 48, 43}},
+//                                         std::pair{"DP", ivec{1, 8, 5}},
+//                                         std::pair{"HQ", ivecvec{{51,51}, {51,51}, {mv,mv} }}},
+//                                 priv
+//                                      );
 
         handler.write_record(rec0);
     }
 
-    EXPECT_EQ(ostr.str(), example_from_spec_header_regenerated_no_IDX + example_from_spec_records);
+//     EXPECT_EQ(ostr.str(), example_from_spec_bcf_unbgzf);
 }

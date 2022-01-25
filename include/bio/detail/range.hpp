@@ -159,6 +159,24 @@ void string_copy(std::string_view const in, out_string auto & out)
         sized_range_copy(in, out);
 }
 
+constexpr std::string_view to_string_view(char const * const cstring)
+{
+    return std::string_view{cstring};
+}
+
+template <char_range rng_t>
+    requires std::ranges::borrowed_range<rng_t> && std::ranges::contiguous_range<rng_t> && std::ranges::sized_range<rng_t>
+constexpr std::string_view to_string_view(rng_t && contig_range)
+{
+    return std::string_view{std::ranges::data(contig_range), std::ranges::size(contig_range)};
+}
+
+constexpr std::string_view to_string_view(std::string_view const in)
+{
+    return in;
+}
+
+
 //!\}
 
 } // namespace bio::detail
