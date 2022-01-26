@@ -131,7 +131,7 @@ struct writer_options
      *
      * This option is ignored when writing bio::vcf.
      */
-    bool compress_integers = false;
+    bool compress_integers = true;
 
 private:
     static_assert(detail::is_type_list<formats_t>, "formats must be a bio::ttag / seqan3::type_list.");

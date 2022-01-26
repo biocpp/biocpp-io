@@ -85,16 +85,18 @@ private:
     //!\brief Pointer to header that can be owning or non-owning.
     std::unique_ptr<var_io::header const, void (*)(var_io::header const *)> header                  = {nullptr,
                                                                                                        [](var_io::header const *) {}};
-    detail::bcf_type_descriptor header_dictionary_desc;
+    //!\brief This is the descriptor used for IDX values [stored here, so it doesn't need to be recomputed].
+    detail::bcf_type_descriptor idx_desc;
 
+    //!\brief Index of the current record.
     size_t record_no = 0;
 
-    //!\brief This is cached during raw-record reading already.
+    //!\brief Part of the record that can be written en-bloc.
     detail::bcf_record_core record_core;
 
     //!\brief An intermediate stream that is guaranteed to always hold the complete current record in memory.
     std::ostringstream buffer_stream;
-
+    //!\brief Accessor for the the buffer_stream.
     detail::stream_buffer_exposer<char> * streambuf_exposer =
         reinterpret_cast<detail::stream_buffer_exposer<char> *>(buffer_stream.rdbuf());
     //!\brief The iterator on that stream.
@@ -108,61 +110,12 @@ private:
      * \{
      */
     //!\brief Try to use the smallest possible integer type (creates smaller files but is potentially slower).
-    bool compress_integers = false;
+    bool compress_integers = true;
     //!\}
     //!\}
     /*!\name Arbitrary helpers
      * \{
      */
-
-    detail::bcf_type_descriptor smallest_int_desc(std::unsigned_integral auto const num)
-    {
-        // bits required to represent number (the +1 because signed integral has smaller range)
-        switch (std::bit_ceil(std::bit_width(num) + 1))
-        {
-            case 128:
-            case 64:
-                error("Could not write number '", num, "'. Value out of range (only int32 supported).");
-                return {};
-            case 32:
-                return detail::bcf_type_descriptor::int32;
-            case 16:
-                return detail::bcf_type_descriptor::int16;
-            default:
-                return detail::bcf_type_descriptor::int8;
-        }
-    }
-
-    detail::bcf_type_descriptor smallest_int_desc(std::signed_integral auto const num)
-    {
-        return smallest_int_desc(static_cast<uint64_t>(std::abs(num)));
-    }
-
-    detail::bcf_type_descriptor smallest_int_desc(std::ranges::forward_range auto && range)
-    {
-        auto max = std::ranges::max(range);
-//         //TODO check if this is faster:
-//         val_t max = std::numeric_limits<val_t>::lowest();
-//         for (val_t elem : data)
-//         {
-//             if (elem > max)
-//             {
-//                 max = elem;
-//                 desc = smallest_int_desc(elem);
-//                 if (desc == detail::bcf_type_descriptor::int32) // this is max(type_descriptor)
-//                     break;
-//             }
-//         }
-        return smallest_int_desc(max);
-    }
-
-    template <std::ranges::forward_range rng_t>
-        requires std::ranges::range<std::ranges::range_reference_t<rng_t>>
-    detail::bcf_type_descriptor smallest_int_desc(rng_t & range)
-    {
-        return smallest_int_desc(range | std::views::join);
-    }
-
     void write_type_descriptor(detail::bcf_type_descriptor const desc, size_t const size)
     {
         if (size < 15)
@@ -237,9 +190,9 @@ private:
             else
             {
                 //TODO this is probably not the most efficient implementation
-                for (elem_t elem : range)
+                for (elem_t const elem : range)
                 {
-                    target_t buf = static_cast<target_t>(elem);
+                    target_t buf = (elem == var_io::missing_value<elem_t>) ? var_io::missing_value<target_t> : static_cast<target_t>(elem);
                     std::string_view v{reinterpret_cast<char const *>(&buf), sizeof(buf)};
                     it->write_range(v);
                 }
@@ -265,6 +218,32 @@ private:
                 break;
             default:
                 error("Trying to write an unknown type");
+        }
+    }
+
+    template <std::ranges::forward_range rng_t>
+        requires std::ranges::forward_range<std::ranges::range_reference_t<rng_t>>
+    void write_range_impl(rng_t & range, detail::bcf_type_descriptor const desc)
+    {
+        assert(desc == detail::bcf_type_descriptor::char8);
+        using alph_t = std::ranges::range_value_t<std::ranges::range_reference_t<rng_t>>;
+
+        bool first = true;
+
+        //TODO it would be good to have a views::join_with and even better one with size
+        for (auto && r : range)
+        {
+            if (first)
+                first = false;
+            else
+                it = ',';
+
+            if constexpr (std::same_as<alph_t, char>)
+                it->write_range(r);
+            else if constexpr (detail::deliberate_alphabet<alph_t>)
+                it->write_range(r | seqan3::views::to_char);
+            else
+                static_assert(std::same_as<alph_t, char>, "Can't handle this alphabet type here.");
         }
     }
 
@@ -320,31 +299,6 @@ private:
         }
     }
 
-    template <std::ranges::forward_range rng_t>
-        requires std::ranges::forward_range<std::ranges::range_reference_t<rng_t>>
-    void write_range_impl(rng_t & range, detail::bcf_type_descriptor const desc)
-    {
-        assert(desc == detail::bcf_type_descriptor::char8);
-        using alph_t = std::ranges::range_value_t<std::ranges::range_reference_t<rng_t>>;
-
-        bool first = true;
-
-        //TODO it would be good to have a views::join_with and even better one with size
-        for (auto && r : range)
-        {
-            if (first)
-                first = false;
-            else
-                it = ',';
-
-            if constexpr (std::same_as<alph_t, char>)
-                it->write_range(r);
-            else if constexpr (detail::deliberate_alphabet<alph_t>)
-                it->write_range(r | seqan3::views::to_char);
-            else
-                static_assert(std::same_as<alph_t, char>, "Can't handle this alphabet type here.");
-        }
-    }
 
     //!\brief Write single element.
     template <typename elem_t>
@@ -354,7 +308,7 @@ private:
         detail::bcf_type_descriptor desc = detail::type_2_bcf_type_descriptor<elem_t>;
         if constexpr (std::integral<elem_t> && sizeof(elem_t) > 1)
             if (shrink_int)
-                desc = smallest_int_desc(num);
+                desc = detail::smallest_int_desc(num);
 
         write_single_impl(num, desc);
     }
@@ -386,7 +340,7 @@ private:
         detail::bcf_type_descriptor desc = detail::type_2_bcf_type_descriptor<elem_t>;
         if constexpr (std::integral<elem_t> && sizeof(elem_t) > 1)
             if (shrink_int)
-                desc = smallest_int_desc(data);
+                desc = detail::smallest_int_desc(data);
 
         write_type_descriptor(desc, std::ranges::distance(data));
 
@@ -403,7 +357,10 @@ private:
     //!\brief Writing bools.
     void write_typed_data(bool, bool)
     {
-        write_typed_data(int8_t{1}, false);
+        // This is the behaviour according to spec:
+        // write_typed_data(int8_t{1}, false);
+        // but bcftools and htslib expect this:
+        it = '\0';
     }
 
     //!\brief This overload adds a default argument for integer compression based on the class member.
@@ -538,9 +495,11 @@ private:
         requires(!std::same_as<std::ranges::range_value_t<rng_t>, char>)
     void write_field(vtag_t<field::filter> /**/, rng_t && range)
     {
+        write_type_descriptor(idx_desc, std::ranges::distance(range));
+
         if constexpr (std::integral<std::ranges::range_value_t<rng_t>>)
         {
-            write_typed_data(range);
+            write_range_impl(range, idx_desc);
         }
         else
         {
@@ -554,16 +513,15 @@ private:
                 return header->filters[it->second].idx;
             };
 
-            // TODO we are not using header_dictionary_desc here
-            write_typed_data(range | std::views::transform(text_id_to_idx));
+            write_range_impl(range | std::views::transform(text_id_to_idx), idx_desc);
         }
     }
 
     //!\brief Overload for FILTER; single string or single IDX
     void write_field(vtag_t<field::filter> /**/, auto && field)
     {
-//         std::span<decltype(field)> s{&field, 1};
-        write_field(vtag<field::filter>, std::initializer_list{field}); // delegate to previous overload
+        std::span<std::remove_reference_t<decltype(field)>> s{&field, 1};
+        write_field(vtag<field::filter>, s); // delegate to previous overload
     }
 
 
@@ -589,7 +547,7 @@ private:
 
             idx = header->infos[it->second].idx;
         }
-        write_single_impl(idx, header_dictionary_desc);
+        write_single_impl(idx, idx_desc);
 
         /* VALUE */
         if constexpr (detail::is_dynamic_type<value_t>)
@@ -732,7 +690,7 @@ private:
 
             idx = header->formats[it->second].idx;
         }
-        write_single_impl(idx, header_dictionary_desc);
+        write_single_impl(idx, idx_desc);
 
         auto & format = header->formats.at(header->idx_to_format_pos().at(idx));
 
@@ -752,9 +710,9 @@ private:
             }
 
             detail::bcf_type_descriptor desc = detail::type_2_bcf_type_descriptor<alph_t>;
-            if constexpr (std::integral<alph_t>)
+            if constexpr (std::integral<alph_t> && sizeof(alph_t) > 1)
                 if (compress_integers)
-                    desc = smallest_int_desc(values);
+                    desc = detail::smallest_int_desc(values);
 
             // if there are no values, we can write the missing field and need no padding values at all
             if (std::ranges::size(values) == 0)
@@ -852,10 +810,10 @@ private:
         auto func = [&](auto & ... field) { (write_genotypes_element(field), ...); };
         std::apply(func, tup);
     }
-
     //TODO vcf-style
     //!\}
 
+    //!\brief Write the header.
     void write_header()
     {
         if (header == nullptr)
@@ -875,7 +833,7 @@ private:
         header_has_been_written = true;
 
         /* compute the smallest int type for the dictionaries */
-        header_dictionary_desc = smallest_int_desc(header->max_idx());
+        idx_desc = detail::smallest_int_desc(header->max_idx());
     }
 
     //!\brief Write the record (supports const and non-const lvalue ref).
@@ -906,6 +864,11 @@ private:
          * replace the placeholders with the actual values. Since we are using a stringstream, we know that
          * the full record is inside the buffer (in contrast to using the regular stream which might have been
          * flushed to disk already).
+         * The stringstream's pbase() always points to the beginning of the string-buffer and we store the
+         * current record's begin in a separate variable.
+         * The contents of the stringstream are flushed to the actual stream periodically, but only after
+         * it contains at least one full record. Flushing to the actual stream happens via sputn() so the
+         * hope is that for sufficiently large buffers the write is not buffered again.
          *
          * Alternative implementations like SEEKing back in the fstream where considered, but seeking is not
          * guaranteed to work on arbitrary streams and is particularly inefficient on gzipped streams.
@@ -1006,7 +969,6 @@ private:
 
 public:
     /*!\name Constructors, destructor and assignment.
-     * \brief These are all private to prevent wrong instantiation.
      * \{
      */
     format_output_handler()                              = default;            //!< Defaulted.

@@ -424,6 +424,10 @@ using default_record = record<decltype(default_field_ids), decltype(field_types<
 namespace bio::detail
 {
 
+//-----------------------------------------------------------------------------
+// BCF record core
+//-----------------------------------------------------------------------------
+
 //!\brief The "core" of a BCF record in bit-compatible representation to the on-disk format.
 //!\ingroup var_io
 struct bcf_record_core
@@ -440,6 +444,15 @@ struct bcf_record_core
 
 static_assert(sizeof(bcf_record_core) == 24, "Bit alignment problem in declaration of bcf_record_core.");
 
+//-----------------------------------------------------------------------------
+// bcf_type_descriptor and utilities
+//-----------------------------------------------------------------------------
+
+/*!\name Pre-defined field types
+ * \brief These can be used to configure the behaviour of the bio::var_io::reader via bio::var_io::reader_options.
+ * \{
+ */
+
 //!\brief The BCF type descriptor with values as described in the specification.
 //!\ingroup var_io
 enum class bcf_type_descriptor : uint8_t
@@ -451,6 +464,59 @@ enum class bcf_type_descriptor : uint8_t
     float32 = 5,
     char8   = 7
 };
+
+//TODO this needs standalone tests
+//!\brief Compute the smallest possible integral type descriptor able to represent the value.
+//!\relates bcf_type_descriptor
+detail::bcf_type_descriptor smallest_int_desc(std::unsigned_integral auto const num)
+{
+    // bits required to represent number (the +1 because signed integral has smaller range)
+    switch (std::bit_ceil(std::bit_width(num) + 1))
+    {
+        case 128:
+        case 64:
+            throw std::runtime_error{std::string{"Could not write number '"} + detail::to_string(num) + "'. Value out of range (only int32 supported)."};
+            return {};
+        case 32:
+            return detail::bcf_type_descriptor::int32;
+        case 16:
+            return detail::bcf_type_descriptor::int16;
+        default:
+            return detail::bcf_type_descriptor::int8;
+    }
+}
+
+//!\overload
+detail::bcf_type_descriptor smallest_int_desc(std::signed_integral auto const num)
+{
+    return smallest_int_desc(static_cast<uint64_t>(std::abs(num)));
+}
+
+//!\overload
+detail::bcf_type_descriptor smallest_int_desc(std::ranges::forward_range auto && range)
+{
+//         //TODO check if this is faster:
+//         val_t max = std::numeric_limits<val_t>::lowest();
+//         for (val_t elem : data)
+//         {
+//             if (elem > max)
+//             {
+//                 max = elem;
+//                 desc = smallest_int_desc(elem);
+//                 if (desc == detail::bcf_type_descriptor::int32) // this is max(type_descriptor)
+//                     break;
+//             }
+//         }
+    return smallest_int_desc(std::ranges::empty(range) ? 0 : *std::ranges::max_element(range));
+}
+
+//!\overload
+template <std::ranges::forward_range rng_t>
+    requires std::ranges::range<std::ranges::range_reference_t<rng_t>>
+detail::bcf_type_descriptor smallest_int_desc(rng_t & range)
+{
+    return smallest_int_desc(range | std::views::join);
+}
 
 /*!\addtogroup var_io
  * \{
@@ -498,31 +564,6 @@ inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<char> = bcf_type
 //!\brief Specialisation for seqan3 alphabets.
 template <detail::deliberate_alphabet t>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::char8;
-//!\}
-
-/*!\name A compile-time mapping of bio::detail::bcf_type_descriptor to types
- * \{
- */
-
-template <bcf_type_descriptor desc>
-auto bcf_type_descriptor_2_type_impl()
-{
-    if constexpr (desc == bcf_type_descriptor::int8)
-        return int8_t{};
-    else if constexpr (desc == bcf_type_descriptor::int16)
-        return int16_t{};
-    else if constexpr (desc == bcf_type_descriptor::int32)
-        return int32_t{};
-    else if constexpr (desc == bcf_type_descriptor::char8)
-        return char{};
-    else if constexpr (desc == bcf_type_descriptor::float32)
-        return float{};
-    else
-        return;
-}
-
-template <bcf_type_descriptor desc>
-using bcf_type_descriptor_2_type = decltype(bcf_type_descriptor_2_type_impl<desc>());
 //!\}
 
 //!\}
