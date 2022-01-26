@@ -161,9 +161,17 @@ private:
         if (options_.compression == compression_format::detect)
         {
             if (filename_.empty()) // constructed from ostream → there is nothing to detect
+            {
                 options_.compression = compression_format::none;
+            }
             else
-                options_.compression = detail::detect_format_from_filename(filename_);
+            {
+                options_.compression = detail::detect_format_from_extension(filename_);
+                if (options_.compression != compression_format::none)
+                    truncated_filename_.replace_extension(); // remove compression extension
+                else
+                    options_.compression = detail::detect_format_from_secondary_extension(filename_);
+            }
         }
 
         // Thread handling
@@ -176,28 +184,23 @@ private:
                 --options_.threads; // bgzf spawns **additional** threads, but user sets total
         }
 
-        std::span<std::string> file_extensions{};
-        std::ostream *         sec = nullptr;
+        std::ostream * sec = nullptr;
         switch (options_.compression)
         {
             case compression_format::bgzf:
-                sec             = detail::make_ostream<compression_format::bgzf>(*primary_stream,
+                sec = detail::make_ostream<compression_format::bgzf>(*primary_stream,
                                                                      options_.threads,
                                                                      static_cast<size_t>(8ul),
                                                                      options_.compression_level);
-                file_extensions = compression_traits<compression_format::bgzf>::file_extensions;
                 break;
             case compression_format::gz:
                 sec = detail::make_ostream<compression_format::gz>(*primary_stream, options_.compression_level);
-                file_extensions = compression_traits<compression_format::gz>::file_extensions;
                 break;
             case compression_format::bz2:
                 sec = detail::make_ostream<compression_format::bz2>(*primary_stream, options_.compression_level);
-                file_extensions = compression_traits<compression_format::bz2>::file_extensions;
                 break;
             case compression_format::zstd:
                 sec = detail::make_ostream<compression_format::zstd>(*primary_stream, options_.compression_level);
-                file_extensions = compression_traits<compression_format::zstd>::file_extensions;
                 break;
             default:
                 break;
@@ -207,14 +210,6 @@ private:
             secondary_stream = stream_ptr_t{&*primary_stream, stream_deleter_noop};
         else
             secondary_stream = stream_ptr_t{sec, stream_deleter_default};
-
-        // truncate the filename in truncated_filename_ to show that compression has taken place
-        if (filename_.has_extension())
-        {
-            std::string extension = filename_.extension().string().substr(1);
-            if (std::ranges::find(file_extensions, extension) != std::ranges::end(file_extensions))
-                truncated_filename_.replace_extension();
-        }
     }
 
     //!\brief Initialise state of object.

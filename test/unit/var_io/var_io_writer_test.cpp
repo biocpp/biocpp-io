@@ -12,7 +12,6 @@
 #include <seqan3/test/expect_range_eq.hpp>
 #include <seqan3/test/tmp_filename.hpp>
 
-#include <bio/format/fasta.hpp>
 #include <bio/stream/transparent_istream.hpp>
 #include <bio/var_io/writer.hpp>
 
@@ -81,7 +80,7 @@ TEST(var_io_writer, constructor2_with_opts_direct_format)
 
 TEST(var_io_writer, constructor2_just_filename_format_variant)
 {
-    std::variant<bio::vcf> var{};
+    std::variant<bio::vcf, bio::bcf> var{};
 
     var_io_writer_filename_constructor(false, var);
     EXPECT_TRUE((std::same_as<decltype(bio::var_io::writer{"", var}), bio::var_io::writer<>>));

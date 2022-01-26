@@ -64,7 +64,7 @@ private:
     //DO NOT INHERIT it from base!
 //     using base_t::it;
     using base_t::stream;
-    using base_t::write_field;
+//     using base_t::write_field;
 //     using base_t::write_field_aux;
     //!\}
 
@@ -111,6 +111,9 @@ private:
      */
     //!\brief Try to use the smallest possible integer type (creates smaller files but is potentially slower).
     bool compress_integers = true;
+
+    //!\brief Throw exceptions if the header type does not match the descriptor from the header.
+    bool enforce_header_types = false;
     //!\}
     //!\}
     /*!\name Arbitrary helpers
@@ -303,7 +306,7 @@ private:
     //!\brief Write single element.
     template <typename elem_t>
         requires (seqan3::alphabet<elem_t> || seqan3::arithmetic<elem_t>)
-    void write_typed_data(elem_t const num, bool shrink_int)
+    detail::bcf_type_descriptor write_typed_data(elem_t const num, bool shrink_int)
     {
         detail::bcf_type_descriptor desc = detail::type_2_bcf_type_descriptor<elem_t>;
         if constexpr (std::integral<elem_t> && sizeof(elem_t) > 1)
@@ -311,9 +314,10 @@ private:
                 desc = detail::smallest_int_desc(num);
 
         write_single_impl(num, desc);
+        return desc;
     }
 
-    void write_typed_data(detail::char_range auto && data, bool)
+    detail::bcf_type_descriptor write_typed_data(detail::char_range auto && data, bool)
     {
         if (std::ranges::empty(data) || std::ranges::equal(data, std::string_view{"."}))
         {
@@ -325,14 +329,16 @@ private:
             write_type_descriptor(detail::bcf_type_descriptor::char8, size);
             it->write_range(data);
         }
+
+        return detail::bcf_type_descriptor::char8;
     }
 
-    void write_typed_data(char const * const cstring, bool)
+    detail::bcf_type_descriptor write_typed_data(char const * const cstring, bool)
     {
-        write_typed_data(std::string_view{cstring}, false);
+        return write_typed_data(std::string_view{cstring}, false);
     }
 
-    void write_typed_data(std::ranges::forward_range auto && data, bool shrink_int)
+    detail::bcf_type_descriptor write_typed_data(std::ranges::forward_range auto && data, bool shrink_int)
     {
         using data_t = decltype(data);
         using elem_t = std::ranges::range_value_t<data_t>;
@@ -345,43 +351,33 @@ private:
         write_type_descriptor(desc, std::ranges::distance(data));
 
         write_range_impl(data, desc);
+
+        return desc;
     }
 
     template <std::ranges::forward_range data_t>
         requires detail::char_range<std::ranges::range_value_t<data_t>>
-    void write_typed_data(data_t &&, bool)
+    detail::bcf_type_descriptor write_typed_data(data_t &&, bool)
     {
         error("implement me");
+        return detail::bcf_type_descriptor::char8;
     }
 
     //!\brief Writing bools.
-    void write_typed_data(bool, bool)
+    detail::bcf_type_descriptor write_typed_data(bool, bool)
     {
         // This is the behaviour according to spec:
         // write_typed_data(int8_t{1}, false);
         // but bcftools and htslib expect this:
         it = '\0';
+        return detail::bcf_type_descriptor::missing;
     }
 
     //!\brief This overload adds a default argument for integer compression based on the class member.
-    void write_typed_data(auto && num)
+    detail::bcf_type_descriptor write_typed_data(auto && num)
     {
-        write_typed_data(num, compress_integers);
+        return write_typed_data(num, compress_integers);
     }
-
-    //!\brief Write chracter ranges.
-    void write_field_aux(detail::char_range auto & range) { write_typed_data(range); }
-
-    //!\brief Write alphabet ranges.
-    template <std::ranges::forward_range rng_t>
-        requires(detail::deliberate_alphabet<std::ranges::range_reference_t<rng_t>>)
-    void write_field_aux(rng_t & range) { write_typed_data(range | seqan3::views::to_char); }
-
-    //!\brief Write CStrings.
-    void write_field_aux(char const * const cstr) { write_typed_data(std::string_view{cstr}); }
-
-    //!\brief Write numbers.
-    void write_field_aux(seqan3::arithmetic auto number) { write_types_single_data(number); }
 
     /*!\name Core record setters
      * \brief These set up the core record.
@@ -478,16 +474,32 @@ private:
      * \{
      */
 
-    // ID, REF, (one-element) ALT handled by defaults
+    void write_field(vtag_t<field::id> /**/, auto && field)
+    {
+        detail::bcf_type_descriptor desc = write_typed_data(field);
+        assert(desc == detail::bcf_type_descriptor::char8);
+    }
 
-    //!\brief Overload for ALT that is range-of-range (single-range ALT is handled by defaults).
+    void write_field(vtag_t<field::ref> /**/, auto && field)
+    {
+        detail::bcf_type_descriptor desc = write_typed_data(field);
+        assert(desc == detail::bcf_type_descriptor::char8);
+    }
+
+    //!\brief Overload for ALT (single argument).
+    void write_field(vtag_t<field::alt> /**/, auto && field)
+    {
+        detail::bcf_type_descriptor desc = write_typed_data(field);
+        assert(desc == detail::bcf_type_descriptor::char8);
+    }
+
+    //!\brief Overload for ALT that is range-of-range.
     template <std::ranges::input_range rng_t>
-        requires std::ranges::forward_range<std::ranges::range_reference_t<rng_t>> // TOOD and requires
-                                                                                   // write_field_aux(value)
+        requires std::ranges::forward_range<std::ranges::range_reference_t<rng_t>>
     void write_field(vtag_t<field::alt> /**/, rng_t && range)
     {
         for (auto && elem : range)
-            write_field_aux(elem);
+            write_field(vtag<field::alt>, elem);
     }
 
     //!\brief Overload for FILTER; handles vector of numeric IDs and vector of IDX
@@ -549,16 +561,26 @@ private:
         }
         write_single_impl(idx, idx_desc);
 
+//         var_io::header::info_t * info = nullptr;
+//
+//
+//         header->infos[header->idx_to_infos_pos().find(idx)];
+//         bool explicit_integer_width = info.other_fields.find("IntegerBits") != info.other_fields.end();
+//
+//         if (info.
+
         /* VALUE */
+//         detail::bcf_type_descriptor desc;
         if constexpr (detail::is_dynamic_type<value_t>)
         {
-            auto func = [&] (auto & param) { write_typed_data(param); };
+            auto func = [&] (auto & param) { return write_typed_data(param); };
             std::visit(func, value);
         }
         else
         {
             write_typed_data(value);
         }
+
     }
 
     //!\brief Overload for INFO; range of pairs.

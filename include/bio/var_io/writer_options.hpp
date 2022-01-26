@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <bio/format/bcf.hpp>
 #include <bio/format/vcf.hpp>
 #include <bio/stream/transparent_ostream.hpp>
 #include <bio/var_io/misc.hpp>
@@ -82,7 +83,7 @@ namespace bio::var_io
  *
  * TODO describe how to easily initialise this
  */
-template <typename formats_t = seqan3::type_list<vcf>>
+template <typename formats_t = seqan3::type_list<vcf, bcf>>
 struct writer_options
 {
     /*!\brief The formats that output files can take; a bio::ttag over the types.
@@ -91,7 +92,7 @@ struct writer_options
      *
      * See bio::var_io::writer for an overview of the the supported formats.
      */
-    formats_t formats = ttag<vcf>;
+    formats_t formats = ttag<vcf, bcf>;
 
     //!\brief Options that are passed on to the internal stream oject.
     transparent_ostream_options stream_options{};

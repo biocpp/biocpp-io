@@ -78,6 +78,7 @@ struct header_number
 class header
 {
 public:
+    //TODO we definitely want transparent hashing for these so we can search string_views efficiently
     //!\brief The dictionary for the non-standard fields in a header entry.
     using other_fields_t = std::map<std::string, std::string, std::ranges::less>;
 
@@ -660,6 +661,18 @@ private:
             throw format_error{"INFO or FORMAT line does not contain Type field."};
         else
             new_entry.type = parse_type(type.mapped(), new_entry.number);
+        if (new_entry.type == dynamic_type_id::vector_of_int32)
+        {
+            if (auto it = new_entry.other_fields.find("IntegerBits"); it != new_entry.other_fields.end())
+            {
+                std::string_view number = strip_quotes(it->second);
+                if (number == "8")
+                    new_entry.type = dynamic_type_id::vector_of_int8;
+                else if (number == "16")
+                    new_entry.type = dynamic_type_id::vector_of_int16;
+                // else this is something we can't interpret and we keep the type as vec_of_int32
+            }
+        }
 
         /* Description */
         auto description = new_entry.other_fields.extract("Description");
@@ -781,6 +794,12 @@ private:
         if (in.size() < 2 || in.front() != '<' || in.back() != '>')
             throw format_error{"Structured line does not contain \"<\" and \">\" at right places."};
         return in.substr(1, in.size() - 2);
+    }
+
+    //!\brief Return a substring from the argument that does not contain enclosing quotes (if present).
+    static inline std::string_view strip_quotes(std::string_view const in)
+    {
+        return (in.size() < 2 || in.front() != '"' || in.back() != '"') ? in.substr(1, in.size() - 2) : in;
     }
 
     //!\brief Turn a string into a bio::var_io::header_number.

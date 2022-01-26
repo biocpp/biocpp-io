@@ -58,7 +58,19 @@ struct compression_traits
      * Note that this static member is not `const` and may be modified to allow
      * user-provided extensions.
      */
-    static inline std::vector<std::string> file_extensions = {"gz", "bgz", "bgzf"};
+    static inline std::vector<std::string> file_extensions;
+
+    /*!\brief Valid file extensions that have significance of their own.
+     *
+     * \details
+     *
+     * Note that this static member is not `const` and may be modified to allow
+     * user-provided extensions.
+     *
+     * These file extensions are not "additional" (e.g. the ".gz" in ".tar.gz")
+     * but still indicate the usage of a specific compression (e.g. ".tgz").
+     */
+    static inline std::vector<std::string> secondary_file_extensions;
 
     //!\brief The magic byte sequence to disambiguate the compression format.
     static constexpr std::string_view magic_header = "";
@@ -79,6 +91,9 @@ struct compression_traits<compression_format::bgzf> : compression_traits<compres
 
     //!\copydoc bio::compression_traits<compression_format::none>::file_extensions
     static inline std::vector<std::string> file_extensions = {"gz", "bgz", "bgzf"};
+
+    //!\copydoc bio::compression_traits<compression_format::none>::secondary_file_extensions
+    static inline std::vector<std::string> secondary_file_extensions = {"bcf", "bam"};
 
     //!\copydoc bio::compression_traits<compression_format::none>::magic_header
     static constexpr std::string_view magic_header{// GZip header
@@ -291,7 +306,7 @@ inline compression_format detect_format_from_magic_header(std::string_view const
 }
 
 //-------------------------------------------------------------------------------
-// detect_format_from_filename
+// detect_format_from_extension
 //-------------------------------------------------------------------------------
 
 /*!\brief Deduce bio::compression_format from a filename extension.
@@ -301,7 +316,7 @@ inline compression_format detect_format_from_magic_header(std::string_view const
  * Note that this function checks BGZF before GZ which means that it always selects BGZF for the extension ".gz".
  * This is desired, because many biological formats expect this.
  */
-inline compression_format detect_format_from_filename(std::filesystem::path const & path)
+inline compression_format detect_format_from_extension(std::filesystem::path const & path)
 {
     auto ext = path.extension().string();
 
@@ -323,6 +338,41 @@ inline compression_format detect_format_from_filename(std::filesystem::path cons
         if (ext == ext2)
             return compression_format::zstd;
     for (std::string_view const ext2 : compression_traits<compression_format::bgzf>::file_extensions)
+        if (ext == ext2)
+            return compression_format::bgzf;
+
+    return compression_format::none;
+}
+
+/*!\brief Deduce bio::compression_format from a filename extension.
+ * \ingroup stream
+ * \details
+ *
+ * Note that this function checks BGZF before GZ which means that it always selects BGZF for the extension ".gz".
+ * This is desired, because many biological formats expect this.
+ */
+inline compression_format detect_format_from_secondary_extension(std::filesystem::path const & path)
+{
+    auto ext = path.extension().string();
+
+    if (!ext.starts_with('.'))
+        return compression_format::none;
+    else
+        ext = ext.substr(1);
+
+    for (std::string_view const ext2 : compression_traits<compression_format::bgzf>::secondary_file_extensions)
+        if (ext == ext2)
+            return compression_format::bgzf;
+    for (std::string_view const ext2 : compression_traits<compression_format::gz>::secondary_file_extensions)
+        if (ext == ext2)
+            return compression_format::gz;
+    for (std::string_view const ext2 : compression_traits<compression_format::bz2>::secondary_file_extensions)
+        if (ext == ext2)
+            return compression_format::bz2;
+    for (std::string_view const ext2 : compression_traits<compression_format::zstd>::secondary_file_extensions)
+        if (ext == ext2)
+            return compression_format::zstd;
+    for (std::string_view const ext2 : compression_traits<compression_format::bgzf>::secondary_file_extensions)
         if (ext == ext2)
             return compression_format::bgzf;
 
