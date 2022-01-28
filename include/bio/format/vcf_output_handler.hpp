@@ -74,6 +74,7 @@ private:
     //!\brief Pointer to header that can be owning or non-owning.
     std::unique_ptr<var_io::header const, void (*)(var_io::header const *)> header                  = {nullptr,
                                                                                                        [](var_io::header const *) {}};
+    detail::move_tracker move_tracker;
     //!\}
 
     /*!\name Options
@@ -477,6 +478,17 @@ private:
     }
     //!\}
 
+    //!\brief Write the header.
+    void write_header()
+    {
+        if (write_IDX)
+            it->write_range(header->to_plaintext());
+        else
+            it->write_range(header->to_plaintext_without_idx());
+
+        header_has_been_written = true;
+    }
+
     //!\brief Write the record (supports const and non-const lvalue ref).
     void write_record_impl(auto & record)
     {
@@ -486,31 +498,14 @@ private:
         {
             if (header == nullptr)
             {
-                bool set = false;
-
                 if constexpr (field_ids::contains(field::_private))
                 {
                     if (var_io::header const * ptr = get<field::_private>(record).header_ptr; ptr != nullptr)
-                    {
                         set_header(*ptr);
-                        set = true;
-                    }
-                }
-
-                if (!set)
-                {
-                    throw std::runtime_error{
-                      "You need to call set_header() on the writer/format before writing a "
-                      "record."};
                 }
             }
 
-            if (write_IDX)
-                it->write_range(header->to_plaintext());
-            else
-                it->write_range(header->to_plaintext_without_idx());
-
-            header_has_been_written = true;
+            write_header();
         }
 
         static_assert(field_ids::contains(field::chrom), "The record must contain the CHROM field.");
@@ -579,10 +574,9 @@ public:
      * \brief These are all private to prevent wrong instantiation.
      * \{
      */
-    format_output_handler()                              = default;            //!< Defaulted.
+    format_output_handler()                              = delete;            //!< Defaulted.
     format_output_handler(format_output_handler const &) = delete;             //!< Deleted.
     format_output_handler(format_output_handler &&)      = default;            //!< Defaulted.
-    ~format_output_handler()                             = default;            //!< Defaulted.
     format_output_handler & operator=(format_output_handler const &) = delete; //!< Deleted.
     format_output_handler & operator=(format_output_handler &&) = default;     //!< Defaulted.
 
@@ -606,6 +600,16 @@ public:
 
     //!\brief Construct with only an output stream.
     format_output_handler(std::ostream & str) : format_output_handler(str, 1) {}
+
+    ~format_output_handler()
+    {
+        if (move_tracker.moved_from)
+            return;
+
+        // if no records were written, the header also wasn't written
+        if (!header_has_been_written)
+            write_header();
+    }
     //!\}
 
     //!\brief Get the header.

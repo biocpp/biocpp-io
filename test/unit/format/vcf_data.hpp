@@ -250,7 +250,7 @@ auto example_records_default_style()
 
     bio::var_io::record_private_data priv{};
     constexpr int_t mv = bio::var_io::missing_value<int_t>;
-    using ivec          = std::vector<int32_t>;  // not int_t because dynamic_vector_type doesn have vector<int8_t>
+    using ivec          = std::vector<int_t>;  // not int_t because dynamic_vector_type doesn have vector<int8_t>
     using ivecvec       = std::vector<std::vector<int_t>>;
     using fvec          = std::vector<float>;
     using svec          = std::conditional_t<own == bio::ownership::shallow,
@@ -303,7 +303,7 @@ auto example_records_bcf_style()
 
     bio::var_io::record_private_data priv{};
     constexpr int_t mv  = bio::var_io::missing_value<int_t>;
-    using ivec          = std::vector<int32_t>;  // not int_t because dynamic_vector_type doesn have vector<int8_t>
+    using ivec          = std::vector<int_t>;  // not int_t because dynamic_vector_type doesn have vector<int8_t>
     using ivecvec       = std::vector<std::vector<int_t>>;
     using fvec          = std::vector<float>;
     using svec          = std::conditional_t<own == bio::ownership::shallow,

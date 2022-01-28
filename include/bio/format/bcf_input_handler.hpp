@@ -745,7 +745,7 @@ private:
         requires detail::out_string<std::ranges::range_reference_t<parsed_field_t>>
     void parse_field(vtag_t<field::filter> const & /**/, parsed_field_t & parsed_field)
     {
-        std::vector<int32_t> tmp;
+        std::vector<int32_t> tmp; //ATTENTION this allocates, TODO change
 
         decode_numbers_into(get<field::filter>(raw_record), tmp);
 
@@ -1047,7 +1047,7 @@ inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_i
                                                           dyn_t &                           output)
 {
     // TODO DRY out the boilerplate error messages
-    if (static_cast<size_t>(id_from_header) < 3 /* char8, int32, float32 */ && size != 1)
+    if (static_cast<size_t>(id_from_header) < static_cast<size_t>(var_io::dynamic_type_id::string) && size != 1)
         error("BCF data field expected exactly one element, got:", size);
 
     switch (id_from_header)
@@ -1060,15 +1060,17 @@ inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_i
                 dynamic_type_init_single<var_io::dynamic_type_id::char8, char>(cache_ptr, output);
                 return;
             }
+        case var_io::dynamic_type_id::int8:
+        case var_io::dynamic_type_id::int16:
         case var_io::dynamic_type_id::int32:
             {
                 switch (desc)
                 {
                     case detail::bcf_type_descriptor::int8:
-                        dynamic_type_init_single<var_io::dynamic_type_id::int32, int8_t>(cache_ptr, output);
+                        dynamic_type_init_single<var_io::dynamic_type_id::int8, int8_t>(cache_ptr, output);
                         break;
                     case detail::bcf_type_descriptor::int16:
-                        dynamic_type_init_single<var_io::dynamic_type_id::int32, int16_t>(cache_ptr, output);
+                        dynamic_type_init_single<var_io::dynamic_type_id::int16, int16_t>(cache_ptr, output);
                         break;
                     case detail::bcf_type_descriptor::int32:
                         dynamic_type_init_single<var_io::dynamic_type_id::int32, int32_t>(cache_ptr, output);
@@ -1179,7 +1181,8 @@ inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_i
                                                           std::byte const *&                cache_ptr,
                                                           dyn_t &                           output)
 {
-    if (static_cast<size_t>(id_from_header) < 3 /* char8, int32, float32 */ && inner_size != 1)
+    // TODO DRY out the boilerplate error messages
+    if (static_cast<size_t>(id_from_header) < static_cast<size_t>(var_io::dynamic_type_id::string) && inner_size != 1)
         error("BCF data field expected exactly one element, got:", inner_size);
 
     switch (id_from_header)
@@ -1192,20 +1195,22 @@ inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_i
                 dynamic_type_init_vector<var_io::dynamic_type_id::char8, char>(outer_size, cache_ptr, output);
                 return;
             }
+        case var_io::dynamic_type_id::int8:
+        case var_io::dynamic_type_id::int16:
         case var_io::dynamic_type_id::int32:
             {
                 switch (desc)
                 {
                     case detail::bcf_type_descriptor::int8:
                         {
-                            dynamic_type_init_vector<var_io::dynamic_type_id::int32, int8_t>(outer_size,
-                                                                                             cache_ptr,
-                                                                                             output);
+                            dynamic_type_init_vector<var_io::dynamic_type_id::int8, int8_t>(outer_size,
+                                                                                            cache_ptr,
+                                                                                            output);
                             break;
                         }
                     case detail::bcf_type_descriptor::int16:
                         {
-                            dynamic_type_init_vector<var_io::dynamic_type_id::int32, int16_t>(outer_size,
+                            dynamic_type_init_vector<var_io::dynamic_type_id::int16, int16_t>(outer_size,
                                                                                               cache_ptr,
                                                                                               output);
                             break;

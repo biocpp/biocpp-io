@@ -50,6 +50,14 @@ void field_types()
     }
 
     EXPECT_EQ(ostr.str(), example_from_spec_bcf_unbgzf_our);
+
+//     std::string buf = ostr.str();
+//     std::ofstream ofour{"/tmp/our.bcf", std::ios::binary};
+//     ofour.write(std::ranges::data(buf), buf.size());
+//
+//     std::ofstream oftheir{"/tmp/their.bcf", std::ios::binary};
+//     oftheir.write(std::ranges::data(example_from_spec_bcf_unbgzf_our), example_from_spec_bcf_unbgzf_our.size());
+
 }
 
 TEST(bcf_output, default_style_shallow)
@@ -120,3 +128,5 @@ TEST(bcf_output, novariant)
 //     EXPECT_EQ(ostr.str(), example_from_spec_header_regenerated_no_IDX + example_from_spec_records);
 // }
 
+
+//TODO tests for the different options

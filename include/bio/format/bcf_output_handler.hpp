@@ -61,9 +61,9 @@ private:
     //!\brief Befriend the base class so we can instantiate.
     friend base_t;
 
-    //DO NOT INHERIT it from base!
-//     using base_t::it;
     using base_t::stream;
+    // WE EXPLICITLY DO NOT INHERIT THE FOLLOWING:
+//     using base_t::it;
 //     using base_t::write_field;
 //     using base_t::write_field_aux;
     //!\}
@@ -104,6 +104,12 @@ private:
 
     //!\brief Distance from pbase()
     size_t this_record_offset = 0;
+
+    //!\brief Used when writing vector-of-string.
+    std::vector<size_t> string_size_buffer;
+
+    //!\brief Set if this object was moved from.
+    bool moved_from = false;
     //!\}
 
     /*!\name Options
@@ -113,12 +119,13 @@ private:
     bool compress_integers = true;
 
     //!\brief Throw exceptions if the header type does not match the descriptor from the header.
-    bool enforce_header_types = false;
+    bool verify_header_types = false;
     //!\}
     //!\}
     /*!\name Arbitrary helpers
      * \{
      */
+    //!\brief Write the type-descriptor byte(s).
     void write_type_descriptor(detail::bcf_type_descriptor const desc, size_t const size)
     {
         if (size < 15)
@@ -132,7 +139,9 @@ private:
             uint8_t byte = static_cast<uint8_t>(15) << 4;
             byte |= static_cast<uint8_t>(desc);
             it->write_as_binary(byte);
-            write_typed_data(size, true /*always shrink this number*/);
+            detail::bcf_type_descriptor int_desc = detail::smallest_int_desc(size);
+            write_type_descriptor1(int_desc);
+            write_single_impl(size, int_desc);
         }
     }
 
@@ -144,9 +153,9 @@ private:
         it->write_as_binary(byte);
     }
 
+    //!\brief Write a single value.
     void write_single_impl(seqan3::arithmetic auto num, detail::bcf_type_descriptor const desc)
     {
-        write_type_descriptor1(desc);
         switch (desc)
         {
             case detail::bcf_type_descriptor::char8:
@@ -169,6 +178,7 @@ private:
         }
     }
 
+    //!\brief Write a range of values.
     void write_range_impl(std::ranges::forward_range auto && range, detail::bcf_type_descriptor const desc)
     {
         using data_t = decltype(range);
@@ -224,6 +234,7 @@ private:
         }
     }
 
+    //!\brief Write a range of ranges.
     template <std::ranges::forward_range rng_t>
         requires std::ranges::forward_range<std::ranges::range_reference_t<rng_t>>
     void write_range_impl(rng_t & range, detail::bcf_type_descriptor const desc)
@@ -248,6 +259,57 @@ private:
             else
                 static_assert(std::same_as<alph_t, char>, "Can't handle this alphabet type here.");
         }
+    }
+
+    //!\brief Write the GT field (has custom writer, because it pretends to be a string but is encoded differently).
+    size_t write_GT_impl(detail::char_range_or_cstring auto && gt_string_, detail::bcf_type_descriptor const desc)
+    {
+        std::string_view gt_string = detail::to_string_view(gt_string_);
+
+        bool phased = false;
+
+        size_t n_alleles = 0;
+
+        //TODO use views::eager_split once that can handle predicates
+        for (size_t i = 0, j = 0; i <= gt_string.size(); ++i)
+        {
+            if (i == gt_string.size() || (seqan3::is_char<'/'> || seqan3::is_char<'|'>)(gt_string[i]))
+            {
+                std::string_view substr = gt_string.substr(j, i - j);
+                size_t buf = 0;
+
+                if (substr != ".")
+                    detail::string_to_number(substr, buf);
+                // else it remains 0
+
+                // encode according to BCF spec
+                size_t encoded_buf = (buf + 1) << 1 | (size_t)phased;
+
+                switch (desc)
+                {
+                    case detail::bcf_type_descriptor::int8:
+                        assert(encoded_buf < std::numeric_limits<int8_t>::max());
+                        it->write_as_binary(static_cast<int8_t>(encoded_buf));
+                        break;
+                    case detail::bcf_type_descriptor::int16:
+                        assert(encoded_buf < std::numeric_limits<int16_t>::max());
+                        it->write_as_binary(static_cast<int16_t>(encoded_buf));
+                        break;
+                    case detail::bcf_type_descriptor::int32:
+                        assert(encoded_buf < std::numeric_limits<int32_t>::max());
+                        it->write_as_binary(static_cast<int32_t>(encoded_buf));
+                        break;
+                    default:
+                        error("Trying to write an unknown type.");
+                }
+
+                ++n_alleles;
+                j = i + 1;
+                phased = seqan3::is_char<'|'>(gt_string[i]);
+            }
+        }
+
+        return n_alleles;
     }
 
     /*!\brief Write padding values to make vector have fixed size.
@@ -303,22 +365,20 @@ private:
     }
 
 
-    //!\brief Write single element.
+    //!\brief Generic writing function that dispatches depending on the type of the argument.
     template <typename elem_t>
         requires (seqan3::alphabet<elem_t> || seqan3::arithmetic<elem_t>)
-    detail::bcf_type_descriptor write_typed_data(elem_t const num, bool shrink_int)
+    void write_typed_data(elem_t const num, detail::bcf_type_descriptor const desc)
     {
-        detail::bcf_type_descriptor desc = detail::type_2_bcf_type_descriptor<elem_t>;
-        if constexpr (std::integral<elem_t> && sizeof(elem_t) > 1)
-            if (shrink_int)
-                desc = detail::smallest_int_desc(num);
-
+        write_type_descriptor1(desc);
         write_single_impl(num, desc);
-        return desc;
     }
 
-    detail::bcf_type_descriptor write_typed_data(detail::char_range auto && data, bool)
+    //!\overload
+    void write_typed_data(detail::char_range auto && data, [[maybe_unused]] detail::bcf_type_descriptor const desc)
     {
+        assert(desc == detail::bcf_type_descriptor::char8);
+
         if (std::ranges::empty(data) || std::ranges::equal(data, std::string_view{"."}))
         {
             it->write_as_binary(uint8_t{0x07});
@@ -330,54 +390,48 @@ private:
             it->write_range(data);
         }
 
-        return detail::bcf_type_descriptor::char8;
     }
 
-    detail::bcf_type_descriptor write_typed_data(char const * const cstring, bool)
+    //!\overload
+    void write_typed_data(char const * const cstring, detail::bcf_type_descriptor const desc)
     {
-        return write_typed_data(std::string_view{cstring}, false);
+        assert(desc == detail::bcf_type_descriptor::char8);
+        return write_typed_data(std::string_view{cstring}, desc);
     }
 
-    detail::bcf_type_descriptor write_typed_data(std::ranges::forward_range auto && data, bool shrink_int)
+    //!\overload
+    void write_typed_data(std::ranges::forward_range auto && data, detail::bcf_type_descriptor const desc)
     {
-        using data_t = decltype(data);
-        using elem_t = std::ranges::range_value_t<data_t>;
-
-        detail::bcf_type_descriptor desc = detail::type_2_bcf_type_descriptor<elem_t>;
-        if constexpr (std::integral<elem_t> && sizeof(elem_t) > 1)
-            if (shrink_int)
-                desc = detail::smallest_int_desc(data);
-
         write_type_descriptor(desc, std::ranges::distance(data));
-
         write_range_impl(data, desc);
-
-        return desc;
     }
 
-    template <std::ranges::forward_range data_t>
-        requires detail::char_range<std::ranges::range_value_t<data_t>>
-    detail::bcf_type_descriptor write_typed_data(data_t &&, bool)
-    {
-        error("implement me");
-        return detail::bcf_type_descriptor::char8;
-    }
+    //!\overload
+//     template <std::ranges::forward_range data_t>
+//         requires detail::char_range<std::ranges::range_value_t<data_t>>
+//     void write_typed_data(data_t &&, [[maybe_unused]] detail::bcf_type_descriptor const desc)
+//     {
+//         assert(desc == detail::bcf_type_descriptor::char8);
+//         size_t size_sum =
+//         error("implement me");
+//     }
 
-    //!\brief Writing bools.
-    detail::bcf_type_descriptor write_typed_data(bool, bool)
+    //!\overload
+    void write_typed_data(bool, [[maybe_unused]] detail::bcf_type_descriptor const desc)
     {
+        assert(desc == detail::bcf_type_descriptor::int8);
         // This is the behaviour according to spec:
         // write_typed_data(int8_t{1}, false);
         // but bcftools and htslib expect this:
         it = '\0';
-        return detail::bcf_type_descriptor::missing;
     }
 
-    //!\brief This overload adds a default argument for integer compression based on the class member.
-    detail::bcf_type_descriptor write_typed_data(auto && num)
+    //!\brief This overload adds an automatically deduced descriptor.
+    void write_typed_data(auto && num)
     {
-        return write_typed_data(num, compress_integers);
+        return write_typed_data(num, detail::type_2_bcf_type_descriptor<std::remove_cvref_t<decltype(num)>>);
     }
+    //!\}
 
     /*!\name Core record setters
      * \brief These set up the core record.
@@ -390,9 +444,9 @@ private:
     }
 
     //!\brief Overload for CHROM and text IDs.
-    void set_core_chrom(detail::char_range auto && field)
+    void set_core_chrom(detail::char_range_or_cstring auto && field)
     {
-        std::string_view const buf = field; // TODO make this more generic
+        std::string_view const buf = detail::to_string_view(field);
         if (auto it = header->string_to_contig_pos().find(buf); it == header->string_to_contig_pos().end())
             error("The contig '", field, "' is not present in the header.");
         else
@@ -476,21 +530,27 @@ private:
 
     void write_field(vtag_t<field::id> /**/, auto && field)
     {
-        detail::bcf_type_descriptor desc = write_typed_data(field);
-        assert(desc == detail::bcf_type_descriptor::char8);
+        static_assert(detail::type_2_bcf_type_descriptor<std::remove_cvref_t<decltype(field)>> ==
+                      detail::bcf_type_descriptor::char8,
+                      "ID field must be provided as string.");
+        write_typed_data(field);
     }
 
     void write_field(vtag_t<field::ref> /**/, auto && field)
     {
-        detail::bcf_type_descriptor desc = write_typed_data(field);
-        assert(desc == detail::bcf_type_descriptor::char8);
+        static_assert(detail::type_2_bcf_type_descriptor<std::remove_cvref_t<decltype(field)>> ==
+                      detail::bcf_type_descriptor::char8,
+                      "REF field must be provided as string.");
+        write_typed_data(field);
     }
 
     //!\brief Overload for ALT (single argument).
     void write_field(vtag_t<field::alt> /**/, auto && field)
     {
-        detail::bcf_type_descriptor desc = write_typed_data(field);
-        assert(desc == detail::bcf_type_descriptor::char8);
+        static_assert(detail::type_2_bcf_type_descriptor<std::remove_cvref_t<decltype(field)>> ==
+                      detail::bcf_type_descriptor::char8,
+                      "ALT field must be provided as (range of) string(s).");
+        write_typed_data(field);
     }
 
     //!\brief Overload for ALT that is range-of-range.
@@ -536,6 +596,46 @@ private:
         write_field(vtag<field::filter>, s); // delegate to previous overload
     }
 
+    //!\brief Deduce descriptor from parameter type and optionally compress (integers) and verify with header.
+    detail::bcf_type_descriptor get_desc(auto & param, var_io::header::info_t const & hdr_entry)
+    {
+        using param_t = std::remove_cvref_t<decltype(param)>;
+        constexpr detail::bcf_type_descriptor c_desc = detail::type_2_bcf_type_descriptor<param_t>;
+        detail::bcf_type_descriptor             desc = c_desc;
+
+        if constexpr (c_desc == detail::bcf_type_descriptor::int8 ||
+                      c_desc == detail::bcf_type_descriptor::int16 ||
+                      c_desc == detail::bcf_type_descriptor::int32)
+        {
+            // explicit integer width given in header
+            if (hdr_entry.other_fields.find("IntegerBits") != hdr_entry.other_fields.end())
+            {
+                desc = detail::dynamic_type_id_2_type_descriptor(hdr_entry.type);
+                if (!detail::type_descriptor_is_int(desc)) // ignore header value if it isn't intX
+                    desc = c_desc;
+            }
+            else if constexpr (c_desc == detail::bcf_type_descriptor::int16 ||
+                               c_desc == detail::bcf_type_descriptor::int32)
+            {
+                if (compress_integers)
+                    desc = detail::smallest_int_desc(param);
+            }
+        }
+
+        if (verify_header_types)
+        {
+            detail::bcf_type_descriptor header_desc = detail::dynamic_type_id_2_type_descriptor(hdr_entry.type);
+            if (desc != header_desc ||
+                !detail::type_descriptor_is_int(desc) ||
+                !detail::type_descriptor_is_int(header_desc))
+            {
+                error("The type of field ", hdr_entry.id, " set in the header is different from the current record's "
+                      "data.");
+            }
+        }
+
+        return desc;
+    }
 
     void write_info_element(auto & info_element)
     {
@@ -559,26 +659,19 @@ private:
 
             idx = header->infos[it->second].idx;
         }
-        write_single_impl(idx, idx_desc);
+        write_typed_data(idx, idx_desc);
 
-//         var_io::header::info_t * info = nullptr;
-//
-//
-//         header->infos[header->idx_to_infos_pos().find(idx)];
-//         bool explicit_integer_width = info.other_fields.find("IntegerBits") != info.other_fields.end();
-//
-//         if (info.
+        var_io::header::info_t const & info = header->infos.at(header->idx_to_info_pos().at(idx));
 
         /* VALUE */
-//         detail::bcf_type_descriptor desc;
         if constexpr (detail::is_dynamic_type<value_t>)
         {
-            auto func = [&] (auto & param) { return write_typed_data(param); };
+            auto func = [&] (auto & param) { write_typed_data(param, get_desc(param, info)); };
             std::visit(func, value);
         }
         else
         {
-            write_typed_data(value);
+            write_typed_data(value, get_desc(value, info));
         }
 
     }
@@ -640,55 +733,6 @@ private:
         return {max_alleles, max_allele_val};
     }
 
-    size_t write_GT_impl(detail::char_range_or_cstring auto && gt_string_, detail::bcf_type_descriptor const desc)
-    {
-        std::string_view gt_string = detail::to_string_view(gt_string_);
-
-        bool phased = false;
-
-        size_t n_alleles = 0;
-
-        //TODO use views::eager_split once that can handle predicates
-        for (size_t i = 0, j = 0; i <= gt_string.size(); ++i)
-        {
-            if (i == gt_string.size() || (seqan3::is_char<'/'> || seqan3::is_char<'|'>)(gt_string[i]))
-            {
-                std::string_view substr = gt_string.substr(j, i - j);
-                size_t buf = 0;
-
-                if (substr != ".")
-                    detail::string_to_number(substr, buf);
-                // else it remains 0
-
-                // encode according to BCF spec
-                size_t encoded_buf = (buf + 1) << 1 | (size_t)phased;
-
-                switch (desc)
-                {
-                    case detail::bcf_type_descriptor::int8:
-                        assert(encoded_buf < std::numeric_limits<int8_t>::max());
-                        it->write_as_binary(static_cast<int8_t>(encoded_buf));
-                        break;
-                    case detail::bcf_type_descriptor::int16:
-                        assert(encoded_buf < std::numeric_limits<int16_t>::max());
-                        it->write_as_binary(static_cast<int16_t>(encoded_buf));
-                        break;
-                    case detail::bcf_type_descriptor::int32:
-                        assert(encoded_buf < std::numeric_limits<int32_t>::max());
-                        it->write_as_binary(static_cast<int32_t>(encoded_buf));
-                        break;
-                    default:
-                        error("Trying to write an unknown type.");
-                }
-
-                ++n_alleles;
-                j = i + 1;
-                phased = seqan3::is_char<'|'>(gt_string[i]);
-            }
-        }
-
-        return n_alleles;
-    }
 
     void write_genotypes_element(auto & genotype)
     {
@@ -706,15 +750,14 @@ private:
         }
         else
         {
-            auto it = header->string_to_format_pos().find(id);
-            if (it == header->string_to_format_pos().end())
+            if (auto it = header->string_to_format_pos().find(id); it == header->string_to_format_pos().end())
                 error("The genotype '", id, "' is not present in the header.");
-
-            idx = header->formats[it->second].idx;
+            else
+                idx = header->formats[it->second].idx;
         }
-        write_single_impl(idx, idx_desc);
+        write_typed_data(idx, idx_desc);
 
-        auto & format = header->formats.at(header->idx_to_format_pos().at(idx));
+        var_io::header::format_t const & format = header->formats.at(header->idx_to_format_pos().at(idx));
 
         /* value */
         auto func = [&](auto & values)
@@ -723,18 +766,13 @@ private:
             static_assert(std::ranges::range<values_t>, "This function handles only ranges; write_genotypes_element.");
             using value_t = std::ranges::range_value_t<values_t>;
 
-            using alph_t = seqan3::range_innermost_value_t<values_t>;
-
             if (std::ranges::size(values) > record_core.n_sample)
             {
                 error("There are ", std::ranges::size(values), " values in the genotype vector "
                       "for field ", format.id, " which is more than the number of samples.");
             }
 
-            detail::bcf_type_descriptor desc = detail::type_2_bcf_type_descriptor<alph_t>;
-            if constexpr (std::integral<alph_t> && sizeof(alph_t) > 1)
-                if (compress_integers)
-                    desc = detail::smallest_int_desc(values);
+            detail::bcf_type_descriptor desc = get_desc(values, format);
 
             // if there are no values, we can write the missing field and need no padding values at all
             if (std::ranges::size(values) == 0)
@@ -743,9 +781,20 @@ private:
                 return;
             }
 
-            if constexpr (std::ranges::range<value_t>)
+
+            if constexpr (!std::ranges::range<value_t>) // case: one value per sample
             {
-                if (format.id == "GT") // this has to be handled extra, because it isn't a string
+                write_type_descriptor1(desc); // size refers to size per-sample, which is one, because this isn't range
+                write_range_impl(values, desc);
+
+                // per-sample padding
+                write_range_padding(record_core.n_sample - std::ranges::size(values), desc, false);
+            }
+            // case: multiple values per sample or one string-per-sample
+            else if constexpr (!std::ranges::range<std::ranges::range_reference_t<value_t>>)
+            {
+                // this looks like "one-string" but is actually a case with custom encoding
+                if (format.id == "GT")
                 {
                     if constexpr (detail::char_range_or_cstring<value_t>)
                     {
@@ -781,7 +830,7 @@ private:
                         error("GT field must be provided as range of strings.");
                     }
                 }
-                else
+                else // the regular case of multiple values or one string
                 {
                     size_t max_length = std::ranges::size(*std::ranges::max_element(values, {}, std::ranges::size));
 
@@ -799,14 +848,55 @@ private:
                         write_range_padding(max_length, desc, true);
                 }
             }
-            else
+            else // this is the case of multiple strings per sample
             {
-                write_type_descriptor1(desc); // size refers to size per-sample, which is one, because this isn't range
-                write_range_impl(values, desc);
+                if constexpr (std::same_as<char, seqan3::range_innermost_value_t<value_t>>)
+                {
+                    assert(desc == detail::bcf_type_descriptor::char8);
 
-                // per-sample padding
-                write_range_padding(record_core.n_sample - std::ranges::size(values), desc, false);
+                    string_size_buffer.clear();
+                    size_t max_length = 0;
+                    for (auto && range_of_strings : values)
+                    {
+                        size_t sum = 0;
+
+                        for (auto && string : range_of_strings)
+                            sum += std::ranges::size(string);
+
+                        // add one comma per string after the first
+                        sum += std::ranges::size(range_of_strings) ? std::ranges::size(range_of_strings) - 1: 0;
+                        string_size_buffer.push_back(sum);
+
+                        max_length = std::max(max_length, sum);
+                    }
+
+                    write_type_descriptor(desc, max_length); // size refers to size per-sample
+
+                    size_t i = 0;
+                    for (auto && range_of_strings : values)
+                    {
+                        // this choses overload that intersperses ','
+                        write_range_impl(range_of_strings, desc);
+                        // per-value padding
+                        write_range_padding(max_length - string_size_buffer[i], desc, false);
+                        ++i;
+                    }
+
+                    // TODO instead of storing the cumulative sizes, we could also track the bytes written
+
+                    // per-sample padding
+                    for (size_t i = 0; i < record_core.n_sample - std::ranges::size(values); ++i)
+                        write_range_padding(max_length, desc, true);
+
+                }
+                else // the constex
+                {
+                    // this case is never reached. The constexpr prevents needless instantions though.
+                    static_assert(std::same_as<char, seqan3::range_innermost_value_t<value_t>>,
+                                  "Cannot handle range-of-range-of-range unless the alphabet is char.");
+                }
             }
+
         };
 
         if constexpr (detail::is_dynamic_vector_type<value_t>)
@@ -866,9 +956,13 @@ private:
         if (!header_has_been_written)
         {
             if (header == nullptr)
+            {
                 if constexpr (field_ids::contains(field::_private))
+                {
                     if (var_io::header const * ptr = get<field::_private>(record).header_ptr; ptr != nullptr)
                         set_header(*ptr);
+                }
+            }
 
             write_header();
         }
@@ -993,11 +1087,48 @@ public:
     /*!\name Constructors, destructor and assignment.
      * \{
      */
-    format_output_handler()                              = default;            //!< Defaulted.
+    format_output_handler()                              = delete;             //!< Deleted.
     format_output_handler(format_output_handler const &) = delete;             //!< Deleted.
-    format_output_handler(format_output_handler &&)      = default;            //!< Defaulted.
     format_output_handler & operator=(format_output_handler const &) = delete; //!< Deleted.
-    format_output_handler & operator=(format_output_handler &&) = default;     //!< Defaulted.
+
+    //!\brief Move construction.
+    format_output_handler(format_output_handler && rhs)
+        : base_t(std::move(rhs))
+    {
+        move_impl(std::move(rhs));
+    }
+
+    //!\brief Move assignment.
+    format_output_handler & operator=(format_output_handler && rhs)
+    {
+        base_t::operator=(std::move(rhs));
+        move_impl(std::move(rhs));
+        return *this;
+    }
+
+    //!\brief Helper function for move-constructor and move-assignment.
+    void move_impl(format_output_handler && rhs)
+    {
+        std::swap(header_has_been_written, rhs.header_has_been_written);
+        std::swap(header,                  rhs.header);
+        std::swap(idx_desc,                rhs.idx_desc);
+        std::swap(record_no,               rhs.record_no);
+        std::swap(record_core,             rhs.record_core);
+        std::swap(this_record_offset,      rhs.this_record_offset);
+        std::swap(buffer_stream,           rhs.buffer_stream);
+        std::swap(compress_integers,       rhs.compress_integers);
+        std::swap(verify_header_types,     rhs.verify_header_types);
+        std::swap(string_size_buffer,      rhs.string_size_buffer);
+
+        streambuf_exposer     = reinterpret_cast<detail::stream_buffer_exposer<char> *>(buffer_stream.rdbuf());
+        rhs.streambuf_exposer = nullptr;
+
+        it = detail::fast_ostreambuf_iterator<char>{buffer_stream};
+        // rhs.it does not have to be handled
+
+        moved_from     = false;
+        rhs.moved_from = true;
+    }
 
     /*!\brief Construct with an options object.
      * \param[in,out] str The output stream.
@@ -1012,13 +1143,19 @@ public:
         // extract options
         if constexpr (requires { (bool)options.compress_integers; })
             compress_integers = options.compress_integers;
+        if constexpr (requires { (bool)options.verify_header_types; })
+            verify_header_types = options.verify_header_types;
     }
 
     //!\brief Construct with only an output stream.
     format_output_handler(std::ostream & str) : format_output_handler(str, 1) {}
 
+    //!\brief Destruction with flushing and cleanup.
     ~format_output_handler()
     {
+        if (moved_from)
+            return;
+
         // if no records were written, the header also wasn't written
         if (!header_has_been_written)
             write_header();
@@ -1027,7 +1164,6 @@ public:
         if (streambuf_exposer->pptr() - streambuf_exposer->pbase() > 0)
             stream->rdbuf()->sputn(streambuf_exposer->pbase(), streambuf_exposer->pptr() - streambuf_exposer->pbase());
     }
-
     //!\}
 
     //!\brief Get the header.

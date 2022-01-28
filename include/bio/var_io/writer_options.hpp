@@ -101,10 +101,10 @@ struct writer_options
      *
      * \details
      *
+     * **VCF-only**
+     *
      * This option results in old Windows-style line-endings ("\r\n"). Since Windows supports the typical UNIX
      * line-endigns ("\n") nowadays, this option is is highly discouraged.
-     *
-     * This option is ignored when writing for bio::bcf.
      */
     bool windows_eol = false;
 
@@ -128,11 +128,27 @@ struct writer_options
      *
      * \details
      *
+     * **BCF-only**
+     *
      * TODO
      *
-     * This option is ignored when writing bio::vcf.
      */
     bool compress_integers = true;
+
+    /*!\brief Verify types when writing.
+     *
+     * \details
+     *
+     * **BCF-only**
+     *
+     * By default this implementation takes your data and transforms into the respective BCF encoding, e.g.
+     * a vector of floats (or doubles) is always written as a vector of floats. This is independent of what
+     * the header says the field should be.
+     *
+     * This option activates a check that verifies compatibility of the type information in the header
+     * and the data you provide.
+     */
+    bool verify_header_types = false;
 
 private:
     static_assert(detail::is_type_list<formats_t>, "formats must be a bio::ttag / seqan3::type_list.");

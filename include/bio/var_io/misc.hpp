@@ -532,6 +532,10 @@ inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor = bcf_type_descr
 template <std::signed_integral t>
     requires (sizeof(t) == 1)
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::int8;
+//!\brief Specialisation for int8.
+template <>
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<bool> = bcf_type_descriptor::int8;
+
 
 //!\brief Specialisation for int16.
 template <std::signed_integral t>
@@ -564,7 +568,55 @@ inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<char> = bcf_type
 //!\brief Specialisation for seqan3 alphabets.
 template <detail::deliberate_alphabet t>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::char8;
+
+//!\brief Specialisation for cstring.
+template <decays_to<char const *> t>
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::char8;
+
+//!\brief Specialisation for range.
+template <std::ranges::input_range t>
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = type_2_bcf_type_descriptor<seqan3::range_innermost_value_t<t>>;
+
 //!\}
+
+bool type_descriptor_is_int(bcf_type_descriptor const type_desc)
+{
+    switch(type_desc)
+    {
+        case bcf_type_descriptor::int8:
+        case bcf_type_descriptor::int16:
+        case bcf_type_descriptor::int32:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bcf_type_descriptor dynamic_type_id_2_type_descriptor(var_io::dynamic_type_id const type_id)
+{
+    switch (type_id)
+    {
+        case var_io::dynamic_type_id::char8:
+        case var_io::dynamic_type_id::vector_of_char8:
+        case var_io::dynamic_type_id::string:
+        case var_io::dynamic_type_id::vector_of_string:
+            return bcf_type_descriptor::char8;
+        case var_io::dynamic_type_id::int8:
+        case var_io::dynamic_type_id::vector_of_int8:
+        case var_io::dynamic_type_id::flag:
+            return bcf_type_descriptor::int8;
+        case var_io::dynamic_type_id::int16:
+        case var_io::dynamic_type_id::vector_of_int16:
+            return bcf_type_descriptor::int16;
+        case var_io::dynamic_type_id::int32:
+        case var_io::dynamic_type_id::vector_of_int32:
+            return bcf_type_descriptor::int32;
+        case var_io::dynamic_type_id::float32:
+        case var_io::dynamic_type_id::vector_of_float32:
+            return bcf_type_descriptor::float32;
+    }
+    return bcf_type_descriptor::missing;
+}
 
 //!\}
 } // namespace bio::detail

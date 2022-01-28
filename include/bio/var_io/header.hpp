@@ -562,6 +562,10 @@ private:
         // TODO replace with string_view
         switch (id)
         {
+            case dynamic_type_id::int8:
+            case dynamic_type_id::vector_of_int8:
+            case dynamic_type_id::int16:
+            case dynamic_type_id::vector_of_int16:
             case dynamic_type_id::int32:
             case dynamic_type_id::vector_of_int32:
                 return "Integer";

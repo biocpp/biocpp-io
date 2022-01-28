@@ -144,7 +144,12 @@ private:
     //!\brief Make the init_state handler visible.
     using base_t::init_state;
 
+
 public:
+
+    //TODO wrap this, so we don't return reference to base
+    using base_t::operator=;
+
     // clang-format off
     //!\copydoc bio::writer_base::writer_base(std::filesystem::path const & filename, format_type const & fmt, options_t const & opt = options_t{})
     // clang-format on
@@ -219,7 +224,9 @@ public:
     //!\brief Get the header used by the format.
     bio::var_io::header const & header()
     {
-        return std::visit([](auto const & handler) { return handler.get_header(); }, format_handler);
+        return std::visit(detail::overloaded{[](std::monostate) {},
+                                             [](auto const & handler) { return handler.get_header(); }},
+                          format_handler);
     }
 
     //!\brief Set the header to the given value.
@@ -230,7 +237,9 @@ public:
         if (!init_state)
             throw std::logic_error{"You cannot change the header after I/O has happened."};
 
-        std::visit([&hdr](auto & handler) { handler.set_header(std::forward<header_t>(hdr)); }, format_handler);
+        std::visit(detail::overloaded{[](std::monostate) {},
+                                      [&hdr](auto & handler) { handler.set_header(std::forward<header_t>(hdr)); }},
+                   format_handler);
     }
 };
 

@@ -31,6 +31,8 @@ namespace bio::var_io
 enum class dynamic_type_id
 {
     char8,
+    int8,
+    int16,
     int32,
     float32,
     string,
@@ -55,6 +57,8 @@ enum class dynamic_type_id
 template <ownership own = ownership::shallow>
 using dynamic_type =
   std::variant<char,
+               int8_t,
+               int16_t,
                int32_t,
                float,
                std::conditional_t<own == ownership::shallow, std::string_view, std::string>,
@@ -79,6 +83,8 @@ using dynamic_type =
 template <ownership own = ownership::shallow>
 using dynamic_vector_type =
   std::variant<std::vector<char>,
+               std::vector<int8_t>,
+               std::vector<int16_t>,
                std::vector<int32_t>,
                std::vector<float>,
                std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>,
@@ -177,6 +183,18 @@ inline void init_dynamic_type(var_io::dynamic_type_id const id, t & output)
         case var_io::dynamic_type_id::char8:
             {
                 constexpr size_t id = static_cast<size_t>(var_io::dynamic_type_id::char8);
+                output.template emplace<id>();
+                return;
+            }
+        case var_io::dynamic_type_id::int8:
+            {
+                constexpr size_t id = static_cast<size_t>(var_io::dynamic_type_id::int8);
+                output.template emplace<id>();
+                return;
+            }
+        case var_io::dynamic_type_id::int16:
+            {
+                constexpr size_t id = static_cast<size_t>(var_io::dynamic_type_id::int16);
                 output.template emplace<id>();
                 return;
             }
