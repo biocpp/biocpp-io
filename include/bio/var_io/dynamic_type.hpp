@@ -45,6 +45,43 @@ enum class dynamic_type_id
     flag
 };
 
+//!\brief in* and vector_of_int* are each are "compatible" with each other; the rest only with self.
+//!\ingroup var_io
+bool type_id_is_compatible(dynamic_type_id const lhs, dynamic_type_id const rhs)
+{
+    switch (lhs)
+    {
+        case bio::var_io::dynamic_type_id::int8:
+        case bio::var_io::dynamic_type_id::int16:
+        case bio::var_io::dynamic_type_id::int32:
+            switch (rhs)
+            {
+                case bio::var_io::dynamic_type_id::int8:
+                case bio::var_io::dynamic_type_id::int16:
+                case bio::var_io::dynamic_type_id::int32:
+                    return true;
+                default:
+                    return false;
+            };
+            break;
+        case bio::var_io::dynamic_type_id::vector_of_int8:
+        case bio::var_io::dynamic_type_id::vector_of_int16:
+        case bio::var_io::dynamic_type_id::vector_of_int32:
+            switch (rhs)
+            {
+                case bio::var_io::dynamic_type_id::vector_of_int8:
+                case bio::var_io::dynamic_type_id::vector_of_int16:
+                case bio::var_io::dynamic_type_id::vector_of_int32:
+                    return true;
+                default:
+                    return false;
+            };
+            break;
+        default:
+            return lhs == rhs;
+    }
+}
+
 /*!\brief Variant to handle "dynamic typing" in variant IO.
  * \ingroup var_io
  * \details
