@@ -118,6 +118,9 @@ private:
     //!\brief Try to use the smallest possible integer type (creates smaller files but is potentially slower).
     bool compress_integers = true;
 
+    //!\brief Use run-length-encoding for GENOTYPE vectors.
+    bool run_length_encoding = false;
+
     //!\brief Throw exceptions if the header type does not match the descriptor from the header.
     bool verify_header_types = false;
     //!\}
@@ -784,7 +787,7 @@ private:
 
             if constexpr (!std::ranges::range<value_t>) // case: one value per sample
             {
-                write_type_descriptor1(desc); // size refers to size per-sample, which is one, because this isn't range
+                write_type_descriptor1(desc); // size refers to size per-sample, which is one
                 write_range_impl(values, desc);
 
                 // per-sample padding
@@ -1143,6 +1146,8 @@ public:
         // extract options
         if constexpr (requires { (bool)options.compress_integers; })
             compress_integers = options.compress_integers;
+        if constexpr (requires { (bool)options.run_length_encoding; })
+            run_length_encoding = options.run_length_encoding;
         if constexpr (requires { (bool)options.verify_header_types; })
             verify_header_types = options.verify_header_types;
     }
@@ -1151,8 +1156,13 @@ public:
     format_output_handler(std::ostream & str) : format_output_handler(str, 1) {}
 
     //!\brief Destruction with flushing and cleanup.
-    ~format_output_handler()
+    ~format_output_handler() noexcept(false)
     {
+        // never throw if the stack is unwinding
+        if (std::uncaught_exception())
+            return;
+
+        // no cleanup is needed if this object is in moved-from-state
         if (moved_from)
             return;
 

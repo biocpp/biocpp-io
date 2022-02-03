@@ -140,7 +140,7 @@ private:
      * \brief These are all private to prevent wrong instantiation.
      * \{
      */
-    format_output_handler_base()                                   = delete;            //!< Deleted.
+    format_output_handler_base()                                   = delete;             //!< Deleted.
     format_output_handler_base(format_output_handler_base const &) = delete;             //!< Deleted.
     format_output_handler_base(format_output_handler_base &&)      = default;            //!< Defaulted.
     ~format_output_handler_base()                                  = default;            //!< Defaulted.
@@ -153,22 +153,3 @@ private:
 };
 
 } // namespace bio
-
-namespace bio::detail
-{
-
-/*!\brief Metaprogramming shortcut for defining the format_handler in detail::writer_base.
- *
- * \details
- *
- * Metaprogramming shortcut to turn
- * `type_list<vcf, bcf>` into `std::variant<std::monostate, format_output_handler<vcf>, format_output_handler<bcf>>`.
- */
-template <typename formats_list>
-using formats_list_2_format_handler_variant_t =
-    seqan3::detail::transfer_template_args_onto_t<
-        seqan3::list_traits::concat<seqan3::type_list<std::monostate>,
-                                    seqan3::list_traits::transform<format_output_handler, formats_list>>,
-        std::variant>;
-
-}

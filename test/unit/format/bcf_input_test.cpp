@@ -157,25 +157,6 @@ void field_types()
     record_t rec;
 
     handler.parse_next_record_into(rec);
-    EXPECT_EQ(std::get<0>(rec),   std::get<0>(recs[0]));
-    EXPECT_EQ(std::get<1>(rec),   std::get<1>(recs[0]));
-    EXPECT_EQ(std::get<2>(rec),   std::get<2>(recs[0]));
-    EXPECT_EQ(std::get<3>(rec),   std::get<3>(recs[0]));
-    EXPECT_EQ(std::get<4>(rec),   std::get<4>(recs[0]));
-    EXPECT_EQ(std::get<5>(rec),   std::get<5>(recs[0]));
-    EXPECT_EQ(std::get<6>(rec),   std::get<6>(recs[0]));
-//     if constexpr (s != style::vcf)
-//     {
-//         for (size_t i = 0; i < std::get<7>(rec).size(); ++i)
-//         {
-//             EXPECT_EQ(std::get<7>(rec)[i].value.index(),   std::get<7>(recs[0])[i].value.index());
-//             EXPECT_EQ(std::get<7>(rec)[i].value,   std::get<7>(recs[0])[i].value);
-//         }
-//     }
-    EXPECT_EQ(std::get<7>(rec),   std::get<7>(recs[0]));
-    EXPECT_EQ(std::get<8>(rec),   std::get<8>(recs[0]));
-    EXPECT_EQ(std::get<9>(rec),   std::get<9>(recs[0]));
-
     EXPECT_EQ(rec, recs[0]);
 
     handler.parse_next_record_into(rec);

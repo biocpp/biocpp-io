@@ -601,12 +601,18 @@ public:
     //!\brief Construct with only an output stream.
     format_output_handler(std::ostream & str) : format_output_handler(str, 1) {}
 
-    ~format_output_handler()
+    //!\brief The destructor writes the header if necessary and cleans up.
+    ~format_output_handler() noexcept(false)
     {
+        // never throw if the stack is unwinding
+        if (std::uncaught_exception())
+            return;
+
+        // no cleanup is needed if we are in moved-from state
         if (move_tracker.moved_from)
             return;
 
-        // if no records were written, the header also wasn't written
+        // if no records were written, the header also wasn't written, but needs to be:
         if (!header_has_been_written)
             write_header();
     }
