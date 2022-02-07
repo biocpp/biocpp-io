@@ -361,8 +361,13 @@ private:
         uint8_t desc = static_cast<uint8_t>(b) & 0b00001111;
         uint8_t size = static_cast<uint8_t>(b) >> 4;
 
-        if (desc == 4 || desc == 6 || desc >= 8)
-            error("Cannot decode BCF type descriptor byte. Value: ", desc, " is unknown.");
+        switch (static_cast<uint8_t>(desc))
+        {
+            case 4: case 6: case 8: case 12: case 14:
+                error("Cannot decode BCF type descriptor byte. Value: ", desc, " is unknown.");
+            default:
+                break;
+        }
 
         return {detail::bcf_type_descriptor{desc}, size};
     }
@@ -437,6 +442,7 @@ private:
 
         size_t real_size = size < 15 ? size : decode_integral(cache_ptr);
 
+        // TODO shouldn't we take into account the element size?
         cache_ptr += real_size;
 
         std::span<std::byte const> ret{b, size_t(cache_ptr - b)};
@@ -612,6 +618,28 @@ private:
         cache_ptr += size * sizeof(elem_t);
     }
 
+    //!\brief Set to run-length-encoded vector.
+    template <var_io::dynamic_type_id id_, typename elem_t>
+    inline void dynamic_type_init_vector_rle(size_t const size, std::byte const *& cache_ptr, auto & output)
+    {
+        constexpr size_t id      = static_cast<size_t>(id_);
+        auto &           output_ = output.template emplace<id>();
+
+        size_t elements_read = 0;
+
+        while (elements_read < size)
+        {
+            int32_t run_length = decode_integral(cache_ptr);
+            elem_t const * elemptr = reinterpret_cast<elem_t const *>(cache_ptr);
+            std::ranges::fill_n(std::back_inserter(output_), run_length, *elemptr);
+
+            cache_ptr += sizeof(elem_t);
+            elements_read += run_length;
+        }
+
+        assert(elements_read == size);
+    }
+
     //!\brief Set to vector-of-string.
     template <var_io::dynamic_type_id id_>
     static inline void dynamic_type_init_vector_of_string(size_t const       size,
@@ -654,6 +682,42 @@ private:
             detail::sized_range_copy(tmp, output_.back());
         }
         cache_ptr += outer_size * inner_size * sizeof(elem_t);
+    }
+
+    //!\brief Set to run-length-encoded vector-of-vector.
+    template <var_io::dynamic_type_id id_, typename elem_t>
+    inline void dynamic_type_init_vector_of_vector_rle(size_t const       outer_size,
+                                                              size_t const       inner_size,
+                                                              std::byte const *& cache_ptr,
+                                                              auto &             output)
+    {
+        constexpr size_t id      = static_cast<size_t>(id_);
+        auto &           output_ = output.template emplace<id>();
+
+        size_t elements_read = 0;
+
+        while (elements_read < outer_size)
+        {
+            int32_t run_length = decode_integral(cache_ptr);
+            std::span<elem_t const> tmp{reinterpret_cast<elem_t const *>(cache_ptr), inner_size};
+
+            // vectors can be smaller by being padded with end-of-vector values
+            size_t s = tmp.size();
+            while (s > 0 && tmp[s - 1] == detail::end_of_vector<elem_t>)
+                --s;
+            tmp = tmp.subspan(0, s);
+
+            for (int32_t i = 0; i < run_length; ++i)
+            {
+                output_.emplace_back();
+                detail::sized_range_copy(tmp, output_.back());
+            }
+
+            cache_ptr += inner_size * sizeof(elem_t);
+            elements_read += run_length;
+        }
+
+        assert(elements_read == outer_size);
     }
 
     template <detail::is_dynamic_type dyn_t>
@@ -796,9 +860,9 @@ private:
     }
 
     //!\brief Auxilliary function for reading GT which isn't actually encoded as a string.
-    template <typename int_t>
-    void parse_gt_field(std::span<int_t const> const in, std::string & number_cache, std::string & output) const
+    void parse_gt_field(auto & in, std::string & number_cache, std::string & output) const
     {
+        using int_t = std::ranges::range_value_t<decltype(in)>;
         bool first = true;
 
         for (int_t i : in)
@@ -866,40 +930,97 @@ private:
 
             if (format.id == "GT") // this needs custom decoding, it is not a string
             {
-                for (size_t sample = 0; sample < record_core->n_sample; ++sample)
+//                 auto fun = [&] (std::string & gt_cache_i)
+//                 {
+//                     gt_cache[sample].clear();
+//                     number_cache.clear();
+//
+//                     //TODO we should switch on every element but instead once outside
+//                     switch (fmt_type)
+//                     {
+//                         case detail::bcf_type_descriptor::int8:
+//                             {
+//                                 std::span<int8_t const> data{reinterpret_cast<int8_t const *>(cache_ptr), fmt_size};
+//                                 parse_gt_field(data, number_cache, gt_cache_i);
+//                                 cache_ptr += fmt_size;
+//                                 break;
+//                             }
+//                         case detail::bcf_type_descriptor::int16:
+//                             {
+//                                 std::span<int16_t const> data{reinterpret_cast<int16_t const *>(cache_ptr), fmt_size};
+//                                 parse_gt_field(data, number_cache, gt_cache_i);
+//                                 cache_ptr += fmt_size * 2;
+//                                 break;
+//                             }
+//                         case detail::bcf_type_descriptor::int32:
+//                             {
+//                                 std::span<int32_t const> data{reinterpret_cast<int32_t const *>(cache_ptr), fmt_size};
+//                                 parse_gt_field(data, number_cache, gt_cache_i);
+//                                 cache_ptr += fmt_size * 4;
+//                                 break;
+//                             }
+//                         default:
+//                             error("GT field must always be encoded as number but was something else.");
+//                             break;
+//                     }
+//                 }
+//
+//                 if (detail::is_rle_desc(desc))
+//                 {
+//                     size_t elements_read = 0;
+//
+//                     while (elements_read < record_core->n_sample)
+//                     {
+//                         int32_t run_length = decode_integral(cache_ptr);
+//                         elem_t const * elemptr = reinterpret_cast<elem_t const *>(cache_ptr);
+//                         std::ranges::fill_n(std::back_inserter(output_), run_length, *elemptr);
+//
+//                         cache_ptr += sizeof(elem_t);
+//                         elements_read += run_length;
+//                     }
+//
+//
+//                 }
+//                 else
+//                 {
+//                     for (size_t sample = 0; sample < record_core->n_sample; ++sample)
+//                         fun(gt_cache[sample]);
+//                 }
+
+                /* we explicitly parse into integer format for now: */
+                parse_dynamic_type(var_io::dynamic_type_id::vector_of_int32,
+                                   fmt_type,
+                                   record_core->n_sample,
+                                   fmt_size,
+                                   cache_ptr,
+                                   parsed_variant);
+
+                /* we transform number to string and store in caches */
+                std::visit([&] <typename rng_t> (rng_t && int_range)
                 {
-                    gt_cache[sample].clear();
-                    number_cache.clear();
-
-                    switch (fmt_type)
+                    using innermost_val_t = seqan3::range_innermost_value_t<rng_t>;
+                    if constexpr (std::ranges::range<std::ranges::range_value_t<rng_t>> &&
+                                  std::integral<innermost_val_t> &&
+                                  !std::same_as<innermost_val_t, char>)
                     {
-                        case detail::bcf_type_descriptor::int8:
-                            {
-                                std::span<int8_t const> data{reinterpret_cast<int8_t const *>(cache_ptr), fmt_size};
-                                parse_gt_field(data, number_cache, gt_cache[sample]);
-                                cache_ptr += fmt_size;
-                                break;
-                            }
-                        case detail::bcf_type_descriptor::int16:
-                            {
-                                std::span<int16_t const> data{reinterpret_cast<int16_t const *>(cache_ptr), fmt_size};
-                                parse_gt_field(data, number_cache, gt_cache[sample]);
-                                fmt_size += fmt_size * 2;
-                                break;
-                            }
-                        case detail::bcf_type_descriptor::int32:
-                            {
-                                std::span<int32_t const> data{reinterpret_cast<int32_t const *>(cache_ptr), fmt_size};
-                                parse_gt_field(data, number_cache, gt_cache[sample]);
-                                fmt_size += fmt_size * 4;
-                                break;
-                            }
-                        default:
-                            error("GT field must always be encoded as number but was something else.");
-                            break;
-                    }
-                }
+                        if (std::ranges::size(int_range) != record_core->n_sample)
+                            error("Expected exactly one GT string per sample.");
 
+                        for (size_t sample = 0; sample < record_core->n_sample; ++sample)
+                        {
+                            gt_cache[sample].clear();
+                            number_cache.clear();
+                            parse_gt_field(int_range[sample], number_cache, gt_cache[sample]);
+                        }
+                    }
+                    else
+                    {
+                        // THIS NEVER HAPPENS BUT WE SAVE INSTANTIATIONS with if-constexpr
+                        error("Unreachable state reached at code line: ", __LINE__);
+                    }
+                }, parsed_variant);
+
+                /* now reset the variant to string-state and create copies/views */
                 constexpr size_t string_id = static_cast<size_t>(var_io::dynamic_type_id::string);
                 auto &           strings   = parsed_variant.template emplace<string_id>();
                 strings.resize(record_core->n_sample);
@@ -1222,6 +1343,27 @@ inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_i
                                                                                               output);
                             break;
                         }
+                    case detail::bcf_type_descriptor::rle_int8:
+                        {
+                            dynamic_type_init_vector_rle<var_io::dynamic_type_id::int8, int8_t>(outer_size,
+                                                                                            cache_ptr,
+                                                                                            output);
+                            break;
+                        }
+                    case detail::bcf_type_descriptor::rle_int16:
+                        {
+                            dynamic_type_init_vector_rle<var_io::dynamic_type_id::int16, int16_t>(outer_size,
+                                                                                              cache_ptr,
+                                                                                              output);
+                            break;
+                        }
+                    case detail::bcf_type_descriptor::rle_int32:
+                        {
+                            dynamic_type_init_vector_rle<var_io::dynamic_type_id::int32, int32_t>(outer_size,
+                                                                                              cache_ptr,
+                                                                                              output);
+                            break;
+                        }
                     default:
                         error("Attempting to create int but the byte descriptor does not indicate int type.");
                 }
@@ -1229,10 +1371,21 @@ inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_i
             }
         case var_io::dynamic_type_id::float32:
             {
-                if (desc != detail::bcf_type_descriptor::float32)
-                    error("Attempting to create float but the byte descriptor does not indicate float type.");
-
-                dynamic_type_init_vector<var_io::dynamic_type_id::float32, float>(outer_size, cache_ptr, output);
+                switch (desc)
+                {
+                    case detail::bcf_type_descriptor::float32:
+                        dynamic_type_init_vector<var_io::dynamic_type_id::float32, float>(outer_size,
+                                                                                          cache_ptr,
+                                                                                          output);
+                        break;
+                    case detail::bcf_type_descriptor::rle_float32:
+                        dynamic_type_init_vector_rle<var_io::dynamic_type_id::float32, float>(outer_size,
+                                                                                              cache_ptr,
+                                                                                              output);
+                        break;
+                    default:
+                        error("Attempting to create float but the byte descriptor does not indicate float type.");
+                }
                 return;
             }
         case var_io::dynamic_type_id::string:
@@ -1240,6 +1393,7 @@ inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_i
                 if (desc != detail::bcf_type_descriptor::char8)
                     error("Attempting to creates string but the byte descriptor does not indicate string type.");
 
+                //TODO double-check if we shouldn't actually call dynamic_type_init_vector_of_vector here instead
                 dynamic_type_init_vector_of_string<var_io::dynamic_type_id::string>(outer_size, cache_ptr, output);
                 return;
             }
@@ -1287,6 +1441,33 @@ inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_i
                               output);
                             break;
                         }
+                    case detail::bcf_type_descriptor::rle_int8:
+                        {
+                            dynamic_type_init_vector_of_vector_rle<var_io::dynamic_type_id::vector_of_int8, int8_t>(
+                              outer_size,
+                              inner_size,
+                              cache_ptr,
+                              output);
+                            break;
+                        }
+                    case detail::bcf_type_descriptor::rle_int16:
+                        {
+                            dynamic_type_init_vector_of_vector_rle<var_io::dynamic_type_id::vector_of_int16, int16_t>(
+                              outer_size,
+                              inner_size,
+                              cache_ptr,
+                              output);
+                            break;
+                        }
+                    case detail::bcf_type_descriptor::rle_int32:
+                        {
+                            dynamic_type_init_vector_of_vector_rle<var_io::dynamic_type_id::vector_of_int32, int32_t>(
+                              outer_size,
+                              inner_size,
+                              cache_ptr,
+                              output);
+                            break;
+                        }
                     default:
                         error("Attempting to create vector of int but the byte descriptor does not indicate int type.");
                 }
@@ -1294,13 +1475,19 @@ inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_i
             }
         case var_io::dynamic_type_id::vector_of_float32:
             {
-                if (desc != detail::bcf_type_descriptor::float32)
-                    error("Attempting to create vector of float but the byte descriptor does not indicate float type.");
-
-                dynamic_type_init_vector_of_vector<var_io::dynamic_type_id::vector_of_float32, float>(outer_size,
-                                                                                                      inner_size,
-                                                                                                      cache_ptr,
-                                                                                                      output);
+                switch (desc)
+                {
+                    case detail::bcf_type_descriptor::float32:
+                        dynamic_type_init_vector_of_vector<var_io::dynamic_type_id::vector_of_float32, float>(
+                            outer_size, inner_size, cache_ptr, output);
+                        break;
+                    case detail::bcf_type_descriptor::rle_float32:
+                        dynamic_type_init_vector_of_vector_rle<var_io::dynamic_type_id::vector_of_float32, float>(
+                            outer_size, inner_size, cache_ptr, output);
+                        break;
+                    default:
+                        error("Attempting to create vector of float but the byte descriptor does not indicate float type.");
+                }
                 return;
             }
         case var_io::dynamic_type_id::vector_of_string:

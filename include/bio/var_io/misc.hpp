@@ -457,13 +457,42 @@ static_assert(sizeof(bcf_record_core) == 24, "Bit alignment problem in declarati
 //!\ingroup var_io
 enum class bcf_type_descriptor : uint8_t
 {
-    missing = 0,
-    int8    = 1,
-    int16   = 2,
-    int32   = 3,
-    float32 = 5,
-    char8   = 7
+    missing     = 0,
+    int8        = 1,
+    int16       = 2,
+    int32       = 3,
+//  int64
+    float32     = 5,
+//  double
+    char8       = 7,
+//  rle_missing
+    rle_int8    = 9,
+    rle_int16   = 10,
+    rle_int32   = 11,
+//  rle_int64
+    rle_float32 = 13,
+//  rle_double
+    rle_char8   = 15
 };
+
+constexpr bool is_rle_desc(bcf_type_descriptor const desc)
+{
+    return ((static_cast<uint8_t>(desc) & 8u) == 8u);
+}
+
+constexpr bcf_type_descriptor make_rle_desc(bcf_type_descriptor const desc)
+{
+    return bcf_type_descriptor{static_cast<uint8_t>(static_cast<uint8_t>(desc) | 8u)};
+}
+
+constexpr bcf_type_descriptor unmake_rle_desc(bcf_type_descriptor const desc)
+{
+    return bcf_type_descriptor{static_cast<uint8_t>(static_cast<unsigned>(desc) & ~8u)};
+}
+
+static_assert(make_rle_desc(bcf_type_descriptor::int8) == bcf_type_descriptor::rle_int8);
+static_assert(unmake_rle_desc(bcf_type_descriptor::rle_int8) == bcf_type_descriptor::int8);
+
 
 //TODO this needs standalone tests
 //!\brief Compute the smallest possible integral type descriptor able to represent the value.

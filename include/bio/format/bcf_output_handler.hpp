@@ -181,11 +181,59 @@ private:
         }
     }
 
+    void run_length_encode(auto & range, detail::bcf_type_descriptor const desc, auto && fun)
+    {
+        size_t run_length = 1;
+
+        auto eq = detail::overloaded{
+            [](std::ranges::range auto && lhs, std::ranges::range auto && rhs) { return std::ranges::equal(lhs, rhs); },
+            [](auto && lhs, auto && rhs) { return lhs == rhs; }};
+
+        for (auto rit = std::ranges::begin(range), next = std::ranges::next(rit);
+             rit != std::ranges::end(range);
+             ++rit, ++next)
+        {
+            if (next != std::ranges::end(range) && eq(*rit, *next))
+            {
+                ++run_length;
+            }
+            else
+            {
+                // write size
+                detail::bcf_type_descriptor int_desc = detail::smallest_int_desc(run_length);
+                write_type_descriptor1(int_desc);
+                write_single_impl(run_length, int_desc);
+
+                // write value
+                fun(*rit, desc);
+
+                // finish
+                run_length = 1;
+            }
+        }
+    }
+
     //!\brief Write a range of values.
     void write_range_impl(std::ranges::forward_range auto && range, detail::bcf_type_descriptor const desc)
     {
         using data_t = decltype(range);
         using elem_t = std::ranges::range_value_t<data_t>;
+
+        // run-length encoding
+        if (detail::is_rle_desc(desc))
+        {
+            assert(!std::ranges::empty(range));
+            auto fun = [&] (auto && val, detail::bcf_type_descriptor const desc)
+            {
+                if constexpr (detail::deliberate_alphabet<elem_t>)
+                    write_single_impl(seqan3::to_char(val), desc);
+                else
+                    write_single_impl(val, desc);
+            };
+
+            run_length_encode(range, detail::unmake_rle_desc(desc), fun);
+            return;
+        }
 
         auto dump_or_convert = [&] <typename target_t> (target_t)
         {
@@ -265,9 +313,9 @@ private:
     }
 
     //!\brief Write the GT field (has custom writer, because it pretends to be a string but is encoded differently).
-    size_t write_GT_impl(detail::char_range_or_cstring auto && gt_string_, detail::bcf_type_descriptor const desc)
+    size_t write_GT_impl(std::string_view const gt_string, detail::bcf_type_descriptor const desc)
     {
-        std::string_view gt_string = detail::to_string_view(gt_string_);
+//         std::string_view gt_string = detail::to_string_view(gt_string_);
 
         bool phased = false;
 
@@ -334,6 +382,33 @@ private:
 
         auto func = [&] <typename target_t> (target_t)
         {
+            // run-length encoding
+            if (detail::is_rle_desc(desc))
+            {
+                if (front_missing)
+                {
+
+                    // write size
+                    write_type_descriptor1(detail::bcf_type_descriptor::int8);
+                    write_single_impl(1, detail::bcf_type_descriptor::int8);
+
+                    it->write_as_binary(var_io::missing_value<target_t>);
+                    --num;
+                }
+
+                if (num > 0)
+                {
+                    // write size
+                    detail::bcf_type_descriptor int_desc = detail::smallest_int_desc(num);
+                    write_type_descriptor1(int_desc);
+                    write_single_impl(num, int_desc);
+
+                    // write value
+                    it->write_as_binary(detail::end_of_vector<target_t>);
+                }
+                return;
+            }
+
             if (front_missing)
             {
                 it->write_as_binary(var_io::missing_value<target_t>);
@@ -345,7 +420,7 @@ private:
                 it->write_as_binary(detail::end_of_vector<target_t>);
         };
 
-        switch (desc)
+        switch (detail::unmake_rle_desc(desc))
         {
             case detail::bcf_type_descriptor::char8:
                 func(char{});
@@ -736,7 +811,6 @@ private:
         return {max_alleles, max_allele_val};
     }
 
-
     void write_genotypes_element(auto & genotype)
     {
         auto & [ id, value ] = genotype;
@@ -784,6 +858,8 @@ private:
                 return;
             }
 
+            if (run_length_encoding)
+                desc = detail::make_rle_desc(desc);
 
             if constexpr (!std::ranges::range<value_t>) // case: one value per sample
             {
@@ -801,7 +877,10 @@ private:
                 {
                     if constexpr (detail::char_range_or_cstring<value_t>)
                     {
-                        assert(desc == detail::bcf_type_descriptor::char8);
+                        assert(desc == detail::bcf_type_descriptor::char8 || desc == detail::bcf_type_descriptor::rle_char8);
+
+                        if (record_core.n_sample != std::ranges::size(values))
+                            error("If the GT field is present, a value must be given for every sample.");
 
                         auto [ max_alleles, max_allele_val ] = get_GT_maxs(values);
 
@@ -814,45 +893,87 @@ private:
                         else
                             desc = detail::bcf_type_descriptor::int32;
 
-                        write_type_descriptor(desc, max_alleles); // size refers to size per-sample
-
-                        for (auto & rng : values)
+                        auto fun = [&] (auto && val, detail::bcf_type_descriptor const d)
                         {
-                            size_t n_alleles = write_GT_impl(rng, desc);
+                            size_t n_alleles = write_GT_impl(detail::to_string_view(val), d);
 
                             // per-value padding
-                            write_range_padding(max_alleles - n_alleles, desc, false);
-                        }
+                            write_range_padding(max_alleles - n_alleles, d, false);
+                        };
 
-                        // per-sample padding
-                        for (size_t i = 0; i < record_core.n_sample - std::ranges::size(values); ++i)
-                            write_range_padding(max_alleles, desc, true);
+                        if (run_length_encoding)
+                        {
+                            // size refers to size per-sample
+                            write_type_descriptor(detail::make_rle_desc(desc), max_alleles);
+                            run_length_encode(values, desc, fun);
+
+                            // no padding (GT required for all samples)
+                        }
+                        else
+                        {
+                            // size refers to size per-sample
+                            write_type_descriptor(desc, max_alleles);
+                            for (auto & rng : values)
+                                fun(rng, desc);
+
+                            // no padding (GT required for all samples)
+                        }
                     }
                     else
                     {
                         error("GT field must be provided as range of strings.");
                     }
                 }
-                else // the regular case of multiple values or one string
+                else // the regular case of multiple values or one string (per sample)
                 {
                     size_t max_length = std::ranges::size(*std::ranges::max_element(values, {}, std::ranges::size));
 
                     write_type_descriptor(desc, max_length); // size refers to size per-sample
 
-                    for (auto & rng : values)
-                    {
-                        write_range_impl(rng, desc);
-                        // per-value padding
-                        write_range_padding(max_length - std::ranges::size(rng), desc, false);
-                    }
+                    detail::bcf_type_descriptor actual_desc = detail::unmake_rle_desc(desc);
 
-                    // per-sample padding
-                    for (size_t i = 0; i < record_core.n_sample - std::ranges::size(values); ++i)
-                        write_range_padding(max_length, desc, true);
+                    if (run_length_encoding)
+                    {
+                        auto fun = [&] (auto && val, detail::bcf_type_descriptor const d)
+                        {
+                            // write value
+                            write_range_impl(val, d);
+                            write_range_padding(max_length - std::ranges::size(val), d, false);
+                        };
+
+                        run_length_encode(values, actual_desc, fun);
+
+                        // per-sample padding
+                        if (int32_t run_length = record_core.n_sample - std::ranges::size(values); run_length > 0)
+                        {
+                            // write run_length
+                            detail::bcf_type_descriptor int_desc = detail::smallest_int_desc(run_length);
+                            write_type_descriptor1(int_desc);
+                            write_single_impl(run_length, int_desc);
+
+                            // write value
+                            write_range_padding(max_length, actual_desc, true);
+                        }
+                    }
+                    else
+                    {
+                        for (auto & rng : values)
+                        {
+                            write_range_impl(rng, desc);
+                            // per-value padding
+                            write_range_padding(max_length - std::ranges::size(rng), desc, false);
+                        }
+
+                        // per-sample padding
+                        for (size_t i = 0; i < record_core.n_sample - std::ranges::size(values); ++i)
+                            write_range_padding(max_length, desc, true);
+                    }
                 }
             }
             else // this is the case of multiple strings per sample
             {
+                //TODO this doesn't work for RLE, yet
+                desc = detail::unmake_rle_desc(desc);
                 if constexpr (std::same_as<char, seqan3::range_innermost_value_t<value_t>>)
                 {
                     assert(desc == detail::bcf_type_descriptor::char8);
@@ -892,9 +1013,9 @@ private:
                         write_range_padding(max_length, desc, true);
 
                 }
-                else // the constex
+                else
                 {
-                    // this case is never reached. The constexpr prevents needless instantions though.
+                    // this case is never reached. The constexpr prevents needless instantiations though.
                     static_assert(std::same_as<char, seqan3::range_innermost_value_t<value_t>>,
                                   "Cannot handle range-of-range-of-range unless the alphabet is char.");
                 }
@@ -1159,7 +1280,7 @@ public:
     ~format_output_handler() noexcept(false)
     {
         // never throw if the stack is unwinding
-        if (std::uncaught_exception())
+        if (std::uncaught_exceptions() > 0)
             return;
 
         // no cleanup is needed if this object is in moved-from-state

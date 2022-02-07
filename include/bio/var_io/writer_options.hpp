@@ -86,6 +86,17 @@ namespace bio::var_io
 template <typename formats_t = seqan3::type_list<vcf, bcf>>
 struct writer_options
 {
+    /*!\brief Try to use types smaller than 32bit to represent integers.
+     *
+     * \details
+     *
+     * **BCF-only**
+     *
+     * TODO
+     *
+     */
+    bool compress_integers = true;
+
     /*!\brief The formats that output files can take; a bio::ttag over the types.
      *
      * \details
@@ -93,6 +104,17 @@ struct writer_options
      * See bio::var_io::writer for an overview of the the supported formats.
      */
     formats_t formats = ttag<vcf, bcf>;
+
+    /*!\brief Compress series of values in pairs of (size, value).
+     *
+     * \details
+     *
+     * **BCF-only**
+     *
+     * TODO
+     *
+     */
+    bool run_length_encoding = false;
 
     //!\brief Options that are passed on to the internal stream oject.
     transparent_ostream_options stream_options{};
@@ -123,17 +145,6 @@ struct writer_options
      * This option is always assumed to be true for bio::bcf.
      */
     bool write_IDX = false;
-
-    /*!\brief Try to use types smaller than 32bit to represent integers.
-     *
-     * \details
-     *
-     * **BCF-only**
-     *
-     * TODO
-     *
-     */
-    bool compress_integers = true;
 
     /*!\brief Verify types when writing.
      *

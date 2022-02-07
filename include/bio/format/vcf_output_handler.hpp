@@ -605,7 +605,7 @@ public:
     ~format_output_handler() noexcept(false)
     {
         // never throw if the stack is unwinding
-        if (std::uncaught_exception())
+        if (std::uncaught_exceptions() > 0)
             return;
 
         // no cleanup is needed if we are in moved-from state
