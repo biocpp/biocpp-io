@@ -14,6 +14,7 @@
 #pragma once
 
 #include <bit>
+#include <numeric>
 
 #include <seqan3/utility/views/join_with.hpp>
 #include <seqan3/utility/char_operations/predicate.hpp>
@@ -315,8 +316,6 @@ private:
     //!\brief Write the GT field (has custom writer, because it pretends to be a string but is encoded differently).
     size_t write_GT_impl(std::string_view const gt_string, detail::bcf_type_descriptor const desc)
     {
-//         std::string_view gt_string = detail::to_string_view(gt_string_);
-
         bool phased = false;
 
         size_t n_alleles = 0;
@@ -327,14 +326,16 @@ private:
             if (i == gt_string.size() || (seqan3::is_char<'/'> || seqan3::is_char<'|'>)(gt_string[i]))
             {
                 std::string_view substr = gt_string.substr(j, i - j);
-                size_t buf = 0;
 
+                size_t encoded_buf = 0;
                 if (substr != ".")
+                {
+                    size_t buf = 0;
                     detail::string_to_number(substr, buf);
+                    // encode according to BCF spec
+                    encoded_buf = (buf + 1) << 1 | (size_t)phased;
+                }
                 // else it remains 0
-
-                // encode according to BCF spec
-                size_t encoded_buf = (buf + 1) << 1 | (size_t)phased;
 
                 switch (desc)
                 {
@@ -480,19 +481,39 @@ private:
     //!\overload
     void write_typed_data(std::ranges::forward_range auto && data, detail::bcf_type_descriptor const desc)
     {
+        static_assert(!std::ranges::range<std::ranges::range_reference_t<decltype(data)>>);
         write_type_descriptor(desc, std::ranges::distance(data));
         write_range_impl(data, desc);
     }
 
     //!\overload
-//     template <std::ranges::forward_range data_t>
-//         requires detail::char_range<std::ranges::range_value_t<data_t>>
-//     void write_typed_data(data_t &&, [[maybe_unused]] detail::bcf_type_descriptor const desc)
-//     {
-//         assert(desc == detail::bcf_type_descriptor::char8);
-//         size_t size_sum =
-//         error("implement me");
-//     }
+    template <std::ranges::forward_range data_t>
+        requires detail::char_range_or_cstring<std::ranges::range_value_t<data_t>>
+    void write_typed_data(data_t && vector_of_string, [[maybe_unused]] detail::bcf_type_descriptor const desc)
+    {
+        assert(desc == detail::bcf_type_descriptor::char8);
+
+        size_t num_strings = std::ranges::distance(vector_of_string);
+        if (num_strings == 0)
+        {
+            it->write_as_binary(uint8_t{0x07});
+            return;
+        }
+
+        auto to_size = detail::overloaded([] (char const * const cstr) { return std::string_view{cstr}.size(); },
+                                          std::ranges::distance);
+
+        size_t size_sum = std::transform_reduce(std::ranges::begin(vector_of_string),
+                                                std::ranges::end(vector_of_string),
+                                                0ull,
+                                                std::plus<>{},
+                                                to_size);
+        // add additional size for the "," that will be interspersed
+        size_sum += num_strings - 1;
+
+        write_type_descriptor(desc, size_sum);
+        write_range_impl(vector_of_string, desc);
+    }
 
     //!\overload
     void write_typed_data(bool, [[maybe_unused]] detail::bcf_type_descriptor const desc)
@@ -784,8 +805,7 @@ private:
             int32_t buf = 0;
             size_t n_alleles = 0;
 
-            if (s.size() % 2 != 1) // very basic sanity check, TODO improve
-                error("GT string has wrong format.");
+            //TODO perform sanity check on string?
 
             //TODO use views::eager_split once that can handle predicates
             for (size_t i = 0, j = 0; i <= s.size(); ++i)
@@ -960,8 +980,9 @@ private:
                         for (auto & rng : values)
                         {
                             write_range_impl(rng, desc);
-                            // per-value padding
-                            write_range_padding(max_length - std::ranges::size(rng), desc, false);
+                            size_t const s = std::ranges::size(rng);
+                            // per-value padding; we only insert missing value if this range is empty
+                            write_range_padding(max_length - s, desc, s == 0);
                         }
 
                         // per-sample padding
@@ -1002,7 +1023,7 @@ private:
                         // this choses overload that intersperses ','
                         write_range_impl(range_of_strings, desc);
                         // per-value padding
-                        write_range_padding(max_length - string_size_buffer[i], desc, false);
+                        write_range_padding(max_length - string_size_buffer[i], desc, string_size_buffer[i] == 0);
                         ++i;
                     }
 

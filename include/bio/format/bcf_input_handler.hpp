@@ -926,6 +926,7 @@ private:
             auto [fmt_type, fmt_size] = decode_type_descriptor_byte(*cache_ptr);
             ++cache_ptr;
 
+            //TODO fmt_size might overflow because it is only uint8_t
             fmt_size = fmt_size < 15 ? fmt_size : decode_integral(cache_ptr);
 
             if (format.id == "GT") // this needs custom decoding, it is not a string
@@ -1500,11 +1501,18 @@ inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_i
                 constexpr size_t id      = static_cast<size_t>(var_io::dynamic_type_id::vector_of_string);
                 auto &           output_ = output.template emplace<id>();
                 std::string_view tmp{reinterpret_cast<char const *>(cache_ptr), outer_size * inner_size};
-                for (size_t i = 0; i < outer_size; ++i)
+                for (size_t sample = 0; sample < outer_size; ++sample)
                 {
                     output_.emplace_back();
 
-                    std::string_view tmp_inner = tmp.substr(i * inner_size, (i + 1) * inner_size);
+                    std::string_view tmp_inner = tmp.substr(sample * inner_size, inner_size);
+
+                    // string might be padded with end_of_vector values
+                    size_t s = tmp_inner.size();
+                    while (s > 0 && tmp_inner[s - 1] == detail::end_of_vector<char>)
+                        --s;
+                    tmp_inner = tmp_inner.substr(0, s);
+
                     for (std::string_view const s : tmp_inner | detail::eager_split(','))
                     {
                         output_.back().push_back({});
