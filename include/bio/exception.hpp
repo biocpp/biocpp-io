@@ -75,10 +75,17 @@ struct unexpected_end_of_input : std::runtime_error
 // ----------------------------------------------------------------------------
 
 //!\brief Thrown if information given to output format didn't match expectations.
-struct format_error : std::invalid_argument
+struct format_error : std::runtime_error
 {
     //!\brief Constructor that forwards the exception string.
-    format_error(std::string const & s) : std::invalid_argument{s} {}
+    format_error(std::string const & s) : std::runtime_error{s} {}
+};
+
+//!\brief Thrown if a writer requires a header but it isn't provided.
+struct missing_header_error : std::runtime_error
+{
+    //!\brief Constructor that forwards the exception string.
+    missing_header_error(std::string const & s) : std::runtime_error{s} {}
 };
 
 //!\}

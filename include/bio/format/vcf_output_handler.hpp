@@ -20,7 +20,6 @@
 #include <bio/stream/detail/fast_streambuf_iterator.hpp>
 #include <bio/var_io/header.hpp>
 #include <bio/var_io/misc.hpp>
-#include <bio/var_io/reader_options.hpp> // TODO remove this once we have concepts for writer
 #include <bio/var_io/writer_options.hpp>
 
 namespace bio
@@ -70,11 +69,14 @@ private:
     /*!\name State
      * \{
      */
+    //!\brief Can be used to infer if the object is in moved-from state.
+    detail::move_tracker move_tracker;
     //!\brief Whether the header has been written or not.
-    bool                                                                    header_has_been_written = false;
+    bool                 header_has_been_written = false;
+
     //!\brief Pointer to header that can be owning or non-owning.
-    std::unique_ptr<var_io::header const, void (*)(var_io::header const *)> header                  = {nullptr,
-                                                                                                       [](var_io::header const *) {}};
+    std::unique_ptr<var_io::header const, void (*)(var_io::header const *)> header = {nullptr,
+                                                                                      [](var_io::header const *) {}};
     //!\}
 
     /*!\name Options
@@ -189,7 +191,7 @@ private:
     {
         if constexpr (detail::is_dynamic_type<std::remove_cvref_t<decltype(var)>>)
         {
-            if (static_cast<size_t>(type_id) != var.index())
+            if (!detail::type_id_is_compatible(type_id, var_io::dynamic_type_id{static_cast<int32_t>(var.index())}))
                 throw format_error{"The variant was not in the proper state."}; // TODO improve text
         }
         else
@@ -442,11 +444,9 @@ private:
 
         for (size_t i_sample = 0; i_sample < n_samples; ++i_sample) // for every sample
         {
-            auto write_fields = [&]<typename tup_t, size_t... i_field>(tup_t const & tup,
-                                                                       std::index_sequence<i_field...>)
-            {
-                (write_vector_variant(detail::get_second(std::get<i_field>(tup)), lengths, i_sample, i_field), ...);
-            };
+            auto write_fields =
+              [&]<typename tup_t, size_t... i_field>(tup_t const & tup, std::index_sequence<i_field...>)
+            { (write_vector_variant(detail::get_second(std::get<i_field>(tup)), lengths, i_sample, i_field), ...); };
 
             write_fields(tup, std::make_index_sequence<sizeof...(elem_ts)>{});
 
@@ -478,6 +478,20 @@ private:
     }
     //!\}
 
+    //!\brief Write the header.
+    void write_header() noexcept(false)
+    {
+        if (header == nullptr)
+            throw missing_header_error{"The VCF output handler needs a header but no header was set."};
+
+        if (write_IDX)
+            it->write_range(header->to_plaintext());
+        else
+            it->write_range(header->to_plaintext_without_idx());
+
+        header_has_been_written = true;
+    }
+
     //!\brief Write the record (supports const and non-const lvalue ref).
     void write_record_impl(auto & record)
     {
@@ -487,31 +501,14 @@ private:
         {
             if (header == nullptr)
             {
-                bool set = false;
-
                 if constexpr (field_ids::contains(field::_private))
                 {
                     if (var_io::header const * ptr = get<field::_private>(record).header_ptr; ptr != nullptr)
-                    {
                         set_header(*ptr);
-                        set = true;
-                    }
-                }
-
-                if (!set)
-                {
-                    throw std::runtime_error{
-                      "You need to call set_header() on the writer/format before writing a "
-                      "record."};
                 }
             }
 
-            if (write_IDX)
-                it->write_range(header->to_plaintext());
-            else
-                it->write_range(header->to_plaintext_without_idx());
-
-            header_has_been_written = true;
+            write_header();
         }
 
         static_assert(field_ids::contains(field::chrom), "The record must contain the CHROM field.");
@@ -580,12 +577,11 @@ public:
      * \brief These are all private to prevent wrong instantiation.
      * \{
      */
-    format_output_handler()                              = default;            //!< Defaulted.
-    format_output_handler(format_output_handler const &) = delete;             //!< Deleted.
-    format_output_handler(format_output_handler &&)      = default;            //!< Defaulted.
-    ~format_output_handler()                             = default;            //!< Defaulted.
-    format_output_handler & operator=(format_output_handler const &) = delete; //!< Deleted.
-    format_output_handler & operator=(format_output_handler &&) = default;     //!< Defaulted.
+    format_output_handler()                                          = delete;  //!< Defaulted.
+    format_output_handler(format_output_handler const &)             = delete;  //!< Deleted.
+    format_output_handler(format_output_handler &&)                  = default; //!< Defaulted.
+    format_output_handler & operator=(format_output_handler const &) = delete;  //!< Deleted.
+    format_output_handler & operator=(format_output_handler &&)      = default; //!< Defaulted.
 
     /*!\brief Construct with an options object.
      * \param[in,out] str The output stream.
@@ -607,6 +603,22 @@ public:
 
     //!\brief Construct with only an output stream.
     format_output_handler(std::ostream & str) : format_output_handler(str, 1) {}
+
+    //!\brief The destructor writes the header if necessary and cleans up.
+    ~format_output_handler() noexcept(false)
+    {
+        // never throw if the stack is unwinding
+        if (std::uncaught_exceptions() > 0)
+            return;
+
+        // no cleanup is needed if we are in moved-from state
+        if (move_tracker.moved_from)
+            return;
+
+        // if no records were written, the header also wasn't written, but needs to be:
+        if (!header_has_been_written)
+            write_header();
+    }
     //!\}
 
     //!\brief Get the header.
