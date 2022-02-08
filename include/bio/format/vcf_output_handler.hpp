@@ -191,7 +191,7 @@ private:
     {
         if constexpr (detail::is_dynamic_type<std::remove_cvref_t<decltype(var)>>)
         {
-            if (!detail::type_id_is_compatible(type_id, var_io::dynamic_type_id{static_cast<int32_t>(var.index())}))
+            if (!detail::type_id_is_compatible(type_id, var_io::dynamic_type_id{var.index()}))
                 throw format_error{"The variant was not in the proper state."}; // TODO improve text
         }
         else

@@ -44,15 +44,7 @@ inline t missing_value = t{};
 
 //!\brief Specialisation for char.
 template <>
-inline constexpr char missing_value<char> = '.';
-
-//!\brief Specialisation for std::string.
-template <>
-inline std::string missing_value<std::string> = ".";
-
-//!\brief Specialisation for std::string_view.
-template <>
-inline constexpr std::string_view missing_value<std::string_view> = ".";
+inline constexpr char missing_value<char> = char{0x07};
 
 //!\brief Specialisation for integral types.
 template <typename int_t>
@@ -89,6 +81,10 @@ namespace bio::detail
 //!\brief Default implementation. [not used]
 template <typename t>
 inline t end_of_vector = t{};
+
+//!\brief Specialisation for char.
+template <>
+inline constexpr char end_of_vector<char> = '\0';
 
 //!\brief Specialisation for integral types.
 template <typename int_t>
@@ -426,21 +422,34 @@ using default_record = record<decltype(default_field_ids), decltype(field_types<
 namespace bio::detail
 {
 
+//-----------------------------------------------------------------------------
+// BCF record core
+//-----------------------------------------------------------------------------
+
 //!\brief The "core" of a BCF record in bit-compatible representation to the on-disk format.
 //!\ingroup var_io
 struct bcf_record_core
 {
-    int32_t  chrom         = -1; //!< CHROM as IDX.
-    int32_t  pos           = -1; //!< POS.
-    int32_t  rlen          = -1; //!< Not used by this implementation.
-    float    qual          = -1; //!< QUAL.
-    uint16_t n_info        = 0;  //!< Number of INFOS values.
-    uint16_t n_allele      = 0;  //!< Number of alleles.
-    uint32_t n_sample : 24 = 0;  //!< Number of samples.
-    uint8_t  n_fmt         = 0;  //!< Number of FORMAT values.
+    int32_t  chrom         = -1;                                //!< CHROM as IDX.
+    int32_t  pos           = -1;                                //!< POS.
+    int32_t  rlen          = -1;                                //!< Not used by this implementation.
+    float    qual          = bio::var_io::missing_value<float>; //!< QUAL.
+    uint16_t n_info        = 0;                                 //!< Number of INFOS values.
+    uint16_t n_allele      = 0;                                 //!< Number of alleles.
+    uint32_t n_sample : 24 = 0;                                 //!< Number of samples.
+    uint8_t  n_fmt         = 0;                                 //!< Number of FORMAT values.
 };
 
 static_assert(sizeof(bcf_record_core) == 24, "Bit alignment problem in declaration of bcf_record_core.");
+
+//-----------------------------------------------------------------------------
+// bcf_type_descriptor and utilities
+//-----------------------------------------------------------------------------
+
+/*!\name BCF Type descriptor and utilities
+ * \brief TODO some things here should get stand-alone tests maybe?
+ * \{
+ */
 
 //!\brief The BCF type descriptor with values as described in the specification.
 //!\ingroup var_io
@@ -450,9 +459,117 @@ enum class bcf_type_descriptor : uint8_t
     int8    = 1,
     int16   = 2,
     int32   = 3,
+    //  int64
     float32 = 5,
-    char8   = 7
+    //  double
+    char8   = 7,
 };
+
+/*!\addtogroup var_io
+ * \{
+ */
+
+//!\brief Compute the smallest possible integral type descriptor able to represent the value.
+detail::bcf_type_descriptor smallest_int_desc(std::unsigned_integral auto const num)
+{
+    // bits required to represent number (the +1 because signed integral has smaller range)
+    switch (std::bit_ceil(std::bit_width(num) + 1))
+    {
+        case 128:
+        case 64:
+            throw std::runtime_error{std::string{"Could not write number '"} + detail::to_string(num) +
+                                     "'. Value out of range (only int32 supported)."};
+            return {};
+        case 32:
+            return detail::bcf_type_descriptor::int32;
+        case 16:
+            return detail::bcf_type_descriptor::int16;
+        default:
+            return detail::bcf_type_descriptor::int8;
+    }
+}
+
+//!\overload
+detail::bcf_type_descriptor smallest_int_desc(std::signed_integral auto const num)
+{
+    return smallest_int_desc(static_cast<uint64_t>(std::abs(num)));
+}
+
+//!\overload
+detail::bcf_type_descriptor smallest_int_desc(std::ranges::forward_range auto && range)
+{
+    using val_t             = seqan3::range_innermost_value_t<decltype(range)>;
+    val_t               max = std::numeric_limits<val_t>::lowest();
+    bcf_type_descriptor desc{};
+    for (val_t elem : range)
+    {
+        if constexpr (std::signed_integral<val_t>)
+            elem = std::abs(elem);
+
+        if (elem > max)
+        {
+            max  = elem;
+            desc = smallest_int_desc(elem);
+            if (desc == detail::bcf_type_descriptor::int32) // this is max(type_descriptor)
+                break;
+        }
+    }
+    return desc;
+    // TODO check if this is faster, NEEDS abs() projection:
+    //  return smallest_int_desc(std::ranges::empty(range) ? 0 : *std::ranges::max_element(range));
+}
+
+//!\overload
+template <std::ranges::forward_range rng_t>
+    requires(std::ranges::range<std::ranges::range_reference_t<rng_t>>)
+detail::bcf_type_descriptor smallest_int_desc(rng_t & range)
+{
+    return smallest_int_desc(range | std::views::join);
+}
+
+//!\brief Whether the value is any integer value.
+bool type_descriptor_is_int(bcf_type_descriptor const type_desc)
+{
+    switch (type_desc)
+    {
+        case bcf_type_descriptor::int8:
+        case bcf_type_descriptor::int16:
+        case bcf_type_descriptor::int32:
+            return true;
+        default:
+            return false;
+    }
+}
+
+//!\brief Convert from bio::var_io::dynamic_type_id to bio::detail::bcf_type_descriptor.
+bcf_type_descriptor dynamic_type_id_2_type_descriptor(var_io::dynamic_type_id const type_id)
+{
+    switch (type_id)
+    {
+        case var_io::dynamic_type_id::char8:
+        case var_io::dynamic_type_id::vector_of_char8:
+        case var_io::dynamic_type_id::string:
+        case var_io::dynamic_type_id::vector_of_string:
+            return bcf_type_descriptor::char8;
+        case var_io::dynamic_type_id::int8:
+        case var_io::dynamic_type_id::vector_of_int8:
+        case var_io::dynamic_type_id::flag:
+            return bcf_type_descriptor::int8;
+        case var_io::dynamic_type_id::int16:
+        case var_io::dynamic_type_id::vector_of_int16:
+            return bcf_type_descriptor::int16;
+        case var_io::dynamic_type_id::int32:
+        case var_io::dynamic_type_id::vector_of_int32:
+            return bcf_type_descriptor::int32;
+        case var_io::dynamic_type_id::float32:
+        case var_io::dynamic_type_id::vector_of_float32:
+            return bcf_type_descriptor::float32;
+    }
+    return bcf_type_descriptor::missing;
+}
+
+//!\}
+//!\}
 
 /*!\addtogroup var_io
  * \{
@@ -465,20 +582,55 @@ template <typename t>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor = bcf_type_descriptor::missing;
 
 //!\brief Specialisation for int8.
+template <std::signed_integral t>
+    requires(sizeof(t) == 1)
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::int8;
+//!\brief Specialisation for int8.
 template <>
-inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<int8_t> = bcf_type_descriptor::int8;
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<bool> = bcf_type_descriptor::int8;
+
 //!\brief Specialisation for int16.
-template <>
-inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<int16_t> = bcf_type_descriptor::int16;
+template <std::signed_integral t>
+    requires(sizeof(t) == 2)
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::int16;
+//!\brief Specialisation for int16.
+template <std::unsigned_integral t>
+    requires(sizeof(t) == 1)
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::int16;
+
 //!\brief Specialisation for int32.
-template <>
-inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<int32_t> = bcf_type_descriptor::int32;
+template <std::signed_integral t>
+    requires(sizeof(t) >= 4)
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::int32;
+
+//!\brief Specialisation for int32.
+template <std::unsigned_integral t>
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::int32;
+
 //!\brief Specialisation for float.
 template <>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<float> = bcf_type_descriptor::float32;
+//!\brief Specialisation for double.
+template <>
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<double> = bcf_type_descriptor::float32;
+
 //!\brief Specialisation for char.
 template <>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<char> = bcf_type_descriptor::char8;
+//!\brief Specialisation for seqan3 alphabets.
+template <detail::deliberate_alphabet t>
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::char8;
+
+//!\brief Specialisation for cstring.
+template <decays_to<char const *> t>
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::char8;
+
+//!\brief Specialisation for range.
+template <std::ranges::input_range t>
+inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> =
+  type_2_bcf_type_descriptor<seqan3::range_innermost_value_t<t>>;
+
 //!\}
+
 //!\}
 } // namespace bio::detail
