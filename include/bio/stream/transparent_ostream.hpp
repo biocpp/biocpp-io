@@ -122,6 +122,9 @@ struct transparent_ostream_options
 class transparent_ostream : public std::basic_ostream<char>
 {
 private:
+    //!\brief The base type.
+    using base_t = std::basic_ostream<char>;
+
     /*TODO
      * evaluate whether to use custom sized buffer on both streams
      * evaluate whether to use custom sized buffer strings passed in (what happens to stuff in old buffer?)
@@ -159,9 +162,17 @@ private:
         if (options_.compression == compression_format::detect)
         {
             if (filename_.empty()) // constructed from ostream → there is nothing to detect
+            {
                 options_.compression = compression_format::none;
+            }
             else
-                options_.compression = detail::detect_format_from_filename(filename_);
+            {
+                options_.compression = detail::detect_format_from_extension(filename_);
+                if (options_.compression != compression_format::none)
+                    truncated_filename_.replace_extension(); // remove compression extension
+                else
+                    options_.compression = detail::detect_format_from_implied_extension(filename_);
+            }
         }
 
         // Thread handling
@@ -174,28 +185,23 @@ private:
                 --options_.threads; // bgzf spawns **additional** threads, but user sets total
         }
 
-        std::span<std::string> file_extensions{};
-        std::ostream *         sec = nullptr;
+        std::ostream * sec = nullptr;
         switch (options_.compression)
         {
             case compression_format::bgzf:
-                sec             = detail::make_ostream<compression_format::bgzf>(*primary_stream,
+                sec = detail::make_ostream<compression_format::bgzf>(*primary_stream,
                                                                      options_.threads,
                                                                      static_cast<size_t>(8ul),
                                                                      options_.compression_level);
-                file_extensions = compression_traits<compression_format::bgzf>::file_extensions;
                 break;
             case compression_format::gz:
                 sec = detail::make_ostream<compression_format::gz>(*primary_stream, options_.compression_level);
-                file_extensions = compression_traits<compression_format::gz>::file_extensions;
                 break;
             case compression_format::bz2:
                 sec = detail::make_ostream<compression_format::bz2>(*primary_stream, options_.compression_level);
-                file_extensions = compression_traits<compression_format::bz2>::file_extensions;
                 break;
             case compression_format::zstd:
                 sec = detail::make_ostream<compression_format::zstd>(*primary_stream, options_.compression_level);
-                file_extensions = compression_traits<compression_format::zstd>::file_extensions;
                 break;
             default:
                 break;
@@ -205,14 +211,6 @@ private:
             secondary_stream = stream_ptr_t{&*primary_stream, stream_deleter_noop};
         else
             secondary_stream = stream_ptr_t{sec, stream_deleter_default};
-
-        // truncate the filename in truncated_filename_ to show that compression has taken place
-        if (filename_.has_extension())
-        {
-            std::string extension = filename_.extension().string().substr(1);
-            if (std::ranges::find(file_extensions, extension) != std::ranges::end(file_extensions))
-                truncated_filename_.replace_extension();
-        }
     }
 
     //!\brief Initialise state of object.
@@ -234,10 +232,10 @@ public:
      */
     //!\brief Manually defined default constructor that behaves as expected.
     transparent_ostream() : std::basic_ostream<char>{} {}                  //!< Call default constructor of base.
-    transparent_ostream(transparent_ostream const &) = delete;             //!< Defaulted.
+    transparent_ostream(transparent_ostream const &)             = delete; //!< Defaulted.
     transparent_ostream & operator=(transparent_ostream const &) = delete; //!< Defaulted.
     // TODO double check that this works:
-    transparent_ostream & operator=(transparent_ostream &&) = default; //!< Defaulted.
+    transparent_ostream & operator=(transparent_ostream &&)      = default; //!< Defaulted.
 
     //!\brief Manually defined move constructor that behaves as expected.
     transparent_ostream(transparent_ostream && rhs)
@@ -320,6 +318,12 @@ public:
      * If this object was not created from a file, an empty path is returned.
      */
     std::filesystem::path const & truncated_filename() { return truncated_filename_; }
+
+    //!\brief Expose the base class's rdbuf which also accepts an argument.
+    using base_t::rdbuf;
+
+    //!\brief Expose the read buffer.
+    std::basic_streambuf<char> * rdbuf() const { return secondary_stream->rdbuf(); }
 };
 
 } // namespace bio
