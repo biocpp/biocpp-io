@@ -193,12 +193,12 @@ public:
     /*!\name Constructors, destructor and assignment.
      * \{
      */
-    format_input_handler()                             = default;            //!< Defaulted.
-    format_input_handler(format_input_handler const &) = delete;             //!< Deleted.
-    format_input_handler(format_input_handler &&)      = default;            //!< Defaulted.
-    ~format_input_handler()                            = default;            //!< Defaulted.
-    format_input_handler & operator=(format_input_handler const &) = delete; //!< Deleted.
-    format_input_handler & operator=(format_input_handler &&) = default;     //!< Defaulted.
+    format_input_handler()                                         = default; //!< Defaulted.
+    format_input_handler(format_input_handler const &)             = delete;  //!< Deleted.
+    format_input_handler(format_input_handler &&)                  = default; //!< Defaulted.
+    ~format_input_handler()                                        = default; //!< Defaulted.
+    format_input_handler & operator=(format_input_handler const &) = delete;  //!< Deleted.
+    format_input_handler & operator=(format_input_handler &&)      = default; //!< Defaulted.
 
     /*!\brief Construct with an options object.
      * \param[in,out] str The input stream.

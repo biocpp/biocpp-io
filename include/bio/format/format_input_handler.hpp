@@ -190,12 +190,12 @@ private:
      * \brief These are all private to prevent wrong instantiation.
      * \{
      */
-    format_input_handler_base()                                  = default;            //!< Defaulted.
-    format_input_handler_base(format_input_handler_base const &) = delete;             //!< Deleted.
-    format_input_handler_base(format_input_handler_base &&)      = default;            //!< Defaulted.
-    ~format_input_handler_base()                                 = default;            //!< Defaulted.
-    format_input_handler_base & operator=(format_input_handler_base const &) = delete; //!< Deleted.
-    format_input_handler_base & operator=(format_input_handler_base &&) = default;     //!< Defaulted.
+    format_input_handler_base()                                              = default; //!< Defaulted.
+    format_input_handler_base(format_input_handler_base const &)             = delete;  //!< Deleted.
+    format_input_handler_base(format_input_handler_base &&)                  = default; //!< Defaulted.
+    ~format_input_handler_base()                                             = default; //!< Defaulted.
+    format_input_handler_base & operator=(format_input_handler_base const &) = delete;  //!< Deleted.
+    format_input_handler_base & operator=(format_input_handler_base &&)      = default; //!< Defaulted.
 
     //!\brief Construct from a std::istream.
     format_input_handler_base(std::istream & str) : stream{&str}

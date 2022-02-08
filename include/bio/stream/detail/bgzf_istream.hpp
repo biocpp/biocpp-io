@@ -503,7 +503,10 @@ public:
     }
 
     // returns the compressed input istream
-    istream_reference get_istream() { return serializer.istream; };
+    istream_reference get_istream()
+    {
+        return serializer.istream;
+    };
 };
 
 // --------------------------------------------------------------------------

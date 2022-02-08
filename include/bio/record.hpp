@@ -15,12 +15,11 @@
 
 #include <tuple>
 
-#include <bio/platform.hpp>
-
 #include <seqan3/core/detail/template_inspection.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
 #include <seqan3/utility/type_list/type_list.hpp>
 
+#include <bio/detail/concept.hpp>
 #include <bio/misc.hpp>
 
 namespace bio
@@ -140,7 +139,7 @@ private:
     //!\brief Auxiliary functions for clear().
     template <typename t>
         //!\cond REQ
-        requires requires(t & v) { v.clear(); }
+        requires(requires(t & v) { v.clear(); })
     //!\endcond
     static constexpr void clear_element(t & v) noexcept(noexcept(v.clear())) { v.clear(); }
 
@@ -164,12 +163,12 @@ public:
     /*!\name Constructors, destructor and assignment
      * \{
      */
-    record()               = default;             //!< Defaulted.
-    record(record const &) = default;             //!< Defaulted.
-    record(record &&)      = default;             //!< Defaulted.
-    ~record()              = default;             //!< Defaulted.
+    record()                           = default; //!< Defaulted.
+    record(record const &)             = default; //!< Defaulted.
+    record(record &&)                  = default; //!< Defaulted.
+    ~record()                          = default; //!< Defaulted.
     record & operator=(record const &) = default; //!< Defaulted.
-    record & operator=(record &&) = default;      //!< Defaulted.
+    record & operator=(record &&)      = default; //!< Defaulted.
 
     //!\brief Inherit tuple's constructors.
     using base_type::base_type;
@@ -222,9 +221,15 @@ public:
 //!\brief A macro that defines all getter functions for fields contained in bio::record.
 #define BIO_RECORD_MEMBER(F)                                                                                           \
     /*!\brief Return the bio::field F if available.*/                                                                  \
-    decltype(auto) F() noexcept(noexcept(get<field::F>())) { return get<field::F>(); }                                 \
+    decltype(auto) F() noexcept(noexcept(get<field::F>()))                                                             \
+    {                                                                                                                  \
+        return get<field::F>();                                                                                        \
+    }                                                                                                                  \
     /*!\brief Return the bio::field F if available. [const-qualified version] */                                       \
-    decltype(auto) F() const noexcept(noexcept(get<field::F>())) { return get<field::F>(); }
+    decltype(auto) F() const noexcept(noexcept(get<field::F>()))                                                       \
+    {                                                                                                                  \
+        return get<field::F>();                                                                                        \
+    }
 
     /*!\name Member accessors
      * \brief This is the same as calling #get<field::X>(); functions are only defined if record has that element.
@@ -314,7 +319,7 @@ struct record_element<f, record<field_ids, field_types>> :
 
 //!\brief Like std::tuple_element but with bio::field on bio::record. [type trait shortcut]
 template <field f, typename t>
-    requires requires { typename record_element<f, t>::type; }
+    requires(requires { typename record_element<f, t>::type; })
 using record_element_t = typename record_element<f, t>::type;
 
 //-------------------------------------------------------------------------------

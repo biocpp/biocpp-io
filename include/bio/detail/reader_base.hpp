@@ -84,17 +84,17 @@ public:
      * \{
      */
     //!\brief Default constructor is explicitly deleted, you need to give a stream or file name.
-    reader_base()                    = delete;
+    reader_base()                                = delete;
     //!\brief Copy construction is explicitly deleted, because you can't have multiple access to the same file.
-    reader_base(reader_base const &) = delete;
+    reader_base(reader_base const &)             = delete;
     //!\brief Copy assignment is explicitly deleted, because you can't have multiple access to the same file.
     reader_base & operator=(reader_base const &) = delete;
     //!\brief Move construction is defaulted.
     reader_base(reader_base &&)                  = default;
     //!\brief Move assignment is defaulted.
-    reader_base & operator=(reader_base &&) = default;
+    reader_base & operator=(reader_base &&)      = default;
     //!\brief Destructor is defaulted.
-    ~reader_base()                          = default;
+    ~reader_base()                               = default;
 
     /*!\brief Construct from filename.
      * \param[in] filename  Path to the file you wish to open.

@@ -99,11 +99,11 @@ public:
     /*!\name Constructors, destructor and assignment
      * \{
      */
-    constexpr header_kind() noexcept                    = default;             //!< Defaulted.
-    constexpr header_kind(header_kind const &) noexcept = default;             //!< Defaulted.
-    constexpr header_kind(header_kind &&) noexcept      = default;             //!< Defaulted.
+    constexpr header_kind() noexcept                                = default; //!< Defaulted.
+    constexpr header_kind(header_kind const &) noexcept             = default; //!< Defaulted.
+    constexpr header_kind(header_kind &&) noexcept                  = default; //!< Defaulted.
     constexpr header_kind & operator=(header_kind const &) noexcept = default; //!< Defaulted.
-    constexpr header_kind & operator=(header_kind &&) noexcept = default;      //!< Defaulted.
+    constexpr header_kind & operator=(header_kind &&) noexcept      = default; //!< Defaulted.
 
     //!\brief Initialise to the "none"-state.
     constexpr header_kind(decltype(none)) noexcept : state{none_state} {}

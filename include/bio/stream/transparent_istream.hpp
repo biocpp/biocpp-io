@@ -204,10 +204,10 @@ public:
     /*!\name Constructors, destructor and assignment
      * \{
      */
-    transparent_istream() : std::basic_istream<char>{} {}                  //!< Call default constructor of base.
-    transparent_istream(transparent_istream const &) = delete;             //!< Deleted.
-    transparent_istream & operator=(transparent_istream &&) = default;     //!< Defaulted.
-    transparent_istream & operator=(transparent_istream const &) = delete; //!< Defaulted.
+    transparent_istream() : std::basic_istream<char>{} {}                   //!< Call default constructor of base.
+    transparent_istream(transparent_istream const &)             = delete;  //!< Deleted.
+    transparent_istream & operator=(transparent_istream &&)      = default; //!< Defaulted.
+    transparent_istream & operator=(transparent_istream const &) = delete;  //!< Defaulted.
 
     //!\brief Move construction swaps the members maually before setting the buffer s.t. it is not invalidated.
     transparent_istream(transparent_istream && rhs)
