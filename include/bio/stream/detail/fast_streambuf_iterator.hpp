@@ -51,6 +51,7 @@ struct stream_buffer_exposer : public std::basic_streambuf<char_t, traits_t>
     using base_t::egptr;
     using base_t::gbump;
     using base_t::gptr;
+    using base_t::setg;
     using base_t::underflow;
 
     using base_t::epptr;
@@ -58,6 +59,7 @@ struct stream_buffer_exposer : public std::basic_streambuf<char_t, traits_t>
     using base_t::pbase;
     using base_t::pbump;
     using base_t::pptr;
+    using base_t::setp;
     //!\endcond
 };
 
@@ -94,12 +96,12 @@ public:
     /*!\name Constructors, destructor and assignment
      * \{
      */
-    fast_istreambuf_iterator() noexcept                                 = default;             //!< Defaulted.
-    fast_istreambuf_iterator(fast_istreambuf_iterator const &) noexcept = default;             //!< Defaulted.
-    fast_istreambuf_iterator(fast_istreambuf_iterator &&) noexcept      = default;             //!< Defaulted.
-    ~fast_istreambuf_iterator() noexcept                                = default;             //!< Defaulted.
+    fast_istreambuf_iterator() noexcept                                             = default; //!< Defaulted.
+    fast_istreambuf_iterator(fast_istreambuf_iterator const &) noexcept             = default; //!< Defaulted.
+    fast_istreambuf_iterator(fast_istreambuf_iterator &&) noexcept                  = default; //!< Defaulted.
+    ~fast_istreambuf_iterator() noexcept                                            = default; //!< Defaulted.
     fast_istreambuf_iterator & operator=(fast_istreambuf_iterator const &) noexcept = default; //!< Defaulted.
-    fast_istreambuf_iterator & operator=(fast_istreambuf_iterator &&) noexcept = default;      //!< Defaulted.
+    fast_istreambuf_iterator & operator=(fast_istreambuf_iterator &&) noexcept      = default; //!< Defaulted.
 
     //!\brief Construct from a stream buffer.
     explicit fast_istreambuf_iterator(std::basic_streambuf<char_t, traits_t> & ibuf) :
@@ -207,12 +209,12 @@ public:
     /*!\name Constructors, destructor and assignment
      * \{
      */
-    fast_ostreambuf_iterator() noexcept                                 = default;             //!< Defaulted.
-    fast_ostreambuf_iterator(fast_ostreambuf_iterator const &) noexcept = default;             //!< Defaulted.
-    fast_ostreambuf_iterator(fast_ostreambuf_iterator &&) noexcept      = default;             //!< Defaulted.
-    ~fast_ostreambuf_iterator() noexcept                                = default;             //!< Defaulted.
+    fast_ostreambuf_iterator() noexcept                                             = default; //!< Defaulted.
+    fast_ostreambuf_iterator(fast_ostreambuf_iterator const &) noexcept             = default; //!< Defaulted.
+    fast_ostreambuf_iterator(fast_ostreambuf_iterator &&) noexcept                  = default; //!< Defaulted.
+    ~fast_ostreambuf_iterator() noexcept                                            = default; //!< Defaulted.
     fast_ostreambuf_iterator & operator=(fast_ostreambuf_iterator const &) noexcept = default; //!< Defaulted.
-    fast_ostreambuf_iterator & operator=(fast_ostreambuf_iterator &&) noexcept = default;      //!< Defaulted.
+    fast_ostreambuf_iterator & operator=(fast_ostreambuf_iterator &&) noexcept      = default; //!< Defaulted.
 
     //!\brief Construct from a stream buffer.
     explicit fast_ostreambuf_iterator(std::basic_streambuf<char_t, traits_t> & ibuf) :
@@ -307,6 +309,7 @@ public:
             if constexpr (std::ranges::sized_range<range_type>)
             {
                 size_t const characters_to_write = std::min<size_t>(std::ranges::distance(it, end), buffer_space);
+                // TODO if input range is contiguous over char, use sputn/xsputn instead
                 auto         copy_res            = std::ranges::copy_n(it, characters_to_write, stream_buf->pptr());
                 it                               = copy_res.in;
                 stream_buf->pbump(characters_to_write);
@@ -343,17 +346,14 @@ public:
     {
         write_range(rng); // lvalue is always a safe range. return value is ignored because iterator would be dangling
     }
+
+    void write_range(char const * const cstring) { write_range(std::string_view{cstring}); }
     //!\endcond
 
     /*!\brief Writes a number to the underlying stream buffer using std::to_chars.
-     * \tparam number_type The type of number; must model bio::arithmetic.
      * \param[in] num The number to write.
      */
-    template <typename number_type>
-        //!\cond
-        requires std::is_arithmetic_v<number_type>
-    //!\endcond
-    auto write_number(number_type num)
+    void write_number(seqan3::arithmetic auto num)
     {
         if (stream_buf->epptr() - stream_buf->pptr() > 150) // enough space for any number, should be likely
         {
@@ -365,6 +365,27 @@ public:
             auto res = to_chars(&buffer[0], &buffer[0] + sizeof(buffer), num);
             write_range(std::span<char>{&buffer[0], res.ptr});
         }
+    }
+
+    //!\brief Write the binary representation of a type byte-wise to the output stream.
+    template <typename t>
+        requires(std::is_trivially_copyable_v<t> && !std::ranges::range<t>)
+    void write_as_binary(t const & num)
+    {
+        // TODO enforce little endian on numbers
+        std::string_view v{reinterpret_cast<char const *>(&num), sizeof(num)};
+        write_range(v);
+    }
+
+    //!\brief Write a contiguous range byte-wise to the output stream.
+    template <std::ranges::contiguous_range rng_t>
+        requires std::ranges::sized_range<rng_t>
+    void write_as_binary(rng_t && rng)
+    {
+        // TODO enforce little endian on elements?
+        std::string_view v{reinterpret_cast<char const *>(std::ranges::data(rng)),
+                           reinterpret_cast<char const *>(std::ranges::data(rng) + std::ranges::size(rng))};
+        write_range(v);
     }
 
     /*!\brief Write `"\n"` or `"\r\n"` to the stream buffer, depending on arguments.
