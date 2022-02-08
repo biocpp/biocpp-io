@@ -252,7 +252,7 @@ private:
         for (std::string_view subfield : raw_field | detail::eager_split(';'))
         {
             int32_t idx = -1;
-            if (auto it = header.string_to_filter_pos().find(raw_field);
+            if (auto it = header.string_to_filter_pos().find(subfield);
                 it == header.string_to_filter_pos().end()) // filter name was not in header, insert!
             {
                 header.filters.push_back(
@@ -297,7 +297,7 @@ private:
         {
             var_io::header::info_t info;
             info.id          = info_name;
-            info.description = "\"Automatically added by SeqAn3.\"";
+            info.description = "\"Automatically added by B.I.O..\"";
 
             if (info_value.empty()) // no "=" → flag
             {
@@ -428,7 +428,7 @@ private:
             format.id          = format_name;
             format.number      = 1;
             format.type        = var_io::dynamic_type_id::string;
-            format.description = "\"Automatically added by SeqAn3.\"";
+            format.description = "\"Automatically added by B.I.O..\"";
 
             // create a new header with new format and replace current one
             header.formats.push_back(std::move(format));
@@ -599,12 +599,12 @@ public:
     /*!\name Constructors, destructor and assignment.
      * \{
      */
-    format_input_handler()                             = default;            //!< Defaulted.
-    format_input_handler(format_input_handler const &) = delete;             //!< Deleted.
-    format_input_handler(format_input_handler &&)      = default;            //!< Defaulted.
-    ~format_input_handler()                            = default;            //!< Defaulted.
-    format_input_handler & operator=(format_input_handler const &) = delete; //!< Deleted.
-    format_input_handler & operator=(format_input_handler &&) = default;     //!< Defaulted.
+    format_input_handler()                                         = default; //!< Defaulted.
+    format_input_handler(format_input_handler const &)             = delete;  //!< Deleted.
+    format_input_handler(format_input_handler &&)                  = default; //!< Defaulted.
+    ~format_input_handler()                                        = default; //!< Defaulted.
+    format_input_handler & operator=(format_input_handler const &) = delete;  //!< Deleted.
+    format_input_handler & operator=(format_input_handler &&)      = default; //!< Defaulted.
 
     /*!\brief Construct with an options object.
      * \param[in,out] str The input stream.
