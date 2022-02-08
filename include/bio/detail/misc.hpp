@@ -71,29 +71,6 @@ void set_format(auto & format, std::filesystem::path const & file_name)
         throw unhandled_extension_error("No valid format found for this extension.");
 }
 
-//!\brief Wrapper to create an overload set of multiple functors.
-template <typename... functors>
-struct overloaded : functors...
-{
-    using functors::operator()...;
-};
-
-//!\brief Deduction guide for bio::detail::overloaded.
-template <typename... functors>
-overloaded(functors...) -> overloaded<functors...>;
-
-/*!\brief Pass this function a constrained functor that accepts one argument and returns std::true_type.
- * \details
- *
- * See e.g. bio::seq_io::reader_options to see how this is used.
- */
-constexpr bool lazy_concept_checker(auto fun)
-{
-    auto fallback = []<typename T = int>(auto) { return std::false_type{}; };
-    using ret_t   = decltype(detail::overloaded{fallback, fun}(1));
-    return ret_t::value;
-}
-
 //!\}
 
 } // namespace bio::detail

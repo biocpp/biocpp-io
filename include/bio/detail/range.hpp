@@ -57,9 +57,13 @@ concept back_insertable =
 
 //!\brief A range whose value type is `char`.
 template <typename t>
-concept char_range = (std::ranges::forward_range<t> &&
-                      std::same_as<char, std::remove_cvref_t<std::ranges::range_value_t<t>>>) ||
-                     std::same_as<std::decay_t<t>, char const *>;
+concept char_range =
+  std::ranges::forward_range<t> && std::same_as<char, std::remove_cvref_t<std::ranges::range_value_t<t>>>;
+
+//!\brief A range whose value type is `char` or a C-String.
+template <typename t>
+concept char_range_or_cstring = char_range<t> || std::same_as < std::decay_t<t>,
+char const * > ;
 
 //!\brief A range whose value type is an integral type other than `char`.
 template <typename t>
@@ -154,6 +158,51 @@ void string_copy(std::string_view const in, out_string auto & out)
     else
         sized_range_copy(in, out);
 }
+
+// ----------------------------------------------------------------------------
+// to_string_view
+// ----------------------------------------------------------------------------
+
+//!\brief Turn something string-viewable into a std::string_view.
+constexpr std::string_view to_string_view(char const * const cstring)
+{
+    return std::string_view{cstring};
+}
+
+//!\overload
+template <char_range rng_t>
+    requires std::ranges::borrowed_range<rng_t> && std::ranges::contiguous_range<rng_t> &&
+      std::ranges::sized_range<rng_t>
+constexpr std::string_view to_string_view(rng_t && contig_range)
+{
+    return std::string_view{std::ranges::data(contig_range), std::ranges::size(contig_range)};
+}
+
+//!\overload
+constexpr std::string_view to_string_view(std::string_view const in)
+{
+    return in;
+}
+
+// ----------------------------------------------------------------------------
+// range_or_tuple_size
+// ----------------------------------------------------------------------------
+
+//!\brief Returns the size of the argument, either a range or a tuple.
+constexpr size_t range_or_tuple_size(std::ranges::forward_range auto && r)
+{
+    return std::ranges::distance(r);
+}
+
+//!\overload
+template <typename tuple_t>
+    requires(requires { typename std::tuple_size<std::remove_cvref_t<tuple_t>>::type; })
+constexpr size_t range_or_tuple_size(tuple_t)
+{
+    return std::tuple_size_v<tuple_t>;
+}
+
+// there is another overload for this in magic_get.hpp
 
 //!\}
 
