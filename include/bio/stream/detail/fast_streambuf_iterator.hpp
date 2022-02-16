@@ -22,6 +22,7 @@
 #include <span>
 
 #include <bio/detail/charconv.hpp>
+#include <bio/detail/concept.hpp>
 
 namespace bio::detail
 {
@@ -253,7 +254,7 @@ public:
         // TODO: evaluate whether this is actually faster than just calling: stream_buf->sputc(c);
         if (stream_buf->pptr() == stream_buf->epptr())
         {
-            if (stream_buf->sputc(c) == traits_t::eof()) // overflow() [virtual], then write character
+            if (stream_buf->sputc(c) == traits_t::eof()) // sputc() [virtual], then write character
             {
                 // LCOV_EXCL_START
                 throw std::ios_base::failure{"Cannot write to output stream (reached traits::eof() condition)."};
@@ -273,9 +274,9 @@ public:
     bool failed() const noexcept { return stream_buf->overflow() == traits_t::eof(); }
 
     /*!\brief Writes a range to the associated output.
-     * \tparam range_type The type of range to write; Must model std::ranges::forward_range.
+     * \tparam rng_t The type of range to write; Must model std::ranges::forward_range.
      * \param[in] rng The range to write.
-     * \returns If `range_type` models `std::ranges::borrowed_range` returns an iterator pointing to end of the range
+     * \returns If `rng_t` models `std::ranges::borrowed_range` returns an iterator pointing to end of the range
      *          (rng) else returns `void`.
      *
      * This function avoids the buffer-at-end check by writing the range in chunks, where a chunks has the size of
@@ -290,26 +291,29 @@ public:
      *
      * \include test/snippet/io/detail/iterator_write_range.cpp
      */
-    template <std::ranges::forward_range range_type>
-        //!\cond
-        requires std::ranges::borrowed_range<range_type>
-    //!\endcond
-    auto write_range(range_type && rng)
+    template <std::ranges::forward_range rng_t>
+    auto write_range(rng_t && rng)
     {
-        using sen_t = std::ranges::sentinel_t<range_type>;
-        using it_t  = std::ranges::iterator_t<range_type>;
+        using sen_t = std::ranges::sentinel_t<rng_t>;
+        using it_t  = std::ranges::iterator_t<rng_t>;
 
         it_t  it  = std::ranges::begin(rng);
         sen_t end = std::ranges::end(rng);
 
+        if (stream_buf->epptr() - stream_buf->pptr() == 0 && it != end)
+        {
+            stream_buf->sputc(*it);
+            ++it;
+        }
+
         while (it != end)
         {
             size_t const buffer_space = stream_buf->epptr() - stream_buf->pptr();
+            assert(buffer_space > 0);
 
-            if constexpr (std::ranges::sized_range<range_type>)
+            if constexpr (std::sized_sentinel_for<sen_t, it_t>)
             {
-                size_t const characters_to_write = std::min<size_t>(std::ranges::distance(it, end), buffer_space);
-                // TODO if input range is contiguous over char, use sputn/xsputn instead
+                size_t const characters_to_write = std::min<size_t>(end - it, buffer_space);
                 auto         copy_res            = std::ranges::copy_n(it, characters_to_write, stream_buf->pptr());
                 it                               = copy_res.in;
                 stream_buf->pbump(characters_to_write);
@@ -323,32 +327,42 @@ public:
             }
 
             if (it == end) // no more characters to write
-                return it;
+                break;
 
             // Push one more character and flush
-            if (stream_buf->overflow(*it) == traits_t::eof())
+            if (stream_buf->sputc(*it) == traits_t::eof())
             {
                 // LCOV_EXCL_START
                 throw std::ios_base::failure{"Cannot write to output stream (reached traits::eof() condition)."};
                 // LCOV_EXCL_STOP
             }
 
-            ++it; // drop 1 character that has been written in overflow()
+            ++it; // drop 1 character that has been written in sputc() above
         }
 
-        return it;
+        if constexpr (std::ranges::borrowed_range<rng_t>)
+            return it;
+        else
+            return;
     }
 
-    //!\cond
-    // overload for non-std::ranges::borrowed_range types that return void
-    template <std::ranges::forward_range range_type>
-    void write_range(range_type && rng)
-    {
-        write_range(rng); // lvalue is always a safe range. return value is ignored because iterator would be dangling
-    }
-
-    void write_range(char const * const cstring) { write_range(std::string_view{cstring}); }
+    //!\overload
+    template <std::ranges::contiguous_range rng_t>
+        //!\cond
+        requires(std::ranges::sized_range<rng_t> && std::same_as<std::ranges::range_value_t<rng_t> const, char const>)
     //!\endcond
+    auto write_range(rng_t && rng)
+    {
+        stream_buf->sputn(std::ranges::data(rng), std::ranges::size(rng));
+
+        if constexpr (std::ranges::borrowed_range<rng_t>)
+            return std::ranges::begin(rng) + std::ranges::size(rng);
+        else
+            return;
+    }
+
+    //!\overload
+    void write_range(char const * const cstring) { write_range(std::string_view{cstring}); }
 
     /*!\brief Writes a number to the underlying stream buffer using std::to_chars.
      * \param[in] num The number to write.
@@ -367,7 +381,7 @@ public:
         }
     }
 
-    //!\brief Write the binary representation of a type byte-wise to the output stream.
+    //!\brief Write the binary representation of an object byte-wise to the output stream.
     template <typename t>
         requires(std::is_trivially_copyable_v<t> && !std::ranges::range<t>)
     void write_as_binary(t const & num)
@@ -377,7 +391,7 @@ public:
         write_range(v);
     }
 
-    //!\brief Write a contiguous range byte-wise to the output stream.
+    //!\brief Write the binary representation of a contiguous range byte-wise to the output stream.
     template <std::ranges::contiguous_range rng_t>
         requires std::ranges::sized_range<rng_t>
     void write_as_binary(rng_t && rng)
