@@ -437,9 +437,9 @@ private:
         header.add_missing();
     }
 
-    //!\brief Overload for parsing bcf style GENOTYPES.
+    //!\brief Overload for parsing GENOTYPES.
     template <detail::back_insertable field_t>
-        requires detail::genotype_bcf_style_reader_concept<std::ranges::range_reference_t<field_t>>
+        requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
     void parse_field(vtag_t<field::genotypes> const & /**/, field_t & parsed_field)
     {
         using genotype_field_t = std::ranges::range_reference_t<field_t>;
@@ -523,67 +523,6 @@ private:
                 {
                     break;
                 }
-            }
-        }
-    }
-
-    //!\brief Overload for parsing vcf style GENOTYPES.
-    void parse_field(vtag_t<field::genotypes> const & /**/,
-                     detail::genotypes_vcf_style_reader_concept auto & parsed_field)
-    {
-        size_t column_number          = file_it->fields.size();
-        size_t expected_column_number = header.column_labels.size();
-
-        if (column_number != expected_column_number)
-            error("Expected ", expected_column_number, " columns in line but found ", column_number, ".");
-
-        if (column_number <= 8) // there are no genotypes
-            return;
-
-        auto & [parsed_format, parsed_samples] = parsed_field;
-
-        using string_t  = std::remove_cvref_t<decltype(parsed_format[0])>;
-        using variant_t = std::remove_cvref_t<decltype(parsed_samples[0][0])>;
-
-        /* parse formats */
-        std::string_view    format_names = file_it->fields[8];
-        std::vector<size_t> format_map; // ATTENTION ALWAYS DYNAMICALLY ALLOCATES HERE
-        for (std::string_view format_name : format_names | detail::eager_split(':'))
-        {
-            size_t format_pos = -1;
-            if (auto it = header.string_to_format_pos().find(format_name);
-                it == header.string_to_format_pos().end()) // format name was not in header, insert!
-            {
-                add_format_to_header(format_name);
-                format_pos = header.formats.size() - 1;
-            }
-            else
-            {
-                format_pos = it->second;
-            }
-
-            parsed_format.push_back(static_cast<string_t>(format_name));
-            format_map.push_back(format_pos);
-        }
-
-        /* parse samples */
-        parsed_samples.resize(column_number - 9);
-
-        size_t sample_num = 0;
-        for (std::string_view sample : file_it->fields | std::views::drop(9))
-        {
-            auto & parsed_sample = parsed_samples[sample_num++];
-
-            size_t field_num = 0;
-            for (std::string_view field : sample | detail::eager_split(':'))
-            {
-                variant_t var;
-
-                var_io::dynamic_type_id id = header.formats[format_map[field_num++]].type;
-
-                parse_dynamic_type(id, field, var);
-
-                parsed_sample.push_back(std::move(var));
             }
         }
     }

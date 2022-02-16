@@ -555,13 +555,7 @@ private:
     }
 
     //!\brief Overload for n_fmt.
-    void set_core_n_fmt(auto & field)
-    {
-        if constexpr (detail::genotypes_vcf_style_writer_concept<decltype(field)>)
-            record_core.n_fmt = std::ranges::distance(detail::get_first(field));
-        else
-            record_core.n_fmt = detail::range_or_tuple_size(field);
-    }
+    void set_core_n_fmt(auto & field) { record_core.n_fmt = detail::range_or_tuple_size(field); }
     //!\}
 
     /*!\name Field writers
@@ -956,9 +950,9 @@ private:
             func(value);
     }
 
-    //!\brief Overload for GENOTYPES; genotypes_bcf_style.
+    //!\brief Overload for GENOTYPES.
     template <std::ranges::forward_range range_t>
-        requires(detail::genotype_bcf_style_writer_concept<std::ranges::range_reference_t<range_t>>)
+        requires(detail::genotype_writer_concept<std::ranges::range_reference_t<range_t>>)
     void write_field(vtag_t<field::genotypes> /**/, range_t && range)
     {
         for (auto && genotype : range)
@@ -967,13 +961,12 @@ private:
 
     //!\brief Overload for GENOTYPES; tuple of pairs.
     template <typename... elem_ts>
-        requires(detail::genotype_bcf_style_writer_concept<elem_ts> &&...)
+        requires(detail::genotype_writer_concept<elem_ts> &&...)
     void write_field(vtag_t<field::genotypes> /**/, std::tuple<elem_ts...> & tup) // TODO add const version
     {
         auto func = [&](auto &... field) { (write_genotypes_element(field), ...); };
         std::apply(func, tup);
     }
-    // TODO vcf-style
     //!\}
 
     //!\brief Write the header.

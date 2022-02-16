@@ -101,7 +101,6 @@ TEST(bcf, iterator_underflow)
 enum class style
 {
     def,
-    vcf,
     bcf
 };
 
@@ -117,9 +116,7 @@ void field_types()
 
     using fields_t = std::conditional_t<s == style::def,
                                         decltype(bio::var_io::field_types<own>),
-                                        std::conditional_t<s == style::vcf,
-                                                           decltype(bio::var_io::field_types_vcf_style<own>),
-                                                           decltype(bio::var_io::field_types_bcf_style<own>)>>;
+                                        decltype(bio::var_io::field_types_bcf_style<own>)>;
     using record_t = bio::record<decltype(bio::var_io::default_field_ids), fields_t>;
 
     using int_t       = int8_t;
@@ -129,24 +126,13 @@ void field_types()
 
     if constexpr (s == style::def)
         recs = example_records_default_style<own, int_t>();
-    else if constexpr (s == style::vcf)
-        recs = example_records_vcf_style<own, int_t>();
     else
         recs = example_records_bcf_style<own, int_t>();
 
     // this workaround is pending clarification in https://github.com/samtools/hts-specs/issues/593
-    if constexpr (s == style::vcf)
-    {
-        bio::detail::get_second(recs[1].genotypes()).back().push_back(std::vector<int_t>{mv});
-        bio::detail::get_second(recs[2].genotypes()).back().push_back(std::vector<int_t>{mv});
-        bio::detail::get_second(recs[3].genotypes()).back().push_back(std::vector<int_t>{mv});
-    }
-    else
-    {
-        std::get<std::vector<std::vector<int_t>>>(bio::detail::get_second(recs[1].genotypes().back())).push_back({mv});
-        std::get<std::vector<std::vector<int_t>>>(bio::detail::get_second(recs[2].genotypes().back())).push_back({mv});
-        std::get<std::vector<std::vector<int_t>>>(bio::detail::get_second(recs[3].genotypes().back())).push_back({mv});
-    }
+    std::get<std::vector<std::vector<int_t>>>(bio::detail::get_second(recs[1].genotypes().back())).push_back({mv});
+    std::get<std::vector<std::vector<int_t>>>(bio::detail::get_second(recs[2].genotypes().back())).push_back({mv});
+    std::get<std::vector<std::vector<int_t>>>(bio::detail::get_second(recs[3].genotypes().back())).push_back({mv});
 
     for (auto & rec : recs)
         get<bio::field::_private>(rec) = priv;
@@ -177,16 +163,6 @@ TEST(bcf, field_types_default_style_shallow)
 TEST(bcf, field_types_default_style_deep)
 {
     field_types<style::def, bio::ownership::deep>();
-}
-
-TEST(bcf, field_types_vcf_style_shallow)
-{
-    field_types<style::vcf, bio::ownership::shallow>();
-}
-
-TEST(bcf, field_types_vcf_style_deep)
-{
-    field_types<style::vcf, bio::ownership::deep>();
 }
 
 TEST(bcf, field_types_bcf_style_shallow)

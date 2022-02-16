@@ -846,7 +846,7 @@ private:
         }
     }
 
-    //!\brief Implementation for parsing into bcf-style genotypes.
+    //!\brief Implementation for parsing into genotypes.
     void parse_genotypes_impl(auto & parsed_field)
     {
         std::span<std::byte const> raw_field = get<field::genotypes>(raw_record);
@@ -933,57 +933,12 @@ private:
         assert(cache_ptr == raw_field.data() + raw_field.size());
     }
 
-    //!\brief Reading of the GENOTYPES field (BCF-style).
+    //!\brief Reading of the GENOTYPES field.
     template <detail::back_insertable field_t>
-        requires detail::genotype_bcf_style_reader_concept<std::ranges::range_reference_t<field_t>>
+        requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
     void parse_field(vtag_t<field::genotypes> const & /**/, field_t & parsed_field)
     {
         parse_genotypes_impl(parsed_field);
-    }
-
-    //!\brief Implementation for parsing into vcf-style genotypes.
-    void parse_genotypes_impl_vcf_style(auto & genotypes_cache, auto & parsed_field)
-    {
-        genotypes_cache.clear();
-        parse_genotypes_impl(genotypes_cache); // we parse into BCF-style caches and convert
-
-        auto & [parsed_formats, parsed_samples] = parsed_field;
-
-        /* formats */
-        for (auto & [idx, dyn_type] : genotypes_cache)
-        {
-            var_io::header::format_t & format = header.formats[header.idx_to_format_pos().at(idx)];
-
-            parsed_formats.push_back({});
-            detail::string_copy(format.id, parsed_formats.back());
-        }
-
-        /* samples */
-        parsed_samples.resize(record_core->n_sample);
-        for (size_t s = 0; s < record_core->n_sample; ++s)
-        {
-            parsed_samples[s].resize(parsed_formats.size());
-            for (size_t f = 0; f < parsed_formats.size(); ++f)
-            {
-                auto & output  = parsed_samples[s][f];
-                auto   visitor = [s, &output](auto & in) { output = std::move(in[s]); };
-
-                std::visit(visitor, detail::get_second(genotypes_cache[f]));
-            }
-        }
-    }
-
-    //!\brief Reading of the GENOTYPES field (VCF-style).
-    void parse_field(vtag_t<field::genotypes> const & /**/,
-                     detail::genotypes_vcf_style_reader_concept auto & parsed_field)
-    {
-        using parsed_field_t = decltype(parsed_field);
-        using dyn_t = std::ranges::range_value_t<std::ranges::range_reference_t<detail::second_elem_t<parsed_field_t>>>;
-
-        if constexpr (std::same_as<var_io::dynamic_type<ownership::shallow>, dyn_t>)
-            parse_genotypes_impl_vcf_style(shallow_genotypes_cache, parsed_field);
-        else
-            parse_genotypes_impl_vcf_style(deep_genotypes_cache, parsed_field);
     }
 
     //!\brief Overload for parsing the private data.

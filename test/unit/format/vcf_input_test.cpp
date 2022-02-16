@@ -33,17 +33,13 @@ void field_types()
 
     using fields_t = std::conditional_t<s == style::def,
                                         decltype(bio::var_io::field_types<own>),
-                                        std::conditional_t<s == style::vcf,
-                                                           decltype(bio::var_io::field_types_vcf_style<own>),
-                                                           decltype(bio::var_io::field_types_bcf_style<own>)>>;
+                                        decltype(bio::var_io::field_types_bcf_style<own>)>;
     using record_t = bio::record<decltype(bio::var_io::default_field_ids), fields_t>;
 
     std::vector<record_t> recs;
 
     if constexpr (s == style::def)
         recs = example_records_default_style<own>();
-    else if constexpr (s == style::vcf)
-        recs = example_records_vcf_style<own>();
     else
         recs = example_records_bcf_style<own>();
 
@@ -78,16 +74,6 @@ TEST(vcf, field_types_default_style_deep)
     field_types<style::def, bio::ownership::deep>();
 }
 
-TEST(vcf, field_types_vcf_style_shallow)
-{
-    field_types<style::vcf, bio::ownership::shallow>();
-}
-
-TEST(vcf, field_types_vcf_style_deep)
-{
-    field_types<style::vcf, bio::ownership::deep>();
-}
-
 TEST(vcf, field_types_bcf_style_shallow)
 {
     field_types<style::bcf, bio::ownership::shallow>();
@@ -106,8 +92,7 @@ TEST(vcf, incomplete_header)
 
     std::istringstream istr{incomplete_header_before + example_from_spec_records};
 
-    using record_t =
-      bio::record<decltype(bio::var_io::default_field_ids), decltype(bio::var_io::field_types_vcf_style<>)>;
+    using record_t = bio::record<decltype(bio::var_io::default_field_ids), decltype(bio::var_io::field_types<>)>;
 
     bio::format_input_handler<bio::vcf> handler{istr, bio::var_io::reader_options{.print_warnings = false}};
 
@@ -115,7 +100,7 @@ TEST(vcf, incomplete_header)
 
     bio::var_io::header const & hdr = handler.get_header();
 
-    auto recs = example_records_vcf_style<bio::ownership::shallow>();
+    auto recs = example_records_default_style<bio::ownership::shallow>();
 
     for (auto & rec : recs)
         get<bio::field::_private>(rec) = priv;

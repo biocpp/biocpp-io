@@ -381,9 +381,9 @@ private:
         write_delimited(tup, ';', func);
     }
 
-    //!\brief Overload for GENOTYPES; genotypes_bcf_style.
+    //!\brief Overload for GENOTYPES.
     template <std::ranges::forward_range range_t>
-        requires(detail::genotype_bcf_style_writer_concept<std::ranges::range_reference_t<range_t>>)
+        requires(detail::genotype_writer_concept<std::ranges::range_reference_t<range_t>>)
     void write_field(vtag_t<field::genotypes> /**/, range_t & range)
     {
         if (header->column_labels.size() <= 8)
@@ -416,9 +416,9 @@ private:
         }
     }
 
-    //!\brief Overload for GENOTYPES; genotypes_bcf_style; nonvariant
+    //!\brief Overload for GENOTYPES; nonvariant.
     template <typename... elem_ts>
-        requires(detail::genotype_bcf_style_writer_concept<std::remove_cvref_t<elem_ts>> &&...)
+        requires(detail::genotype_writer_concept<std::remove_cvref_t<elem_ts>> &&...)
     void write_field(vtag_t<field::genotypes> /**/, std::tuple<elem_ts...> & tup)
     {
         if (header->column_labels.size() <= 8)
@@ -453,28 +453,6 @@ private:
             if (i_sample < n_samples - 1)
                 it = '\t';
         }
-    }
-
-    //!\brief Overload for GENOTYPES; genotypes_vcf_style
-    void write_field(vtag_t<field::genotypes> /**/, detail::genotypes_vcf_style_writer_concept auto & field)
-    {
-        if (header->column_labels.size() <= 8)
-            return;
-
-        auto & [format, samples] = field;
-
-        /* format field */
-        write_delimited(format, ':');
-        it = '\t';
-
-        if (header->column_labels.size() <= 9)
-            return;
-
-        /* samples */
-        // functional programming for the win! [this works for tuples and ranges!]
-        auto write_var    = [&](auto const & var) { write_variant(var); };
-        auto write_sample = [&](auto const & sample) { write_delimited(sample, ':', write_var); };
-        write_delimited(samples, '\t', write_sample);
     }
     //!\}
 

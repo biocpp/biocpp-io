@@ -46,29 +46,15 @@ concept info_element_reader_concept = detail::decomposable_into_two<t> &&
    std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::is_dynamic_type<detail::second_elem_t<t>>;
 //!\endcond
 
-/*!\interface bio::detail::genotype_bcf_style_reader_concept <>
+/*!\interface bio::detail::genotype_reader_concept <>
  * \tparam t The type to check.
  * \brief Types "similar" to bio::var_io::genotype_element / bio::var_io::genotype_element_bcf.
  */
 //!\cond CONCEPT_DEF
 template <typename t>
-concept genotype_bcf_style_reader_concept = detail::decomposable_into_two<t> &&
+concept genotype_reader_concept = detail::decomposable_into_two<t> &&
   (detail::out_string<detail::first_elem_t<t>> ||
    std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::is_dynamic_vector_type<detail::second_elem_t<t>>;
-//!\endcond
-
-/*!\interface bio::detail::genotypes_vcf_style_reader_concept <>
- * \tparam t The type to check.
- * \brief Types "similar" to bio::var_io::genotypes_vcf_style
- */
-//!\cond CONCEPT_DEF
-template <typename t>
-concept genotypes_vcf_style_reader_concept =
-  detail::decomposable_into_two<t> && detail::back_insertable<detail::first_elem_t<t>> &&
-  detail::out_string<std::ranges::range_reference_t<detail::first_elem_t<t>>> &&
-  detail::vector_like<detail::second_elem_t<t>> &&
-  detail::vector_like<std::ranges::range_reference_t<detail::second_elem_t<t>>> &&
-  detail::is_dynamic_type<std::ranges::range_value_t<std::ranges::range_reference_t<detail::second_elem_t<t>>>>;
 //!\endcond
 } // namespace bio::detail
 
@@ -91,6 +77,8 @@ namespace bio::var_io
  * If you are new to the way options are set in this library, have a look bio::seq_io::reader
  * and bio::seq_io::reader_options first, as those are much simpler.
  *
+ * TODO improve this to reflect absence of VCF-style
+ *
  * ### Field types (beginner's guide)
  *
  * The internal representation of VCF and BCF are different. To be able to freely
@@ -111,20 +99,14 @@ namespace bio::var_io
  * Some of these represent certain formats more closely, but any format can be read in any
  * representation.
  *
- * Three "styles" of field types are predefined:
+ * Two "styles" of field types are predefined:
  *
- * 1. bio::var_io::field_types (the default; VCF-style with BCF-style genotypes)
+ * 1. bio::var_io::field_types (the default)
  *   * All "strings" are represented as strings.
  *   * Genotypes are encoded by-genotype (BCF-style) but with text-id (see bio::var_io::genotype_element).
- * 2. bio::var_io::field_types_vcf_style (VCF-style)
- *   * All "strings" are represented as strings.
- *   * Genotypes are encoded by-sample (see bio::var_io::genotypes_vcf_style).
- *   * This might be slightly faster when you only read and write VCF, but it has a significant overhead when reading
- * or writing BCF!
- * 3. bio::var_io::field_types_bcf_style (BCF-style)
+ * 2. bio::var_io::field_types_bcf_style (BCF-style)
  *   * Most "strings" are represented by their in-header IDX value (see the BCF spec for more details).
  *   * Genotypes are encoded by-genotype (see bio::var_io::genotype_element_bcf).
- *   * When reading or writing VCF, this is slower than the default.
  *   * When reading or writing BCF, the deep version of this style is faster that the deep version of the default style,
  * but for the shallow versions there is almost no difference.
  *   * When reading and writing, you need to make sure that the IDX values in the output header are the same as in the
@@ -132,11 +114,6 @@ namespace bio::var_io
  *
  * **Numbers are always 1-based,** because this is the default in VCF and all other tools that
  * deal with VCF/BCF.
- *
- * This example shows how to switch to vcf-style and deactivate reading of BCF (not required
- * but recommended):
- *
- * \snippet test/snippet/var_io/var_io_reader_options.cpp field_types_vcf_only
  *
  * All of the above styles are "shallow" by default, but can be configured to be "deep":
  *
@@ -188,16 +165,11 @@ namespace bio::var_io
  *   * *similar* means any type decomposable into two elements (`struct` or tuple) where the
  * first is either a string[_view] or `int32_t` (IDX) and the second is bio::var_io::dynamic_type.
  * 9. field::genotypes
- *   1. A range (that supports back-insertion) over elements that are "similar" to
+ *   * A range (that supports back-insertion) over elements that are "similar" to
  * bio::var_io::genotype_element:
  *     * The elements must be decomposable into exactly two sub-elements (either `struct` or tuple).
  *     * The first subelement must be a string[_view] (ID) or `int32_t` (IDX).
  *     * The second subelement must bio::var_io::dynamic_vector_type.
- *   2. Or: A type similar to bio::var_io::genotypes_vcf :
- *     * It must be decomposable into exactly two sub-elements (either `struct` or tuple).
- *     * The first subelement must be a range over string[_views] that supports back-insertion (FORMAT strings).
- *     * The second subelement must range-of-range over bio::var_io::dynamic_type and both
- * range-dimensions need to support back-insertion (SAMPLE columns with genotype entries).
  *
  * This example shows how to read only a subset of the available fields and manually specify their type:
  *
@@ -327,9 +299,8 @@ private:
       detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
         !field_ids_t::contains(field::genotypes) ||
         (detail::back_insertable<record_element_t<field::genotypes, rec_t>> &&
-         detail::genotype_bcf_style_reader_concept<
-           std::remove_reference_t<std::ranges::range_reference_t<record_element_t<field::genotypes, rec_t>>>>) ||
-        detail::genotypes_vcf_style_reader_concept<record_element_t<field::genotypes, rec_t>>) {
+         detail::genotype_reader_concept<
+           std::remove_reference_t<std::ranges::range_reference_t<record_element_t<field::genotypes, rec_t>>>>)) {
           return std::true_type{};
       }),
       "Requirements for the field-type of the GENOTYPES-field not met. See documentation for "

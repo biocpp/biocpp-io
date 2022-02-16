@@ -208,37 +208,6 @@ struct genotype_element_bcf
     auto operator<=>(genotype_element_bcf const &) const = default;
 };
 
-/*!\brief A type representing the FORMATS column and all sample columns in VCF-style.
- * \ingroup var_io
- *
- * \details
- *
- * This type can be used as the field-type for the GENOTYPES field as an alternative to a range of
- * bio::var_io::genotype_element.
- *
- * It uses the data layout as it appears in a VCF file with the FORMAT strings in one member and a vector of "samples".
- * Each element of that vector represents a single sample column and is implemented as a vector of values of
- * dynamic type (see bio::var_io::dynamic_type).
- *
- * **This data layout is not recommended, because it is almost always slower.**
- * Use it only, if you know that the user will never read or write BCF and if you do very little processing of the
- * sample values.
- */
-template <ownership own = ownership::shallow>
-struct genotypes_vcf
-{
-    //!\brief Type of the format strings.
-    using string_t = std::conditional_t<own == ownership::shallow, std::string_view, std::string>;
-
-    //!\brief The FORMAT strings.
-    std::vector<string_t>                       format_strings;
-    //!\brief The sample columns.
-    std::vector<std::vector<dynamic_type<own>>> samples;
-
-    //!\brief Defaulted three-way comparisons.
-    auto operator<=>(genotypes_vcf const &) const = default;
-};
-
 //!\brief A datastructure that contains private data of variant IO records.
 //!\ingroup var_io
 struct record_private_data
@@ -286,8 +255,8 @@ inline constinit auto default_field_ids = vtag<field::chrom,
  * It is the recommended record type when iterating ("streaming") over files that ca be any variant IO format.
  *
  * The "style" of the record resembles the VCF specification, i.e. contigs, FILTERs and INFO identifiers are
- * represented as string/string_views. **However,**  the genotypes are encoded by-genotype (BCF-style) and not by-sample
- *(VCF-style) for performance reasons.
+ * represented as string/string_views. **However,** the genotypes are encoded by-genotype (BCF-style) and not by-sample
+ * (VCF-style) for performance reasons.
  *
  * See bio::var_io::genotypes_bcf_style for more information on the latter.
  */
@@ -358,46 +327,6 @@ inline constinit auto field_types_bcf_style<ownership::deep> =
        std::vector<info_element_bcf<ownership::deep>>,     // field::info,
        std::vector<genotype_element_bcf<ownership::deep>>, // field::genotypes,
        record_private_data>;                               // field::_private
-
-/*!\brief Alternative set of field types (VCF-style, shallow).
- *!\ingroup var_io
- *
- * \details
- *
- * See bio::var_io::reader_options for when and why to choose these field types.
- */
-template <ownership own = ownership::shallow>
-inline constinit auto field_types_vcf_style =
-  ttag<std::string_view,                                                             // field::chrom,
-       int32_t,                                                                      // field::pos,
-       std::string_view,                                                             // field::id,
-       decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>), // field::ref,
-       std::vector<std::string_view>,                                                // field::alt,
-       float,                                                                        // field::qual,
-       std::vector<std::string_view>,                                                // field::filter,
-       std::vector<info_element<ownership::shallow>>,                                // field::info,
-       genotypes_vcf<ownership::shallow>,                                            // field::genotypes,
-       record_private_data>;                                                         // field::_private>;
-
-/*!\brief Alternative set of field types (BCF-style, deep).
- *!\ingroup var_io
- *
- * \details
- *
- * See bio::var_io::reader_options for when and why to choose these field types.
- */
-template <>
-inline constinit auto field_types_vcf_style<ownership::deep> =
-  ttag<std::string,                                // field::chrom
-       int32_t,                                    // field::pos
-       std::string,                                // field::id
-       std::vector<seqan3::dna5>,                  // field::ref
-       std::vector<std::string>,                   // field::alt
-       float,                                      // field::qual
-       std::vector<std::string>,                   // field::filter
-       std::vector<info_element<ownership::deep>>, // field::info,
-       genotypes_vcf<ownership::deep>,             // field::genotypes
-       record_private_data>;                       // field::_private
 
 //!\brief Every field is configured as a std::span of std::byte (this enables "raw" io).
 //!\ingroup var_io

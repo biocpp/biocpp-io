@@ -39,8 +39,6 @@ void field_types()
         {
             if constexpr (s == style::def)
                 return example_records_default_style<own>();
-            else if constexpr (s == style::vcf)
-                return example_records_vcf_style<own>();
             else
                 return example_records_bcf_style<own>();
         }();
@@ -61,17 +59,6 @@ TEST(bcf_output, default_style_deep)
 {
     field_types<style::def, bio::ownership::deep>();
 }
-
-// TODO no VCF-style, yet
-//  TEST(bcf_output, vcf_style_shallow)
-//  {
-//      field_types<style::vcf, bio::ownership::shallow>();
-//  }
-//
-//  TEST(bcf_output, vcf_style_deep)
-//  {
-//      field_types<style::vcf, bio::ownership::deep>();
-//  }
 
 TEST(bcf_output, bcf_style_shallow)
 {
