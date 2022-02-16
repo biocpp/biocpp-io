@@ -78,7 +78,7 @@ private:
     //!\brief Write chracter ranges.
     template <std::ranges::input_range rng_t>
         requires(std::convertible_to<std::ranges::range_reference_t<rng_t>, char>)
-    void write_field_aux(rng_t && range) { it->write_range(range); }
+    void write_field_aux(rng_t && range) { to_derived()->it->write_range(range); }
 
     //!\brief Write alphabet ranges.
     template <std::ranges::input_range rng_t>
@@ -92,11 +92,11 @@ private:
     void write_field_aux(std::span<std::byte const> const range)
     {
         std::string_view const v{range.data(), range.size()};
-        it->write_range(v);
+        to_derived()->it->write_range(v);
     }
 
     //!\brief Write numbers.
-    void write_field_aux(seqan3::arithmetic auto number) { it->write_number(number); }
+    void write_field_aux(seqan3::arithmetic auto number) { to_derived()->it->write_number(number); }
 
     //!\brief Write bool.
     void write_field_aux(bool)
@@ -140,12 +140,12 @@ private:
      * \brief These are all private to prevent wrong instantiation.
      * \{
      */
-    format_output_handler_base()                                   = default;            //!< Defaulted.
-    format_output_handler_base(format_output_handler_base const &) = delete;             //!< Deleted.
-    format_output_handler_base(format_output_handler_base &&)      = default;            //!< Defaulted.
-    ~format_output_handler_base()                                  = default;            //!< Defaulted.
-    format_output_handler_base & operator=(format_output_handler_base const &) = delete; //!< Deleted.
-    format_output_handler_base & operator=(format_output_handler_base &&) = default;     //!< Defaulted.
+    format_output_handler_base()                                               = delete;  //!< Deleted.
+    format_output_handler_base(format_output_handler_base const &)             = delete;  //!< Deleted.
+    format_output_handler_base(format_output_handler_base &&)                  = default; //!< Defaulted.
+    ~format_output_handler_base()                                              = default; //!< Defaulted.
+    format_output_handler_base & operator=(format_output_handler_base const &) = delete;  //!< Deleted.
+    format_output_handler_base & operator=(format_output_handler_base &&)      = default; //!< Defaulted.
 
     //!\brief Construct from a std::istream.
     format_output_handler_base(std::ostream & str) : stream{&str}, it{str} {}

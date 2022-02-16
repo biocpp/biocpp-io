@@ -75,17 +75,17 @@ public:
      * \{
      */
     //!\brief Default constructor.
-    constexpr out_file_iterator()                          = default;
+    constexpr out_file_iterator()                                      = default;
     //!\brief Copy constructor.
-    constexpr out_file_iterator(out_file_iterator const &) = default;
+    constexpr out_file_iterator(out_file_iterator const &)             = default;
     //!\brief Copy construction via assignment.
     constexpr out_file_iterator & operator=(out_file_iterator const &) = default;
     //!\brief Move constructor.
     constexpr out_file_iterator(out_file_iterator &&)                  = default;
     //!\brief Move assignment.
-    constexpr out_file_iterator & operator=(out_file_iterator &&) = default;
+    constexpr out_file_iterator & operator=(out_file_iterator &&)      = default;
     //!\brief Use default deconstructor.
-    ~out_file_iterator()                                          = default;
+    ~out_file_iterator()                                               = default;
 
     //!\brief Construct with reference to host.
     constexpr out_file_iterator(file_type & _host) noexcept : host{&_host} {}

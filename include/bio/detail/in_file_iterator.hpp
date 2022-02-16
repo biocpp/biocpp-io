@@ -67,12 +67,12 @@ public:
     /*!\name Constructors, destructor and assignment.
      * \{
      */
-    in_file_iterator()                         = default;             //!< Defaulted.
-    in_file_iterator(in_file_iterator const &) = default;             //!< Defaulted.
-    in_file_iterator(in_file_iterator &&)      = default;             //!< Defaulted.
-    ~in_file_iterator()                        = default;             //!< Defaulted.
+    in_file_iterator()                                     = default; //!< Defaulted.
+    in_file_iterator(in_file_iterator const &)             = default; //!< Defaulted.
+    in_file_iterator(in_file_iterator &&)                  = default; //!< Defaulted.
+    ~in_file_iterator()                                    = default; //!< Defaulted.
     in_file_iterator & operator=(in_file_iterator const &) = default; //!< Defaulted.
-    in_file_iterator & operator=(in_file_iterator &&) = default;      //!< Defaulted.
+    in_file_iterator & operator=(in_file_iterator &&)      = default; //!< Defaulted.
 
     //!\brief Construct with reference to host.
     in_file_iterator(file_type & _host) noexcept : host{&_host} {}

@@ -85,9 +85,16 @@ writer.emplace_back(bio::vtag<bio::field::chrom, bio::field::pos, bio::field::re
 
 {
 //![options]
-bio::var_io::writer writer{"example.vcf",
+bio::var_io::writer writer{"example2.vcf",
                            bio::var_io::writer_options{ .windows_eol = true }};
 //![options]
+
+// add header so destructor works
+std::string_view const text_header =
+R"(##fileformat=VCFv4.3
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001	NA00002	NA00003
+)";
+writer.set_header(bio::var_io::header{text_header});
 }
 
 {
@@ -101,6 +108,7 @@ bio::var_io::writer writer{"example.vcf",
 bio::var_io::reader{"example.bcf"} | bio::var_io::writer{"example.vcf"};
 //![inout]
 }
+
 {
 //![inout2]
 auto pass = [] (auto & rec)
@@ -113,6 +121,7 @@ r | std::views::filter(pass) | bio::var_io::writer{"example.vcf"};
 //![inout2]
 //TODO collapse the above once https://gcc.gnu.org/bugzilla/show_bug.cgi?id=103904 is resolved
 }
+
 {
 //![inout3]
 bio::var_io::reader reader{"example.bcf"};
@@ -128,4 +137,6 @@ for (auto & rec : reader)
 //================= POST ==========================
     std::filesystem::remove("example.bcf");
     std::filesystem::remove("example.vcf");
+    std::filesystem::remove("example2.vcf");
+    std::filesystem::remove("example5.vcf");
 }

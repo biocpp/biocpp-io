@@ -52,10 +52,20 @@ protected:
      * \{
      */
     //!\brief A seqan3::type_list with the possible formats.
-    using valid_formats       = decltype(options_t::formats);
-    //!\brief The seqan3::format_input_handler corresponding to the format.
-    using format_handler_type = seqan3::detail::
-      transfer_template_args_onto_t<seqan3::list_traits::transform<format_output_handler, valid_formats>, std::variant>;
+    using valid_formats            = decltype(options_t::formats);
+    /*!\brief The seqan3::format_output_handler corresponding to the format(s).
+     * \details
+     * Metaprogramming shortcut to turn `type_list<vcf, bcf>` into
+     * `std::variant<std::monostate, format_output_handler<vcf>, format_output_handler<bcf>>`.
+     *
+     * std::monostate is necessary, because the handlers are not default-constructible and the variant is
+     * set later than construction.
+     */
+    using format_handler_variant_t = seqan3::detail::transfer_template_args_onto_t<
+      seqan3::list_traits::concat<seqan3::type_list<std::monostate>,
+                                  seqan3::list_traits::transform<format_output_handler, valid_formats>>,
+      std::variant>;
+
     //!\}
 
 public:
@@ -86,12 +96,29 @@ public:
     writer_base(writer_base const &) = delete;
     //!\brief Move construction is defaulted.
     writer_base(writer_base &&)      = default;
-    //!\brief Destructor is defaulted.
-    ~writer_base()                   = default;
+    //!\brief Destructor which can potentially throw.
+    ~writer_base() noexcept(false)
+    {
+        /* Implementation note:
+         *
+         * std::variant's destructor is always marked noexcept(true), so
+         * when a format_handler throws on destruction, the program immediately
+         * terminates. This is not desirable, because the exception cannot
+         * be caught, and the functionality cannot be tested.
+         *
+         * This piece of code creates a temporary of the same type as the handler
+         * that is then move-constructed from the handler, so it destructs (and
+         * potentially throws) before the variant is itself destructed.
+         * Thus the exception cannot be propagated outside of the destructor as usual.
+         */
+        auto del = []<typename handler_t>(handler_t & handler) { [[maybe_unused]] handler_t tmp = std::move(handler); };
+
+        std::visit(del, format_handler);
+    }
     //!\brief Copy assignment is explicitly deleted, because you can't have multiple access to the same file.
     writer_base & operator=(writer_base const &) = delete;
     //!\brief Move assignment is defaulted.
-    writer_base & operator=(writer_base &&) = default;
+    writer_base & operator=(writer_base &&)      = default;
 
     /*!\brief Construct from filename.
      * \param[in] filename  Path to the file you wish to open.
@@ -327,14 +354,17 @@ protected:
     void init()
     {
         // set format-handler
-        std::visit([&](auto f) { format_handler = format_output_handler<decltype(f)>{stream, options}; }, format);
+        std::visit([&](auto f)
+                   { format_handler.template emplace<format_output_handler<decltype(f)>>(stream, options); },
+                   format);
     }
 
     //!\brief Implementation function for writing a record.
     void write_record(auto & r)
     {
         init_state = false;
-        std::visit([&r](auto & handler) { handler.write_record(r); }, format_handler);
+        std::visit(detail::overloaded([](std::monostate) {}, [&r](auto & handler) { handler.write_record(r); }),
+                   format_handler);
     }
 
     /*!\name State
@@ -344,13 +374,13 @@ protected:
     bool init_state = true;
 
     //!\brief The options.
-    options_t           options;
+    options_t                options;
     //!\brief The stream.
-    transparent_ostream stream;
+    transparent_ostream      stream;
     //!\brief The std::variant holding the detected/selected format.
-    format_type         format;
+    format_type              format;
     //!\brief The std::variant holding the respective handler.
-    format_handler_type format_handler;
+    format_handler_variant_t format_handler;
 
     //!\brief Befriend iterator so it can access the buffers.
     friend iterator;

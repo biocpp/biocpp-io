@@ -34,18 +34,31 @@ TEST(var_io_writer, concepts)
 
 void var_io_writer_filename_constructor(bool ext_check, auto &&... args)
 {
+    using t =
+      decltype(bio::var_io::writer{std::declval<std::filesystem::path &>(), std::forward<decltype(args)>(args)...});
+    [[maybe_unused]] t * ptr = nullptr;
+
     /* just the filename */
     {
         seqan3::test::tmp_filename filename{"var_io_writer_constructor.vcf"};
-        EXPECT_NO_THROW((bio::var_io::writer{filename.get_path(), std::forward<decltype(args)>(args)...}));
+
+        // constructor
+        EXPECT_NO_THROW((ptr = new bio::var_io::writer{filename.get_path(), std::forward<decltype(args)>(args)...}));
+
+        // destructor
+        EXPECT_THROW(delete ptr, bio::missing_header_error);
+        ptr = nullptr;
     }
 
     /* wrong extension */
     if (ext_check)
     {
         seqan3::test::tmp_filename filename{"var_io_writer_constructor.xyz"};
-        EXPECT_THROW((bio::var_io::writer{filename.get_path(), std::forward<decltype(args)>(args)...}),
+        EXPECT_THROW((ptr = new bio::var_io::writer{filename.get_path(), std::forward<decltype(args)>(args)...}),
                      bio::unhandled_extension_error);
+
+        // destructor, nothrow because already thrown during construction
+        EXPECT_NO_THROW(delete ptr);
     }
 }
 
@@ -97,11 +110,31 @@ TEST(var_io_writer, constructor2_with_opts_format_variant)
     EXPECT_TRUE((std::same_as<decltype(bio::var_io::writer{"", var, std::move(opt)}), control_t>));
 }
 
+void var_io_writer_stream_constructor(auto &&... args)
+{
+    /* Hacky-hack: we know that the destructor will throw,
+     * but we only want to test the constructor, so we call new and never delete properly!
+     */
+    using t                  = decltype(bio::var_io::writer{std::forward<decltype(args)>(args)...});
+    [[maybe_unused]] t * ptr = nullptr;
+
+    {
+        std::ostringstream str;
+
+        // constructor
+        EXPECT_NO_THROW((ptr = new bio::var_io::writer{std::forward<decltype(args)>(args)...}));
+
+        // destructor
+        EXPECT_THROW(delete ptr, bio::missing_header_error);
+        ptr = nullptr;
+    }
+}
+
 TEST(var_io_writer, constructor3)
 {
     std::ostringstream str;
+    var_io_writer_stream_constructor(str, bio::vcf{});
 
-    EXPECT_NO_THROW((bio::var_io::writer{str, bio::vcf{}}));
     EXPECT_TRUE((std::same_as<decltype(bio::var_io::writer{str, bio::vcf{}}), bio::var_io::writer<>>));
 }
 
@@ -109,17 +142,17 @@ TEST(var_io_writer, constructor3_with_opts)
 {
     std::ostringstream          str;
     bio::var_io::writer_options opt{.formats = bio::ttag<bio::vcf>};
-    using control_t = bio::var_io::writer<seqan3::type_list<bio::vcf>>;
+    var_io_writer_stream_constructor(str, bio::vcf{}, opt);
 
-    EXPECT_NO_THROW((bio::var_io::writer{str, bio::vcf{}, opt}));
+    using control_t = bio::var_io::writer<seqan3::type_list<bio::vcf>>;
     EXPECT_TRUE((std::same_as<decltype(bio::var_io::writer{str, bio::vcf{}, opt}), control_t>));
 }
 
 TEST(var_io_writer, constructor4)
 {
     std::ostringstream str;
+    var_io_writer_stream_constructor(std::move(str), bio::vcf{});
 
-    EXPECT_NO_THROW((bio::var_io::writer{std::move(str), bio::vcf{}}));
     EXPECT_TRUE((std::same_as<decltype(bio::var_io::writer{std::move(str), bio::vcf{}}), bio::var_io::writer<>>));
 }
 
@@ -127,9 +160,9 @@ TEST(var_io_writer, constructor4_with_opts)
 {
     std::ostringstream          str;
     bio::var_io::writer_options opt{.formats = bio::ttag<bio::vcf>};
-    using control_t = bio::var_io::writer<seqan3::type_list<bio::vcf>>;
+    var_io_writer_stream_constructor(std::move(str), bio::vcf{}, opt);
 
-    EXPECT_NO_THROW((bio::var_io::writer{std::move(str), bio::vcf{}, opt}));
+    using control_t = bio::var_io::writer<seqan3::type_list<bio::vcf>>;
     EXPECT_TRUE((std::same_as<decltype(bio::var_io::writer{std::move(str), bio::vcf{}, opt}), control_t>));
 }
 
@@ -240,20 +273,28 @@ TEST(var_io_writer, minimal_fields)
 
 TEST(var_io_writer, no_header1) // record contains header_ptr but this is == nullptr
 {
-    std::ostringstream  stream{};
-    bio::var_io::writer writer{stream, bio::vcf{}};
+    std::ostringstream stream{};
+    auto *             writer = new bio::var_io::writer{stream, bio::vcf{}};
 
     auto records = example_records_bcf_style<bio::ownership::shallow>();
 
-    EXPECT_THROW(writer.push_back(records[0]), std::runtime_error);
+    EXPECT_THROW(writer->push_back(records[0]), bio::missing_header_error);
+
+    // destructor
+    EXPECT_THROW(delete writer, bio::missing_header_error);
+    writer = nullptr;
 }
 
 TEST(var_io_writer, no_header2) // record does not contain header_ptr
 {
-    std::ostringstream  stream{};
-    bio::var_io::writer writer{stream, bio::vcf{}};
+    std::ostringstream stream{};
+    auto *             writer = new bio::var_io::writer{stream, bio::vcf{}};
 
-    EXPECT_THROW(writer.emplace_back(custom_field_ids_t{}, "20", 14370, "G"), std::runtime_error);
+    EXPECT_THROW(writer->emplace_back(custom_field_ids_t{}, "20", 14370, "G"), bio::missing_header_error);
+
+    // destructor
+    EXPECT_THROW(delete writer, bio::missing_header_error);
+    writer = nullptr;
 }
 
 TEST(var_io_writer, compression)

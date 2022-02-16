@@ -28,9 +28,11 @@ namespace bio::var_io
 
 //!\brief Enumerator to ease "dynamic typing" in variant IO.
 //!\ingroup var_io
-enum class dynamic_type_id
+enum class dynamic_type_id : size_t
 {
     char8,
+    int8,
+    int16,
     int32,
     float32,
     string,
@@ -55,6 +57,8 @@ enum class dynamic_type_id
 template <ownership own = ownership::shallow>
 using dynamic_type =
   std::variant<char,
+               int8_t,
+               int16_t,
                int32_t,
                float,
                std::conditional_t<own == ownership::shallow, std::string_view, std::string>,
@@ -79,6 +83,8 @@ using dynamic_type =
 template <ownership own = ownership::shallow>
 using dynamic_vector_type =
   std::variant<std::vector<char>,
+               std::vector<int8_t>,
+               std::vector<int16_t>,
                std::vector<int32_t>,
                std::vector<float>,
                std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>,
@@ -108,6 +114,47 @@ inline debug_stream_type<char_t> & operator<<(debug_stream_type<char_t> & s, bio
 
 namespace bio::detail
 {
+
+/*!\addtogroup var_io
+ * \{
+ */
+
+//!\brief in* and vector_of_int* are each are "compatible" with each other; the rest only with self.
+constexpr bool type_id_is_compatible(var_io::dynamic_type_id const lhs, var_io::dynamic_type_id const rhs)
+{
+    switch (lhs)
+    {
+        case var_io::dynamic_type_id::int8:
+        case var_io::dynamic_type_id::int16:
+        case var_io::dynamic_type_id::int32:
+            switch (rhs)
+            {
+                case var_io::dynamic_type_id::int8:
+                case var_io::dynamic_type_id::int16:
+                case var_io::dynamic_type_id::int32:
+                    return true;
+                default:
+                    return false;
+            };
+            break;
+        case var_io::dynamic_type_id::vector_of_int8:
+        case var_io::dynamic_type_id::vector_of_int16:
+        case var_io::dynamic_type_id::vector_of_int32:
+            switch (rhs)
+            {
+                case var_io::dynamic_type_id::vector_of_int8:
+                case var_io::dynamic_type_id::vector_of_int16:
+                case var_io::dynamic_type_id::vector_of_int32:
+                    return true;
+                default:
+                    return false;
+            };
+            break;
+        default:
+            return lhs == rhs;
+    }
+}
+
 //!\brief Auxilliary concept that encompasses bio::var_io::dynamic_type.
 template <typename t>
 concept is_dynamic_type = one_of<t, var_io::dynamic_type<ownership::shallow>, var_io::dynamic_type<ownership::deep>>;
@@ -180,6 +227,18 @@ inline void init_dynamic_type(var_io::dynamic_type_id const id, t & output)
                 output.template emplace<id>();
                 return;
             }
+        case var_io::dynamic_type_id::int8:
+            {
+                constexpr size_t id = static_cast<size_t>(var_io::dynamic_type_id::int8);
+                output.template emplace<id>();
+                return;
+            }
+        case var_io::dynamic_type_id::int16:
+            {
+                constexpr size_t id = static_cast<size_t>(var_io::dynamic_type_id::int16);
+                output.template emplace<id>();
+                return;
+            }
         case var_io::dynamic_type_id::int32:
             {
                 constexpr size_t id = static_cast<size_t>(var_io::dynamic_type_id::int32);
@@ -249,5 +308,7 @@ inline void init_dynamic_type(var_io::dynamic_type_id const id, t & output)
             }
     }
 }
+
+//!\}
 
 } // namespace bio::detail

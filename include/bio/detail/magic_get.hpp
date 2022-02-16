@@ -29,11 +29,7 @@ namespace bio::detail
  */
 //!\cond
 template <typename t>
-concept tuple_of_two = requires
-{
-    std::tuple_size<t>::value;
-}
-&&std::tuple_size<t>::value == 2;
+concept tuple_of_two = (requires { std::tuple_size<t>::value; }) && (std::tuple_size<t>::value == 2);
 
 //!\endcond
 
@@ -64,11 +60,12 @@ struct converts_to_any_lref
  * \brief       A aggregate type with exactly two elements.
  */
 //!\cond
+// clang-format off
 template <typename t>
-concept aggregate_of_two = std::is_aggregate_v<t> && requires
-{
-    t{converts_to_any_lref{}, converts_to_any_lref{}};
-} && !(requires { t{converts_to_any_lref{}, converts_to_any_lref{}, converts_to_any_lref{}}; });
+concept aggregate_of_two = std::is_aggregate_v<t> &&
+    (requires { t{converts_to_any_lref{}, converts_to_any_lref{}};                          }) &&
+   !(requires { t{converts_to_any_lref{}, converts_to_any_lref{}, converts_to_any_lref{}};  });
+// clang-format on
 //!\endcond
 
 /*!\interface   bio::detail::decomposable_into_two <>
@@ -114,5 +111,12 @@ auto & get_second(decomposable_into_two auto & val)
  */
 template <typename t>
 using second_elem_t = std::remove_cvref_t<decltype(get_second(std::declval<t &>()))>;
+
+//!\brief Overload of bio::detail::range_or_tuple_size for aggregates of two.
+//!\ingroup bio
+constexpr size_t range_or_tuple_size(aggregate_of_two auto &&)
+{
+    return 2;
+}
 
 } // namespace bio::detail

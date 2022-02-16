@@ -122,30 +122,30 @@ void field_types()
                                                            decltype(bio::var_io::field_types_bcf_style<own>)>>;
     using record_t = bio::record<decltype(bio::var_io::default_field_ids), fields_t>;
 
+    using int_t       = int8_t;
+    constexpr auto mv = bio::var_io::missing_value<int_t>;
+
     std::vector<record_t> recs;
 
     if constexpr (s == style::def)
-        recs = example_records_default_style<own, int8_t>();
+        recs = example_records_default_style<own, int_t>();
     else if constexpr (s == style::vcf)
-        recs = example_records_vcf_style<own, int8_t>();
+        recs = example_records_vcf_style<own, int_t>();
     else
-        recs = example_records_bcf_style<own, int8_t>();
+        recs = example_records_bcf_style<own, int_t>();
 
     // this workaround is pending clarification in https://github.com/samtools/hts-specs/issues/593
     if constexpr (s == style::vcf)
     {
-        bio::detail::get_second(recs[1].genotypes()).back().push_back(std::vector<int8_t>{-128});
-        bio::detail::get_second(recs[2].genotypes()).back().push_back(std::vector<int8_t>{-128});
-        bio::detail::get_second(recs[3].genotypes()).back().push_back(std::vector<int8_t>{-128});
+        bio::detail::get_second(recs[1].genotypes()).back().push_back(std::vector<int_t>{mv});
+        bio::detail::get_second(recs[2].genotypes()).back().push_back(std::vector<int_t>{mv});
+        bio::detail::get_second(recs[3].genotypes()).back().push_back(std::vector<int_t>{mv});
     }
     else
     {
-        std::get<std::vector<std::vector<int8_t>>>(bio::detail::get_second(recs[1].genotypes().back()))
-          .push_back({-128});
-        std::get<std::vector<std::vector<int8_t>>>(bio::detail::get_second(recs[2].genotypes().back()))
-          .push_back({-128});
-        std::get<std::vector<std::vector<int8_t>>>(bio::detail::get_second(recs[3].genotypes().back()))
-          .push_back({-128});
+        std::get<std::vector<std::vector<int_t>>>(bio::detail::get_second(recs[1].genotypes().back())).push_back({mv});
+        std::get<std::vector<std::vector<int_t>>>(bio::detail::get_second(recs[2].genotypes().back())).push_back({mv});
+        std::get<std::vector<std::vector<int_t>>>(bio::detail::get_second(recs[3].genotypes().back())).push_back({mv});
     }
 
     for (auto & rec : recs)

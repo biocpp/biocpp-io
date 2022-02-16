@@ -65,17 +65,17 @@ public:
      * \{
      */
     //!\brief Default construction.
-    eager_split_iterator()                                           = default;
+    eager_split_iterator()                                                       = default;
     //!\brief Copy construction.
-    constexpr eager_split_iterator(eager_split_iterator const & rhs) = default;
+    constexpr eager_split_iterator(eager_split_iterator const & rhs)             = default;
     //!\brief Move construction.
-    constexpr eager_split_iterator(eager_split_iterator && rhs)      = default;
+    constexpr eager_split_iterator(eager_split_iterator && rhs)                  = default;
     //!\brief Destruction.
-    ~eager_split_iterator()                                          = default;
+    ~eager_split_iterator()                                                      = default;
     //!\brief Copy assignment.
     constexpr eager_split_iterator & operator=(eager_split_iterator const & rhs) = default;
     //!\brief Move assignment.
-    constexpr eager_split_iterator & operator=(eager_split_iterator && rhs) = default;
+    constexpr eager_split_iterator & operator=(eager_split_iterator && rhs)      = default;
 
     //!\brief Constructing from the underlying seqan3::eager_split_view.
     constexpr eager_split_iterator(std::string_view const _urange, char const _delimiter, bool skip_quotes_) noexcept :
@@ -214,17 +214,17 @@ public:
      * \brief All standard functions are explicitly set to default.
      */
     //!\brief Default default-constructor.
-    constexpr eager_split_view()                         = default;
+    constexpr eager_split_view()                                     = default;
     //!\brief Default copy-constructor.
-    constexpr eager_split_view(eager_split_view const &) = default;
+    constexpr eager_split_view(eager_split_view const &)             = default;
     //!\brief Default move-constructor.
-    constexpr eager_split_view(eager_split_view &&)      = default;
+    constexpr eager_split_view(eager_split_view &&)                  = default;
     //!\brief Default copy-assignment.
     constexpr eager_split_view & operator=(eager_split_view const &) = default;
     //!\brief Default move-assignment
-    constexpr eager_split_view & operator=(eager_split_view &&) = default;
+    constexpr eager_split_view & operator=(eager_split_view &&)      = default;
     //!\brief Default destructor.
-    ~eager_split_view()                                         = default;
+    ~eager_split_view()                                              = default;
 
     //!\brief Construction from the underlying view.
     explicit constexpr eager_split_view(std::string_view urng_, char delimiter_, bool skip_quotes_ = false) :

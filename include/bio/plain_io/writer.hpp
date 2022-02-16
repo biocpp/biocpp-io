@@ -112,12 +112,12 @@ public:
     /*!\name Constructors, destructor and assignment
      * \{
      */
-    plaintext_output_iterator() noexcept                                  = default;             //!< Defaulted.
-    plaintext_output_iterator(plaintext_output_iterator const &) noexcept = default;             //!< Defaulted.
-    plaintext_output_iterator(plaintext_output_iterator &&) noexcept      = default;             //!< Defaulted.
-    ~plaintext_output_iterator() noexcept                                 = default;             //!< Defaulted.
+    plaintext_output_iterator() noexcept                                              = default; //!< Defaulted.
+    plaintext_output_iterator(plaintext_output_iterator const &) noexcept             = default; //!< Defaulted.
+    plaintext_output_iterator(plaintext_output_iterator &&) noexcept                  = default; //!< Defaulted.
+    ~plaintext_output_iterator() noexcept                                             = default; //!< Defaulted.
     plaintext_output_iterator & operator=(plaintext_output_iterator const &) noexcept = default; //!< Defaulted.
-    plaintext_output_iterator & operator=(plaintext_output_iterator &&) noexcept = default;      //!< Defaulted.
+    plaintext_output_iterator & operator=(plaintext_output_iterator &&) noexcept      = default; //!< Defaulted.
 
     //!\brief Construct from a stream.
     explicit plaintext_output_iterator(std::ostream & ostr) : stream_it{ostr} {}
@@ -316,17 +316,17 @@ public:
      * \{
      */
     //!\brief Default constructor is explicitly deleted, you need to give a stream or file name.
-    writer()               = delete;
+    writer()                           = delete;
     //!\brief Copy construction is explicitly deleted, because you can't have multiple access to the same file.
-    writer(writer const &) = delete;
+    writer(writer const &)             = delete;
     //!\brief Move construction is defaulted.
-    writer(writer &&)      = default;
+    writer(writer &&)                  = default;
     //!\brief Copy assignment is explicitly deleted, because you can't have multiple access to the same file.
     writer & operator=(writer const &) = delete;
     //!\brief Move assignment is defaulted.
-    writer & operator=(writer &&) = default;
+    writer & operator=(writer &&)      = default;
     //!\brief Destructor is defaulted.
-    ~writer()                     = default;
+    ~writer()                          = default;
 
     /*!\brief Construct from filename.
      * \param[in] filename        Path that you wish to write to.

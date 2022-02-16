@@ -86,12 +86,12 @@ public:
     /*!\name Constructors, destructor and assignment
      * \{
      */
-    plaintext_input_iterator() noexcept                                 = default;             //!< Defaulted.
-    plaintext_input_iterator(plaintext_input_iterator const &) noexcept = default;             //!< Defaulted.
-    plaintext_input_iterator(plaintext_input_iterator &&) noexcept      = default;             //!< Defaulted.
+    plaintext_input_iterator() noexcept                                             = default; //!< Defaulted.
+    plaintext_input_iterator(plaintext_input_iterator const &) noexcept             = default; //!< Defaulted.
+    plaintext_input_iterator(plaintext_input_iterator &&) noexcept                  = default; //!< Defaulted.
     plaintext_input_iterator & operator=(plaintext_input_iterator const &) noexcept = default; //!< Defaulted.
-    plaintext_input_iterator & operator=(plaintext_input_iterator &&) noexcept = default;      //!< Defaulted.
-    ~plaintext_input_iterator() noexcept                                       = default;      //!< Defaulted.
+    plaintext_input_iterator & operator=(plaintext_input_iterator &&) noexcept      = default; //!< Defaulted.
+    ~plaintext_input_iterator() noexcept                                            = default; //!< Defaulted.
 
     //!\brief Construct from a stream buffer.
     explicit plaintext_input_iterator(std::basic_streambuf<char> & ibuf, bool const read_first_record = true) :
@@ -384,17 +384,17 @@ public:
      * \{
      */
     //!\brief Default constructor is explicitly deleted, you need to give a stream or file name.
-    reader()               = delete;
+    reader()                           = delete;
     //!\brief Copy construction is explicitly deleted, because you can't have multiple access to the same file.
-    reader(reader const &) = delete;
+    reader(reader const &)             = delete;
     //!\brief Move construction is defaulted.
-    reader(reader &&)      = default;
+    reader(reader &&)                  = default;
     //!\brief Destructor is defaulted.
-    ~reader()              = default;
+    ~reader()                          = default;
     //!\brief Copy assignment is explicitly deleted, because you can't have multiple access to the same file.
     reader & operator=(reader const &) = delete;
     //!\brief Move assignment is defaulted.
-    reader & operator=(reader &&) = default;
+    reader & operator=(reader &&)      = default;
 
     /*!\brief Construct from filename.
      * \param[in] filename        Path to the file you wish to open.

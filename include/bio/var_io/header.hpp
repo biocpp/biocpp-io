@@ -78,6 +78,7 @@ struct header_number
 class header
 {
 public:
+    // TODO we definitely want transparent hashing for these so we can search string_views efficiently
     //!\brief The dictionary for the non-standard fields in a header entry.
     using other_fields_t = std::map<std::string, std::string, std::ranges::less>;
 
@@ -131,11 +132,11 @@ public:
      */
     //!\brief Default construction.
     header() { init(); }
-    header(header const &) = default;             //!< Defaulted.
-    header(header &&)      = default;             //!< Defaulted.
-    ~header()              = default;             //!< Defaulted.
+    header(header const &)             = default; //!< Defaulted.
+    header(header &&)                  = default; //!< Defaulted.
+    ~header()                          = default; //!< Defaulted.
     header & operator=(header const &) = default; //!< Defaulted.
-    header & operator=(header &&) = default;      //!< Defaulted.
+    header & operator=(header &&)      = default; //!< Defaulted.
 
     //!\brief Construct from a header given as plaintext.
     explicit header(std::string_view plaintext_header)
@@ -149,6 +150,8 @@ public:
 
         for (std::string_view const line : plaintext_header | detail::eager_split('\n'))
             parse_line(line);
+
+        add_missing();
     }
     //!\}
 
@@ -200,6 +203,12 @@ public:
     string_to_idx_t const & string_to_idx() const { return string_to_idx_; }
     //!\brief Global string to IDX mapping (contig).
     string_to_idx_t const & contig_string_to_idx() const { return contig_string_to_idx_; }
+
+    //!\brief The largest IDX value used (filter, info, format).
+    int32_t max_idx() const { return max_other_idx_; }
+    //!\brief The largest IDX value used (contig).
+    int32_t max_contig_idx() const { return max_contig_idx_; }
+
     //!\}
 
     /*!\name Update, reset and inspect
@@ -267,8 +276,8 @@ public:
     //!\brief Clear the IDX values from all header entries (sets them to -1); implicitly calls #reset_hash().
     void reset_idx()
     {
-        max_contig_idx = -1;
-        max_other_idx  = 0;
+        max_contig_idx_ = -1;
+        max_other_idx_  = 0;
 
         for (filter_t & filter : filters)
         {
@@ -378,7 +387,7 @@ private:
         ();
 
         string_to_idx_t & string_to_idx = k == entry_kind::contig ? contig_string_to_idx_ : string_to_idx_;
-        int32_t &         max_idx       = k == entry_kind::contig ? max_contig_idx : max_other_idx;
+        int32_t &         max_idx       = k == entry_kind::contig ? max_contig_idx_ : max_other_idx_;
 
         string_to_pos_t & string_to_pos = k == entry_kind::contig   ? string_to_contig_pos_
                                           : k == entry_kind::filter ? string_to_filter_pos_
@@ -439,8 +448,8 @@ private:
     string_to_idx_t string_to_idx_;        //!< Global string to IDX mapping (filter, info, format).
     string_to_idx_t contig_string_to_idx_; //!< Global string to IDX mapping (contig).
 
-    int32_t max_other_idx  = 0;  //!< The highest IDX value in use (defaults to 0, because PASS is used).
-    int32_t max_contig_idx = -1; //!< The highest contig IDX value in use (defaults to -1, because none is used).
+    int32_t max_other_idx_  = 0;  //!< The highest IDX value in use (defaults to 0, because PASS is used).
+    int32_t max_contig_idx_ = -1; //!< The highest contig IDX value in use (defaults to -1, because none is used).
     //!\}
 
     /*!\name Functions for converting to text
@@ -555,6 +564,10 @@ private:
         // TODO replace with string_view
         switch (id)
         {
+            case dynamic_type_id::int8:
+            case dynamic_type_id::vector_of_int8:
+            case dynamic_type_id::int16:
+            case dynamic_type_id::vector_of_int16:
             case dynamic_type_id::int32:
             case dynamic_type_id::vector_of_int32:
                 return "Integer";
@@ -654,6 +667,50 @@ private:
             throw format_error{"INFO or FORMAT line does not contain Type field."};
         else
             new_entry.type = parse_type(type.mapped(), new_entry.number);
+        if (auto it = new_entry.other_fields.find("IntegerBits"); it != new_entry.other_fields.end())
+        {
+            std::string_view number = strip_quotes(it->second);
+
+            if (number == "8")
+            {
+                switch (new_entry.type)
+                {
+                    case dynamic_type_id::int8:
+                    case dynamic_type_id::int16:
+                    case dynamic_type_id::int32:
+                        new_entry.type = dynamic_type_id::int8;
+                        break;
+                    case dynamic_type_id::vector_of_int8:
+                    case dynamic_type_id::vector_of_int16:
+                    case dynamic_type_id::vector_of_int32:
+                        new_entry.type = dynamic_type_id::vector_of_int8;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else if (number == "16")
+            {
+                switch (new_entry.type)
+                {
+                    case dynamic_type_id::int8:
+                    case dynamic_type_id::int16:
+                    case dynamic_type_id::int32:
+                        new_entry.type = dynamic_type_id::int16;
+                        break;
+                    case dynamic_type_id::vector_of_int8:
+                    case dynamic_type_id::vector_of_int16:
+                    case dynamic_type_id::vector_of_int32:
+                        new_entry.type = dynamic_type_id::vector_of_int16;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            // integer fields are set to 32 by default, so no need to handle this case here
+            // if the number is something else or the string is not a number, we also don't
+            // do anything and just assume 32Bit Integer
+        }
 
         /* Description */
         auto description = new_entry.other_fields.extract("Description");
@@ -666,7 +723,7 @@ private:
         auto idx = new_entry.other_fields.extract("IDX");
         if (!idx.empty())
             detail::string_to_number(idx.mapped(), new_entry.idx);
-        max_other_idx = std::max(max_other_idx, new_entry.idx);
+        max_other_idx_ = std::max(max_other_idx_, new_entry.idx);
 
         if (is_info)
         {
@@ -710,7 +767,7 @@ private:
         auto idx = new_entry.other_fields.extract("IDX");
         if (!idx.empty())
             detail::string_to_number(idx.mapped(), new_entry.idx);
-        max_other_idx = std::max(max_other_idx, new_entry.idx);
+        max_other_idx_ = std::max(max_other_idx_, new_entry.idx);
 
         // PASS line was added by us before and is now swapped with user-provided
         if (filters.size() > 0 && filters.front().id == "PASS" && new_entry.id == "PASS")
@@ -749,10 +806,10 @@ private:
         /* IDX */
         auto idx = new_entry.other_fields.extract("IDX");
         if (idx.empty())
-            new_entry.idx = ++max_contig_idx;
+            new_entry.idx = ++max_contig_idx_;
         else
             detail::string_to_number(idx.mapped(), new_entry.idx);
-        max_contig_idx = std::max(max_contig_idx, new_entry.idx);
+        max_contig_idx_ = std::max(max_contig_idx_, new_entry.idx);
 
         if (string_to_contig_pos_.contains(new_entry.id))
             throw format_error{std::string{"Duplicate CONTIG ID \""} + std::string{new_entry.id} + "\" in HEADER."};
@@ -775,6 +832,12 @@ private:
         if (in.size() < 2 || in.front() != '<' || in.back() != '>')
             throw format_error{"Structured line does not contain \"<\" and \">\" at right places."};
         return in.substr(1, in.size() - 2);
+    }
+
+    //!\brief Return a substring from the argument that does not contain enclosing quotes (if present).
+    static inline std::string_view strip_quotes(std::string_view const in)
+    {
+        return (in.size() < 2 || in.front() != '"' || in.back() != '"') ? in.substr(1, in.size() - 2) : in;
     }
 
     //!\brief Turn a string into a bio::var_io::header_number.
