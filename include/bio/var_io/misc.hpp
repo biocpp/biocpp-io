@@ -26,11 +26,19 @@
 #include <bio/detail/range.hpp>
 #include <bio/misc.hpp>
 #include <bio/record.hpp>
-#include <bio/var_io/dynamic_type.hpp>
-#include <bio/var_io/header.hpp>
 
 namespace bio::var_io
 {
+
+//-----------------------------------------------------------------------------
+// forwards
+//-----------------------------------------------------------------------------
+
+class header;
+
+//-----------------------------------------------------------------------------
+// missing_value
+//-----------------------------------------------------------------------------
 
 /*!\addtogroup var_io
  * \{
@@ -69,6 +77,10 @@ inline float missing_value<float> = []()
 //!\}
 //!\}
 } // namespace bio::var_io
+
+//-----------------------------------------------------------------------------
+// end_of_vector
+//-----------------------------------------------------------------------------
 
 namespace bio::detail
 {
@@ -114,8 +126,131 @@ namespace bio::var_io
 {
 
 //-----------------------------------------------------------------------------
-// Helper classes for field types
+// value_type_id
 //-----------------------------------------------------------------------------
+
+//!\brief Enumerator to ease "dynamic typing" in variant IO.
+//!\ingroup var_io
+enum class value_type_id : size_t
+{
+    char8,
+    int8,
+    int16,
+    int32,
+    float32,
+    string,
+    vector_of_char8,
+    vector_of_int8,
+    vector_of_int16,
+    vector_of_int32,
+    vector_of_float32,
+    vector_of_string,
+    flag
+};
+
+} // namespace bio::var_io
+
+namespace seqan3
+{
+
+//!\brief TODO implement me properly
+template <typename char_t>
+inline debug_stream_type<char_t> & operator<<(debug_stream_type<char_t> & s, bio::var_io::value_type_id const & id)
+{
+    // TODO print nice string
+    s << (size_t)id;
+    return s;
+}
+
+} // namespace seqan3
+
+namespace bio::detail
+{
+
+//!\brief int* and vector_of_int* are each are "compatible" with each other; the rest only with self.
+//!\ingroup var_io
+constexpr bool type_id_is_compatible(var_io::value_type_id const lhs, var_io::value_type_id const rhs)
+{
+    switch (lhs)
+    {
+        case var_io::value_type_id::int8:
+        case var_io::value_type_id::int16:
+        case var_io::value_type_id::int32:
+            switch (rhs)
+            {
+                case var_io::value_type_id::int8:
+                case var_io::value_type_id::int16:
+                case var_io::value_type_id::int32:
+                    return true;
+                default:
+                    return false;
+            };
+            break;
+        case var_io::value_type_id::vector_of_int8:
+        case var_io::value_type_id::vector_of_int16:
+        case var_io::value_type_id::vector_of_int32:
+            switch (rhs)
+            {
+                case var_io::value_type_id::vector_of_int8:
+                case var_io::value_type_id::vector_of_int16:
+                case var_io::value_type_id::vector_of_int32:
+                    return true;
+                default:
+                    return false;
+            };
+            break;
+        default:
+            return lhs == rhs;
+    }
+}
+
+} // namespace bio::detail
+
+namespace bio::var_io
+{
+
+//-----------------------------------------------------------------------------
+// The info element
+//-----------------------------------------------------------------------------
+
+/*!\brief Variant to handle "dynamic typing" in Var I/O INFO fields.
+ * \ingroup var_io
+ * \details
+ *
+ * This variant can hold values for the INFO field.
+ * Since the type of such fields may only be determined at run-time (depends on values in header), variables
+ * of this type can be set to different types at run-time.
+ */
+template <ownership own = ownership::shallow>
+using info_element_value_type =
+  std::variant<char,
+               int8_t,
+               int16_t,
+               int32_t,
+               float,
+               std::conditional_t<own == ownership::shallow, std::string_view, std::string>,
+               std::vector<char>,
+               std::vector<int8_t>,
+               std::vector<int16_t>,
+               std::vector<int32_t>,
+               std::vector<float>,
+               std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>,
+               bool>;
+
+} // namespace bio::var_io
+
+namespace bio::detail
+{
+//!\brief Auxilliary concept that encompasses bio::var_io::info_element_value_type.
+//!\ingroup var_io
+template <typename t>
+concept is_info_element_value_type =
+  one_of<t, var_io::info_element_value_type<ownership::shallow>, var_io::info_element_value_type<ownership::deep>>;
+
+} // namespace bio::detail
+
+namespace bio::var_io
+{
 
 /*!\brief The type of elements in an INFO field. [default]
  * \ingroup var_io
@@ -128,9 +263,9 @@ struct info_element
     using string_t = std::conditional_t<own == ownership::shallow, std::string_view, std::string>;
 
     //!\brief The ID of the element (as a string or string_view).
-    string_t          id;
+    string_t                     id;
     //!\brief The value of the element.
-    dynamic_type<own> value;
+    info_element_value_type<own> value;
 
     //!\brief Defaulted three-way comparisons.
     auto operator<=>(info_element const &) const = default;
@@ -144,13 +279,59 @@ template <ownership own = ownership::shallow>
 struct info_element_bcf
 {
     //!\brief The IDX of the element (index of that descriptor in the header).
-    int32_t           idx;
+    int32_t                      idx;
     //!\brief The value of the element.
-    dynamic_type<own> value;
+    info_element_value_type<own> value;
 
     //!\brief Defaulted three-way comparisons.
     auto operator<=>(info_element_bcf const &) const = default;
 };
+
+//-----------------------------------------------------------------------------
+// The genotype element
+//-----------------------------------------------------------------------------
+
+/*!\brief Variant to handle "dynamic typing" in Var I/O GENOTYPE fields.
+ * \ingroup var_io
+ * \details
+ *
+ * This type is similar to bio::var_io::info_element_value_type except that it encodes a range of the respective value.
+ *
+ * It does not contain an entry for bio::var_io::value_type_id::flag, because flags cannot appear in
+ * the genotype field.
+ */
+template <ownership own = ownership::shallow>
+using genotype_element_value_type =
+  std::variant<std::vector<char>,
+               std::vector<int8_t>,
+               std::vector<int16_t>,
+               std::vector<int32_t>,
+               std::vector<float>,
+               std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>,
+               std::vector<std::vector<char>>,
+               std::vector<std::vector<int8_t>>,
+               std::vector<std::vector<int16_t>>,
+               std::vector<std::vector<int32_t>>,
+               std::vector<std::vector<float>>,
+               std::vector<std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>>
+               /* no flag here */>;
+
+} // namespace bio::var_io
+
+namespace bio::detail
+{
+
+//!\brief Auxilliary concept that encompasses bio::var_io::genotype_element_value_type.
+//!\ingroup var_io
+template <typename t>
+concept is_genotype_element_value_type = one_of<t,
+                                                var_io::genotype_element_value_type<ownership::shallow>,
+                                                var_io::genotype_element_value_type<ownership::deep>>;
+
+} // namespace bio::detail
+
+namespace bio::var_io
+{
 
 /*!\brief A type representing an element in the GENOTYPES field.
  * \ingroup var_io
@@ -167,8 +348,8 @@ struct info_element_bcf
  *   * 0 -- if the field is missing from all samples.
  *
  * The variant vector is guaranteed to be over the type defined in the header. Note that this is a vector over such
- * types (one element per sample!), so bio::var_io::dynamic_type_id::vector_of_int32 corresponds to
- * std::vector<std::vector<int32_t>>. See bio::var_io::dynamic_vector_type for more details.
+ * types (one element per sample!), so bio::var_io::value_type_id::vector_of_int32 corresponds to
+ * std::vector<std::vector<int32_t>>. See bio::var_io::genotype_element_value_type for more details.
  *
  * If fields are missing from some samples but not others, the vector will have full size but the respective values
  * will be set to the missing value (see bio::var_io::missing_value) or be the empty vector (in case the element type
@@ -181,9 +362,9 @@ struct genotype_element
     using string_t = std::conditional_t<own == ownership::shallow, std::string_view, std::string>;
 
     //!\brief The ID of the element (as a string or string_view).
-    string_t                 id;
+    string_t                         id;
     //!\brief The value of the element.
-    dynamic_vector_type<own> value;
+    genotype_element_value_type<own> value;
 
     //!\brief Defaulted three-way comparisons.
     auto operator<=>(genotype_element const &) const = default;
@@ -200,43 +381,12 @@ template <ownership own = ownership::shallow>
 struct genotype_element_bcf
 {
     //!\brief The IDX of the element (index of that descriptor in the header).
-    int32_t                  idx;
+    int32_t                          idx;
     //!\brief The value of the element.
-    dynamic_vector_type<own> value;
+    genotype_element_value_type<own> value;
 
     //!\brief Defaulted three-way comparisons.
     auto operator<=>(genotype_element_bcf const &) const = default;
-};
-
-/*!\brief A type representing the FORMATS column and all sample columns in VCF-style.
- * \ingroup var_io
- *
- * \details
- *
- * This type can be used as the field-type for the GENOTYPES field as an alternative to a range of
- * bio::var_io::genotype_element.
- *
- * It uses the data layout as it appears in a VCF file with the FORMAT strings in one member and a vector of "samples".
- * Each element of that vector represents a single sample column and is implemented as a vector of values of
- * dynamic type (see bio::var_io::dynamic_type).
- *
- * **This data layout is not recommended, because it is almost always slower.**
- * Use it only, if you know that the user will never read or write BCF and if you do very little processing of the
- * sample values.
- */
-template <ownership own = ownership::shallow>
-struct genotypes_vcf
-{
-    //!\brief Type of the format strings.
-    using string_t = std::conditional_t<own == ownership::shallow, std::string_view, std::string>;
-
-    //!\brief The FORMAT strings.
-    std::vector<string_t>                       format_strings;
-    //!\brief The sample columns.
-    std::vector<std::vector<dynamic_type<own>>> samples;
-
-    //!\brief Defaulted three-way comparisons.
-    auto operator<=>(genotypes_vcf const &) const = default;
 };
 
 //!\brief A datastructure that contains private data of variant IO records.
@@ -286,8 +436,8 @@ inline constinit auto default_field_ids = vtag<field::chrom,
  * It is the recommended record type when iterating ("streaming") over files that ca be any variant IO format.
  *
  * The "style" of the record resembles the VCF specification, i.e. contigs, FILTERs and INFO identifiers are
- * represented as string/string_views. **However,**  the genotypes are encoded by-genotype (BCF-style) and not by-sample
- *(VCF-style) for performance reasons.
+ * represented as string/string_views. **However,** the genotypes are encoded by-genotype (BCF-style) and not by-sample
+ * (VCF-style) for performance reasons.
  *
  * See bio::var_io::genotypes_bcf_style for more information on the latter.
  */
@@ -358,46 +508,6 @@ inline constinit auto field_types_bcf_style<ownership::deep> =
        std::vector<info_element_bcf<ownership::deep>>,     // field::info,
        std::vector<genotype_element_bcf<ownership::deep>>, // field::genotypes,
        record_private_data>;                               // field::_private
-
-/*!\brief Alternative set of field types (VCF-style, shallow).
- *!\ingroup var_io
- *
- * \details
- *
- * See bio::var_io::reader_options for when and why to choose these field types.
- */
-template <ownership own = ownership::shallow>
-inline constinit auto field_types_vcf_style =
-  ttag<std::string_view,                                                             // field::chrom,
-       int32_t,                                                                      // field::pos,
-       std::string_view,                                                             // field::id,
-       decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>), // field::ref,
-       std::vector<std::string_view>,                                                // field::alt,
-       float,                                                                        // field::qual,
-       std::vector<std::string_view>,                                                // field::filter,
-       std::vector<info_element<ownership::shallow>>,                                // field::info,
-       genotypes_vcf<ownership::shallow>,                                            // field::genotypes,
-       record_private_data>;                                                         // field::_private>;
-
-/*!\brief Alternative set of field types (BCF-style, deep).
- *!\ingroup var_io
- *
- * \details
- *
- * See bio::var_io::reader_options for when and why to choose these field types.
- */
-template <>
-inline constinit auto field_types_vcf_style<ownership::deep> =
-  ttag<std::string,                                // field::chrom
-       int32_t,                                    // field::pos
-       std::string,                                // field::id
-       std::vector<seqan3::dna5>,                  // field::ref
-       std::vector<std::string>,                   // field::alt
-       float,                                      // field::qual
-       std::vector<std::string>,                   // field::filter
-       std::vector<info_element<ownership::deep>>, // field::info,
-       genotypes_vcf<ownership::deep>,             // field::genotypes
-       record_private_data>;                       // field::_private
 
 //!\brief Every field is configured as a std::span of std::byte (this enables "raw" io).
 //!\ingroup var_io
@@ -541,28 +651,28 @@ bool type_descriptor_is_int(bcf_type_descriptor const type_desc)
     }
 }
 
-//!\brief Convert from bio::var_io::dynamic_type_id to bio::detail::bcf_type_descriptor.
-bcf_type_descriptor dynamic_type_id_2_type_descriptor(var_io::dynamic_type_id const type_id)
+//!\brief Convert from bio::var_io::value_type_id to bio::detail::bcf_type_descriptor.
+bcf_type_descriptor value_type_id_2_type_descriptor(var_io::value_type_id const type_id)
 {
     switch (type_id)
     {
-        case var_io::dynamic_type_id::char8:
-        case var_io::dynamic_type_id::vector_of_char8:
-        case var_io::dynamic_type_id::string:
-        case var_io::dynamic_type_id::vector_of_string:
+        case var_io::value_type_id::char8:
+        case var_io::value_type_id::vector_of_char8:
+        case var_io::value_type_id::string:
+        case var_io::value_type_id::vector_of_string:
             return bcf_type_descriptor::char8;
-        case var_io::dynamic_type_id::int8:
-        case var_io::dynamic_type_id::vector_of_int8:
-        case var_io::dynamic_type_id::flag:
+        case var_io::value_type_id::int8:
+        case var_io::value_type_id::vector_of_int8:
+        case var_io::value_type_id::flag:
             return bcf_type_descriptor::int8;
-        case var_io::dynamic_type_id::int16:
-        case var_io::dynamic_type_id::vector_of_int16:
+        case var_io::value_type_id::int16:
+        case var_io::value_type_id::vector_of_int16:
             return bcf_type_descriptor::int16;
-        case var_io::dynamic_type_id::int32:
-        case var_io::dynamic_type_id::vector_of_int32:
+        case var_io::value_type_id::int32:
+        case var_io::value_type_id::vector_of_int32:
             return bcf_type_descriptor::int32;
-        case var_io::dynamic_type_id::float32:
-        case var_io::dynamic_type_id::vector_of_float32:
+        case var_io::value_type_id::float32:
+        case var_io::value_type_id::vector_of_float32:
             return bcf_type_descriptor::float32;
     }
     return bcf_type_descriptor::missing;

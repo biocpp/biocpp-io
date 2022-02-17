@@ -11,8 +11,8 @@
 #include <iostream>
 #include <string>
 
-#include <seqan3/test/tmp_filename.hpp>
 #include <bio/misc.hpp>
+#include <seqan3/test/tmp_filename.hpp>
 
 #include <bio/stream/compression.hpp>
 #include <bio/stream/detail/make_stream.hpp>
@@ -40,7 +40,7 @@ void regular()
     }
 
     std::ifstream fi{filename.get_path(), std::ios::binary};
-    std::string buffer{std::istreambuf_iterator<char>{fi}, std::istreambuf_iterator<char>{}};
+    std::string   buffer{std::istreambuf_iterator<char>{fi}, std::istreambuf_iterator<char>{}};
 
     if constexpr (f == bio::compression_format::bgzf)
         buffer[9] = '\x00'; // zero-out the OS byte.
@@ -58,7 +58,9 @@ void type_erased()
 
         if constexpr (std::same_as<stream_t, bio::transparent_ostream>)
         {
-            std::unique_ptr<std::ostream> ogzf{new stream_t{of, {.compression = f}}};
+            std::unique_ptr<std::ostream> ogzf{
+              new stream_t{of, {.compression = f}}
+            };
             *ogzf << uncompressed << std::flush;
         }
         else
@@ -69,11 +71,10 @@ void type_erased()
     }
 
     std::ifstream fi{filename.get_path(), std::ios::binary};
-    std::string buffer{std::istreambuf_iterator<char>{fi}, std::istreambuf_iterator<char>{}};
+    std::string   buffer{std::istreambuf_iterator<char>{fi}, std::istreambuf_iterator<char>{}};
 
     if constexpr (f == bio::compression_format::bgzf)
         buffer[9] = '\x00'; // zero-out the OS byte.
 
     EXPECT_EQ(buffer, compressed<f>);
 }
-

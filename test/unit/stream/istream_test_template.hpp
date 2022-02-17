@@ -11,8 +11,8 @@
 #include <iostream>
 #include <string>
 
-#include <seqan3/test/tmp_filename.hpp>
 #include <bio/misc.hpp>
+#include <seqan3/test/tmp_filename.hpp>
 
 #include <bio/stream/compression.hpp>
 #include <bio/stream/detail/make_stream.hpp>
@@ -31,8 +31,8 @@ void regular()
     }
 
     std::ifstream fi{filename.get_path(), std::ios::binary};
-    stream_t comp{fi};
-    std::string buffer{std::istreambuf_iterator<char>{comp}, std::istreambuf_iterator<char>{}};
+    stream_t      comp{fi};
+    std::string   buffer{std::istreambuf_iterator<char>{comp}, std::istreambuf_iterator<char>{}};
 
     EXPECT_EQ(buffer, uncompressed);
 }
@@ -48,9 +48,9 @@ void type_erased()
         fi << compressed<f>;
     }
 
-    std::ifstream fi{filename.get_path(), std::ios::binary};
+    std::ifstream                 fi{filename.get_path(), std::ios::binary};
     std::unique_ptr<std::istream> comp{new stream_t{fi}};
-    std::string buffer{std::istreambuf_iterator<char>{*comp}, std::istreambuf_iterator<char>{}};
+    std::string                   buffer{std::istreambuf_iterator<char>{*comp}, std::istreambuf_iterator<char>{}};
 
     EXPECT_EQ(buffer, uncompressed);
 }

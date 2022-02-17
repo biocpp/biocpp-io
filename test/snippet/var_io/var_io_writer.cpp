@@ -50,7 +50,7 @@ rec.info().push_back({.id = "AF", .value = std::vector{0.5f}});     // AF is vec
 
 /* genotypes is vector over bio::var_io::genotype_element */
 rec.genotypes().push_back({ .id = "GT", .value = std::vector{"0|0"s, "1|0"s, "1/1"s}});
-// value in genotype is always a vector of size == number of samples; see bio::var_io::dynamic_vector_type
+// value in genotype is always a vector of size == number of samples; see bio::var_io::genotype_element_value_type
 
 writer.push_back(rec);
 

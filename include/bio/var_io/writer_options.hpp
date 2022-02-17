@@ -21,6 +21,52 @@
 namespace bio::detail
 {
 
+template <typename t>
+concept var_io_legal_type_aux =
+  std::same_as<t, char> || std::signed_integral<t> || std::floating_point<t> || std::same_as < std::decay_t<t>,
+char const * > ;
+
+/*!\interface bio::detail::var_io_legal_type <>
+ * \tparam t The type to check.
+ * \brief A type that is similar to one of the alternatives of bio::var_io::info_element_value_type
+ */
+//!\cond CONCEPT_DEF
+template <typename t>
+concept var_io_legal_type = var_io_legal_type_aux<std::remove_cvref_t<t>> || std::same_as<t const &, bool const &> ||
+  (std::ranges::forward_range<t> && (var_io_legal_type_aux<std::remove_cvref_t<std::ranges::range_reference_t<t>>> ||
+                                     (std::ranges::forward_range<std::ranges::range_reference_t<t>> &&
+                                      std::same_as<char const &, std::ranges::range_reference_t<t> const &>)));
+//!\endcond
+
+/*!\interface bio::detail::var_io_legal_vector_type <>
+ * \tparam t The type to check.
+ * \brief A type that is similar to one of the alternatives of bio::var_io::info_element_value_type
+ */
+//!\cond CONCEPT_DEF
+template <typename t>
+concept var_io_legal_vector_type =
+  std::ranges::forward_range<t> && var_io_legal_type<std::ranges::range_reference_t<t>> &&
+  !std::same_as<bool const &, std::ranges::range_reference_t<t>>;
+//!\endcond
+
+/*!\interface bio::detail::var_io_legal_or_dynamic <>
+ * \tparam t The type to check.
+ * \brief A type that is similar to one of the alternatives of bio::var_io::info_element_value_type
+ */
+//!\cond CONCEPT_DEF
+template <typename t>
+concept var_io_legal_or_dynamic = var_io_legal_type<t> || is_info_element_value_type<t>;
+//!\endcond
+
+/*!\interface bio::detail::var_io_vector_legal_or_dynamic <>
+ * \tparam t The type to check.
+ * \brief A type that is similar to one of the alternatives of bio::var_io::info_element_value_type
+ */
+//!\cond CONCEPT_DEF
+template <typename t>
+concept var_io_vector_legal_or_dynamic = var_io_legal_vector_type<t> || is_genotype_element_value_type<t>;
+//!\endcond
+
 /*!\interface bio::detail::info_element_writer_concept <>
  * \tparam t The type to check.
  * \brief Types "similar" to bio::var_io::info_element / bio::var_io::info_element_bcf.
@@ -32,42 +78,15 @@ concept info_element_writer_concept = detail::decomposable_into_two<t> &&
    std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::var_io_legal_or_dynamic<detail::second_elem_t<t>>;
 //!\endcond
 
-/*!\interface bio::detail::genotype_bcf_style_writer_concept <>
+/*!\interface bio::detail::genotype_writer_concept <>
  * \tparam t The type to check.
  * \brief Types "similar" to bio::var_io::genotype_element / bio::var_io::genotype_element_bcf.
  */
 //!\cond CONCEPT_DEF
 template <typename t>
-concept genotype_bcf_style_writer_concept = detail::decomposable_into_two<t> &&
+concept genotype_writer_concept = detail::decomposable_into_two<t> &&
   (detail::char_range_or_cstring<detail::first_elem_t<t>> ||
    std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::var_io_vector_legal_or_dynamic<detail::second_elem_t<t>>;
-//!\endcond
-
-template <typename t>
-concept genotypes_vcf_style_format_writer_concept =
-  std::ranges::forward_range<t> && detail::char_range_or_cstring<std::ranges::range_reference_t<t>>;
-
-template <typename t>
-concept genotypes_vcf_style_onesample_writer_concept =
-  std::ranges::forward_range<t> && detail::var_io_legal_or_dynamic<std::ranges::range_value_t<t>>;
-
-/*!\interface bio::detail::genotypes_vcf_style_writer_concept <>
- * \tparam t The type to check.
- * \brief Types "similar" to bio::var_io::genotypes_vcf_style
- */
-//!\cond CONCEPT_DEF
-template <typename t>
-concept genotypes_vcf_style_writer_concept = detail::decomposable_into_two<t> &&
-  genotypes_vcf_style_format_writer_concept<detail::first_elem_t<t>> &&
-  ((std::ranges::forward_range<detail::second_elem_t<t>> &&
-    genotypes_vcf_style_onesample_writer_concept<std::ranges::range_reference_t<detail::second_elem_t<t>>>) ||
-   requires // a tuple whose elements satisfy genotypes_vcf_style_onesample_writer_concept
-   {
-       requires decltype(std::apply(
-         []<typename... elem_t>(elem_t...)
-           -> std::bool_constant<true /*(genotypes_vcf_style_onesample_writer_concept<elem_t> && ...)*/> { return {}; },
-         std::declval<detail::second_elem_t<t>>()))::value;
-   });
 //!\endcond
 
 } // namespace bio::detail

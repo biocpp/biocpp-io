@@ -555,13 +555,7 @@ private:
     }
 
     //!\brief Overload for n_fmt.
-    void set_core_n_fmt(auto & field)
-    {
-        if constexpr (detail::genotypes_vcf_style_writer_concept<decltype(field)>)
-            record_core.n_fmt = std::ranges::distance(detail::get_first(field));
-        else
-            record_core.n_fmt = detail::range_or_tuple_size(field);
-    }
+    void set_core_n_fmt(auto & field) { record_core.n_fmt = detail::range_or_tuple_size(field); }
     //!\}
 
     /*!\name Field writers
@@ -651,7 +645,7 @@ private:
             // explicit integer width given in header
             if (hdr_entry.other_fields.find("IntegerBits") != hdr_entry.other_fields.end())
             {
-                desc = detail::dynamic_type_id_2_type_descriptor(hdr_entry.type);
+                desc = detail::value_type_id_2_type_descriptor(hdr_entry.type);
                 if (!detail::type_descriptor_is_int(desc)) // ignore header value if it isn't intX
                     desc = c_desc;
             }
@@ -665,7 +659,7 @@ private:
 
         if (verify_header_types)
         {
-            detail::bcf_type_descriptor header_desc = detail::dynamic_type_id_2_type_descriptor(hdr_entry.type);
+            detail::bcf_type_descriptor header_desc = detail::value_type_id_2_type_descriptor(hdr_entry.type);
             if (desc != header_desc || !detail::type_descriptor_is_int(desc) ||
                 !detail::type_descriptor_is_int(header_desc))
             {
@@ -707,7 +701,7 @@ private:
         var_io::header::info_t const & info = header->infos.at(header->idx_to_info_pos().at(idx));
 
         /* VALUE */
-        if constexpr (detail::is_dynamic_type<value_t>)
+        if constexpr (detail::is_info_element_value_type<value_t>)
         {
             auto func = [&](auto & param) { write_typed_data(param, get_desc(param, info)); };
             std::visit(func, value);
@@ -950,15 +944,15 @@ private:
             }
         };
 
-        if constexpr (detail::is_dynamic_vector_type<value_t>)
+        if constexpr (detail::is_genotype_element_value_type<value_t>)
             std::visit(func, value);
         else
             func(value);
     }
 
-    //!\brief Overload for GENOTYPES; genotypes_bcf_style.
+    //!\brief Overload for GENOTYPES.
     template <std::ranges::forward_range range_t>
-        requires(detail::genotype_bcf_style_writer_concept<std::ranges::range_reference_t<range_t>>)
+        requires(detail::genotype_writer_concept<std::ranges::range_reference_t<range_t>>)
     void write_field(vtag_t<field::genotypes> /**/, range_t && range)
     {
         for (auto && genotype : range)
@@ -967,13 +961,12 @@ private:
 
     //!\brief Overload for GENOTYPES; tuple of pairs.
     template <typename... elem_ts>
-        requires(detail::genotype_bcf_style_writer_concept<elem_ts> &&...)
+        requires(detail::genotype_writer_concept<elem_ts> &&...)
     void write_field(vtag_t<field::genotypes> /**/, std::tuple<elem_ts...> & tup) // TODO add const version
     {
         auto func = [&](auto &... field) { (write_genotypes_element(field), ...); };
         std::apply(func, tup);
     }
-    // TODO vcf-style
     //!\}
 
     //!\brief Write the header.

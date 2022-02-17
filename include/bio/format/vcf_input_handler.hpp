@@ -33,7 +33,7 @@
 #include <bio/format/vcf.hpp>
 #include <bio/plain_io/reader.hpp>
 #include <bio/stream/detail/fast_streambuf_iterator.hpp>
-#include <bio/var_io/dynamic_type.hpp>
+
 #include <bio/var_io/header.hpp>
 #include <bio/var_io/misc.hpp>
 #include <bio/var_io/reader_options.hpp>
@@ -155,18 +155,18 @@ private:
      * \{
      */
 
-    //!\brief Visitor definition for #parse_dynamic_type.
-    struct parse_dynamic_type_fn; // implementation after class
+    // implementation after class
+    template <typename t>
+        requires detail::is_info_element_value_type<t> || detail::is_genotype_element_value_type<t>
+    static void init_element_value_type(var_io::value_type_id const id, t & output);
 
-    /*!\brief Create an bio::var_io::dynamic_type from a string and a known bio::var_io::dynamic_type_id.
-     * \param[in]  id           ID of the type that shall be read.
-     * \param[in]  input_string The string data to read from.
-     * \param[out] output       The object to store the result in.
-     * \returns The number of elements stored in the output in case ID is one of the "vector_of_"-types; 1 otherwise.
-     */
-    static size_t parse_dynamic_type(var_io::dynamic_type_id const  id,
-                                     std::string_view const         input_string,
-                                     detail::is_dynamic_type auto & output); // implementation after class
+    // implementation after class
+    struct parse_element_value_type_fn;
+
+    // implementation after class
+    static size_t parse_element_value_type(var_io::value_type_id const               id,
+                                           std::string_view const                    input_string,
+                                           detail::is_info_element_value_type auto & output);
 
     //!\brief Parse the CHROM field. Reading chrom as number means getting the index (not converting string to number).
     void parse_field(vtag_t<field::chrom> const & /**/, auto & parsed_field)
@@ -301,17 +301,17 @@ private:
 
             if (info_value.empty()) // no "=" → flag
             {
-                info.type   = var_io::dynamic_type_id::flag;
+                info.type   = var_io::value_type_id::flag;
                 info.number = 0;
             }
             else if (info_value.find(',') != std::string_view::npos) // found comma → assume vector-of-strings
             {
-                info.type   = var_io::dynamic_type_id::vector_of_string;
+                info.type   = var_io::value_type_id::vector_of_string;
                 info.number = var_io::header_number::dot;
             }
             else // assume string as type
             {
-                info.type   = var_io::dynamic_type_id::string;
+                info.type   = var_io::value_type_id::string;
                 info.number = 1;
             }
 
@@ -373,9 +373,9 @@ private:
             /* PARSE VALUE */
             if (val.empty()) // no "=" → flag
             {
-                if constexpr (detail::is_dynamic_type<value_t>)
+                if constexpr (detail::is_info_element_value_type<value_t>)
                 {
-                    if (header.infos[info_pos].type != var_io::dynamic_type_id::flag ||
+                    if (header.infos[info_pos].type != var_io::value_type_id::flag ||
                         header.infos[info_pos].number != 0)
                     {
                         error("INFO field \"", key, "\" is not a flag and should come with a value -- but does not.");
@@ -387,9 +387,9 @@ private:
             }
             else // any other type than flag
             {
-                if constexpr (detail::is_dynamic_type<value_t>)
+                if constexpr (detail::is_info_element_value_type<value_t>)
                 {
-                    int32_t num_val = parse_dynamic_type(header.infos[info_pos].type, val, parsed_value);
+                    int32_t num_val = parse_element_value_type(header.infos[info_pos].type, val, parsed_value);
                     if (int32_t exp_val = header.infos[info_pos].number;
                         print_warnings && num_val != exp_val && exp_val >= 0)
                     {
@@ -427,7 +427,7 @@ private:
 
             format.id          = format_name;
             format.number      = 1;
-            format.type        = var_io::dynamic_type_id::string;
+            format.type        = var_io::value_type_id::string;
             format.description = "\"Automatically added by B.I.O..\"";
 
             // create a new header with new format and replace current one
@@ -437,9 +437,9 @@ private:
         header.add_missing();
     }
 
-    //!\brief Overload for parsing bcf style GENOTYPES.
+    //!\brief Overload for parsing GENOTYPES.
     template <detail::back_insertable field_t>
-        requires detail::genotype_bcf_style_reader_concept<std::ranges::range_reference_t<field_t>>
+        requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
     void parse_field(vtag_t<field::genotypes> const & /**/, field_t & parsed_field)
     {
         using genotype_field_t = std::ranges::range_reference_t<field_t>;
@@ -481,7 +481,7 @@ private:
 
             auto const & format = header.formats[format_pos];
 
-            detail::init_dynamic_type(format.type, current_value);
+            init_element_value_type(format.type, current_value);
             auto reserve = [s = column_number - 8](auto & vec) { vec.reserve(s); };
             std::visit(reserve, current_value);
 
@@ -512,7 +512,7 @@ private:
                         else
                             variant.emplace_back();
 
-                        parse_dynamic_type_fn{field}(variant.back());
+                        parse_element_value_type_fn{field}(variant.back());
                     };
 
                     auto & [current_id, current_value] = parsed_field[j];
@@ -523,67 +523,6 @@ private:
                 {
                     break;
                 }
-            }
-        }
-    }
-
-    //!\brief Overload for parsing vcf style GENOTYPES.
-    void parse_field(vtag_t<field::genotypes> const & /**/,
-                     detail::genotypes_vcf_style_reader_concept auto & parsed_field)
-    {
-        size_t column_number          = file_it->fields.size();
-        size_t expected_column_number = header.column_labels.size();
-
-        if (column_number != expected_column_number)
-            error("Expected ", expected_column_number, " columns in line but found ", column_number, ".");
-
-        if (column_number <= 8) // there are no genotypes
-            return;
-
-        auto & [parsed_format, parsed_samples] = parsed_field;
-
-        using string_t  = std::remove_cvref_t<decltype(parsed_format[0])>;
-        using variant_t = std::remove_cvref_t<decltype(parsed_samples[0][0])>;
-
-        /* parse formats */
-        std::string_view    format_names = file_it->fields[8];
-        std::vector<size_t> format_map; // ATTENTION ALWAYS DYNAMICALLY ALLOCATES HERE
-        for (std::string_view format_name : format_names | detail::eager_split(':'))
-        {
-            size_t format_pos = -1;
-            if (auto it = header.string_to_format_pos().find(format_name);
-                it == header.string_to_format_pos().end()) // format name was not in header, insert!
-            {
-                add_format_to_header(format_name);
-                format_pos = header.formats.size() - 1;
-            }
-            else
-            {
-                format_pos = it->second;
-            }
-
-            parsed_format.push_back(static_cast<string_t>(format_name));
-            format_map.push_back(format_pos);
-        }
-
-        /* parse samples */
-        parsed_samples.resize(column_number - 9);
-
-        size_t sample_num = 0;
-        for (std::string_view sample : file_it->fields | std::views::drop(9))
-        {
-            auto & parsed_sample = parsed_samples[sample_num++];
-
-            size_t field_num = 0;
-            for (std::string_view field : sample | detail::eager_split(':'))
-            {
-                variant_t var;
-
-                var_io::dynamic_type_id id = header.formats[format_map[field_num++]].type;
-
-                parse_dynamic_type(id, field, var);
-
-                parsed_sample.push_back(std::move(var));
             }
         }
     }
@@ -643,8 +582,112 @@ public:
     var_io::header const & get_header() const { return header; }
 };
 
-//!\brief Visitor definition for format_input_handler<vcf>::parse_dynamic_type.
-struct format_input_handler<vcf>::parse_dynamic_type_fn
+// ----------------------------------------------------------------------------
+// out-of-line definitions of some members
+// ----------------------------------------------------------------------------
+
+/*!\brief Initialise an object of dynamic type to a given ID.
+ * \tparam     t        Type of the output
+ * \param[in]  id       The ID.
+ * \param[out] output   The object being initialised.
+ */
+template <typename t>
+    requires detail::is_info_element_value_type<t> || detail::is_genotype_element_value_type<t>
+inline void format_input_handler<vcf>::init_element_value_type(var_io::value_type_id const id, t & output)
+{
+    switch (id)
+    {
+        case var_io::value_type_id::char8:
+            {
+                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::char8);
+                output.template emplace<id>();
+                return;
+            }
+        case var_io::value_type_id::int8:
+            {
+                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::int8);
+                output.template emplace<id>();
+                return;
+            }
+        case var_io::value_type_id::int16:
+            {
+                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::int16);
+                output.template emplace<id>();
+                return;
+            }
+        case var_io::value_type_id::int32:
+            {
+                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::int32);
+                output.template emplace<id>();
+                return;
+            }
+        case var_io::value_type_id::float32:
+            {
+                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::float32);
+                output.template emplace<id>();
+                return;
+            }
+        case var_io::value_type_id::string:
+            {
+                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::string);
+                output.template emplace<id>();
+                return;
+            }
+        case var_io::value_type_id::vector_of_char8:
+            {
+                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::vector_of_char8);
+                output.template emplace<id>();
+                return;
+            }
+        case var_io::value_type_id::vector_of_int8:
+            {
+                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::vector_of_int8);
+                output.template emplace<id>();
+                return;
+            }
+        case var_io::value_type_id::vector_of_int16:
+            {
+                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::vector_of_int16);
+                output.template emplace<id>();
+                return;
+            }
+        case var_io::value_type_id::vector_of_int32:
+            {
+                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::vector_of_int32);
+                output.template emplace<id>();
+                return;
+            }
+        case var_io::value_type_id::vector_of_float32:
+            {
+                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::vector_of_float32);
+                output.template emplace<id>();
+                return;
+            }
+        case var_io::value_type_id::vector_of_string:
+            {
+                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::vector_of_string);
+                output.template emplace<id>();
+                return;
+            }
+        case var_io::value_type_id::flag:
+            {
+                if constexpr (detail::is_genotype_element_value_type<t>)
+                {
+                    throw std::logic_error{
+                      "bio::var_io::genotype_element_value_type cannot be initialised to flag state."};
+                }
+                else
+                {
+                    constexpr size_t id = static_cast<size_t>(var_io::value_type_id::flag);
+                    output.template emplace<id>();
+                }
+                return;
+            }
+    }
+}
+
+//!\brief Visitor definition for format_input_handler<vcf>::parse_element_value_type.
+struct format_input_handler<vcf>::parse_element_value_type_fn
 {
     //!\brief The input data.
     std::string_view                  input;
@@ -708,7 +751,7 @@ struct format_input_handler<vcf>::parse_dynamic_type_fn
             for (std::string_view const s : input | detail::eager_split(','))
             {
                 vec.emplace_back();
-                parse_dynamic_type_fn{s}(vec.back());
+                parse_element_value_type_fn{s}(vec.back());
             }
         }
 
@@ -716,13 +759,19 @@ struct format_input_handler<vcf>::parse_dynamic_type_fn
     }
 };
 
-template <detail::is_dynamic_type output_t>
-inline size_t format_input_handler<vcf>::parse_dynamic_type(var_io::dynamic_type_id const id,
-                                                            std::string_view const        input_string,
-                                                            output_t &                    output)
+/*!\brief Parse text input into a bio::var_io::info_element_value_type / bio::var_io::genotype_element_value_type.
+ * \param[in]  id           ID of the type that shall be read.
+ * \param[in]  input_string The string data to read from.
+ * \param[out] output       The object to store the result into.
+ * \returns The number of elements stored in the output in case ID is one of the "vector_of_"-types; 1 otherwise.
+ */
+template <detail::is_info_element_value_type output_t>
+inline size_t format_input_handler<vcf>::parse_element_value_type(var_io::value_type_id const id,
+                                                                  std::string_view const      input_string,
+                                                                  output_t &                  output)
 {
-    detail::init_dynamic_type(id, output);
-    return std::visit(parse_dynamic_type_fn{input_string}, output);
+    init_element_value_type(id, output);
+    return std::visit(parse_element_value_type_fn{input_string}, output);
 }
 
 } // namespace bio

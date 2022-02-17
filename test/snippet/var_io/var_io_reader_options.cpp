@@ -20,30 +20,16 @@ int main()
 //================= SNIPPETS ======================
 
 {
-//![field_types_vcf_only]
-// Only allow VCF-format (not BCF) and use full VCF style representation
-bio::var_io::reader_options options{
-    .field_types = bio::var_io::field_types_vcf_style<>,
-    .formats     = bio::ttag<bio::vcf>
-};
-
-bio::var_io::reader reader{"example.vcf", options};
-
-/*...*/
-//![field_types_vcf_only]
-}
-
-{
 //![field_types_deep]
 // this results in the records becoming "copyable"
 bio::var_io::reader_options options{ .field_types = bio::var_io::field_types<bio::ownership::deep> };
 
-bio::var_io::reader reader{"example.vcf", options};
+// read the entire file, copy all records into a vector; immediately closes file again
+std::vector records = bio::var_io::reader{"example.vcf", options} | seqan3::views::to<std::vector>;
 
-// read the entire file, copy all records into a vector
-std::vector records = reader | seqan3::views::to<std::vector>;
+/* do something else */
 
-// process them later-on
+// process the records later-on
 for (auto & rec : records)
 {
     seqan3::debug_stream << rec.chrom() << ':'
