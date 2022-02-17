@@ -55,7 +55,7 @@ namespace bio::var_io
  * are returned by default also correspond to VCF specification (i.e. 1-based positions, string as strings and not
  * as numbers) **with one exception:** the genotypes are not grouped by sample (as in the VCF format) but by
  * genotype field (as in the BCF format).
- * This results in  a notably better performance when reading BCF files. See below for information on how to change
+ * This results in a notably better performance when reading BCF files. See below for information on how to change
  * this.
  *
  * This reader supports the following formats:

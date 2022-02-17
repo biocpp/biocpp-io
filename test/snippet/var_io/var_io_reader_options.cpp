@@ -24,12 +24,12 @@ int main()
 // this results in the records becoming "copyable"
 bio::var_io::reader_options options{ .field_types = bio::var_io::field_types<bio::ownership::deep> };
 
-bio::var_io::reader reader{"example.vcf", options};
+// read the entire file, copy all records into a vector; immediately closes file again
+std::vector records = bio::var_io::reader{"example.vcf", options} | seqan3::views::to<std::vector>;
 
-// read the entire file, copy all records into a vector
-std::vector records = reader | seqan3::views::to<std::vector>;
+/* do something else */
 
-// process them later-on
+// process the records later-on
 for (auto & rec : records)
 {
     seqan3::debug_stream << rec.chrom() << ':'

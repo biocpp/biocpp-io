@@ -18,6 +18,12 @@
 /*!\defgroup var_io Var I/O
  * \ingroup bio
  * \brief Reader and writer for variant files.
+ *
+ * This module provides high-level APIs to read and write VCF and BCF files.
+ *
+ * To read files, have a look at bio::var_io::reader and to write files have a look at bio::var_io::writer.
+ *
+ *
  */
 
 /*!\namespace bio::var_io
