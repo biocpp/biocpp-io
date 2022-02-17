@@ -21,6 +21,52 @@
 namespace bio::detail
 {
 
+template <typename t>
+concept var_io_legal_type_aux =
+  std::same_as<t, char> || std::signed_integral<t> || std::floating_point<t> || std::same_as < std::decay_t<t>,
+char const * > ;
+
+/*!\interface bio::detail::var_io_legal_type <>
+ * \tparam t The type to check.
+ * \brief A type that is similar to one of the alternatives of bio::var_io::info_element_value_type
+ */
+//!\cond CONCEPT_DEF
+template <typename t>
+concept var_io_legal_type = var_io_legal_type_aux<std::remove_cvref_t<t>> || std::same_as<t const &, bool const &> ||
+  (std::ranges::forward_range<t> && (var_io_legal_type_aux<std::remove_cvref_t<std::ranges::range_reference_t<t>>> ||
+                                     (std::ranges::forward_range<std::ranges::range_reference_t<t>> &&
+                                      std::same_as<char const &, std::ranges::range_reference_t<t> const &>)));
+//!\endcond
+
+/*!\interface bio::detail::var_io_legal_vector_type <>
+ * \tparam t The type to check.
+ * \brief A type that is similar to one of the alternatives of bio::var_io::info_element_value_type
+ */
+//!\cond CONCEPT_DEF
+template <typename t>
+concept var_io_legal_vector_type =
+  std::ranges::forward_range<t> && var_io_legal_type<std::ranges::range_reference_t<t>> &&
+  !std::same_as<bool const &, std::ranges::range_reference_t<t>>;
+//!\endcond
+
+/*!\interface bio::detail::var_io_legal_or_dynamic <>
+ * \tparam t The type to check.
+ * \brief A type that is similar to one of the alternatives of bio::var_io::info_element_value_type
+ */
+//!\cond CONCEPT_DEF
+template <typename t>
+concept var_io_legal_or_dynamic = var_io_legal_type<t> || is_info_element_value_type<t>;
+//!\endcond
+
+/*!\interface bio::detail::var_io_vector_legal_or_dynamic <>
+ * \tparam t The type to check.
+ * \brief A type that is similar to one of the alternatives of bio::var_io::info_element_value_type
+ */
+//!\cond CONCEPT_DEF
+template <typename t>
+concept var_io_vector_legal_or_dynamic = var_io_legal_vector_type<t> || is_genotype_element_value_type<t>;
+//!\endcond
+
 /*!\interface bio::detail::info_element_writer_concept <>
  * \tparam t The type to check.
  * \brief Types "similar" to bio::var_io::info_element / bio::var_io::info_element_bcf.

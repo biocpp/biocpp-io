@@ -99,10 +99,10 @@ private:
     static constexpr auto views_get_second =
       std::views::transform([](auto & pair) -> decltype(auto) { return detail::get_second(pair); });
 
-    //!\brief Get the size of a range or dynamic_vector_type.
+    //!\brief Get the size of a range or genotype_element_value_type.
     static size_t dyn_vec_size(auto & in)
     {
-        if constexpr (detail::is_dynamic_vector_type<std::remove_cvref_t<decltype(in)>>)
+        if constexpr (detail::is_genotype_element_value_type<std::remove_cvref_t<decltype(in)>>)
             return std::visit([](auto & val) { return std::ranges::size(val); }, in);
         else
             return std::ranges::size(in);
@@ -180,18 +180,18 @@ private:
             }
         };
 
-        if constexpr (detail::is_dynamic_type<std::remove_cvref_t<decltype(var)>>)
+        if constexpr (detail::is_info_element_value_type<std::remove_cvref_t<decltype(var)>>)
             std::visit(visitor, var);
         else
             visitor(var);
     }
 
     //!\brief Write variant or a type that is given inplace of a variant; possibly verify.
-    void write_variant(auto const & var, var_io::dynamic_type_id const type_id)
+    void write_variant(auto const & var, var_io::value_type_id const type_id)
     {
-        if constexpr (detail::is_dynamic_type<std::remove_cvref_t<decltype(var)>>)
+        if constexpr (detail::is_info_element_value_type<std::remove_cvref_t<decltype(var)>>)
         {
-            if (!detail::type_id_is_compatible(type_id, var_io::dynamic_type_id{var.index()}))
+            if (!detail::type_id_is_compatible(type_id, var_io::value_type_id{var.index()}))
                 throw format_error{"The variant was not in the proper state."}; // TODO improve text
         }
         else
@@ -246,7 +246,7 @@ private:
             }
         };
 
-        if constexpr (detail::is_dynamic_vector_type<std::remove_cvref_t<decltype(var)>>)
+        if constexpr (detail::is_genotype_element_value_type<std::remove_cvref_t<decltype(var)>>)
             std::visit(visitor, var);
         else
             visitor(var);
@@ -292,9 +292,9 @@ private:
         else
             pos = header->string_to_info_pos().at(key);
 
-        var_io::dynamic_type_id type_id = header->infos[pos].type;
+        var_io::value_type_id type_id = header->infos[pos].type;
 
-        if (type_id != var_io::dynamic_type_id::flag) // all fields that aren't flags have second part
+        if (type_id != var_io::value_type_id::flag) // all fields that aren't flags have second part
         {
             it = '=';
             write_variant(val, type_id);

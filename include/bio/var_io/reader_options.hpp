@@ -24,7 +24,7 @@
 #include <bio/format/vcf.hpp>
 #include <bio/stream/transparent_istream.hpp>
 #include <bio/stream/transparent_ostream.hpp>
-#include <bio/var_io/dynamic_type.hpp>
+
 #include <bio/var_io/header.hpp>
 #include <bio/var_io/misc.hpp>
 
@@ -43,7 +43,7 @@ namespace bio::detail
 template <typename t>
 concept info_element_reader_concept = detail::decomposable_into_two<t> &&
   (detail::out_string<detail::first_elem_t<t>> ||
-   std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::is_dynamic_type<detail::second_elem_t<t>>;
+   std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::is_info_element_value_type<detail::second_elem_t<t>>;
 //!\endcond
 
 /*!\interface bio::detail::genotype_reader_concept <>
@@ -54,7 +54,7 @@ concept info_element_reader_concept = detail::decomposable_into_two<t> &&
 template <typename t>
 concept genotype_reader_concept = detail::decomposable_into_two<t> &&
   (detail::out_string<detail::first_elem_t<t>> ||
-   std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::is_dynamic_vector_type<detail::second_elem_t<t>>;
+   std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::is_genotype_element_value_type<detail::second_elem_t<t>>;
 //!\endcond
 } // namespace bio::detail
 
@@ -163,13 +163,13 @@ namespace bio::var_io
  * 8. bio::field::info
  *   * back-insertable range of elements similar to bio::var_io::info_element
  *   * *similar* means any type decomposable into two elements (`struct` or tuple) where the
- * first is either a string[_view] or `int32_t` (IDX) and the second is bio::var_io::dynamic_type.
+ * first is either a string[_view] or `int32_t` (IDX) and the second is bio::var_io::info_element_value_type.
  * 9. field::genotypes
  *   * A range (that supports back-insertion) over elements that are "similar" to
  * bio::var_io::genotype_element:
  *     * The elements must be decomposable into exactly two sub-elements (either `struct` or tuple).
  *     * The first subelement must be a string[_view] (ID) or `int32_t` (IDX).
- *     * The second subelement must bio::var_io::dynamic_vector_type.
+ *     * The second subelement must bio::var_io::genotype_element_value_type.
  *
  * This example shows how to read only a subset of the available fields and manually specify their type:
  *

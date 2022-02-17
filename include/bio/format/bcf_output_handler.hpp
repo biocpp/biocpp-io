@@ -645,7 +645,7 @@ private:
             // explicit integer width given in header
             if (hdr_entry.other_fields.find("IntegerBits") != hdr_entry.other_fields.end())
             {
-                desc = detail::dynamic_type_id_2_type_descriptor(hdr_entry.type);
+                desc = detail::value_type_id_2_type_descriptor(hdr_entry.type);
                 if (!detail::type_descriptor_is_int(desc)) // ignore header value if it isn't intX
                     desc = c_desc;
             }
@@ -659,7 +659,7 @@ private:
 
         if (verify_header_types)
         {
-            detail::bcf_type_descriptor header_desc = detail::dynamic_type_id_2_type_descriptor(hdr_entry.type);
+            detail::bcf_type_descriptor header_desc = detail::value_type_id_2_type_descriptor(hdr_entry.type);
             if (desc != header_desc || !detail::type_descriptor_is_int(desc) ||
                 !detail::type_descriptor_is_int(header_desc))
             {
@@ -701,7 +701,7 @@ private:
         var_io::header::info_t const & info = header->infos.at(header->idx_to_info_pos().at(idx));
 
         /* VALUE */
-        if constexpr (detail::is_dynamic_type<value_t>)
+        if constexpr (detail::is_info_element_value_type<value_t>)
         {
             auto func = [&](auto & param) { write_typed_data(param, get_desc(param, info)); };
             std::visit(func, value);
@@ -944,7 +944,7 @@ private:
             }
         };
 
-        if constexpr (detail::is_dynamic_vector_type<value_t>)
+        if constexpr (detail::is_genotype_element_value_type<value_t>)
             std::visit(func, value);
         else
             func(value);

@@ -23,7 +23,7 @@
 #include <bio/detail/views_eager_split.hpp>
 #include <bio/exception.hpp>
 #include <bio/misc.hpp>
-#include <bio/var_io/dynamic_type.hpp>
+#include <bio/var_io/misc.hpp>
 
 namespace bio::var_io
 {
@@ -100,12 +100,12 @@ public:
     //!\brief Type of a INFO field header line.
     struct info_t
     {
-        std::string     id;             //!< The ID.
-        int32_t         number{};       //!< Number of values, see also bio::var_io::header_number.
-        dynamic_type_id type{};         //!< Type of the field.
-        std::string     description{};  //!< Description.
-        other_fields_t  other_fields{}; //!< Other entries.
-        int32_t         idx = -1;       //!< The numeric ID.
+        std::string    id;             //!< The ID.
+        int32_t        number{};       //!< Number of values, see also bio::var_io::header_number.
+        value_type_id  type{};         //!< Type of the field.
+        std::string    description{};  //!< Description.
+        other_fields_t other_fields{}; //!< Other entries.
+        int32_t        idx = -1;       //!< The numeric ID.
 
         //!\brief Defaulted three-way comparisons.
         auto operator<=>(info_t const &) const = default;
@@ -558,29 +558,29 @@ private:
         return raw_data;
     }
 
-    //!\brief Turn bio::dynamic_type_id into string.
-    static std::string unparse_type(dynamic_type_id const id)
+    //!\brief Turn bio::value_type_id into string.
+    static std::string unparse_type(value_type_id const id)
     {
         // TODO replace with string_view
         switch (id)
         {
-            case dynamic_type_id::int8:
-            case dynamic_type_id::vector_of_int8:
-            case dynamic_type_id::int16:
-            case dynamic_type_id::vector_of_int16:
-            case dynamic_type_id::int32:
-            case dynamic_type_id::vector_of_int32:
+            case value_type_id::int8:
+            case value_type_id::vector_of_int8:
+            case value_type_id::int16:
+            case value_type_id::vector_of_int16:
+            case value_type_id::int32:
+            case value_type_id::vector_of_int32:
                 return "Integer";
-            case dynamic_type_id::float32:
-            case dynamic_type_id::vector_of_float32:
+            case value_type_id::float32:
+            case value_type_id::vector_of_float32:
                 return "Float";
-            case dynamic_type_id::char8:
-            case dynamic_type_id::vector_of_char8:
+            case value_type_id::char8:
+            case value_type_id::vector_of_char8:
                 return "Character";
-            case dynamic_type_id::string:
-            case dynamic_type_id::vector_of_string:
+            case value_type_id::string:
+            case value_type_id::vector_of_string:
                 return "String";
-            case dynamic_type_id::flag:
+            case value_type_id::flag:
                 return "Flag";
             default:
                 throw format_error{"Illegal type in INFO or FILTER header line."};
@@ -675,15 +675,15 @@ private:
             {
                 switch (new_entry.type)
                 {
-                    case dynamic_type_id::int8:
-                    case dynamic_type_id::int16:
-                    case dynamic_type_id::int32:
-                        new_entry.type = dynamic_type_id::int8;
+                    case value_type_id::int8:
+                    case value_type_id::int16:
+                    case value_type_id::int32:
+                        new_entry.type = value_type_id::int8;
                         break;
-                    case dynamic_type_id::vector_of_int8:
-                    case dynamic_type_id::vector_of_int16:
-                    case dynamic_type_id::vector_of_int32:
-                        new_entry.type = dynamic_type_id::vector_of_int8;
+                    case value_type_id::vector_of_int8:
+                    case value_type_id::vector_of_int16:
+                    case value_type_id::vector_of_int32:
+                        new_entry.type = value_type_id::vector_of_int8;
                         break;
                     default:
                         break;
@@ -693,15 +693,15 @@ private:
             {
                 switch (new_entry.type)
                 {
-                    case dynamic_type_id::int8:
-                    case dynamic_type_id::int16:
-                    case dynamic_type_id::int32:
-                        new_entry.type = dynamic_type_id::int16;
+                    case value_type_id::int8:
+                    case value_type_id::int16:
+                    case value_type_id::int32:
+                        new_entry.type = value_type_id::int16;
                         break;
-                    case dynamic_type_id::vector_of_int8:
-                    case dynamic_type_id::vector_of_int16:
-                    case dynamic_type_id::vector_of_int32:
-                        new_entry.type = dynamic_type_id::vector_of_int16;
+                    case value_type_id::vector_of_int8:
+                    case value_type_id::vector_of_int16:
+                    case value_type_id::vector_of_int32:
+                        new_entry.type = value_type_id::vector_of_int16;
                         break;
                     default:
                         break;
@@ -863,18 +863,18 @@ private:
         return header_number::dot;
     }
 
-    /*!\brief Turn a string into bio::var_io::dynamic_type_id.
+    /*!\brief Turn a string into bio::var_io::value_type_id.
      * \param[in] in        The input string.
      * \param[in] number    The accompanying number value from the header.
      * \return The dynamic type id.
      */
-    static dynamic_type_id parse_type(std::string_view const in, int32_t const number)
+    static value_type_id parse_type(std::string_view const in, int32_t const number)
     {
-        dynamic_type_id ret{};
+        value_type_id ret{};
 
         if (in == "Flag")
         {
-            ret = dynamic_type_id::flag;
+            ret = value_type_id::flag;
             if (number != 0)
                 throw format_error{std::string{"Flags must always have number 0 in header."}};
             return ret;
@@ -886,30 +886,30 @@ private:
         if (in == "Integer")
         {
             if (number == 1)
-                ret = dynamic_type_id::int32;
+                ret = value_type_id::int32;
             else
-                ret = dynamic_type_id::vector_of_int32;
+                ret = value_type_id::vector_of_int32;
         }
         else if (in == "Float")
         {
             if (number == 1)
-                ret = dynamic_type_id::float32;
+                ret = value_type_id::float32;
             else
-                ret = dynamic_type_id::vector_of_float32;
+                ret = value_type_id::vector_of_float32;
         }
         else if (in == "Character")
         {
             if (number == 1)
-                ret = dynamic_type_id::char8;
+                ret = value_type_id::char8;
             else
-                ret = dynamic_type_id::vector_of_char8;
+                ret = value_type_id::vector_of_char8;
         }
         else if (in == "String")
         {
             if (number == 1)
-                ret = dynamic_type_id::string;
+                ret = value_type_id::string;
             else
-                ret = dynamic_type_id::vector_of_string;
+                ret = value_type_id::vector_of_string;
         }
         else
         {
@@ -950,27 +950,27 @@ private:
 //!\brief A table of reserved INFO entries.
 inline std::unordered_map<std::string_view, header::info_t> const reserved_infos =
 {
-    {"AA",       {"AA",                   1, dynamic_type_id::string,            "\"Ancestral allele\""}},
-    {"AC",       {"AC",    header_number::A, dynamic_type_id::vector_of_int32,   "\"Allele count in genotypes, for each ALT allele, in the same order as listed\""}},
-    {"AD",       {"AD",    header_number::R, dynamic_type_id::vector_of_int32,   "\"Total read depth for each allele\""}},
-    {"ADF",      {"ADF",   header_number::R, dynamic_type_id::vector_of_int32,   "\"Read depth for each allele on the forward strand\""}},
-    {"ADR",      {"ADR",   header_number::R, dynamic_type_id::vector_of_int32,   "\"Read depth for each allele on the reverse strand\""}},
-    {"AF",       {"AF",    header_number::A, dynamic_type_id::vector_of_float32, "\"Allele frequency for each ALT allele in the same order as listed\""}},
-    {"AN",       {"AN",                   1, dynamic_type_id::int32,             "\"Total number of alleles in called genotypes\""}},
-    {"BQ",       {"BQ",                   1, dynamic_type_id::float32,           "\"RMS base quality\""}},
-    {"CIGAR",    {"CIGAR", header_number::A, dynamic_type_id::vector_of_string,  "\"Cigar string describing how to align an alternate allele to the reference allele\""}},
-    {"DB",       {"DB",                   0, dynamic_type_id::flag,              "\"dbSNP membership\""}},
-    {"DP",       {"DP",                   1, dynamic_type_id::int32,             "\"Combined depth across samples\""}},
-    {"END",      {"END",                  1, dynamic_type_id::int32,             "\"End position on CHROM (used with symbolic alleles; see below)\""}},
-    {"H2",       {"H2",                   0, dynamic_type_id::flag,              "\"HapMap2 membership\""}},
-    {"H3",       {"H3",                   0, dynamic_type_id::flag,              "\"HapMap3 membership\""}},
-    {"MQ",       {"MQ",                   1, dynamic_type_id::float32,           "\"RMS mapping quality\""}},
-    {"MQ0",      {"MQ0",                  1, dynamic_type_id::int32,             "\"Number of MAPQ == 0 reads\""}},
-    {"NS",       {"NS",                   1, dynamic_type_id::int32,             "\"Number of samples with data\""}},
-    {"SB",       {"SB",                   4, dynamic_type_id::vector_of_int32,   "\"Strand bias\""}},
-    {"SOMATIC",  {"SOMATIC",              0, dynamic_type_id::flag,              "\"Somatic mutation (for cancer genomics)\""}},
-    {"VALIDATED",{"VALIDATED",            0, dynamic_type_id::flag,              "\"Validated by follow-up experiment\""}},
-    {"1000G",    {"1000G",                0, dynamic_type_id::flag,              "\"1000 Genomes membership\""}}
+    {"AA",       {"AA",                   1, value_type_id::string,            "\"Ancestral allele\""}},
+    {"AC",       {"AC",    header_number::A, value_type_id::vector_of_int32,   "\"Allele count in genotypes, for each ALT allele, in the same order as listed\""}},
+    {"AD",       {"AD",    header_number::R, value_type_id::vector_of_int32,   "\"Total read depth for each allele\""}},
+    {"ADF",      {"ADF",   header_number::R, value_type_id::vector_of_int32,   "\"Read depth for each allele on the forward strand\""}},
+    {"ADR",      {"ADR",   header_number::R, value_type_id::vector_of_int32,   "\"Read depth for each allele on the reverse strand\""}},
+    {"AF",       {"AF",    header_number::A, value_type_id::vector_of_float32, "\"Allele frequency for each ALT allele in the same order as listed\""}},
+    {"AN",       {"AN",                   1, value_type_id::int32,             "\"Total number of alleles in called genotypes\""}},
+    {"BQ",       {"BQ",                   1, value_type_id::float32,           "\"RMS base quality\""}},
+    {"CIGAR",    {"CIGAR", header_number::A, value_type_id::vector_of_string,  "\"Cigar string describing how to align an alternate allele to the reference allele\""}},
+    {"DB",       {"DB",                   0, value_type_id::flag,              "\"dbSNP membership\""}},
+    {"DP",       {"DP",                   1, value_type_id::int32,             "\"Combined depth across samples\""}},
+    {"END",      {"END",                  1, value_type_id::int32,             "\"End position on CHROM (used with symbolic alleles; see below)\""}},
+    {"H2",       {"H2",                   0, value_type_id::flag,              "\"HapMap2 membership\""}},
+    {"H3",       {"H3",                   0, value_type_id::flag,              "\"HapMap3 membership\""}},
+    {"MQ",       {"MQ",                   1, value_type_id::float32,           "\"RMS mapping quality\""}},
+    {"MQ0",      {"MQ0",                  1, value_type_id::int32,             "\"Number of MAPQ == 0 reads\""}},
+    {"NS",       {"NS",                   1, value_type_id::int32,             "\"Number of samples with data\""}},
+    {"SB",       {"SB",                   4, value_type_id::vector_of_int32,   "\"Strand bias\""}},
+    {"SOMATIC",  {"SOMATIC",              0, value_type_id::flag,              "\"Somatic mutation (for cancer genomics)\""}},
+    {"VALIDATED",{"VALIDATED",            0, value_type_id::flag,              "\"Validated by follow-up experiment\""}},
+    {"1000G",    {"1000G",                0, value_type_id::flag,              "\"1000 Genomes membership\""}}
 };
 // clang-format on
 
@@ -978,22 +978,22 @@ inline std::unordered_map<std::string_view, header::info_t> const reserved_infos
 //!\brief A table of reserved FORMAT entries.
 inline std::unordered_map<std::string_view, header::format_t> const reserved_formats =
 {
-    {"AD",  {"AD",  header_number::R, dynamic_type_id::vector_of_int32,   "\"Read depth for each allele\""}},
-    {"ADF", {"ADF", header_number::R, dynamic_type_id::vector_of_int32,   "\"Read depth for each allele on the forward strand\""}},
-    {"ADR", {"ADR", header_number::R, dynamic_type_id::vector_of_int32,   "\"Read depth for each allele on the reverse strand\""}},
-    {"DP",  {"DP",                 1, dynamic_type_id::int32,             "\"Read depth\""}},
-    {"EC",  {"EC",  header_number::A, dynamic_type_id::vector_of_int32,   "\"Expected alternate allele counts\""}},
-    {"FT",  {"FT",                 1, dynamic_type_id::string,            "\"Filter indicating if this genotype was “called”\""}},
-    {"GL",  {"GL",  header_number::G, dynamic_type_id::vector_of_float32, "\"Genotype likelihoods\""}},
-    {"GP",  {"GP",  header_number::G, dynamic_type_id::vector_of_float32, "\"Genotype posterior probabilities\""}},
-    {"GQ",  {"GQ",                 1, dynamic_type_id::int32,             "\"Conditional genotype quality\""}},
-    {"GT",  {"GT",                 1, dynamic_type_id::string,            "\"Genotype\""}},
-    {"HQ",  {"HQ",                 2, dynamic_type_id::vector_of_int32,   "\"Haplotype quality\""}},
-    {"MQ",  {"MQ",                 1, dynamic_type_id::int32,             "\"RMS mapping quality\""}},
-    {"PL",  {"PL",  header_number::G, dynamic_type_id::vector_of_int32,   "\"Phred-scaled genotype likelihoods rounded to the closest integer\""}},
-    {"PP",  {"PP",  header_number::G, dynamic_type_id::vector_of_int32,   "\"Phred-scaled genotype posterior probabilities rounded to the closest integer\""}},
-    {"PQ",  {"PQ",                 1, dynamic_type_id::int32,             "\"Phasing quality\""}},
-    {"PS",  {"PS",                 1, dynamic_type_id::int32,             "\"Phase set\""}}
+    {"AD",  {"AD",  header_number::R, value_type_id::vector_of_int32,   "\"Read depth for each allele\""}},
+    {"ADF", {"ADF", header_number::R, value_type_id::vector_of_int32,   "\"Read depth for each allele on the forward strand\""}},
+    {"ADR", {"ADR", header_number::R, value_type_id::vector_of_int32,   "\"Read depth for each allele on the reverse strand\""}},
+    {"DP",  {"DP",                 1, value_type_id::int32,             "\"Read depth\""}},
+    {"EC",  {"EC",  header_number::A, value_type_id::vector_of_int32,   "\"Expected alternate allele counts\""}},
+    {"FT",  {"FT",                 1, value_type_id::string,            "\"Filter indicating if this genotype was “called”\""}},
+    {"GL",  {"GL",  header_number::G, value_type_id::vector_of_float32, "\"Genotype likelihoods\""}},
+    {"GP",  {"GP",  header_number::G, value_type_id::vector_of_float32, "\"Genotype posterior probabilities\""}},
+    {"GQ",  {"GQ",                 1, value_type_id::int32,             "\"Conditional genotype quality\""}},
+    {"GT",  {"GT",                 1, value_type_id::string,            "\"Genotype\""}},
+    {"HQ",  {"HQ",                 2, value_type_id::vector_of_int32,   "\"Haplotype quality\""}},
+    {"MQ",  {"MQ",                 1, value_type_id::int32,             "\"RMS mapping quality\""}},
+    {"PL",  {"PL",  header_number::G, value_type_id::vector_of_int32,   "\"Phred-scaled genotype likelihoods rounded to the closest integer\""}},
+    {"PP",  {"PP",  header_number::G, value_type_id::vector_of_int32,   "\"Phred-scaled genotype posterior probabilities rounded to the closest integer\""}},
+    {"PQ",  {"PQ",                 1, value_type_id::int32,             "\"Phasing quality\""}},
+    {"PS",  {"PS",                 1, value_type_id::int32,             "\"Phase set\""}}
 };
 // clang-format on
 

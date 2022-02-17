@@ -34,7 +34,7 @@
 #include <bio/format/bcf.hpp>
 #include <bio/format/format_input_handler.hpp>
 #include <bio/stream/detail/fast_streambuf_iterator.hpp>
-#include <bio/var_io/dynamic_type.hpp>
+
 #include <bio/var_io/header.hpp>
 #include <bio/var_io/misc.hpp>
 #include <bio/var_io/reader_options.hpp> //TODO for field_types_raw; move somewhere else
@@ -587,8 +587,8 @@ private:
      * \{
      */
     //!\brief Set to single value.
-    template <var_io::dynamic_type_id id_, typename elem_t>
-    static inline void dynamic_type_init_single(std::byte const *& cache_ptr, auto & output)
+    template <var_io::value_type_id id_, typename elem_t>
+    static inline void info_element_value_type_init_single(std::byte const *& cache_ptr, auto & output)
     {
         constexpr size_t id      = static_cast<size_t>(id_);
         auto &           output_ = output.template emplace<id>();
@@ -597,8 +597,10 @@ private:
     }
 
     //!\brief Set to string.
-    template <var_io::dynamic_type_id id_>
-    static inline void dynamic_type_init_string(size_t const size, std::byte const *& cache_ptr, auto & output)
+    template <var_io::value_type_id id_>
+    static inline void info_element_value_type_init_string(size_t const       size,
+                                                           std::byte const *& cache_ptr,
+                                                           auto &             output)
     {
         constexpr size_t id      = static_cast<size_t>(id_);
         auto &           output_ = output.template emplace<id>();
@@ -610,8 +612,10 @@ private:
     }
 
     //!\brief Set to vector.
-    template <var_io::dynamic_type_id id_, typename elem_t>
-    static inline void dynamic_type_init_vector(size_t const size, std::byte const *& cache_ptr, auto & output)
+    template <var_io::value_type_id id_, typename elem_t>
+    static inline void info_element_value_type_init_vector(size_t const       size,
+                                                           std::byte const *& cache_ptr,
+                                                           auto &             output)
     {
         constexpr size_t id      = static_cast<size_t>(id_);
         auto &           output_ = output.template emplace<id>();
@@ -623,10 +627,10 @@ private:
     }
 
     //!\brief Set to vector-of-string.
-    template <var_io::dynamic_type_id id_>
-    static inline void dynamic_type_init_vector_of_string(size_t const       size,
-                                                          std::byte const *& cache_ptr,
-                                                          auto &             output)
+    template <var_io::value_type_id id_>
+    static inline void info_element_value_type_init_vector_of_string(size_t const       size,
+                                                                     std::byte const *& cache_ptr,
+                                                                     auto &             output)
     {
         constexpr size_t id      = static_cast<size_t>(id_);
         auto &           output_ = output.template emplace<id>();
@@ -642,11 +646,11 @@ private:
     }
 
     //!\brief Set to vector-of-vector.
-    template <var_io::dynamic_type_id id_, typename elem_t>
-    static inline void dynamic_type_init_vector_of_vector(size_t const       outer_size,
-                                                          size_t const       inner_size,
-                                                          std::byte const *& cache_ptr,
-                                                          auto &             output)
+    template <var_io::value_type_id id_, typename elem_t>
+    static inline void info_element_value_type_init_vector_of_vector(size_t const       outer_size,
+                                                                     size_t const       inner_size,
+                                                                     std::byte const *& cache_ptr,
+                                                                     auto &             output)
     {
         constexpr size_t id      = static_cast<size_t>(id_);
         auto &           output_ = output.template emplace<id>();
@@ -666,20 +670,20 @@ private:
         cache_ptr += outer_size * inner_size * sizeof(elem_t);
     }
 
-    template <detail::is_dynamic_type dyn_t>
-    void parse_dynamic_type(var_io::dynamic_type_id const     id_from_header,
-                            detail::bcf_type_descriptor const desc,
-                            size_t const                      size,
-                            std::byte const *&                cache_ptr,
-                            dyn_t &                           output); // implementation below class
+    template <detail::is_info_element_value_type dyn_t>
+    void parse_info_element_value_type(var_io::value_type_id const       id_from_header,
+                                       detail::bcf_type_descriptor const desc,
+                                       size_t const                      size,
+                                       std::byte const *&                cache_ptr,
+                                       dyn_t &                           output); // implementation below class
 
-    template <detail::is_dynamic_vector_type dyn_t>
-    void parse_dynamic_type(var_io::dynamic_type_id const     id_from_header,
-                            detail::bcf_type_descriptor const desc,
-                            size_t const                      outer_size,
-                            size_t const                      inner_size,
-                            std::byte const *&                cache_ptr,
-                            dyn_t &                           output); // implementation below class
+    template <detail::is_genotype_element_value_type dyn_t>
+    void parse_info_element_value_type(var_io::value_type_id const       id_from_header,
+                                       detail::bcf_type_descriptor const desc,
+                                       size_t const                      outer_size,
+                                       size_t const                      inner_size,
+                                       std::byte const *&                cache_ptr,
+                                       dyn_t &                           output); // implementation below class
     //!\}
 
     /*!\name Parsed record handling
@@ -790,11 +794,11 @@ private:
 
             size_t real_size = size < 15 ? size : decode_integral(cache_ptr);
 
-            parse_dynamic_type(header.infos[header.idx_to_info_pos().at(idx)].type,
-                               desc,
-                               real_size,
-                               cache_ptr,
-                               variant);
+            parse_info_element_value_type(header.infos[header.idx_to_info_pos().at(idx)].type,
+                                          desc,
+                                          real_size,
+                                          cache_ptr,
+                                          variant);
 
             if constexpr (detail::out_string<decltype(id)>)
                 detail::string_copy(header.infos[header.idx_to_info_pos().at(idx)].id, id);
@@ -878,12 +882,12 @@ private:
             if (format.id == "GT") // this needs custom decoding, it is not a string
             {
                 /* we explicitly parse into integer format for now: */
-                parse_dynamic_type(var_io::dynamic_type_id::vector_of_int32,
-                                   fmt_type,
-                                   record_core->n_sample,
-                                   fmt_size,
-                                   cache_ptr,
-                                   parsed_variant);
+                parse_info_element_value_type(var_io::value_type_id::vector_of_int32,
+                                              fmt_type,
+                                              record_core->n_sample,
+                                              fmt_size,
+                                              cache_ptr,
+                                              parsed_variant);
 
                 /* we transform number to string and store in caches */
                 std::visit(
@@ -912,7 +916,7 @@ private:
                   parsed_variant);
 
                 /* now reset the variant to string-state and create copies/views */
-                constexpr size_t string_id = static_cast<size_t>(var_io::dynamic_type_id::string);
+                constexpr size_t string_id = static_cast<size_t>(var_io::value_type_id::string);
                 auto &           strings   = parsed_variant.template emplace<string_id>();
                 strings.resize(record_core->n_sample);
 
@@ -926,7 +930,12 @@ private:
             }
             else
             {
-                parse_dynamic_type(format.type, fmt_type, record_core->n_sample, fmt_size, cache_ptr, parsed_variant);
+                parse_info_element_value_type(format.type,
+                                              fmt_type,
+                                              record_core->n_sample,
+                                              fmt_size,
+                                              cache_ptr,
+                                              parsed_variant);
             }
         }
 
@@ -983,7 +992,7 @@ public:
 
         /* checks on header */
         if (header.string_to_format_pos().contains("GT") &&
-            header.formats[header.string_to_format_pos().at("GT")].type != var_io::dynamic_type_id::string)
+            header.formats[header.string_to_format_pos().at("GT")].type != var_io::value_type_id::string)
         {
             error("The \"GT\" field must always be encoded as a string.");
         }
@@ -999,103 +1008,108 @@ public:
 };
 
 /*!\brief Parse a "dynamically typed" field out of a BCF stream and store the content in a variant.
- * \tparam dyn_t             Type of the variant; specialisation of seqan3::var_io::dynamic_type.
- * \param[in] id_from_header A value of seqan3::var_io::dynamic_type_id that denotes the expected type.
+ * \tparam dyn_t             Type of the variant; specialisation of seqan3::var_io::info_element_value_type.
+ * \param[in] id_from_header A value of seqan3::var_io::value_type_id that denotes the expected type.
  * \param[in] desc           A value of seqan3::detail::bcf_type_descriptor that notes the detected type.
  * \param[in] size           The number of values belonging to this field.
  * \param[in,out] cache_ptr  Pointer into the BCF stream; will be updated to point past the end of read data.
  * \param[out] output        The variant to hold the parsed value.
  */
-template <detail::is_dynamic_type dyn_t>
-inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_id const     id_from_header,
-                                                          detail::bcf_type_descriptor const desc,
-                                                          size_t const                      size,
-                                                          std::byte const *&                cache_ptr,
-                                                          dyn_t &                           output)
+template <detail::is_info_element_value_type dyn_t>
+inline void format_input_handler<bcf>::parse_info_element_value_type(var_io::value_type_id const       id_from_header,
+                                                                     detail::bcf_type_descriptor const desc,
+                                                                     size_t const                      size,
+                                                                     std::byte const *&                cache_ptr,
+                                                                     dyn_t &                           output)
 {
     // TODO DRY out the boilerplate error messages
-    if (static_cast<size_t>(id_from_header) < static_cast<size_t>(var_io::dynamic_type_id::string) && size != 1)
+    if (static_cast<size_t>(id_from_header) < static_cast<size_t>(var_io::value_type_id::string) && size != 1)
         error("BCF data field expected exactly one element, got:", size);
 
     switch (id_from_header)
     {
-        case var_io::dynamic_type_id::char8:
+        case var_io::value_type_id::char8:
             {
                 if (desc != detail::bcf_type_descriptor::char8)
                     error("Attempting to create char but the byte descriptor does not indicate char type.");
 
-                dynamic_type_init_single<var_io::dynamic_type_id::char8, char>(cache_ptr, output);
+                info_element_value_type_init_single<var_io::value_type_id::char8, char>(cache_ptr, output);
                 return;
             }
-        case var_io::dynamic_type_id::int8:
-        case var_io::dynamic_type_id::int16:
-        case var_io::dynamic_type_id::int32:
+        case var_io::value_type_id::int8:
+        case var_io::value_type_id::int16:
+        case var_io::value_type_id::int32:
             {
                 switch (desc)
                 {
                     case detail::bcf_type_descriptor::int8:
-                        dynamic_type_init_single<var_io::dynamic_type_id::int8, int8_t>(cache_ptr, output);
+                        info_element_value_type_init_single<var_io::value_type_id::int8, int8_t>(cache_ptr, output);
                         break;
                     case detail::bcf_type_descriptor::int16:
-                        dynamic_type_init_single<var_io::dynamic_type_id::int16, int16_t>(cache_ptr, output);
+                        info_element_value_type_init_single<var_io::value_type_id::int16, int16_t>(cache_ptr, output);
                         break;
                     case detail::bcf_type_descriptor::int32:
-                        dynamic_type_init_single<var_io::dynamic_type_id::int32, int32_t>(cache_ptr, output);
+                        info_element_value_type_init_single<var_io::value_type_id::int32, int32_t>(cache_ptr, output);
                         break;
                     default:
                         error("Attempting to create int but the byte descriptor does not indicate int type.");
                 }
                 return;
             }
-        case var_io::dynamic_type_id::float32:
+        case var_io::value_type_id::float32:
             {
                 if (desc != detail::bcf_type_descriptor::float32)
                     error("Attempting to create float but the byte descriptor does not indicate float type.");
 
-                dynamic_type_init_single<var_io::dynamic_type_id::float32, float>(cache_ptr, output);
+                info_element_value_type_init_single<var_io::value_type_id::float32, float>(cache_ptr, output);
                 return;
             }
-        case var_io::dynamic_type_id::string:
+        case var_io::value_type_id::string:
             {
                 if (desc != detail::bcf_type_descriptor::char8)
                     error("Attempting to creates string but the byte descriptor does not indicate string type.");
 
-                dynamic_type_init_string<var_io::dynamic_type_id::string>(size, cache_ptr, output);
+                info_element_value_type_init_string<var_io::value_type_id::string>(size, cache_ptr, output);
                 return;
             }
-        case var_io::dynamic_type_id::vector_of_char8:
+        case var_io::value_type_id::vector_of_char8:
             {
                 if (desc != detail::bcf_type_descriptor::char8)
                     error("Attempting to create vector of char but the byte descriptor does not indicate char type.");
 
-                dynamic_type_init_vector<var_io::dynamic_type_id::vector_of_char8, char>(size, cache_ptr, output);
+                info_element_value_type_init_vector<var_io::value_type_id::vector_of_char8, char>(size,
+                                                                                                  cache_ptr,
+                                                                                                  output);
                 return;
             }
-        case var_io::dynamic_type_id::vector_of_int8:
-        case var_io::dynamic_type_id::vector_of_int16:
-        case var_io::dynamic_type_id::vector_of_int32:
+        case var_io::value_type_id::vector_of_int8:
+        case var_io::value_type_id::vector_of_int16:
+        case var_io::value_type_id::vector_of_int32:
             {
                 switch (desc)
                 {
                     case detail::bcf_type_descriptor::int8:
                         {
-                            dynamic_type_init_vector<var_io::dynamic_type_id::vector_of_int8, int8_t>(size,
-                                                                                                      cache_ptr,
-                                                                                                      output);
+                            info_element_value_type_init_vector<var_io::value_type_id::vector_of_int8, int8_t>(
+                              size,
+                              cache_ptr,
+                              output);
                             break;
                         }
                     case detail::bcf_type_descriptor::int16:
                         {
-                            dynamic_type_init_vector<var_io::dynamic_type_id::vector_of_int16, int16_t>(size,
-                                                                                                        cache_ptr,
-                                                                                                        output);
+                            info_element_value_type_init_vector<var_io::value_type_id::vector_of_int16, int16_t>(
+                              size,
+                              cache_ptr,
+                              output);
                             break;
                         }
                     case detail::bcf_type_descriptor::int32:
                         {
-                            dynamic_type_init_vector<var_io::dynamic_type_id::vector_of_int32, int32_t>(size,
-                                                                                                        cache_ptr,
-                                                                                                        output);
+                            info_element_value_type_init_vector<var_io::value_type_id::vector_of_int32, int32_t>(
+                              size,
+                              cache_ptr,
+                              output);
                             break;
                         }
                     default:
@@ -1103,26 +1117,30 @@ inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_i
                 }
                 return;
             }
-        case var_io::dynamic_type_id::vector_of_float32:
+        case var_io::value_type_id::vector_of_float32:
             {
                 if (desc != detail::bcf_type_descriptor::float32)
                     error("Attempting to create vector of float but the byte descriptor does not indicate float type.");
 
-                dynamic_type_init_vector<var_io::dynamic_type_id::vector_of_float32, float>(size, cache_ptr, output);
+                info_element_value_type_init_vector<var_io::value_type_id::vector_of_float32, float>(size,
+                                                                                                     cache_ptr,
+                                                                                                     output);
                 return;
             }
-        case var_io::dynamic_type_id::vector_of_string:
+        case var_io::value_type_id::vector_of_string:
             {
                 if (desc != detail::bcf_type_descriptor::char8)
                     error(
                       "Attempting to create vector of string but the byte descriptor does not indicate char alphabet");
 
-                dynamic_type_init_vector_of_string<var_io::dynamic_type_id::vector_of_string>(size, cache_ptr, output);
+                info_element_value_type_init_vector_of_string<var_io::value_type_id::vector_of_string>(size,
+                                                                                                       cache_ptr,
+                                                                                                       output);
                 return;
             }
-        case var_io::dynamic_type_id::flag:
+        case var_io::value_type_id::flag:
             {
-                constexpr size_t id = static_cast<size_t>(var_io::dynamic_type_id::flag);
+                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::flag);
                 output.template emplace<id>(true);
 
                 cache_ptr += size; // This should be 0, but is allowed to be something else
@@ -1132,61 +1150,61 @@ inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_i
 }
 
 /*!\brief Parse a "dynamically typed" field out of a BCF stream and store the content in a vector-variant.
- * \tparam dyn_t             Type of the variant; specialisation of seqan3::var_io::dynamic_type.
- * \param[in] id_from_header A value of seqan3::var_io::dynamic_type_id that denotes the expected type.
+ * \tparam dyn_t             Type of the variant; specialisation of seqan3::var_io::info_element_value_type.
+ * \param[in] id_from_header A value of seqan3::var_io::value_type_id that denotes the expected type.
  * \param[in] desc           A value of seqan3::detail::bcf_type_descriptor that notes the detected type.
  * \param[in] outer_size     The number of values belonging to this field.
  * \param[in] inner_size     The number of values per inner vector in case of vector-of-vector.
  * \param[in,out] cache_ptr  Pointer into the BCF stream; will be updated to point past the end of read data.
  * \param[out] output        The variant to hold the parsed value.
  */
-template <detail::is_dynamic_vector_type dyn_t>
-inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_id const     id_from_header,
-                                                          detail::bcf_type_descriptor const desc,
-                                                          size_t const                      outer_size,
-                                                          size_t const                      inner_size,
-                                                          std::byte const *&                cache_ptr,
-                                                          dyn_t &                           output)
+template <detail::is_genotype_element_value_type dyn_t>
+inline void format_input_handler<bcf>::parse_info_element_value_type(var_io::value_type_id const       id_from_header,
+                                                                     detail::bcf_type_descriptor const desc,
+                                                                     size_t const                      outer_size,
+                                                                     size_t const                      inner_size,
+                                                                     std::byte const *&                cache_ptr,
+                                                                     dyn_t &                           output)
 {
     // TODO DRY out the boilerplate error messages
-    if (static_cast<size_t>(id_from_header) < static_cast<size_t>(var_io::dynamic_type_id::string) && inner_size != 1)
+    if (static_cast<size_t>(id_from_header) < static_cast<size_t>(var_io::value_type_id::string) && inner_size != 1)
         error("BCF data field expected exactly one element, got:", inner_size);
 
     switch (id_from_header)
     {
-        case var_io::dynamic_type_id::char8:
+        case var_io::value_type_id::char8:
             {
                 if (desc != detail::bcf_type_descriptor::char8)
                     error("Attempting to create char but the byte descriptor does not indicate char type.");
 
-                dynamic_type_init_vector<var_io::dynamic_type_id::char8, char>(outer_size, cache_ptr, output);
+                info_element_value_type_init_vector<var_io::value_type_id::char8, char>(outer_size, cache_ptr, output);
                 return;
             }
-        case var_io::dynamic_type_id::int8:
-        case var_io::dynamic_type_id::int16:
-        case var_io::dynamic_type_id::int32:
+        case var_io::value_type_id::int8:
+        case var_io::value_type_id::int16:
+        case var_io::value_type_id::int32:
             {
                 switch (desc)
                 {
                     case detail::bcf_type_descriptor::int8:
                         {
-                            dynamic_type_init_vector<var_io::dynamic_type_id::int8, int8_t>(outer_size,
-                                                                                            cache_ptr,
-                                                                                            output);
+                            info_element_value_type_init_vector<var_io::value_type_id::int8, int8_t>(outer_size,
+                                                                                                     cache_ptr,
+                                                                                                     output);
                             break;
                         }
                     case detail::bcf_type_descriptor::int16:
                         {
-                            dynamic_type_init_vector<var_io::dynamic_type_id::int16, int16_t>(outer_size,
-                                                                                              cache_ptr,
-                                                                                              output);
+                            info_element_value_type_init_vector<var_io::value_type_id::int16, int16_t>(outer_size,
+                                                                                                       cache_ptr,
+                                                                                                       output);
                             break;
                         }
                     case detail::bcf_type_descriptor::int32:
                         {
-                            dynamic_type_init_vector<var_io::dynamic_type_id::int32, int32_t>(outer_size,
-                                                                                              cache_ptr,
-                                                                                              output);
+                            info_element_value_type_init_vector<var_io::value_type_id::int32, int32_t>(outer_size,
+                                                                                                       cache_ptr,
+                                                                                                       output);
                             break;
                         }
                     default:
@@ -1194,65 +1212,70 @@ inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_i
                 }
                 return;
             }
-        case var_io::dynamic_type_id::float32:
+        case var_io::value_type_id::float32:
             {
                 if (desc == detail::bcf_type_descriptor::float32)
-                    dynamic_type_init_vector<var_io::dynamic_type_id::float32, float>(outer_size, cache_ptr, output);
+                    info_element_value_type_init_vector<var_io::value_type_id::float32, float>(outer_size,
+                                                                                               cache_ptr,
+                                                                                               output);
                 else
                     error("Attempting to create float but the byte descriptor does not indicate float type.");
                 return;
             }
-        case var_io::dynamic_type_id::string:
+        case var_io::value_type_id::string:
             {
                 if (desc != detail::bcf_type_descriptor::char8)
                     error("Attempting to creates string but the byte descriptor does not indicate string type.");
 
-                // TODO double-check if we shouldn't actually call dynamic_type_init_vector_of_vector here instead
-                dynamic_type_init_vector_of_string<var_io::dynamic_type_id::string>(outer_size, cache_ptr, output);
+                // TODO double-check if we shouldn't actually call info_element_value_type_init_vector_of_vector here
+                // instead
+                info_element_value_type_init_vector_of_string<var_io::value_type_id::string>(outer_size,
+                                                                                             cache_ptr,
+                                                                                             output);
                 return;
             }
-        case var_io::dynamic_type_id::vector_of_char8:
+        case var_io::value_type_id::vector_of_char8:
             {
                 if (desc != detail::bcf_type_descriptor::char8)
                     error("Attempting to create vector of char but the byte descriptor does not indicate char type.");
 
-                dynamic_type_init_vector_of_vector<var_io::dynamic_type_id::vector_of_char8, char>(outer_size,
-                                                                                                   inner_size,
-                                                                                                   cache_ptr,
-                                                                                                   output);
+                info_element_value_type_init_vector_of_vector<var_io::value_type_id::vector_of_char8, char>(outer_size,
+                                                                                                            inner_size,
+                                                                                                            cache_ptr,
+                                                                                                            output);
                 return;
             }
-        case var_io::dynamic_type_id::vector_of_int8:
-        case var_io::dynamic_type_id::vector_of_int16:
-        case var_io::dynamic_type_id::vector_of_int32:
+        case var_io::value_type_id::vector_of_int8:
+        case var_io::value_type_id::vector_of_int16:
+        case var_io::value_type_id::vector_of_int32:
             {
                 switch (desc)
                 {
                     case detail::bcf_type_descriptor::int8:
                         {
-                            dynamic_type_init_vector_of_vector<var_io::dynamic_type_id::vector_of_int8, int8_t>(
-                              outer_size,
-                              inner_size,
-                              cache_ptr,
-                              output);
+                            info_element_value_type_init_vector_of_vector<var_io::value_type_id::vector_of_int8,
+                                                                          int8_t>(outer_size,
+                                                                                  inner_size,
+                                                                                  cache_ptr,
+                                                                                  output);
                             break;
                         }
                     case detail::bcf_type_descriptor::int16:
                         {
-                            dynamic_type_init_vector_of_vector<var_io::dynamic_type_id::vector_of_int16, int16_t>(
-                              outer_size,
-                              inner_size,
-                              cache_ptr,
-                              output);
+                            info_element_value_type_init_vector_of_vector<var_io::value_type_id::vector_of_int16,
+                                                                          int16_t>(outer_size,
+                                                                                   inner_size,
+                                                                                   cache_ptr,
+                                                                                   output);
                             break;
                         }
                     case detail::bcf_type_descriptor::int32:
                         {
-                            dynamic_type_init_vector_of_vector<var_io::dynamic_type_id::vector_of_int32, int32_t>(
-                              outer_size,
-                              inner_size,
-                              cache_ptr,
-                              output);
+                            info_element_value_type_init_vector_of_vector<var_io::value_type_id::vector_of_int32,
+                                                                          int32_t>(outer_size,
+                                                                                   inner_size,
+                                                                                   cache_ptr,
+                                                                                   output);
                             break;
                         }
                     default:
@@ -1260,14 +1283,15 @@ inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_i
                 }
                 return;
             }
-        case var_io::dynamic_type_id::vector_of_float32:
+        case var_io::value_type_id::vector_of_float32:
             {
                 if (desc == detail::bcf_type_descriptor::float32)
                 {
-                    dynamic_type_init_vector_of_vector<var_io::dynamic_type_id::vector_of_float32, float>(outer_size,
-                                                                                                          inner_size,
-                                                                                                          cache_ptr,
-                                                                                                          output);
+                    info_element_value_type_init_vector_of_vector<var_io::value_type_id::vector_of_float32, float>(
+                      outer_size,
+                      inner_size,
+                      cache_ptr,
+                      output);
                     break;
                 }
                 else
@@ -1276,14 +1300,14 @@ inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_i
                 }
                 return;
             }
-        case var_io::dynamic_type_id::vector_of_string:
+        case var_io::value_type_id::vector_of_string:
             {
                 if (desc != detail::bcf_type_descriptor::char8)
                     error(
                       "Attempting to create vector of string but the byte descriptor does not indicate char alphabet");
 
                 // TODO this definitely needs a test
-                constexpr size_t id      = static_cast<size_t>(var_io::dynamic_type_id::vector_of_string);
+                constexpr size_t id      = static_cast<size_t>(var_io::value_type_id::vector_of_string);
                 auto &           output_ = output.template emplace<id>();
                 std::string_view tmp{reinterpret_cast<char const *>(cache_ptr), outer_size * inner_size};
                 for (size_t sample = 0; sample < outer_size; ++sample)
@@ -1307,9 +1331,9 @@ inline void format_input_handler<bcf>::parse_dynamic_type(var_io::dynamic_type_i
                 cache_ptr += outer_size * inner_size;
                 return;
             }
-        case var_io::dynamic_type_id::flag:
+        case var_io::value_type_id::flag:
             {
-                error("seqan3::var_io::dynamic_vector_type cannot be initialised to flag state.");
+                error("seqan3::var_io::genotype_element_value_type cannot be initialised to flag state.");
                 return;
             }
     }
