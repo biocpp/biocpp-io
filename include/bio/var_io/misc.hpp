@@ -602,31 +602,33 @@ detail::bcf_type_descriptor smallest_int_desc(std::unsigned_integral auto const 
 //!\overload
 detail::bcf_type_descriptor smallest_int_desc(std::signed_integral auto const num)
 {
-    return smallest_int_desc(static_cast<uint64_t>(std::abs(num)));
+    // If a value is the missing value (lowest), we can always encode it as the one-byte missing value
+    return num == var_io::missing_value<decltype(num)> ? detail::bcf_type_descriptor::int8
+                                                       : smallest_int_desc(static_cast<uint64_t>(std::abs(num)));
 }
 
 //!\overload
 detail::bcf_type_descriptor smallest_int_desc(std::ranges::forward_range auto && range)
 {
-    using val_t             = seqan3::range_innermost_value_t<decltype(range)>;
-    val_t               max = std::numeric_limits<val_t>::lowest();
-    bcf_type_descriptor desc{};
-    for (val_t elem : range)
+    using val_t = seqan3::range_innermost_value_t<decltype(range)>;
+    int64_t max = 0;
+
+    // get max:
+    // we don't use std::ranges::max_element here, so we can abort early if know we get max descriptor type
+    for (int64_t elem : range)
     {
         if constexpr (std::signed_integral<val_t>)
-            elem = std::abs(elem);
+            elem = var_io::missing_value<val_t> ? 0 : std::abs(elem);
 
         if (elem > max)
         {
-            max  = elem;
-            desc = smallest_int_desc(elem);
-            if (desc == detail::bcf_type_descriptor::int32) // this is max(type_descriptor)
+            max = elem;
+            if (max >= std::numeric_limits<int16_t>::max()) // this will always lead to bcf_type_descriptor::int32
                 break;
         }
     }
-    return desc;
-    // TODO check if this is faster, NEEDS abs() projection:
-    //  return smallest_int_desc(std::ranges::empty(range) ? 0 : *std::ranges::max_element(range));
+
+    return smallest_int_desc(static_cast<uint64_t>(max));
 }
 
 //!\overload
