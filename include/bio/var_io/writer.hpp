@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <filesystem>
 #include <iosfwd>
 
 #include <bio/detail/writer_base.hpp>
@@ -20,7 +21,6 @@
 #include <bio/format/vcf_output_handler.hpp>
 #include <bio/var_io/header.hpp>
 #include <bio/var_io/writer_options.hpp>
-#include <seqan3/std/filesystem>
 
 namespace bio::var_io
 {
