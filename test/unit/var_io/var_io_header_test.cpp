@@ -23,6 +23,7 @@ TEST(var_io_header, spec_from_text)
     bio::var_io::header hdr{example_from_spec_header};
 
     EXPECT_EQ(hdr.file_format, "VCFv4.3");
+    EXPECT_EQ(hdr.file_date, "2022-03-02 14:18:22");
 
     // filters
     ASSERT_EQ(hdr.filters.size(), 3);
@@ -143,8 +144,7 @@ TEST(var_io_header, spec_from_text)
     EXPECT_TRUE(*++it == (svpair{"taxonomy", "x"}));
 
     // other lines in header
-    std::vector<std::string_view> other_lines_cmp{"fileDate=20090805",
-                                                  "source=myImputationProgramV3.1",
+    std::vector<std::string_view> other_lines_cmp{"source=myImputationProgramV3.1",
                                                   "reference=file:///seq/references/1000GenomesPilot-NCBI36.fasta",
                                                   "phasing=partial"};
     ASSERT_EQ(hdr.other_lines.size(), other_lines_cmp.size());

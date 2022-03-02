@@ -184,8 +184,8 @@ inline constexpr std::string_view example_from_spec_bcf_unbgzf_our{
 
 inline constexpr std::string_view example_from_spec_bcf_header =
   R"(##fileformat=VCFv4.3
+##fileDate=2022-03-02 14:18:22
 ##FILTER=<ID=PASS,Description="All filters passed",IDX=0>
-##fileDate=20090805
 ##source=myImputationProgramV3.1
 ##reference=file:///seq/references/1000GenomesPilot-NCBI36.fasta
 ##contig=<ID=20,length=62435964,assembly=B36,md5=f126cdf8a6e0c7f379d618ff66beb2da,species="Homo sapiens",taxonomy=x,IDX=0>
