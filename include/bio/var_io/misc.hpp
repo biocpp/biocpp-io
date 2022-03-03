@@ -640,7 +640,7 @@ detail::bcf_type_descriptor smallest_int_desc(rng_t & range)
 }
 
 //!\brief Whether the value is any integer value.
-bool type_descriptor_is_int(bcf_type_descriptor const type_desc)
+inline bool type_descriptor_is_int(bcf_type_descriptor const type_desc)
 {
     switch (type_desc)
     {
@@ -654,7 +654,7 @@ bool type_descriptor_is_int(bcf_type_descriptor const type_desc)
 }
 
 //!\brief Convert from bio::var_io::value_type_id to bio::detail::bcf_type_descriptor.
-bcf_type_descriptor value_type_id_2_type_descriptor(var_io::value_type_id const type_id)
+inline bcf_type_descriptor value_type_id_2_type_descriptor(var_io::value_type_id const type_id)
 {
     switch (type_id)
     {
