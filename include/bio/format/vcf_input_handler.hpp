@@ -301,18 +301,21 @@ private:
 
             if (info_value.empty()) // no "=" → flag
             {
-                info.type   = var_io::value_type_id::flag;
-                info.number = 0;
+                info.type    = "Flag";
+                info.type_id = var_io::value_type_id::flag;
+                info.number  = 0;
             }
             else if (info_value.find(',') != std::string_view::npos) // found comma → assume vector-of-strings
             {
-                info.type   = var_io::value_type_id::vector_of_string;
-                info.number = var_io::header_number::dot;
+                info.type    = "String";
+                info.type_id = var_io::value_type_id::vector_of_string;
+                info.number  = var_io::header_number::dot;
             }
             else // assume string as type
             {
-                info.type   = var_io::value_type_id::string;
-                info.number = 1;
+                info.type    = "String";
+                info.type_id = var_io::value_type_id::string;
+                info.number  = 1;
             }
 
             // create a new header with new info and replace current one
@@ -375,7 +378,7 @@ private:
             {
                 if constexpr (detail::is_info_element_value_type<value_t>)
                 {
-                    if (header.infos[info_pos].type != var_io::value_type_id::flag ||
+                    if (header.infos[info_pos].type_id != var_io::value_type_id::flag ||
                         header.infos[info_pos].number != 0)
                     {
                         error("INFO field \"", key, "\" is not a flag and should come with a value -- but does not.");
@@ -389,7 +392,7 @@ private:
             {
                 if constexpr (detail::is_info_element_value_type<value_t>)
                 {
-                    int32_t num_val = parse_element_value_type(header.infos[info_pos].type, val, parsed_value);
+                    int32_t num_val = parse_element_value_type(header.infos[info_pos].type_id, val, parsed_value);
                     if (int32_t exp_val = header.infos[info_pos].number;
                         print_warnings && num_val != exp_val && exp_val >= 0)
                     {
@@ -427,7 +430,8 @@ private:
 
             format.id          = format_name;
             format.number      = 1;
-            format.type        = var_io::value_type_id::string;
+            format.type        = "String";
+            format.type_id     = var_io::value_type_id::string;
             format.description = "\"Automatically added by B.I.O..\"";
 
             // create a new header with new format and replace current one
@@ -481,7 +485,7 @@ private:
 
             auto const & format = header.formats[format_pos];
 
-            init_element_value_type(format.type, current_value);
+            init_element_value_type(format.type_id, current_value);
             auto reserve = [s = column_number - 8](auto & vec) { vec.reserve(s); };
             std::visit(reserve, current_value);
 
@@ -630,12 +634,6 @@ inline void format_input_handler<vcf>::init_element_value_type(var_io::value_typ
         case var_io::value_type_id::string:
             {
                 constexpr size_t id = static_cast<size_t>(var_io::value_type_id::string);
-                output.template emplace<id>();
-                return;
-            }
-        case var_io::value_type_id::vector_of_char8:
-            {
-                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::vector_of_char8);
                 output.template emplace<id>();
                 return;
             }

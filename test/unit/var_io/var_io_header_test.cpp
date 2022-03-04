@@ -51,7 +51,7 @@ TEST(var_io_header, spec_from_text)
     // info 0
     EXPECT_EQ(hdr.infos[0].id, "NS");
     EXPECT_EQ(hdr.infos[0].number, 1);
-    EXPECT_EQ(hdr.infos[0].type, bio::var_io::value_type_id::int32);
+    EXPECT_EQ(hdr.infos[0].type_id, bio::var_io::value_type_id::int32);
     EXPECT_EQ(hdr.infos[0].description, "\"Number of Samples With Data\"");
     EXPECT_EQ(hdr.infos[0].other_fields.size(), 0);
     EXPECT_EQ(hdr.infos[0].idx, 1);
@@ -59,7 +59,7 @@ TEST(var_io_header, spec_from_text)
     // info 1
     EXPECT_EQ(hdr.infos[1].id, "DP");
     EXPECT_EQ(hdr.infos[1].number, 1);
-    EXPECT_EQ(hdr.infos[1].type, bio::var_io::value_type_id::int32);
+    EXPECT_EQ(hdr.infos[1].type_id, bio::var_io::value_type_id::int32);
     EXPECT_EQ(hdr.infos[1].description, "\"Total Depth\"");
     EXPECT_EQ(hdr.infos[1].other_fields.size(), 0);
     EXPECT_EQ(hdr.infos[1].idx, 2);
@@ -67,7 +67,7 @@ TEST(var_io_header, spec_from_text)
     // info 2
     EXPECT_EQ(hdr.infos[2].id, "AF");
     EXPECT_EQ(hdr.infos[2].number, bio::var_io::header_number::A);
-    EXPECT_EQ(hdr.infos[2].type, bio::var_io::value_type_id::vector_of_float32);
+    EXPECT_EQ(hdr.infos[2].type_id, bio::var_io::value_type_id::vector_of_float32);
     EXPECT_EQ(hdr.infos[2].description, "\"Allele Frequency\"");
     EXPECT_EQ(hdr.infos[2].other_fields.size(), 0);
     EXPECT_EQ(hdr.infos[2].idx, 3);
@@ -75,7 +75,7 @@ TEST(var_io_header, spec_from_text)
     // info 3
     EXPECT_EQ(hdr.infos[3].id, "AA");
     EXPECT_EQ(hdr.infos[3].number, 1);
-    EXPECT_EQ(hdr.infos[3].type, bio::var_io::value_type_id::string);
+    EXPECT_EQ(hdr.infos[3].type_id, bio::var_io::value_type_id::string);
     EXPECT_EQ(hdr.infos[3].description, "\"Ancestral Allele\"");
     EXPECT_EQ(hdr.infos[3].other_fields.size(), 0);
     EXPECT_EQ(hdr.infos[3].idx, 4);
@@ -83,7 +83,7 @@ TEST(var_io_header, spec_from_text)
     // info 4
     EXPECT_EQ(hdr.infos[4].id, "DB");
     EXPECT_EQ(hdr.infos[4].number, 0);
-    EXPECT_EQ(hdr.infos[4].type, bio::var_io::value_type_id::flag);
+    EXPECT_EQ(hdr.infos[4].type_id, bio::var_io::value_type_id::flag);
     EXPECT_EQ(hdr.infos[4].description, "\"dbSNP membership, build 129\"");
     EXPECT_EQ(hdr.infos[4].other_fields.size(), 0);
     EXPECT_EQ(hdr.infos[4].idx, 5);
@@ -91,7 +91,7 @@ TEST(var_io_header, spec_from_text)
     // info 5
     EXPECT_EQ(hdr.infos[5].id, "H2");
     EXPECT_EQ(hdr.infos[5].number, 0);
-    EXPECT_EQ(hdr.infos[5].type, bio::var_io::value_type_id::flag);
+    EXPECT_EQ(hdr.infos[5].type_id, bio::var_io::value_type_id::flag);
     EXPECT_EQ(hdr.infos[5].description, "\"HapMap2 membership\"");
     EXPECT_EQ(hdr.infos[5].other_fields.size(), 0);
     EXPECT_EQ(hdr.infos[5].idx, 6);
@@ -102,7 +102,7 @@ TEST(var_io_header, spec_from_text)
     // format 0
     EXPECT_EQ(hdr.formats[0].id, "GT");
     EXPECT_EQ(hdr.formats[0].number, 1);
-    EXPECT_EQ(hdr.formats[0].type, bio::var_io::value_type_id::string);
+    EXPECT_EQ(hdr.formats[0].type_id, bio::var_io::value_type_id::string);
     EXPECT_EQ(hdr.formats[0].description, "\"Genotype\"");
     EXPECT_EQ(hdr.formats[0].other_fields.size(), 0);
     EXPECT_EQ(hdr.formats[0].idx, 9);
@@ -110,7 +110,7 @@ TEST(var_io_header, spec_from_text)
     // format 1
     EXPECT_EQ(hdr.formats[1].id, "GQ");
     EXPECT_EQ(hdr.formats[1].number, 1);
-    EXPECT_EQ(hdr.formats[1].type, bio::var_io::value_type_id::int32);
+    EXPECT_EQ(hdr.formats[1].type_id, bio::var_io::value_type_id::int32);
     EXPECT_EQ(hdr.formats[1].description, "\"Genotype Quality\"");
     EXPECT_EQ(hdr.formats[1].other_fields.size(), 0);
     EXPECT_EQ(hdr.formats[1].idx, 10);
@@ -118,7 +118,7 @@ TEST(var_io_header, spec_from_text)
     // format 2
     EXPECT_EQ(hdr.formats[2].id, "DP");
     EXPECT_EQ(hdr.formats[2].number, 1);
-    EXPECT_EQ(hdr.formats[2].type, bio::var_io::value_type_id::int32);
+    EXPECT_EQ(hdr.formats[2].type_id, bio::var_io::value_type_id::int32);
     EXPECT_EQ(hdr.formats[2].description, "\"Read Depth\"");
     EXPECT_EQ(hdr.formats[2].other_fields.size(), 0);
     EXPECT_EQ(hdr.formats[2].idx, 2);
@@ -126,7 +126,7 @@ TEST(var_io_header, spec_from_text)
     // format 3
     EXPECT_EQ(hdr.formats[3].id, "HQ");
     EXPECT_EQ(hdr.formats[3].number, 2);
-    EXPECT_EQ(hdr.formats[3].type, bio::var_io::value_type_id::vector_of_int32);
+    EXPECT_EQ(hdr.formats[3].type_id, bio::var_io::value_type_id::vector_of_int32);
     EXPECT_EQ(hdr.formats[3].description, "\"Haplotype Quality\"");
     EXPECT_EQ(hdr.formats[3].other_fields.size(), 0);
     EXPECT_EQ(hdr.formats[3].idx, 11);

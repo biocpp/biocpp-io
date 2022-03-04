@@ -794,7 +794,7 @@ private:
 
             size_t real_size = size < 15 ? size : decode_integral(cache_ptr);
 
-            parse_info_element_value_type(header.infos[header.idx_to_info_pos().at(idx)].type,
+            parse_info_element_value_type(header.infos[header.idx_to_info_pos().at(idx)].type_id,
                                           desc,
                                           real_size,
                                           cache_ptr,
@@ -930,7 +930,7 @@ private:
             }
             else
             {
-                parse_info_element_value_type(format.type,
+                parse_info_element_value_type(format.type_id,
                                               fmt_type,
                                               record_core->n_sample,
                                               fmt_size,
@@ -992,7 +992,7 @@ public:
 
         /* checks on header */
         if (header.string_to_format_pos().contains("GT") &&
-            header.formats[header.string_to_format_pos().at("GT")].type != var_io::value_type_id::string)
+            header.formats[header.string_to_format_pos().at("GT")].type_id != var_io::value_type_id::string)
         {
             error("The \"GT\" field must always be encoded as a string.");
         }
@@ -1070,16 +1070,6 @@ inline void format_input_handler<bcf>::parse_info_element_value_type(var_io::val
                     error("Attempting to creates string but the byte descriptor does not indicate string type.");
 
                 info_element_value_type_init_string<var_io::value_type_id::string>(size, cache_ptr, output);
-                return;
-            }
-        case var_io::value_type_id::vector_of_char8:
-            {
-                if (desc != detail::bcf_type_descriptor::char8)
-                    error("Attempting to create vector of char but the byte descriptor does not indicate char type.");
-
-                info_element_value_type_init_vector<var_io::value_type_id::vector_of_char8, char>(size,
-                                                                                                  cache_ptr,
-                                                                                                  output);
                 return;
             }
         case var_io::value_type_id::vector_of_int8:
@@ -1232,17 +1222,6 @@ inline void format_input_handler<bcf>::parse_info_element_value_type(var_io::val
                 info_element_value_type_init_vector_of_string<var_io::value_type_id::string>(outer_size,
                                                                                              cache_ptr,
                                                                                              output);
-                return;
-            }
-        case var_io::value_type_id::vector_of_char8:
-            {
-                if (desc != detail::bcf_type_descriptor::char8)
-                    error("Attempting to create vector of char but the byte descriptor does not indicate char type.");
-
-                info_element_value_type_init_vector_of_vector<var_io::value_type_id::vector_of_char8, char>(outer_size,
-                                                                                                            inner_size,
-                                                                                                            cache_ptr,
-                                                                                                            output);
                 return;
             }
         case var_io::value_type_id::vector_of_int8:
