@@ -133,19 +133,18 @@ namespace bio::var_io
 //!\ingroup var_io
 enum class value_type_id : size_t
 {
-    char8,
-    int8,
-    int16,
-    int32,
-    float32,
-    string,
-    vector_of_char8,
-    vector_of_int8,
-    vector_of_int16,
-    vector_of_int32,
-    vector_of_float32,
-    vector_of_string,
-    flag
+    char8,             //!< Used for "Character" fields of size 1.
+    int8,              //!< Used for "Integer" fields of size 1 where the value fits in one byte.
+    int16,             //!< Used for "Integer" fields of size 1 where the value fits in two bytes.
+    int32,             //!< Used for "Integer" fields of size 1 where the value fits in four bytes.
+    float32,           //!< Used for "Float" fields of size 1.
+    string,            //!< Used for "String" fields of size 1 and "Character" fields of size != 1.
+    vector_of_int8,    //!< Used for "Integer" fields of size != 1 where each value fits in one byte.
+    vector_of_int16,   //!< Used for "Integer" fields of size != 1 where each value fits in two bytes.
+    vector_of_int32,   //!< Used for "Integer" fields of size != 1 where each value fits in four bytes.
+    vector_of_float32, //!< Used for "Float" fields of size != 1.
+    vector_of_string,  //!< Used for "String" fields of size != 1.
+    flag               //!< Used for "Flat" fields (size must be 0).
 };
 
 } // namespace bio::var_io
@@ -167,7 +166,7 @@ inline debug_stream_type<char_t> & operator<<(debug_stream_type<char_t> & s, bio
 namespace bio::detail
 {
 
-//!\brief int* and vector_of_int* are each are "compatible" with each other; the rest only with self.
+//!\brief int* and vector_of_int* are each "compatible" with each other; the rest only with self.
 //!\ingroup var_io
 constexpr bool type_id_is_compatible(var_io::value_type_id const lhs, var_io::value_type_id const rhs)
 {
@@ -229,7 +228,6 @@ using info_element_value_type =
                int32_t,
                float,
                std::conditional_t<own == ownership::shallow, std::string_view, std::string>,
-               std::vector<char>,
                std::vector<int8_t>,
                std::vector<int16_t>,
                std::vector<int32_t>,
@@ -308,7 +306,6 @@ using genotype_element_value_type =
                std::vector<int32_t>,
                std::vector<float>,
                std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>,
-               std::vector<std::vector<char>>,
                std::vector<std::vector<int8_t>>,
                std::vector<std::vector<int16_t>>,
                std::vector<std::vector<int32_t>>,
@@ -659,7 +656,6 @@ inline bcf_type_descriptor value_type_id_2_type_descriptor(var_io::value_type_id
     switch (type_id)
     {
         case var_io::value_type_id::char8:
-        case var_io::value_type_id::vector_of_char8:
         case var_io::value_type_id::string:
         case var_io::value_type_id::vector_of_string:
             return bcf_type_descriptor::char8;

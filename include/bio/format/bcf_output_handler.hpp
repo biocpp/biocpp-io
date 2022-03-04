@@ -645,7 +645,7 @@ private:
             // explicit integer width given in header
             if (hdr_entry.other_fields.find("IntegerBits") != hdr_entry.other_fields.end())
             {
-                desc = detail::value_type_id_2_type_descriptor(hdr_entry.type);
+                desc = detail::value_type_id_2_type_descriptor(hdr_entry.type_id);
                 if (!detail::type_descriptor_is_int(desc)) // ignore header value if it isn't intX
                     desc = c_desc;
             }
@@ -659,7 +659,7 @@ private:
 
         if (verify_header_types)
         {
-            detail::bcf_type_descriptor header_desc = detail::value_type_id_2_type_descriptor(hdr_entry.type);
+            detail::bcf_type_descriptor header_desc = detail::value_type_id_2_type_descriptor(hdr_entry.type_id);
             if (desc != header_desc || !detail::type_descriptor_is_int(desc) ||
                 !detail::type_descriptor_is_int(header_desc))
             {

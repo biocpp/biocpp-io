@@ -292,7 +292,7 @@ private:
         else
             pos = header->string_to_info_pos().at(key);
 
-        var_io::value_type_id type_id = header->infos[pos].type;
+        var_io::value_type_id type_id = header->infos[pos].type_id;
 
         if (type_id != var_io::value_type_id::flag) // all fields that aren't flags have second part
         {
