@@ -47,12 +47,15 @@ namespace bio
  *
  * ### Implementation
  *
- * The implementation target [version 4.3 of the VCF specification](https://samtools.github.io/hts-specs/VCFv4.3.pdf).
+ * The implementation targets [version 4.3 of the VCF specification](https://samtools.github.io/hts-specs/VCFv4.3.pdf).
  * However, reading version 4.2 should be possible, too.
- * Little testing has been done on handling structural variants and breakend strings, but in theory the values
- * should be parsed correctly (as strings).
+ * HTSLib (BCFTools) deviates from the specification in several places. Because it is the de-facto standard, this
+ * implementation emulates HTSLib behaviour whenever necessary (even if that means violating the spec).
  *
- * No testing has been done on gVCF files, but in theory all values should be parsed correctly.
+ * Little testing has been done on handling structural variants and breakend strings, but in theory the values
+ * should be parsed correctly (as strings). No testing has been done on gVCF files, but in theory all values should
+ * be parsed correctly.
+ *
  *
  * Please report any issues you find.
  */

@@ -17,7 +17,7 @@
 
 /*!\defgroup seq_io Seq I/O
  * \ingroup bio
- * \brief Reader and writer for plaintext and CSV/TSV files.
+ * \brief Reader and writer for sequence files (FastA, FastQ, …).
  */
 
 /*!\namespace bio::seq_io

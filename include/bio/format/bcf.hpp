@@ -47,8 +47,10 @@ namespace bio
  *
  * ### Implementation
  *
- * The implementation target [version 2.2 of the BCF specification](https://samtools.github.io/hts-specs/VCFv4.3.pdf).
+ * The implementation targets [version 2.2 of the BCF specification](https://samtools.github.io/hts-specs/VCFv4.3.pdf).
  * However, reading version 2.1 should be possible, too.
+ * HTSLib (BCFTools) deviates from the specification in several places. Because it is the de-facto standard, this
+ * implementation emulates HTSLib behaviour whenever necessary (even if that means violating the spec).
  *
  * If not present, IDX values are always added to the header.
  *
