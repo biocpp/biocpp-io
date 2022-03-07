@@ -26,6 +26,7 @@
 
 #include <bio/detail/reader_base.hpp>
 #include <bio/format/fasta_input_handler.hpp>
+#include <bio/format/fastq_input_handler.hpp>
 #include <bio/seq_io/reader_options.hpp>
 
 namespace bio::seq_io
@@ -54,7 +55,10 @@ namespace bio::seq_io
  *
  * And it supports the following formats:
  *
- *   1. FASTA (see also bio::fasta)
+ *   1. FastA (see also bio::fasta)
+ *   2. FastQ (see also bio::fastq)
+ *
+ * Fields that are not present in a format (e.g. bio::field::qual in FastA) will be returned empty.
  *
  * ### Simple usage
  *
@@ -95,14 +99,12 @@ class reader : public reader_base<reader_options<option_args_t...>>
 {
 private:
     //!\brief The base class.
-    using base_t      = reader_base<reader_options<option_args_t...>>;
+    using base_t = reader_base<reader_options<option_args_t...>>;
+
+public:
     //!\brief Inherit the format_type definition.
     using format_type = typename base_t::format_type;
-    /* Implementation note
-     * format_type is "inherited" as private here to avoid appearing twice in the documentation.
-     * Its actual visibility is public because it is public in the base class.
-     */
-public:
+
     // clang-format off
     //!\copydoc bio::reader_base::reader_base(std::filesystem::path const & filename, format_type const & fmt, options_t const & opt = options_t{})
     // clang-format on

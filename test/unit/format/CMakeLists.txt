@@ -1,5 +1,6 @@
 bio_test(bcf_input_test.cpp)
 bio_test(bcf_output_test.cpp)
 bio_test(fasta_input_test.cpp)
+bio_test(fastq_input_test.cpp)
 bio_test(vcf_input_test.cpp)
 bio_test(vcf_output_test.cpp)

@@ -30,11 +30,11 @@
 #include <bio/detail/misc.hpp>
 #include <bio/detail/range.hpp>
 #include <bio/format/fasta.hpp>
+#include <bio/format/fastq.hpp>
 #include <bio/misc.hpp>
 #include <bio/seq_io/misc.hpp>
 #include <bio/stream/transparent_istream.hpp>
 
-// TODO replace seqan3::views::char_strictly_to with seqan3::views::char_strictly_to
 namespace bio::seq_io
 {
 
@@ -106,19 +106,6 @@ inline constinit auto field_types_protein = field_types<ownership::shallow, seqa
  * Configures a shallow record where sequence and quality data are plain characters.
  */
 inline constinit auto field_types_char = field_types<ownership::shallow, char, char>;
-
-/*!\brief The field types for raw I/O.
- * \details
- *
- * Every field is configured as a std::span of std::byte (this enables "raw" io).
- *
- * ATTENTION: The exact content of this byte-span depends on the format and is likely not
- * compatible between formats. Use at your own risk!
- */
-inline constinit auto field_types_raw =
-  ttag<std::span<std::byte const>, std::span<std::byte const>, std::span<std::byte const>>;
-// TODO use seqan3::list_traits::repeat as soon as available
-
 //!\}
 //!\}
 
@@ -183,7 +170,7 @@ inline constinit auto field_types_raw =
  */
 template <typename field_ids_t   = decltype(default_field_ids),
           typename field_types_t = decltype(field_types_dna),
-          typename formats_t     = seqan3::type_list<fasta>>
+          typename formats_t     = seqan3::type_list<fasta, fastq>>
 struct reader_options
 {
     /*!\brief The fields that shall be contained in each record; a bio::vtag over bio::field.
@@ -208,7 +195,7 @@ struct reader_options
      *
      * See seqan3::seq_io::reader for an overview of the the supported formats.
      */
-    formats_t formats = ttag<fasta>;
+    formats_t formats = ttag<fasta, fastq>;
 
     //!\brief Options that are passed on to the internal stream oject.
     transparent_istream_options stream_options{};

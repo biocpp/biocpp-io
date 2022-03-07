@@ -68,11 +68,11 @@ TEST(seq_io_reader, constructor1_just_filename)
 TEST(seq_io_reader, constructor1_with_opts)
 {
     bio::seq_io::reader_options opt{.field_types = bio::seq_io::field_types_protein};
+    seq_io_reader_filename_constructor(true, std::move(opt));
+
     using control_t = bio::seq_io::reader<std::remove_cvref_t<decltype(bio::seq_io::default_field_ids)>,
                                           std::remove_cvref_t<decltype(bio::seq_io::field_types_protein)>,
-                                          seqan3::type_list<bio::fasta>>;
-
-    seq_io_reader_filename_constructor(true, std::move(opt));
+                                          seqan3::type_list<bio::fasta, bio::fastq>>;
     EXPECT_TRUE((std::same_as<decltype(bio::seq_io::reader{"", opt}), control_t>));
 }
 
@@ -85,17 +85,17 @@ TEST(seq_io_reader, constructor2_just_filename_direct_format)
 TEST(seq_io_reader, constructor2_with_opts_direct_format)
 {
     bio::seq_io::reader_options opt{.field_types = bio::seq_io::field_types_dna};
+    seq_io_reader_filename_constructor(false, bio::fasta{}, std::move(opt));
+
     using control_t = bio::seq_io::reader<std::remove_cvref_t<decltype(bio::seq_io::default_field_ids)>,
                                           std::remove_cvref_t<decltype(bio::seq_io::field_types_dna)>,
-                                          seqan3::type_list<bio::fasta>>;
-
-    seq_io_reader_filename_constructor(false, bio::fasta{}, std::move(opt));
+                                          seqan3::type_list<bio::fasta, bio::fastq>>;
     EXPECT_TRUE((std::same_as<decltype(bio::seq_io::reader{"", bio::fasta{}, opt}), control_t>));
 }
 
 TEST(seq_io_reader, constructor2_just_filename_format_variant)
 {
-    std::variant<bio::fasta> var{};
+    bio::seq_io::reader<>::format_type var{};
 
     seq_io_reader_filename_constructor(false, var);
     EXPECT_TRUE((std::same_as<decltype(bio::seq_io::reader{"", var}), bio::seq_io::reader<>>));
@@ -103,13 +103,13 @@ TEST(seq_io_reader, constructor2_just_filename_format_variant)
 
 TEST(seq_io_reader, constructor2_with_opts_format_variant)
 {
-    std::variant<bio::fasta>    var{};
-    bio::seq_io::reader_options opt{.field_types = bio::seq_io::field_types_dna};
+    bio::seq_io::reader<>::format_type var{};
+    bio::seq_io::reader_options        opt{.field_types = bio::seq_io::field_types_dna};
+    seq_io_reader_filename_constructor(false, var, std::move(opt));
+
     using control_t = bio::seq_io::reader<std::remove_cvref_t<decltype(bio::seq_io::default_field_ids)>,
                                           std::remove_cvref_t<decltype(bio::seq_io::field_types_dna)>,
-                                          seqan3::type_list<bio::fasta>>;
-
-    seq_io_reader_filename_constructor(false, var, std::move(opt));
+                                          seqan3::type_list<bio::fasta, bio::fastq>>;
     EXPECT_TRUE((std::same_as<decltype(bio::seq_io::reader{"", var, std::move(opt)}), control_t>));
 }
 
@@ -125,11 +125,11 @@ TEST(seq_io_reader, constructor3_with_opts)
 {
     std::istringstream          str;
     bio::seq_io::reader_options opt{.field_types = bio::seq_io::field_types_dna};
+    EXPECT_NO_THROW((bio::seq_io::reader{str, bio::fasta{}, opt}));
+
     using control_t = bio::seq_io::reader<std::remove_cvref_t<decltype(bio::seq_io::default_field_ids)>,
                                           std::remove_cvref_t<decltype(bio::seq_io::field_types_dna)>,
-                                          seqan3::type_list<bio::fasta>>;
-
-    EXPECT_NO_THROW((bio::seq_io::reader{str, bio::fasta{}, opt}));
+                                          seqan3::type_list<bio::fasta, bio::fastq>>;
     EXPECT_TRUE((std::same_as<decltype(bio::seq_io::reader{str, bio::fasta{}, opt}), control_t>));
 }
 
@@ -145,11 +145,11 @@ TEST(seq_io_reader, constructor4_with_opts)
 {
     std::istringstream          str;
     bio::seq_io::reader_options opt{.field_types = bio::seq_io::field_types_dna};
+    EXPECT_NO_THROW((bio::seq_io::reader{std::move(str), bio::fasta{}, opt}));
+
     using control_t = bio::seq_io::reader<std::remove_cvref_t<decltype(bio::seq_io::default_field_ids)>,
                                           std::remove_cvref_t<decltype(bio::seq_io::field_types_dna)>,
-                                          seqan3::type_list<bio::fasta>>;
-
-    EXPECT_NO_THROW((bio::seq_io::reader{std::move(str), bio::fasta{}, opt}));
+                                          seqan3::type_list<bio::fasta, bio::fastq>>;
     EXPECT_TRUE((std::same_as<decltype(bio::seq_io::reader{std::move(str), bio::fasta{}, opt}), control_t>));
 }
 
