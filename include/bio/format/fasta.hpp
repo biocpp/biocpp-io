@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * brief Provides the seqan3::format_fasta.
+ * \brief Provides the bio::fasta.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
