@@ -104,6 +104,8 @@ inline constinit auto field_types_protein = field_types<ownership::shallow, seqa
  * \details
  *
  * Configures a shallow record where sequence and quality data are plain characters.
+ * This can be used in cases where the application needs to handle nucleotide *and*
+ * protein data.
  */
 inline constinit auto field_types_char = field_types<ownership::shallow, char, char>;
 //!\}

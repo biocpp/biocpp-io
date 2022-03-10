@@ -1,11 +1,14 @@
 # Welcome {#mainpage}
 
 Welcome to the documentation of the B.I.O. library.
-This web-site contains the API reference (documentation of our interfaces) and more elaborate Tutorials and
-How-Tos.
+This web-site contains the API reference (documentation of our interfaces) and some small Tutorials and HowTos.
+
+B.I.O makes use of SeqAn3 and it is recommended to have a look at [their documentation](https://docs.seqan.de) first.
 
 
 ## Overview
+
+This section contains a very short overview of the most important parts of the library.
 
 
 ### General IO Utilities
@@ -20,7 +23,7 @@ The transparent streams can be used in place of the standard library streams. Th
 compressions such as GZip, BZip2 and BGZip.
 
 
-### Readers and Writers
+### Record-based I/O
 
 
 | Reader                    | Writer                |    Description                                                |

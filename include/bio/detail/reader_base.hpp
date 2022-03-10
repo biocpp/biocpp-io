@@ -37,6 +37,7 @@ namespace bio
 // ----------------------------------------------------------------------------
 
 /*!\brief This is a (non-CRTP) base-class for I/O readers.
+ * \ingroup bio
  * \tparam options_t Type of the reader options.
  * \details
  *
@@ -72,7 +73,19 @@ public:
      * \brief The exact type of the record depends on the options!
      * \{
      */
-    //!\brief The type of the record, a specialisation of bio::record; acts as a tuple of the selected field types.
+    /*!\brief The type of the record, a specialisation of bio::record.
+     * \details
+     *
+     * ### Example
+     *
+     * This snippet demonstrates how to read an interleaved FastQ file and process the read pairs
+     * together (at every second iteration of the loop):
+     *
+     * \snippet test/snippet/detail/reader_base.cpp read_pair_processing
+     *
+     * To be able to easily backup the first record of a mate-pair, you need to create a temporary
+     * variable (`last_record`). This type alias helps define it.
+     */
     using record_type = record<decltype(options_t::field_ids), decltype(options_t::field_types)>;
     //!\brief The iterator type of this view (an input iterator).
     using iterator    = detail::in_file_iterator<reader_base>;

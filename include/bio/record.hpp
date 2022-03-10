@@ -107,23 +107,22 @@ namespace bio
 /*!\brief The class template that file records are based on; behaves like an std::tuple.
  * \implements seqan3::tuple_like
  * \ingroup bio
- * \tparam field_types The types of the fields in this record as a seqan3::type_list.
  * \tparam field_ids   A vtag_t type with bio::field IDs corresponding to field_types.
+ * \tparam field_types The types of the fields in this record as a seqan3::type_list.
  * \details
  *
- * This class template behaves just like an std::tuple, with the exception that it provides an additional
+ * This class template behaves like a std::tuple, with the exception that it provides an additional
  * get-interface that takes a bio::field identifier. The traditional get interfaces (via index and
  * via type) are also supported, but discouraged, because accessing via bio::field is unambiguous and
  * better readable.
  *
- * ### Example
+ * In addition to the get()-interfaces, member accessors are provided with the same name as the fields.
  *
- * For input files this template is specialised automatically and provided by the file via its `record_type` member.
- * For output files you my define it locally and pass instances of this to the output file's `push_back()`.
+ * See bio::seq_io::reader for how this data structure is used in practice.
  *
- * This is how it works:
+ * See #make_record() and #tie_record() for easy ways to create stand-alone record variables.
  *
- * \todo include test/snippet/io/record_2.cpp
+ * See the \ref record_faq for more details.
  */
 template <typename field_ids_, typename field_types_>
 struct record : seqan3::detail::transfer_template_args_onto_t<field_types_, std::tuple>
@@ -372,15 +371,22 @@ auto const && get(record<field_ids, field_types> const && r)
 // make_record
 //-------------------------------------------------------------------------------
 
-/*!\brief Create a bio::record and deduce type from arguments (like std::make_tuple for std::tuple).
+/*!\brief Create a deep bio::record from the arguments (like std::make_tuple for std::tuple).
+ * \param[in] tag    A tag that specifies the identifiers of the subsequent arguments.
+ * \param[in] fields The arguments to put into the record.
+ * \returns A bio::record with copies of the field arguments.
  * \details
+ *
+ * The record will contain copies of the arguments.
+ *
+ * For more information, see \ref record_type and \ref record_make_tie
  *
  * ### Example
  *
- * TODO
+ * \snippet test/snippet/record.cpp make_and_tie_record
  */
 template <auto... field_ids, typename... field_type_ts>
-constexpr auto make_record(vtag_t<field_ids...>, field_type_ts &&... fields)
+constexpr auto make_record(vtag_t<field_ids...> BIO_DOXYGEN_ONLY(tag), field_type_ts &&... fields)
   -> record<vtag_t<field_ids...>, seqan3::type_list<std::decay_t<field_type_ts>...>>
 {
     return {std::forward<field_type_ts>(fields)...};
@@ -390,15 +396,22 @@ constexpr auto make_record(vtag_t<field_ids...>, field_type_ts &&... fields)
 // tie_record
 //-------------------------------------------------------------------------------
 
-/*!\brief Create a bio::record of references (like std::tie for std::tuple).
+/*!\brief Create a shallow bio::record from the arguments (like std::tie for std::tuple).
+ * \param[in] tag    A tag that specifies the identifiers of the subsequent arguments.
+ * \param[in] fields The arguments to represent in the record.
+ * \returns A bio::record with references to the field arguments.
  * \details
+ *
+ * The record will contain references to the arguments.
+ *
+ * For more information, see \ref record_type and \ref record_make_tie
  *
  * ### Example
  *
- * TODO
+ * \snippet test/snippet/record.cpp make_and_tie_record
  */
 template <auto... field_ids, typename... field_type_ts>
-constexpr auto tie_record(vtag_t<field_ids...>, field_type_ts &... fields)
+constexpr auto tie_record(vtag_t<field_ids...> BIO_DOXYGEN_ONLY(tag), field_type_ts &... fields)
   -> record<vtag_t<field_ids...>, seqan3::type_list<field_type_ts &...>>
 {
     return {fields...};

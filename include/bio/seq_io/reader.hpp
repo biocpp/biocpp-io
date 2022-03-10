@@ -92,6 +92,11 @@ namespace bio::seq_io
  * at the first whitespace:
  * \snippet test/snippet/seq_io/seq_io_reader.cpp options
  *
+ * If you need to modify or store the records, request *deep records* from the reader:
+ * \snippet test/snippet/seq_io/seq_io_reader.cpp options2
+ *
+ * For more information on *shallow* vs *deep*, see \ref shallow_vs_deep
+ *
  * For more advanced options, see bio::seq_io::reader_options.
  */
 template <typename... option_args_t>

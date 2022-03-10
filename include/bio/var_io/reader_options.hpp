@@ -24,7 +24,6 @@
 #include <bio/format/vcf.hpp>
 #include <bio/stream/transparent_istream.hpp>
 #include <bio/stream/transparent_ostream.hpp>
-
 #include <bio/var_io/header.hpp>
 #include <bio/var_io/misc.hpp>
 
@@ -90,7 +89,7 @@ namespace bio::var_io
  * and all other tools that deal with VCF/BCF.
  *
  * Beyond that, a wide variety of types are supported per field (see below), but most users will be happy
- * with one of the predefined sets.
+ * with one of the predefined tags.
  *
  * ### Pre-defined tags
  *
@@ -103,29 +102,8 @@ namespace bio::var_io
  *   * When reading and writing, you need to make sure that the IDX values in the output header are the same as in the
  * input header, otherwise your record fields might change meaning or even become invalid.
  *
- * Both styles are "shallow" by default, but can be configured to be "deep":
- *
- * 1. shallow (bio::ownership::shallow)
- *   * The record contains light-weight data structures like views.
- *   * Record cannot be "stored"; it depends on internal caches and buffers, and it becomes invalid
- * as soon as the next record is read from the file.
- * 2. deep (bio::ownership::deep)
- *   * The record is self-contained; sequences and strings are stored in containers.
- *   * Record can be copied or stored and can "live on" independently of the reader.
- *
- * This example shows how to use deep records:
- *
- * \snippet test/snippet/var_io/var_io_reader_options.cpp field_types_deep
- *
- * Performance implications:
- *   * Shallow records imply fewer allocations and lower overhead during reading.
- *   * If you know that you need to copy your fields anyway, using a deep record can be faster than using a shallow
- * record and copying the data "manually" out of that (because certain internal caches are re-used to create deep
- * records).
- *   * field_types_bcf_style<ownership::deep> is faster than field_types<ownership::deep>, but for the shallow variants
- * there is almost no difference.
- *
- * TODO some of this should be moved to a general documentation page on configuring records; shallow vs deep; etc
+ * Both styles are *shallow* by default, but can be configured to be *deep*.
+ * For more details, see \ref shallow_vs_deep
  *
  * ### Manual configuration
  *
@@ -172,9 +150,7 @@ namespace bio::var_io
  * \snippet test/snippet/var_io/var_io_reader_options.cpp field_types_expert
  *
  * Reading fewer fields than available may provide a noticeable speed-up since only the
- * requested fields are actually parsed. Any field may also be set to `std::span<std::byte const>` which
- * results in no parsing happening for that field.
- *
+ * requested fields are actually parsed.
  */
 template <typename field_ids_t   = decltype(default_field_ids),
           typename field_types_t = decltype(field_types<ownership::shallow>),
