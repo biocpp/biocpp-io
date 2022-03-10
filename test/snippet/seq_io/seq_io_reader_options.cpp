@@ -4,14 +4,6 @@
 
 int main()
 {
-{
-//![example_custom]
-bio::seq_io::reader_options options
-{
-    .field_types = bio::seq_io::field_types<bio::ownership::deep, seqan3::dna4, seqan3::phred42>,
-};
-//![example_custom]
-}
 
 {
 //![example_simple]

@@ -4,6 +4,10 @@
   <navindex>
     <tab type="mainpage" visible="yes" title=""/>
     <tab type="pages" visible="no" title="" intro=""/>
+    <tab type="usergroup" visible="yes" title="Record-based I/O" intro="">
+      <tab type="user" visible="yes" title="Introduction" url="\ref record_based_intro" intro=""/>
+      <tab type="user" visible="yes" title="Record FAQ" url="\ref record_faq" intro=""/>
+    </tab>
     <tab type="modules" visible="yes" title="API Reference (Modules)" intro=""/>
     <tab type="usergroup" visible="yes" title="API Reference (details)" intro="">
       <tab type="namespaces" visible="yes" title="">

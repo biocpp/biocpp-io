@@ -34,6 +34,8 @@ namespace bio
  * Typically used to configure a class template to have members that are vectors/strings VS members that are views.
  * The "shallow" version of such a class is typically cheap to copy (no dynamic memory) while the "deep" version
  * is expensive to copy (holds dynamic memory).
+ *
+ * See \ref shallow_vs_deep on what this means in practice.
  */
 enum class ownership
 {
