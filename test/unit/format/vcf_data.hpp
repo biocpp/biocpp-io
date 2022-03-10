@@ -31,7 +31,7 @@ inline std::string const example_from_spec_records =
 
 inline std::string const example_from_spec_header =
   R"(##fileformat=VCFv4.3
-##fileDate=20090805
+##fileDate=2022-03-02 14:18:22
 ##source=myImputationProgramV3.1
 ##reference=file:///seq/references/1000GenomesPilot-NCBI36.fasta
 ##contig=<ID=20,length=62435964,assembly=B36,md5=f126cdf8a6e0c7f379d618ff66beb2da,species="Homo sapiens",taxonomy=x>
@@ -55,6 +55,7 @@ inline std::string const example_from_spec = example_from_spec_header + example_
 
 inline std::string const example_from_spec_header_regenerated =
   R"(##fileformat=VCFv4.3
+##fileDate=2022-03-02 14:18:22
 ##FILTER=<ID=PASS,Description="All filters passed",IDX=0>
 ##FILTER=<ID=q10,Description="Quality below 10",IDX=7>
 ##FILTER=<ID=s50,Description="Less than 50% of samples have data",IDX=8>
@@ -69,7 +70,6 @@ inline std::string const example_from_spec_header_regenerated =
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth",IDX=2>
 ##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality",IDX=11>
 ##contig=<ID=20,length=62435964,assembly=B36,md5=f126cdf8a6e0c7f379d618ff66beb2da,species="Homo sapiens",taxonomy=x,IDX=0>
-##fileDate=20090805
 ##source=myImputationProgramV3.1
 ##reference=file:///seq/references/1000GenomesPilot-NCBI36.fasta
 ##phasing=partial
@@ -78,6 +78,7 @@ inline std::string const example_from_spec_header_regenerated =
 
 inline std::string const example_from_spec_header_regenerated_no_IDX =
   R"(##fileformat=VCFv4.3
+##fileDate=2022-03-02 14:18:22
 ##FILTER=<ID=PASS,Description="All filters passed">
 ##FILTER=<ID=q10,Description="Quality below 10">
 ##FILTER=<ID=s50,Description="Less than 50% of samples have data">
@@ -92,7 +93,6 @@ inline std::string const example_from_spec_header_regenerated_no_IDX =
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
 ##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
 ##contig=<ID=20,length=62435964,assembly=B36,md5=f126cdf8a6e0c7f379d618ff66beb2da,species="Homo sapiens",taxonomy=x>
-##fileDate=20090805
 ##source=myImputationProgramV3.1
 ##reference=file:///seq/references/1000GenomesPilot-NCBI36.fasta
 ##phasing=partial
@@ -165,10 +165,10 @@ inline std::string const minimal_field_rows =
 
 inline std::string const incomplete_header_before =
   R"(##fileformat=VCFv4.3
+##fileDate=2022-03-02 14:18:22
 ##FILTER=<ID=PASS,Description="All filters passed",IDX=0>
 ##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data",IDX=1>
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype",IDX=2>
-##fileDate=20090805
 ##source=myImputationProgramV3.1
 ##reference=file:///seq/references/1000GenomesPilot-NCBI36.fasta
 ##phasing=partial
@@ -177,6 +177,7 @@ inline std::string const incomplete_header_before =
 
 inline std::string const incomplete_header_after =
   R"(##fileformat=VCFv4.3
+##fileDate=2022-03-02 14:18:22
 ##FILTER=<ID=PASS,Description="All filters passed",IDX=0>
 ##FILTER=<ID=q10,Description="Automatically added by SeqAn3.",IDX=9>
 ##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data",IDX=1>
@@ -190,7 +191,6 @@ inline std::string const incomplete_header_after =
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth",IDX=3>
 ##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype quality",IDX=8>
 ##contig=<ID=20,IDX=0>
-##fileDate=20090805
 ##source=myImputationProgramV3.1
 ##reference=file:///seq/references/1000GenomesPilot-NCBI36.fasta
 ##phasing=partial

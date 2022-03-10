@@ -18,6 +18,7 @@ using namespace seqan3::literals;
 // a plaintext header
 std::string_view const text_header =
 R"(##fileformat=VCFv4.3
+##fileDate=2022-03-02 14:18:22
 ##contig=<ID=20,length=62435964,assembly=B36,md5=f126cdf8a6e0c7f379d618ff66beb2da,species="Homo sapiens",taxonomy=x>
 ##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
 ##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
@@ -92,6 +93,7 @@ bio::var_io::writer writer{"example2.vcf",
 // add header so destructor works
 std::string_view const text_header =
 R"(##fileformat=VCFv4.3
+##fileDate=2022-03-02 14:18:22
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001	NA00002	NA00003
 )";
 writer.set_header(bio::var_io::header{text_header});

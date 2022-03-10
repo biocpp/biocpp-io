@@ -13,6 +13,9 @@
 
 #pragma once
 
+#include <chrono>
+#include <ctime>
+#include <iomanip>
 #include <map>
 #include <regex>
 #include <string>
@@ -164,6 +167,7 @@ public:
      * \{
      */
     std::string              file_format = "VCFv4.3"; //!< The file format version.
+    std::string              file_date = transTime(); //!< The file date.
     std::vector<filter_t>    filters;                 //!< Header lines describing FILTER fields.
     std::vector<info_t>      infos;                   //!< Header lines describing INFO fields.
     std::vector<format_t>    formats;                 //!< Header lines describing FORMAT fields.
@@ -215,6 +219,19 @@ public:
     /*!\name Update, reset and inspect
      * \{
      */
+    /*! \brief Gets the current time and transforms it in a nice readable way for the vcf header line fileDate.
+     *
+     * \returns a time string in the format: YYYY-MM-DD HH:MM:SS.
+     */
+    std::string transTime()
+    {
+        std::stringstream text_stream;
+        const std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+        const std::time_t rawtime = std::chrono::system_clock::to_time_t(now);
+        text_stream << std::put_time(std::localtime(&rawtime), "%F %T");
+        std::string time_string = text_stream.str();
+        return time_string;
+    }
     /*!\brief Add missing IDX fields to header entries and ensure that everything has proper hash-entries.
      *
      * \details
@@ -479,6 +496,9 @@ private:
         // file format
         ((raw_data += "##fileformat=") += file_format) += "\n";
 
+        // file date
+        ((raw_data += "##fileDate=") += file_date) += "\n";
+
         // filters
         for (auto const & filter : filters)
         {
@@ -628,6 +648,10 @@ private:
         {
             throw format_error{"File has two lines that begin with \"##fileformat\"."};
         }
+        else if (l.starts_with("##fileDate="))
+        {
+            parse_file_date_line(l.substr(11));
+        }
         else if (l.starts_with("##INFO="))
         {
             parse_info_or_format_line(strip_angular_brackets(l.substr(7)), true);
@@ -656,6 +680,12 @@ private:
         {
             throw format_error{"Plaintext header contains lines that don't start with \"##\" or \"#CHROM\"."};
         }
+    }
+
+    //!\brief Parse an INFO or FORMAT line.
+    void parse_file_date_line(std::string_view const l)
+    {
+        file_date = static_cast<std::string>(l);
     }
 
     //!\brief Parse an INFO or FORMAT line.
