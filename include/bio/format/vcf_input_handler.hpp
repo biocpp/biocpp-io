@@ -120,6 +120,8 @@ private:
     std::string       last_chrom;
     //!\brief Cache of the chromosome index.
     int32_t           last_chrom_idx = -1;
+    //!\brief Cache of the number of alleles.
+    size_t            n_alts         = -1;
     //!\brief Current line number in file.
     size_t            line           = 0;
 
@@ -128,6 +130,8 @@ private:
     {
         ++line;
         ++file_it;
+
+        n_alts = 1; // this is overwritten by the ALT parse function (unless ALT is not being parsed)
 
         if (size_t field_num = file_it->fields.size(); field_num < 8)
             error("Expected at least 8 fields but got ", field_num);
@@ -213,10 +217,14 @@ private:
     {
         std::string_view raw_field = get<field::alt>(raw_record);
 
+        n_alts = 0;
+
         if (raw_field != ".")
         {
             for (std::string_view subfield : raw_field | detail::eager_split(','))
             {
+                ++n_alts; // cache the number of alts
+
                 parsed_field.emplace_back();
                 // delegate parsing of element to base
                 parse_field_aux(subfield, parsed_field.back());
@@ -444,92 +452,7 @@ private:
     //!\brief Overload for parsing GENOTYPES.
     template <detail::back_insertable field_t>
         requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
-    void parse_field(vtag_t<field::genotypes> const & /**/, field_t & parsed_field)
-    {
-        using genotype_field_t = std::ranges::range_reference_t<field_t>;
-
-        size_t column_number          = file_it->fields.size();
-        size_t expected_column_number = header.column_labels.size();
-
-        if (column_number != expected_column_number)
-            error("Expected ", expected_column_number, " columns in line but found ", column_number, ".");
-
-        if (column_number <= 8) // there are no genotypes
-            return;
-
-        std::string_view format_names = file_it->fields[8];
-
-        /* parse keys */
-        size_t formats = 0;
-        for (std::string_view format_name : format_names | detail::eager_split(':'))
-        {
-            size_t format_pos = -1;
-            if (auto it = header.string_to_format_pos().find(format_name);
-                it == header.string_to_format_pos().end()) // format name was not in header, insert!
-            {
-                add_format_to_header(format_name);
-                format_pos = header.formats.size() - 1;
-            }
-            else
-            {
-                format_pos = it->second;
-            }
-
-            parsed_field.push_back({{}, {}});
-            auto & [current_id, current_value] = parsed_field.back();
-
-            if constexpr (std::same_as<int32_t, detail::first_elem_t<genotype_field_t>>)
-                current_id = header.formats[format_pos].idx;
-            else
-                detail::string_copy(format_name, current_id);
-
-            auto const & format = header.formats[format_pos];
-
-            init_element_value_type(format.type_id, current_value);
-            auto reserve = [s = column_number - 8](auto & vec) { vec.reserve(s); };
-            std::visit(reserve, current_value);
-
-            ++formats;
-        }
-
-        /* parse values/samples */
-        for (size_t i = 9; i < column_number; ++i)
-        {
-            std::string_view sample = file_it->fields[i];
-
-            auto fields_view = sample | detail::eager_split(':');
-            auto fields_it   = std::ranges::begin(fields_view);
-
-            for (size_t j = 0; j < formats; ++j)
-            {
-                std::string_view field{};
-
-                if (fields_it != std::default_sentinel)
-                {
-                    field = *fields_it;
-                    ++fields_it;
-
-                    auto parse_and_append = [field](auto & variant)
-                    {
-                        if constexpr (std::same_as<std::ranges::range_value_t<decltype(variant)>, bool>)
-                            variant.push_back(true);
-                        else
-                            variant.emplace_back();
-
-                        parse_element_value_type_fn{field}(variant.back());
-                    };
-
-                    auto & [current_id, current_value] = parsed_field[j];
-
-                    std::visit(parse_and_append, current_value);
-                }
-                else // this handles trailing dropped fields
-                {
-                    break;
-                }
-            }
-        }
-    }
+    void parse_field(vtag_t<field::genotypes> const & /**/, field_t & parsed_field);
 
     //!\brief Overload for parsing the private data.
     void parse_field(vtag_t<field::_private> const & /**/, var_io::record_private_data & parsed_field)
@@ -770,6 +693,139 @@ inline size_t format_input_handler<vcf>::parse_element_value_type(var_io::value_
 {
     init_element_value_type(id, output);
     return std::visit(parse_element_value_type_fn{input_string}, output);
+}
+
+//!\brief Overload for reading the GENOTYPE field.
+template <detail::back_insertable field_t>
+    requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
+inline void format_input_handler<vcf>::parse_field(vtag_t<field::genotypes> const & /**/, field_t & parsed_field)
+{
+    using genotype_field_t = std::ranges::range_reference_t<field_t>;
+
+    size_t column_number          = file_it->fields.size();
+    size_t expected_column_number = header.column_labels.size();
+
+    if (column_number != expected_column_number)
+        error("Expected ", expected_column_number, " columns in line but found ", column_number, ".");
+
+    if (column_number <= 8) // there are no genotypes
+        return;
+
+    std::string_view format_names = file_it->fields[8];
+
+    /* parse keys */
+    size_t formats = 0;
+    for (std::string_view format_name : format_names | detail::eager_split(':'))
+    {
+        size_t format_pos = -1;
+        if (auto it = header.string_to_format_pos().find(format_name);
+            it == header.string_to_format_pos().end()) // format name was not in header, insert!
+        {
+            add_format_to_header(format_name);
+            format_pos = header.formats.size() - 1;
+        }
+        else
+        {
+            format_pos = it->second;
+        }
+
+        parsed_field.push_back({{}, {}});
+        auto & [current_id, current_value] = parsed_field.back();
+
+        if constexpr (std::same_as<int32_t, detail::first_elem_t<genotype_field_t>>)
+            current_id = header.formats[format_pos].idx;
+        else
+            detail::string_copy(format_name, current_id);
+
+        auto const & format = header.formats[format_pos];
+
+        init_element_value_type(format.type_id, current_value);
+        auto reserve = detail::overloaded(
+          [&]<typename t>(seqan3::concatenated_sequences<t> & seqs)
+          {
+              size_t n_samples       = column_number - 8;
+              size_t concat_capacity = 0;
+
+              seqs.reserve(n_samples);
+
+              switch (format.number)
+              {
+                  case bio::var_io::header_number::A:
+                      concat_capacity = n_samples * n_alts;
+                      break;
+                  case bio::var_io::header_number::R:
+                      concat_capacity = n_samples * (n_alts + 1);
+                      break;
+                  case bio::var_io::header_number::G:
+                      concat_capacity = n_samples * (detail::vcf_gt_formula(n_alts, n_alts) + 1);
+                      break;
+                  case bio::var_io::header_number::dot:
+                      // assume 1 value per sample if nothing else is known
+                      concat_capacity = n_samples;
+                      break;
+                  case 0:
+                      throw std::runtime_error{"This state should be unreachable."};
+                      break;
+                  default:
+                      concat_capacity = n_samples * format.number;
+                      break;
+              }
+
+              seqs.concat_reserve(concat_capacity);
+          },
+          [&]<typename t>(std::vector<t> & vec) { vec.reserve(column_number - 8); });
+        std::visit(reserve, current_value);
+
+        ++formats;
+    }
+
+    /* parse values/samples */
+    for (size_t i = 9; i < column_number; ++i)
+    {
+        std::string_view sample = file_it->fields[i];
+
+        auto fields_view = sample | detail::eager_split(':');
+        auto fields_it   = std::ranges::begin(fields_view);
+
+        for (size_t j = 0; j < formats; ++j)
+        {
+            std::string_view field{};
+
+            if (fields_it != std::default_sentinel)
+            {
+                field = *fields_it;
+                ++fields_it;
+
+                auto parse_and_append = detail::overloaded(
+                  [field]<typename t>(seqan3::concatenated_sequences<t> & seqs)
+                  {
+                      seqs.push_back();
+                      if (field != ".")
+                      {
+                          for (std::string_view const s : field | detail::eager_split(','))
+                          {
+                              std::ranges::range_value_t<t> back_back;
+                              parse_element_value_type_fn{s}(back_back);
+                              seqs.last_push_back(back_back);
+                          }
+                      }
+                  },
+                  [field]<typename t>(std::vector<t> & seqs)
+                  {
+                      seqs.emplace_back();
+                      parse_element_value_type_fn{field}(seqs.back());
+                  });
+
+                auto & [current_id, current_value] = parsed_field[j];
+
+                std::visit(parse_and_append, current_value);
+            }
+            else // this handles trailing dropped fields
+            {
+                break;
+            }
+        }
+    }
 }
 
 } // namespace bio

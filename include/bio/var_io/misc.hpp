@@ -18,6 +18,7 @@
 #include <variant>
 #include <vector>
 
+#include <seqan3/alphabet/container/concatenated_sequences.hpp>
 #include <seqan3/alphabet/nucleotide/dna5.hpp>
 #include <seqan3/alphabet/views/char_strictly_to.hpp>
 #include <seqan3/core/debug_stream/debug_stream_type.hpp>
@@ -306,10 +307,10 @@ using genotype_element_value_type =
                std::vector<int32_t>,
                std::vector<float>,
                std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>,
-               std::vector<std::vector<int8_t>>,
-               std::vector<std::vector<int16_t>>,
-               std::vector<std::vector<int32_t>>,
-               std::vector<std::vector<float>>,
+               seqan3::concatenated_sequences<std::vector<int8_t>>,
+               seqan3::concatenated_sequences<std::vector<int16_t>>,
+               seqan3::concatenated_sequences<std::vector<int32_t>>,
+               seqan3::concatenated_sequences<std::vector<float>>,
                std::vector<std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>>
                /* no flag here */>;
 
@@ -605,7 +606,7 @@ detail::bcf_type_descriptor smallest_int_desc(std::signed_integral auto const nu
 }
 
 //!\overload
-detail::bcf_type_descriptor smallest_int_desc(std::ranges::forward_range auto && range)
+detail::bcf_type_descriptor smallest_int_desc(std::ranges::input_range auto && range)
 {
     using val_t = seqan3::range_innermost_value_t<decltype(range)>;
     int64_t max = 0;
@@ -739,6 +740,12 @@ inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> =
   type_2_bcf_type_descriptor<seqan3::range_innermost_value_t<t>>;
 
 //!\}
+
+//!\brief Formula for computing indexes in genotype fields with number "G"; see VCF spec for details.
+constexpr size_t vcf_gt_formula(size_t const a, size_t const b)
+{
+    return (b * (b + 1)) / 2 + a;
+}
 
 //!\}
 } // namespace bio::detail
