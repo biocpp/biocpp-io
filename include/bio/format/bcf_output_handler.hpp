@@ -866,7 +866,7 @@ private:
 
                         // size refers to size per-sample
                         write_type_descriptor(desc, max_alleles);
-                        for (auto & rng : values)
+                        for (auto && rng : values)
                             fun(rng, desc);
 
                         // no padding (GT required for all samples)
@@ -882,7 +882,7 @@ private:
 
                     write_type_descriptor(desc, max_length); // size refers to size per-sample
 
-                    for (auto & rng : values)
+                    for (auto && rng : values)
                     {
                         write_range_impl(rng, desc);
                         size_t const s = std::ranges::size(rng);

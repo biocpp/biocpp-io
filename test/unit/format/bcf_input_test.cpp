@@ -120,6 +120,7 @@ void field_types()
     using record_t = bio::record<decltype(bio::var_io::default_field_ids), fields_t>;
 
     using int_t       = int8_t;
+    using vec_t       = seqan3::concatenated_sequences<std::vector<int_t>>;
     constexpr auto mv = bio::var_io::missing_value<int_t>;
 
     std::vector<record_t> recs;
@@ -130,9 +131,9 @@ void field_types()
         recs = example_records_bcf_style<own, int_t>();
 
     // this workaround is pending clarification in https://github.com/samtools/hts-specs/issues/593
-    std::get<std::vector<std::vector<int_t>>>(bio::detail::get_second(recs[1].genotypes().back())).push_back({mv});
-    std::get<std::vector<std::vector<int_t>>>(bio::detail::get_second(recs[2].genotypes().back())).push_back({mv});
-    std::get<std::vector<std::vector<int_t>>>(bio::detail::get_second(recs[3].genotypes().back())).push_back({mv});
+    std::get<vec_t>(bio::detail::get_second(recs[1].genotypes().back())).push_back(std::vector{mv});
+    std::get<vec_t>(bio::detail::get_second(recs[2].genotypes().back())).push_back(std::vector{mv});
+    std::get<vec_t>(bio::detail::get_second(recs[3].genotypes().back())).push_back(std::vector{mv});
 
     for (auto & rec : recs)
         get<bio::field::_private>(rec) = priv;
