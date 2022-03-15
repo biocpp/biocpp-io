@@ -240,7 +240,7 @@ public:
           ->open(filename_, std::ios_base::in | std::ios::binary);
 
         if (!primary_stream->good())
-            throw file_open_error{"Could not open file " + filename_.string() + " for reading."};
+            throw file_open_error{"Could not open file ", filename_.string(), " for reading."};
 
         init();
     }

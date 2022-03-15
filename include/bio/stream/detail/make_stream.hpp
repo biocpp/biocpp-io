@@ -119,7 +119,8 @@ std::istream * make_istream(args_t &&... args)
     }
     else
     {
-        throw file_open_error{std::string{"The file is "} + std::string{compression_traits<format>::as_string} +
+        throw file_open_error{"The file is ",
+                              compression_traits<format>::as_string,
                               "-compressed, but SeqAn3 is built without support for this format."};
         return nullptr;
     }
@@ -139,9 +140,8 @@ std::ostream * make_ostream(args_t &&... args)
     }
     else
     {
-        throw file_open_error{std::string{compression_traits<format>::as_string} +
-                              "-compression was selected, "
-                              "but SeqAn3 is built without support for this format."};
+        throw file_open_error{compression_traits<format>::as_string,
+                              "-compression was selected, but SeqAn3 is built without support for this format."};
         return nullptr;
     }
 }

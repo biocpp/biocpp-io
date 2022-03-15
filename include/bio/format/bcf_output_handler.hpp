@@ -1215,7 +1215,7 @@ public:
     var_io::header const & get_header() const
     {
         if (header == nullptr)
-            throw std::runtime_error{"Attempting to read header, but no header was set."};
+            throw missing_header_error{"Attempting to read header, but no header was set."};
 
         return *header;
     }

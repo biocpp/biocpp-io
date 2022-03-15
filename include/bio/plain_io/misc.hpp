@@ -17,7 +17,7 @@
 #include <string_view>
 #include <vector>
 
-#include <bio/platform.hpp>
+#include <bio/exception.hpp>
 
 namespace bio::plain_io
 {
@@ -124,16 +124,12 @@ public:
     constexpr bool is_starts_with() const noexcept { return state != none_state && state != first_line_state; }
 
     /*!\brief The character stored as the "starts_with"-state.
-     * \throws std::logic_error If this object is not in a "starts_with"-state.
+     * \throws bio_error If this object is not in a "starts_with"-state.
      */
     char get_starts_with() const
     {
         if (!is_starts_with())
-        {
-            throw std::logic_error{
-              "Tried to read starts_with from header_kind but it was in a "
-              "different state."};
-        }
+            throw bio_error{"Tried to read starts_with from header_kind but it was in a different state."};
 
         return static_cast<char>(state);
     }

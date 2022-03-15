@@ -1,13 +1,13 @@
 // -----------------------------------------------------------------------------------------------------
-// Copyright (c) 2006-2021, Knut Reinert & Freie Universität Berlin
-// Copyright (c) 2016-2021, Knut Reinert & MPI für molekulare Genetik
-// Copyright (c) 2020-2021, deCODE Genetics
+// Copyright (c) 2006-2022, Knut Reinert & Freie Universität Berlin
+// Copyright (c) 2016-2022, Knut Reinert & MPI für molekulare Genetik
+// Copyright (c) 2020-2022, deCODE Genetics
 // This file may be used, modified and/or redistributed under the terms of the 3-clause BSD-License
 // shipped with this file and also available at: https://github.com/seqan/bio/blob/master/LICENSE.md
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides exception types.
+ * \brief Provides functions for converting strings to numbers (and vice-versa).
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -22,7 +22,8 @@
 
 #include <seqan3/utility/concept/exposition_only/core_language.hpp>
 
-#include <bio/platform.hpp>
+#include <bio/detail/to_string.hpp>
+#include <bio/exception.hpp>
 
 namespace bio::detail
 {
@@ -92,7 +93,7 @@ std::from_chars_result from_chars(char const * first, char const * last, auto & 
 /*!\brief Turn a string into a number.
  * \param[in] input The input string.
  * \param[out] number The variable holding the result.
- * \throws std::runtime_error If there was an error during conversion.
+ * \throws bio_error If there was an error during conversion.
  * \details
  *
  * Relies on std::from_chars to efficiently convert but accepts std::string_view and throws on error so
@@ -104,30 +105,10 @@ void string_to_number(std::string_view const input, seqan3::arithmetic auto & nu
 {
     std::from_chars_result res = from_chars(input.data(), input.data() + input.size(), number);
     if (res.ec != std::errc{} || res.ptr != input.data() + input.size())
-        throw std::runtime_error{std::string{"Could not convert \""} + std::string{input} + "\" into a number."};
+        throw bio_error{"Could not convert \"", input, "\" into a number."};
 }
 
 // TODO write number_to_string and append_number_to_string
-
-/*!\brief Convert something to a string.
- * \details
- *
- * ### Attention
- *
- * This function is not efficient. Do not use it in performance-critical code.
- */
-std::string to_string(auto && in)
-{
-    using in_t = std::remove_cvref_t<decltype(in)>;
-    if constexpr (seqan3::arithmetic<in_t>)
-        return std::to_string(in);
-    else if constexpr (std::same_as<in_t, std::string>)
-        return in;
-    else if constexpr (std::constructible_from<std::string, in_t>)
-        return std::string{in};
-    else
-        static_assert(std::constructible_from<std::string, in_t>, "Type cannot be converted to string");
-}
 
 //!\}
 

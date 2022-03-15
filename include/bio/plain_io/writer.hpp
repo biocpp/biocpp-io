@@ -331,8 +331,8 @@ public:
     /*!\brief Construct from filename.
      * \param[in] filename        Path that you wish to write to.
      * \param[in] field_separator Delimiter between fields in a line. [optional]
-     * \param[in] ostream_options Options passed to the underlying stream; see seqan3::transparent_ostream_options.
-     * [optional] \throws seqan3::file_open_error If the file could not be opened, e.g. non-existant or non-readable.
+     * \param[in] ostream_options Options passed to the underlying stream; see bio::transparent_ostream_options.
+     * [optional] \throws bio::file_open_error If the file could not be opened, e.g. non-existant or non-readable.
      *
      * \details
      *
@@ -359,8 +359,8 @@ public:
     /*!\brief Construct from an existing stream and with specified format.
      * \param[in] str             The stream to open from; lvalues and rvalues are supported.
      * \param[in] field_separator Delimiter between fields in a line. [optional]
-     * \param[in] ostream_options Options passed to the underlying stream; see seqan3::transparent_ostream_options.
-     * [optional] \throws seqan3::file_open_error If the file could not be opened, e.g. non-existant or non-readable.
+     * \param[in] ostream_options Options passed to the underlying stream; see bio:transparent_ostream_options.
+     * [optional] \throws bio::file_open_error If the file could not be opened, e.g. non-existant or non-readable.
      *
      * \details
      *

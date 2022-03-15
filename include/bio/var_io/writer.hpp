@@ -236,7 +236,7 @@ public:
     void set_header(header_t && hdr)
     {
         if (!init_state)
-            throw std::logic_error{"You cannot change the header after I/O has happened."};
+            throw bio_error{"You cannot change the header after I/O has happened."};
 
         std::visit(detail::overloaded{[](std::monostate) {},
                                       [&hdr](auto & handler) { handler.set_header(std::forward<header_t>(hdr)); }},

@@ -172,7 +172,8 @@ public:
      */
     /*!\brief Returns an iterator to current position in the file.
      * \returns An iterator pointing to the current position in the file.
-     * \throws seqan3::format_error
+     * \throws bio::unexpected_end_of_input If the file end unexpectedly.
+     * \throws bio::parse_error If there is an unspecific error parsing the format.
      *
      * It is safe to call this function repeatedly, but it will always return an iterator pointing to the current
      * record in the file (and not seek back to the beginning).
@@ -182,10 +183,6 @@ public:
      * ### Complexity
      *
      * Constant.
-     *
-     * ### Exceptions
-     *
-     * Throws seqan3::format_error if the first record could not be read into the buffer.
      */
     iterator begin()
     {

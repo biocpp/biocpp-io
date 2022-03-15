@@ -112,9 +112,6 @@ TEST(var_io_writer, constructor2_with_opts_format_variant)
 
 void var_io_writer_stream_constructor(auto &&... args)
 {
-    /* Hacky-hack: we know that the destructor will throw,
-     * but we only want to test the constructor, so we call new and never delete properly!
-     */
     using t                  = decltype(bio::var_io::writer{std::forward<decltype(args)>(args)...});
     [[maybe_unused]] t * ptr = nullptr;
 
