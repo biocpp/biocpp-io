@@ -585,8 +585,7 @@ detail::bcf_type_descriptor smallest_int_desc(std::unsigned_integral auto const 
     {
         case 128:
         case 64:
-            throw std::runtime_error{std::string{"Could not write number '"} + detail::to_string(num) +
-                                     "'. Value out of range (only int32 supported)."};
+            throw bio_error{"Could not write number '", num, "'. Value out of range (only int32 supported)."};
             return {};
         case 32:
             return detail::bcf_type_descriptor::int32;

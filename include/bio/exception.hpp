@@ -16,7 +16,7 @@
 #include <ios>
 #include <stdexcept>
 
-#include <bio/platform.hpp>
+#include <bio/detail/to_string.hpp>
 
 namespace bio
 {
@@ -26,37 +26,57 @@ namespace bio
  */
 
 // ----------------------------------------------------------------------------
+// generic exceptions
+// ----------------------------------------------------------------------------
+
+//!\brief All other exceptions inherit from this.
+struct bio_error : std::runtime_error
+{
+    //!\brief Constructor that forwards the exception string.
+    explicit bio_error(auto &&... s) : std::runtime_error{(detail::to_string(s) + ...)} {}
+};
+
+//!\brief All other exceptions inherit from this.
+struct unreachable_code : bio_error
+{
+    //!\brief Constructor that forwards the exception string.
+    explicit unreachable_code(auto &&... s) :
+      bio_error{"Unreachable code reached.\nPlease report a bug with this message.\nDetails:\n",
+                (detail::to_string(s) + ...)}
+    {}
+    // TODO(GCC11): When GCC10 is dropped, make the constructor take std::source_location instead.
+};
+
+// ----------------------------------------------------------------------------
 // file open exceptions
 // ----------------------------------------------------------------------------
 
 //!\brief Thrown if there is no format that accepts a given file extension.
-struct unhandled_extension_error : std::invalid_argument
+struct unhandled_extension_error : bio_error
 {
     //!\brief Constructor that forwards the exception string.
-    unhandled_extension_error(std::string const & s) : std::invalid_argument{s} {}
+    explicit unhandled_extension_error(auto &&... s) : bio_error{s...} {}
 };
 
 //!\brief Thrown if there is an unspecified filesystem or stream error while opening, e.g. permission problem.
-struct file_open_error : std::runtime_error
+struct file_open_error : bio_error
 {
     //!\brief Constructor that forwards the exception string.
-    file_open_error(std::string const & s) : std::runtime_error{s} {}
+    explicit file_open_error(auto &&... s) : bio_error{s...} {}
 };
 
 //!\brief Thrown if there is a parse error, such as reading an unexpected character from an input stream.
-struct parse_error : std::runtime_error
+struct parse_error : bio_error
 {
     //!\brief Constructor that forwards the exception string.
-    parse_error(std::string const & s) : std::runtime_error{s} {}
+    explicit parse_error(auto &&... s) : bio_error{s...} {}
 };
 
 //!\brief Thrown if there is an io error in low level io operations such as in std::basic_streambuf operations.
-struct io_error : std::ios_base::failure
+struct io_error : bio_error
 {
     //!\brief Constructor that forwards the exception string.
-    explicit io_error(std::string const & s, std::error_code const & ec = std::io_errc::stream) :
-      std::ios_base::failure{s, ec}
-    {}
+    explicit io_error(auto &&... s) : bio_error{s...} {}
 };
 
 // ----------------------------------------------------------------------------
@@ -64,10 +84,10 @@ struct io_error : std::ios_base::failure
 // ----------------------------------------------------------------------------
 
 //!\brief Thrown if I/O was expecting more input (e.g. a delimiter or a new line), but the end of input was reached.
-struct unexpected_end_of_input : std::runtime_error
+struct unexpected_end_of_input : bio_error
 {
     //!\brief Constructor that forwards the exception string.
-    unexpected_end_of_input(std::string const & s) : std::runtime_error{s} {}
+    explicit unexpected_end_of_input(auto &&... s) : bio_error{s...} {}
 };
 
 // ----------------------------------------------------------------------------
@@ -75,17 +95,17 @@ struct unexpected_end_of_input : std::runtime_error
 // ----------------------------------------------------------------------------
 
 //!\brief Thrown if information given to output format didn't match expectations.
-struct format_error : std::runtime_error
+struct format_error : bio_error
 {
     //!\brief Constructor that forwards the exception string.
-    format_error(std::string const & s) : std::runtime_error{s} {}
+    explicit format_error(auto &&... s) : bio_error{s...} {}
 };
 
 //!\brief Thrown if a writer requires a header but it isn't provided.
-struct missing_header_error : std::runtime_error
+struct missing_header_error : bio_error
 {
     //!\brief Constructor that forwards the exception string.
-    missing_header_error(std::string const & s) : std::runtime_error{s} {}
+    explicit missing_header_error(auto &&... s) : bio_error{s...} {}
 };
 
 //!\}

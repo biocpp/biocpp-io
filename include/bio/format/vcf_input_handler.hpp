@@ -83,10 +83,7 @@ private:
     //!\brief Print an error message with current line number in diagnostic.
     [[noreturn]] void error(auto const &... messages) const
     {
-        std::string message = "[SeqAn3 VCF format error in line " + detail::to_string(line) + "] ";
-        ((message += detail::to_string(messages)), ...);
-
-        throw format_error{message};
+        throw format_error{"[SeqAn3 VCF format error in line ", line, "] ", messages...};
     }
 
     /*!\name Options
@@ -594,8 +591,7 @@ inline void format_input_handler<vcf>::init_element_value_type(var_io::value_typ
             {
                 if constexpr (detail::is_genotype_element_value_type<t>)
                 {
-                    throw std::logic_error{
-                      "bio::var_io::genotype_element_value_type cannot be initialised to flag state."};
+                    throw unreachable_code{__FILE__, ':', __LINE__, '\n', __PRETTY_FUNCTION__};
                 }
                 else
                 {
@@ -764,7 +760,7 @@ inline void format_input_handler<vcf>::parse_field(vtag_t<field::genotypes> cons
                       concat_capacity = n_samples;
                       break;
                   case 0:
-                      throw std::runtime_error{"This state should be unreachable."};
+                      throw unreachable_code{__FILE__, ':', __LINE__, '\n', __PRETTY_FUNCTION__};
                       break;
                   default:
                       concat_capacity = n_samples * format.number;

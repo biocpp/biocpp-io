@@ -401,7 +401,7 @@ public:
      * \param[in] field_separator Delimiter between fields in a line. [optional]
      * \param[in] header          Whether to treat certain lines as header; see bio::plain_io::header_kind. [optional]
      * \param[in] istream_options Options passed to the underlying stream; see bio::transparent_istream_options.
-     * [optional] \throws seqan3::file_open_error If the file could not be opened, e.g. non-existant or non-readable.
+     * [optional] \throws bio::file_open_error If the file could not be opened, e.g. non-existant or non-readable.
      *
      * \details
      *
@@ -438,7 +438,7 @@ public:
      * \param[in] field_separator Delimiter between fields in a line. [optional]
      * \param[in] header          Whether to treat certain lines as header; see bio::plain_io::header_kind. [optional]
      * \param[in] istream_options Options passed to the underlying stream; see bio::transparent_istream_options.
-     * [optional] \throws seqan3::file_open_error If the file could not be opened, e.g. non-existant or non-readable.
+     * [optional] \throws bio::file_open_error If the file could not be opened, e.g. non-existant or non-readable.
      *
      * \details
      *

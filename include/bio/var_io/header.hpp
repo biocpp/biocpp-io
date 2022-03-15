@@ -750,7 +750,7 @@ private:
         if (is_info)
         {
             if (string_to_info_pos_.contains(new_entry.id))
-                throw format_error{std::string{"Duplicate INFO ID \""} + std::string{new_entry.id} + "\" in HEADER."};
+                throw format_error{"Duplicate INFO ID \"", new_entry.id, "\" in HEADER."};
 
             infos.push_back(std::move(new_entry));
             add_idx_and_hash_entries<entry_kind::info>(infos.size() - 1);
@@ -758,7 +758,7 @@ private:
         else
         {
             if (string_to_format_pos_.contains(new_entry.id))
-                throw format_error{std::string{"Duplicate FORMAT ID \""} + std::string{new_entry.id} + "\" in HEADER."};
+                throw format_error{"Duplicate FORMAT ID \"", new_entry.id, "\" in HEADER."};
 
             formats.push_back(std::move(new_entry));
             add_idx_and_hash_entries<entry_kind::format>(formats.size() - 1);
@@ -799,7 +799,7 @@ private:
         else
         {
             if (string_to_filter_pos_.contains(new_entry.id))
-                throw format_error{std::string{"Duplicate FILTER ID \""} + std::string{new_entry.id} + "\" in HEADER."};
+                throw format_error{"Duplicate FILTER ID \"", new_entry.id, "\" in HEADER."};
 
             filters.push_back(std::move(new_entry));
         }
@@ -834,7 +834,7 @@ private:
         max_contig_idx_ = std::max(max_contig_idx_, new_entry.idx);
 
         if (string_to_contig_pos_.contains(new_entry.id))
-            throw format_error{std::string{"Duplicate CONTIG ID \""} + std::string{new_entry.id} + "\" in HEADER."};
+            throw format_error{"Duplicate CONTIG ID \"", new_entry.id, "\" in HEADER."};
 
         contigs.push_back(std::move(new_entry));
 
@@ -898,12 +898,12 @@ private:
         {
             ret = value_type_id::flag;
             if (number != 0)
-                throw format_error{std::string{"Flags must always have number 0 in header."}};
+                throw format_error{"Flags must always have number 0 in header."};
             return ret;
         }
 
         if (number == 0)
-            throw format_error{std::string{"Only flags may have number 0 in header."}};
+            throw format_error{"Only flags may have number 0 in header."};
 
         if (in == "Integer")
         {
@@ -935,8 +935,7 @@ private:
         }
         else
         {
-            throw format_error{std::string{"Cannot convert the following string to a type identifier: "} +
-                               std::string{in}};
+            throw format_error{"Cannot convert the following string to a type identifier: ", in};
         }
 
         return ret;
@@ -956,8 +955,7 @@ private:
 
             if (it1 == std::default_sentinel || it2 == std::default_sentinel) //|| it3 != std::default_sentinel)
             {
-                throw format_error{std::string{"Could not parse the following string into a dictionary: "} +
-                                   std::string{pair}};
+                throw format_error{"Could not parse the following string into a dictionary: ", pair};
             }
 
             ret[static_cast<std::string>(*it1)] = static_cast<std::string>(*it2);
