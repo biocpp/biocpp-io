@@ -1022,7 +1022,7 @@ inline std::unordered_map<std::string_view, header::format_t> const reserved_for
 namespace bio::detail
 {
 
-//!\brief Data structure that represents the beginning of a BCF style (bit-compatible).
+//!\brief Data structure that represents the beginning of a BCF file.
 struct bcf_header
 {
     std::array<char, 3> magic{};         //!< The magic bytes.
