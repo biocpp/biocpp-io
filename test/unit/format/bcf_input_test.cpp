@@ -141,18 +141,28 @@ void field_types()
     record_t rec;
 
     handler.parse_next_record_into(rec);
+    get<bio::field::_private>(rec).raw_record  = nullptr;
+    get<bio::field::_private>(rec).record_core = nullptr;
     EXPECT_EQ(rec, recs[0]);
 
     handler.parse_next_record_into(rec);
+    get<bio::field::_private>(rec).raw_record  = nullptr;
+    get<bio::field::_private>(rec).record_core = nullptr;
     EXPECT_EQ(rec, recs[1]);
 
     handler.parse_next_record_into(rec);
+    get<bio::field::_private>(rec).raw_record  = nullptr;
+    get<bio::field::_private>(rec).record_core = nullptr;
     EXPECT_EQ(rec, recs[2]);
 
     handler.parse_next_record_into(rec);
+    get<bio::field::_private>(rec).raw_record  = nullptr;
+    get<bio::field::_private>(rec).record_core = nullptr;
     EXPECT_EQ(rec, recs[3]);
 
     handler.parse_next_record_into(rec);
+    get<bio::field::_private>(rec).raw_record  = nullptr;
+    get<bio::field::_private>(rec).record_core = nullptr;
     EXPECT_EQ(rec, recs[4]);
 }
 

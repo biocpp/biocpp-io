@@ -454,7 +454,9 @@ private:
     //!\brief Overload for parsing the private data.
     void parse_field(vtag_t<field::_private> const & /**/, var_io::record_private_data & parsed_field)
     {
-        parsed_field = var_io::record_private_data{.header_ptr = &header};
+        parsed_field.header_ptr  = &header;
+        parsed_field.raw_record  = nullptr;
+        parsed_field.record_core = nullptr;
     }
     //!\}
 

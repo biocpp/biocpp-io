@@ -28,12 +28,19 @@
 #include <bio/misc.hpp>
 #include <bio/record.hpp>
 
-namespace bio::var_io
-{
-
 //-----------------------------------------------------------------------------
 // forwards
 //-----------------------------------------------------------------------------
+
+namespace bio::detail
+{
+
+struct bcf_record_core;
+
+} // namespace bio::detail
+
+namespace bio::var_io
+{
 
 class header;
 
@@ -387,19 +394,6 @@ struct genotype_element_bcf
     auto operator<=>(genotype_element_bcf const &) const = default;
 };
 
-//!\brief A datastructure that contains private data of variant IO records.
-//!\ingroup var_io
-struct record_private_data
-{
-    //!\privatesection
-    //!\brief Pointer to the header
-    header const * header_ptr = nullptr;
-
-    //!\brief Defaulted three-way comparison.
-    friend bool operator==(record_private_data const &, record_private_data const &) = default;
-    // TODO pointer to bcf-record
-};
-
 //-----------------------------------------------------------------------------
 // default_field_ids
 //-----------------------------------------------------------------------------
@@ -416,6 +410,33 @@ inline constinit auto default_field_ids = vtag<field::chrom,
                                                field::info,
                                                field::genotypes,
                                                field::_private>;
+
+//-----------------------------------------------------------------------------
+// record_private_data
+//-----------------------------------------------------------------------------
+
+//!\brief A datastructure that contains private data of variant IO records.
+//!\ingroup var_io
+struct record_private_data
+{
+    //!\privatesection
+    //!\brief Pointer to the header
+    header const * header_ptr = nullptr;
+
+    //!\brief Pointer to record core (if BCF).
+    detail::bcf_record_core const * record_core = nullptr;
+
+    //!\brief Raw record type.
+    using raw_record_t = record<
+      decltype(default_field_ids),
+      seqan3::list_traits::concat<seqan3::list_traits::repeat<default_field_ids.size - 1, std::span<std::byte const>>,
+                                  seqan3::type_list<var_io::record_private_data>>>;
+    //!\brief Pointer to raw record.
+    raw_record_t const * raw_record = nullptr;
+
+    //!\brief Defaulted three-way comparison.
+    friend bool operator==(record_private_data const &, record_private_data const &) = default;
+};
 
 //-----------------------------------------------------------------------------
 // Pre-defined field types (reader)
