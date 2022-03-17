@@ -636,7 +636,7 @@ detail::bcf_type_descriptor smallest_int_desc(std::ranges::input_range auto && r
     for (int64_t elem : range)
     {
         if constexpr (std::signed_integral<val_t>)
-            elem = var_io::missing_value<val_t> ? 0 : std::abs(elem);
+            elem = static_cast<val_t>(elem) == var_io::missing_value<val_t> ? 0 : std::abs(elem);
 
         if (elem > max)
         {
