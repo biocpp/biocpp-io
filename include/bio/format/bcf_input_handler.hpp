@@ -614,11 +614,11 @@ private:
         cache_ptr += size * sizeof(elem_t);
     }
 
-    //!\brief Set to vector-of-string.
+    //!\brief Set to vector-of-string (genotypes and info have different implementation here).
     template <var_io::value_type_id id_>
-    static inline void element_value_type_init_vector_of_string(size_t const       size,
-                                                                std::byte const *& cache_ptr,
-                                                                auto &             output)
+    static inline void info_element_value_type_init_vector_of_string(size_t const       size,
+                                                                     std::byte const *& cache_ptr,
+                                                                     auto &             output)
     {
         constexpr size_t id      = static_cast<size_t>(id_);
         auto &           output_ = output.template emplace<id>();
@@ -631,6 +631,36 @@ private:
         }
 
         cache_ptr += size;
+    }
+
+    //!\brief Set to vector-of-string (genotypes and info have different implementation here).
+    template <var_io::value_type_id id_>
+    static inline void genotype_element_value_type_init_vector_of_string(size_t const       outer_size,
+                                                                         size_t const       inner_size,
+                                                                         std::byte const *& cache_ptr,
+                                                                         auto &             output)
+    {
+        constexpr size_t id      = static_cast<size_t>(id_);
+        auto &           output_ = output.template emplace<id>();
+
+        output_.reserve(outer_size);
+        // TODO this is not yet concatenated_sequences
+        //         output_.concat_reserve(outer_size * inner_size);
+
+        for (size_t i = 0; i < outer_size; ++i)
+        {
+            std::string_view tmp{reinterpret_cast<char const *>(cache_ptr) + i * inner_size, inner_size};
+
+            // vectors can be smaller by being padded with end-of-vector values
+            size_t s = tmp.size();
+            while (s > 0 && tmp[s - 1] == detail::end_of_vector<char>)
+                --s;
+            tmp = tmp.substr(0, s);
+
+            output_.emplace_back();
+            detail::string_copy(tmp, output_.back());
+        }
+        cache_ptr += outer_size * inner_size * sizeof(char);
     }
 
     //!\brief Set to vector-of-vector.
@@ -1114,9 +1144,9 @@ inline void format_input_handler<bcf>::parse_element_value_type(var_io::value_ty
                     error(
                       "Attempting to create vector of string but the byte descriptor does not indicate char alphabet");
 
-                element_value_type_init_vector_of_string<var_io::value_type_id::vector_of_string>(size,
-                                                                                                  cache_ptr,
-                                                                                                  output);
+                info_element_value_type_init_vector_of_string<var_io::value_type_id::vector_of_string>(size,
+                                                                                                       cache_ptr,
+                                                                                                       output);
                 return;
             }
         case var_io::value_type_id::flag:
@@ -1208,9 +1238,10 @@ inline void format_input_handler<bcf>::parse_element_value_type(var_io::value_ty
                 if (desc != detail::bcf_type_descriptor::char8)
                     error("Attempting to creates string but the byte descriptor does not indicate string type.");
 
-                // TODO double-check if we shouldn't actually call element_value_type_init_vector_of_vector here
-                // instead
-                element_value_type_init_vector_of_string<var_io::value_type_id::string>(outer_size, cache_ptr, output);
+                genotype_element_value_type_init_vector_of_string<var_io::value_type_id::string>(outer_size,
+                                                                                                 inner_size,
+                                                                                                 cache_ptr,
+                                                                                                 output);
                 return;
             }
         case var_io::value_type_id::vector_of_int8:
