@@ -75,6 +75,18 @@ enum class field : uint64_t
     filter,    //!< FILTER field in Var I/O.
     info,      //!< INFO field in Var I/O.
     genotypes, //!< GENOTYPES in Var I/O.
+
+    // Fields unique to annotation io
+    chromStart = pos,
+    chromEnd,
+    score,
+    strand,
+    thickStart,
+    thickEnd,    //!< Ending position
+    itemRgb,     //!< An RGB value to determine the color of the displayed track in the browser.
+    blockCount,  //!< The number of blocks (exons) in the BED file.
+    blockSizes,  //!< A list of the block sizes, corresponding to blockCount.
+    blockStarts, //!< A list of block starts, relative to offset.
     /*_private*/
 
     // User defined field aliases
@@ -249,6 +261,16 @@ public:
     BIOCPP_IO_RECORD_MEMBER(filter)
     BIOCPP_IO_RECORD_MEMBER(info)
     BIOCPP_IO_RECORD_MEMBER(genotypes)
+    BIOCPP_IO_RECORD_MEMBER(chromStart)
+    BIOCPP_IO_RECORD_MEMBER(chromEnd)
+    BIOCPP_IO_RECORD_MEMBER(score)
+    BIOCPP_IO_RECORD_MEMBER(strand)
+    BIOCPP_IO_RECORD_MEMBER(thickStart)
+    BIOCPP_IO_RECORD_MEMBER(thickEnd)
+    BIOCPP_IO_RECORD_MEMBER(itemRgb)
+    BIOCPP_IO_RECORD_MEMBER(blockCount)
+    BIOCPP_IO_RECORD_MEMBER(blockSizes)
+    BIOCPP_IO_RECORD_MEMBER(blockStarts)
     //!\}
 #undef BIOCPP_IO_RECORD_MEMBER
 };
