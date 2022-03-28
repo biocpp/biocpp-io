@@ -11,6 +11,8 @@
  * \author Joshua Kim <kim_j AT molgen.mpg.de>
  */
 
+ #pragma once
+
  #include <bio/misc.hpp>
  #include <bio/record.hpp>
 

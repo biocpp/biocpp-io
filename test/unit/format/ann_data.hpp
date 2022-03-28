@@ -33,3 +33,22 @@ chr7	127477031	127478198
 chr7	127478198	127479365
 chr7	127479365	127480532
 chr7	127480532	127481699)";
+
+inline std::string const minimal_example_with_header =
+  R"(browser position chr7:127471196-127495720
+browser hide all
+track name="ItemRGBDemo" description="Item RGB demonstration" visibility=2 itemRgb="On"
+chr7	127471196	127472363
+chr7	127472363	127473530
+chr7	127473530	127474697
+chr7	127474697	127475864
+chr7	127475864	127477031
+chr7	127477031	127478198
+chr7	127478198	127479365
+chr7	127479365	127480532
+chr7	127480532	127481699)";
+
+inline std::string const minimal_example_header_regenerated =
+  R"(browser position chr7:127471196-127495720
+browser hide all
+track name="ItemRGBDemo" description="Item RGB demonstration" visibility=2 itemRgb="On")";

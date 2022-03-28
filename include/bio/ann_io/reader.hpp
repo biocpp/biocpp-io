@@ -17,6 +17,7 @@
 
  #include <bio/detail/reader_base.hpp>
  #include <bio/ann_io/reader_options.hpp>
+ #include <bio/ann_io/header.hpp>
  #include <bio/format/bed_input_handler.hpp>
 
 namespace bio::ann_io
@@ -37,7 +38,7 @@ private:
     using base_t::format_handler;
 
     //!\brief A pointer to the header inside the format.
-    // bio::ann_io::header const * header_ptr = nullptr;
+    bio::ann_io::header const * header_ptr = nullptr;
 public:
     // clang-format off
     //!\copydoc bio::reader_base::reader_base(std::filesystem::path const & filename, format_type const & fmt, options_t const & opt = options_t{})
@@ -75,17 +76,17 @@ public:
     {}
 
     //!\brief Access the header.
-    // bio::ann_io::header const & header()
-    // {
-    //     if (header_ptr == nullptr)
-    //     {
-    //         // ensure that the format_handler is created
-    //         this->begin();
-    //
-    //         header_ptr = std::visit([](auto const & handler) { return &handler.get_header(); }, format_handler);
-    //     }
-    //
-    //     return *header_ptr;
-    // }
+    bio::ann_io::header const & header()
+    {
+        if (header_ptr == nullptr)
+        {
+            // ensure that the format_handler is created
+            this->begin();
+
+            header_ptr = std::visit([](auto const & handler) { return &handler.get_header(); }, format_handler);
+        }
+
+        return *header_ptr;
+    }
 };
 }

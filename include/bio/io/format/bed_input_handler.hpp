@@ -65,7 +65,7 @@ private:
     //!\brief The raw record.
     raw_record_type   raw_record;
     //!\brief The header.
-    // var_io::header    header;
+    ann_io::header    header;
     //!\brief Lowlevel stream iterator.
     lowlevel_iterator file_it;
     //!\brief Cache of the chromosome string.
@@ -147,15 +147,15 @@ public:
             print_warnings = options.print_warnings;
         }
 
-        // std::string header_string;
-        // while (file_it != std::default_sentinel && file_it.peak() == '#')
-        // {
-        //     ++file_it;
-        //     ++line;
-        //     header_string += file_it->line;
-        //     header_string += "\n";
-        // }
-        // header = var_io::header{std::move(header_string)};
+        std::string header_string;
+        while (file_it != std::default_sentinel && (file_it.peak() == 't' || file_it.peak() == 'b'))
+        {
+            ++file_it;
+            ++line;
+            header_string += file_it->line;
+            header_string += "\n";
+        }
+        header = ann_io::header{std::move(header_string)};
     }
 
     //!\brief Construct with only an input stream.
@@ -163,6 +163,6 @@ public:
     //!\}
 
     //!\brief Return a reference to the header contained in the input handler.
-    // var_io::header const & get_header() const { return header; }
+    ann_io::header const & get_header() const { return header; }
 };
 }

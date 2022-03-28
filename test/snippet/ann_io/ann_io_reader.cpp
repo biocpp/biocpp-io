@@ -10,7 +10,7 @@ int main()
 //================= PRE ==========================
     {
         std::ofstream os{"example.bed", std::ios::binary};
-        os << minimal_example;
+        os << full_example;
     }
 
     std::ifstream in{"example.bed"};
@@ -28,6 +28,8 @@ for (auto & rec : reader)
                          << rec.chromStart()   << ':'
                          << rec.chromEnd()     << '\n';
 }
+
+seqan3::debug_stream << reader.header().header_values << '\n';
 //![simple_usage_file]
 }
 

@@ -193,31 +193,31 @@ TEST(ann_io_reader, empty_stream)
     }
 }
 
-// TEST(ann_io_reader, get_header)
-// {
-//     // get header before calling begin()
-//     {
-//         std::istringstream  str{static_cast<std::string>(minimal_example)};
-//         bio::ann_io::reader reader{str, bio::bed{}};
-//
-//         bio::ann_io::header const & hdr = reader.header();
-//
-//         EXPECT_EQ(hdr.to_plaintext(), minimal_example_header_regenerated);
-//     }
-//
-//     // get header after calling begin()
-//     {
-//         std::istringstream  str{static_cast<std::string>(minimal_example)};
-//         bio::ann_io::reader reader{str, bio::bed{}};
-//
-//         auto it = reader.begin();
-//         EXPECT_EQ(it->chrom(), "20");
-//
-//         bio::ann_io::header const & hdr = reader.header();
-//
-//         EXPECT_EQ(hdr.to_plaintext(), minimal_example_header_regenerated);
-//     }
-// }
+TEST(ann_io_reader, get_header)
+{
+    // get header before calling begin()
+    {
+        std::istringstream  str{static_cast<std::string>(minimal_example_with_header)};
+        bio::ann_io::reader reader{str, bio::bed{}};
+
+        bio::ann_io::header const & hdr = reader.header();
+
+        EXPECT_EQ(hdr.to_plaintext(), minimal_example_header_regenerated);
+    }
+
+    // get header after calling begin()
+    {
+        std::istringstream  str{static_cast<std::string>(minimal_example_with_header)};
+        bio::ann_io::reader reader{str, bio::bed{}};
+
+        auto it = reader.begin();
+        EXPECT_EQ(it->chrom(), "chr7");
+
+        bio::ann_io::header const & hdr = reader.header();
+
+        EXPECT_EQ(hdr.to_plaintext(), minimal_example_header_regenerated);
+    }
+}
 
 TEST(ann_io_reader, custom_field_types)
 {
@@ -242,41 +242,3 @@ TEST(ann_io_reader, custom_field_ids_structured_bindings)
     for (auto & [chrom, start, end] : reader)
         EXPECT_EQ(chrom, "chr7");
 }
-
-// TEST(ann_io_reader, decompression_filename)
-// {
-//     seqan3::test::tmp_filename filename{"ann_io_reader.bed.gz"};
-//
-//     {
-//         std::ofstream                         filecreator{filename.get_path(), std::ios::out | std::ios::binary};
-//         bio::detail::fast_ostreambuf_iterator it{filecreator};
-//         it.write_range(minimal_example_bgzipped);
-//     }
-//
-//     bio::ann_io::reader reader{filename.get_path()};
-//
-//     size_t count = 0;
-//     for (auto & rec : reader)
-//     {
-//         ++count;
-//         EXPECT_EQ(rec.chrom(), "20");
-//         // only very basic check here, rest in format test
-//     }
-//     EXPECT_EQ(count, 5);
-// }
-
-// TEST(ann_io_reader, decompression_stream)
-// {
-//     std::istringstream str{static_cast<std::string>(minimal_example_bgzipped)};
-//
-//     bio::ann_io::reader reader{str, bio::bed{}};
-//
-//     size_t count = 0;
-//     for (auto & rec : reader)
-//     {
-//         ++count;
-//         EXPECT_EQ(rec.chrom(), "20");
-//         // only very basic check here, rest in format test
-//     }
-//     EXPECT_EQ(count, 5);
-// }
