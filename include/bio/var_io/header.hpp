@@ -859,7 +859,7 @@ private:
     //!\brief Return a substring from the argument that does not contain enclosing quotes (if present).
     static inline std::string_view strip_quotes(std::string_view const in)
     {
-        return (in.size() < 2 || in.front() != '"' || in.back() != '"') ? in.substr(1, in.size() - 2) : in;
+        return (in.size() < 2 || in.front() != '"' || in.back() != '"') ? in : in.substr(1, in.size() - 2);
     }
 
     //!\brief Turn a string into a bio::var_io::header_number.
