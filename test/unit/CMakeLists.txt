@@ -54,3 +54,4 @@ list_missing_unit_tests()
 # Top-level tests
 
 bio_test(record_test.cpp)
+bio_test(genomic_region_test.cpp)
