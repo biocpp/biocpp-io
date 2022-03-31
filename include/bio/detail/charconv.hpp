@@ -36,9 +36,9 @@ namespace bio::detail
 std::to_chars_result to_chars(char * first, char * last, auto in)
 {
 #if defined(__cpp_lib_to_chars) && (__cpp_lib_to_chars >= 201611)
-    constexpr static bool float_support = true;
+    static constexpr bool float_support = true;
 #else
-    constexpr static bool float_support = false;
+    static constexpr bool float_support = false;
 #endif
 
     if constexpr (std::integral<decltype(in)> || float_support)
@@ -66,9 +66,9 @@ std::to_chars_result to_chars(char * first, char * last, auto in)
 std::from_chars_result from_chars(char const * first, char const * last, auto & out)
 {
 #if defined(__cpp_lib_to_chars) && (__cpp_lib_to_chars >= 201611)
-    constexpr static bool float_support = true;
+    static constexpr bool float_support = true;
 #else
-    constexpr static bool float_support = false;
+    static constexpr bool float_support = false;
 #endif
 
     // TODO always use fast_float here.

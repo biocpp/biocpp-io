@@ -39,7 +39,7 @@ namespace bio::contrib
 /*!\brief A static variable indicating the number of threads to use for the bgzf-streams.
  *       Defaults to std::thread::hardware_concurrency.
  */
-inline static uint64_t bgzf_thread_count = std::thread::hardware_concurrency();
+static inline uint64_t bgzf_thread_count = std::thread::hardware_concurrency();
 
 // ============================================================================
 // Forwards
@@ -87,10 +87,10 @@ struct CompressionContext<compression_format::bgzf> : CompressionContext<compres
 template <>
 struct DefaultPageSize<compression_format::bgzf>
 {
-    static const unsigned MAX_BLOCK_SIZE      = 64 * 1024;
-    static const unsigned BLOCK_FOOTER_LENGTH = 8;
+    static unsigned const MAX_BLOCK_SIZE      = 64 * 1024;
+    static unsigned const BLOCK_FOOTER_LENGTH = 8;
     // 5 bytes block overhead (see 3.2.4. at https://tools.ietf.org/html/rfc1951)
-    static const unsigned ZLIB_BLOCK_OVERHEAD = 5;
+    static unsigned const ZLIB_BLOCK_OVERHEAD = 5;
 
     // Reduce the maximal input size, such that the compressed data
     // always fits in one block even for level Z_NO_COMPRESSION.
@@ -98,7 +98,7 @@ struct DefaultPageSize<compression_format::bgzf>
     {
         BLOCK_HEADER_LENGTH = CompressionContext<compression_format::bgzf>::BLOCK_HEADER_LENGTH
     };
-    static const unsigned VALUE = MAX_BLOCK_SIZE - BLOCK_HEADER_LENGTH - BLOCK_FOOTER_LENGTH - ZLIB_BLOCK_OVERHEAD;
+    static unsigned const VALUE = MAX_BLOCK_SIZE - BLOCK_HEADER_LENGTH - BLOCK_FOOTER_LENGTH - ZLIB_BLOCK_OVERHEAD;
 };
 
 // ============================================================================
@@ -111,8 +111,8 @@ struct DefaultPageSize<compression_format::bgzf>
 
 inline void compressInit(CompressionContext<compression_format::gz> & ctx)
 {
-    const int GZIP_WINDOW_BITS    = -15; // no zlib header
-    const int Z_DEFAULT_MEM_LEVEL = 8;
+    int const GZIP_WINDOW_BITS    = -15; // no zlib header
+    int const Z_DEFAULT_MEM_LEVEL = 8;
 
     ctx.strm.zalloc = NULL;
     ctx.strm.zfree  = NULL;
@@ -238,7 +238,7 @@ inline TDestCapacity _compressBlock(TDestValue *                                
 
 inline void decompressInit(CompressionContext<compression_format::gz> & ctx)
 {
-    const int GZIP_WINDOW_BITS = -15; // no zlib header
+    int const GZIP_WINDOW_BITS = -15; // no zlib header
 
     ctx.strm.zalloc = NULL;
     ctx.strm.zfree  = NULL;
