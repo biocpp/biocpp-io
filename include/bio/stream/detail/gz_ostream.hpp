@@ -218,7 +218,7 @@ bool basic_gz_ostreambuf<Elem, Tr, ElemA, ByteT, ByteAT>::zip_to_stream(
             total_written_byte_size += written_byte_size;
 
             // output buffer is full, dumping to ostream
-            m_ostream.write((const char_type *)&(m_output_buffer[0]),
+            m_ostream.write((char_type const *)&(m_output_buffer[0]),
                             static_cast<std::streamsize>(written_byte_size / sizeof(char_type)));
 
             // checking if some bytes were not written.
@@ -259,7 +259,7 @@ std::streamsize basic_gz_ostreambuf<Elem, Tr, ElemA, ByteT, ByteAT>::flush(int f
             total_written_byte_size += written_byte_size;
 
             // output buffer is full, dumping to ostream
-            m_ostream.write((const char_type *)&(m_output_buffer[0]),
+            m_ostream.write((char_type const *)&(m_output_buffer[0]),
                             static_cast<std::streamsize>(written_byte_size / sizeof(char_type) * sizeof(byte_type)));
 
             // checking if some bytes were not written.
