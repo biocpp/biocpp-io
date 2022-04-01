@@ -92,11 +92,16 @@ namespace bio::var_io
  * For more advanced options, see bio::var_io::reader_options.
  */
 template <typename... option_args_t>
-class reader : public reader_base<reader_options<option_args_t...>>
+class reader : public reader_base<reader<option_args_t...>, reader_options<option_args_t...>>
 {
 private:
     //!\brief The base class.
-    using base_t      = reader_base<reader_options<option_args_t...>>;
+    using base_t      = reader_base<reader<option_args_t...>, reader_options<option_args_t...>>;
+
+    //!\brief Expose the options type to the base-class.
+    using options_t   = reader_options<option_args_t...>;
+
+
     //!\brief Inherit the format_type definition.
     using format_type = typename base_t::format_type;
     /* Implementation note
