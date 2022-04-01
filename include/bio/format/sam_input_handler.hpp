@@ -241,7 +241,7 @@ private:
             if (raw_field == "=")
                 raw_field = get<field::rname>(raw_record);
 
-            size_t rname_pos;
+            size_t rname_pos = 0;
 
             if (auto it = header.rname_to_pos().find(raw_field); it == header.rname_to_pos().end())
             { // rname name was not in header, insert!
