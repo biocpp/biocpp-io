@@ -280,3 +280,31 @@ TEST(var_io_reader, decompression_stream)
     }
     EXPECT_EQ(count, 5);
 }
+
+TEST(var_io_reader, region_filter)
+{
+    bio::genomic_region<>       region{.chrom = "20", .beg = 17000, .end = 1230300};
+    bio::var_io::reader_options options{.region = region};
+
+    {
+        std::istringstream  str{static_cast<std::string>(example_from_spec)};
+        bio::var_io::reader reader{str, bio::vcf{}, options};
+
+        EXPECT_EQ(std::ranges::distance(reader), 3);
+    }
+
+    {
+        std::istringstream  str{static_cast<std::string>(example_from_spec)};
+        bio::var_io::reader reader{str, bio::vcf{}, options};
+
+        size_t count = 0;
+        for (auto & rec : reader)
+        {
+            ++count;
+            EXPECT_EQ(rec.chrom(), "20");
+            EXPECT_GE(rec.pos(), region.beg);
+            EXPECT_LT(rec.pos(), region.end);
+        }
+        EXPECT_EQ(count, 3);
+    }
+}

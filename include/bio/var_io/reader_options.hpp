@@ -22,6 +22,7 @@
 #include <bio/detail/misc.hpp>
 #include <bio/format/bcf.hpp>
 #include <bio/format/vcf.hpp>
+#include <bio/genomic_region.hpp>
 #include <bio/stream/transparent_istream.hpp>
 #include <bio/stream/transparent_ostream.hpp>
 #include <bio/var_io/header.hpp>
@@ -157,7 +158,11 @@ template <typename field_ids_t   = decltype(default_field_ids),
           typename formats_t     = seqan3::type_list<vcf, bcf>>
 struct reader_options
 {
-    //!\brief The fields that shall be contained in each record; a seqan3::tag over seqan3::field.
+    /*!\name Field configuration
+     * \brief These options allow configuring the record's field order and types.
+     * \{
+     */
+    //!\brief The fields that shall be contained in each record; a bio::vtag over bio::field.
     field_ids_t field_ids = default_field_ids;
 
     /*!\brief The types corresponding to each field; a bio::ttag over the types.
@@ -167,6 +172,7 @@ struct reader_options
      * See bio::var_io::reader_options for an overview of the supported field/type combinations.
      */
     field_types_t field_types = bio::var_io::field_types<ownership::shallow>;
+    //!\}
 
     /*!\brief The formats that input files can take; a bio::ttag over the types.
      *
@@ -178,6 +184,46 @@ struct reader_options
 
     //!\brief Whether to print non-critical file format warnings.
     bool print_warnings = true;
+
+    /*!\name Region filtering
+     * \brief These options allow filtering the file for a sub-region.
+     * \{
+     */
+    /*!\brief Only display records that overlap with the given region (ignored if default-initialised).
+     * \details
+     *
+     * The region must be specified as a **0-based, half-open interval** (even if VCF is 1-based).
+     *
+     * This option works with and without an index. If available and usable, an index will be used.
+     * Indexes are not usable when the format is uncompressed VCF or if the input is read from STDIN.
+     *
+     * ### Region filter without an index
+     *
+     * The file will be scanned linearly for records that overlap the region.
+     * Only minimal parts of the record are parsed to compare the positions, so this is faster than
+     * using a `std::views::filter` on the file.
+     *
+     * ### Region filter with an index [TODO implement]
+     *
+     * An index file allows skipping regions of the file on-disk. This is usually a lot faster than filtering
+     * without an index.
+     */
+    genomic_region<ownership::deep> region{};
+
+    /*!\brief Path to the index file [optional, auto-detected if not specified].
+     * \details
+     *
+     * This option is ignored if no #region is specified, if the file format is uncompressed VCF or the data
+     * are read from standard input.
+     *
+     * If no path is given, the library will look for `FILE.csi` first and then for `FILE.tbi` where
+     * `FILE` is the filename of the input file.
+     */
+    std::filesystem::path region_index_file{};
+
+    //!\brief Throw an exception if no index file is found or it is not usable.
+    bool region_index_require = false;
+    //!\}
 
     //!\brief Options that are passed on to the internal stream oject.
     transparent_istream_options stream_options{};
