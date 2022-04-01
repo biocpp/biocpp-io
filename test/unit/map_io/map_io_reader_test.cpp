@@ -66,9 +66,9 @@ TEST(map_io_reader, constructor1_just_filename)
 
 TEST(map_io_reader, constructor1_with_opts)
 {
-    bio::map_io::reader_options opt{.field_types = bio::map_io::field_types_sam<>};
+    bio::map_io::reader_options opt{.field_types = bio::map_io::field_types<>};
     using control_t = bio::map_io::reader<std::remove_cvref_t<decltype(bio::map_io::default_field_ids)>,
-                                          std::remove_cvref_t<decltype(bio::map_io::field_types_sam<>)>,
+                                          std::remove_cvref_t<decltype(bio::map_io::field_types<>)>,
                                           seqan3::type_list<bio::sam>>;
 
     map_io_reader_filename_constructor(true, std::move(opt));
@@ -83,9 +83,9 @@ TEST(map_io_reader, constructor2_just_filename_direct_format)
 
 TEST(map_io_reader, constructor2_with_opts_direct_format)
 {
-    bio::map_io::reader_options opt{.field_types = bio::map_io::field_types_sam<>};
+    bio::map_io::reader_options opt{.field_types = bio::map_io::field_types<>};
     using control_t = bio::map_io::reader<std::remove_cvref_t<decltype(bio::map_io::default_field_ids)>,
-                                          std::remove_cvref_t<decltype(bio::map_io::field_types_sam<>)>,
+                                          std::remove_cvref_t<decltype(bio::map_io::field_types<>)>,
                                           seqan3::type_list<bio::sam>>;
 
     map_io_reader_filename_constructor(false, bio::sam{}, std::move(opt));
@@ -103,9 +103,9 @@ TEST(map_io_reader, constructor2_just_filename_format_variant)
 TEST(map_io_reader, constructor2_with_opts_format_variant)
 {
     std::variant<bio::sam>      var{};
-    bio::map_io::reader_options opt{.field_types = bio::map_io::field_types_sam<>};
+    bio::map_io::reader_options opt{.field_types = bio::map_io::field_types<>};
     using control_t = bio::map_io::reader<std::remove_cvref_t<decltype(bio::map_io::default_field_ids)>,
-                                          std::remove_cvref_t<decltype(bio::map_io::field_types_sam<>)>,
+                                          std::remove_cvref_t<decltype(bio::map_io::field_types<>)>,
                                           seqan3::type_list<bio::sam>>;
 
     map_io_reader_filename_constructor(false, var, std::move(opt));
@@ -123,9 +123,9 @@ TEST(map_io_reader, constructor3)
 TEST(map_io_reader, constructor3_with_opts)
 {
     std::istringstream          str;
-    bio::map_io::reader_options opt{.field_types = bio::map_io::field_types_sam<>};
+    bio::map_io::reader_options opt{.field_types = bio::map_io::field_types<>};
     using control_t = bio::map_io::reader<std::remove_cvref_t<decltype(bio::map_io::default_field_ids)>,
-                                          std::remove_cvref_t<decltype(bio::map_io::field_types_sam<>)>,
+                                          std::remove_cvref_t<decltype(bio::map_io::field_types<>)>,
                                           seqan3::type_list<bio::sam>>;
 
     EXPECT_NO_THROW((bio::map_io::reader{str, bio::sam{}, opt}));
@@ -143,9 +143,9 @@ TEST(map_io_reader, constructor4)
 TEST(map_io_reader, constructor4_with_opts)
 {
     std::istringstream          str;
-    bio::map_io::reader_options opt{.field_types = bio::map_io::field_types_sam<>};
+    bio::map_io::reader_options opt{.field_types = bio::map_io::field_types<>};
     using control_t = bio::map_io::reader<std::remove_cvref_t<decltype(bio::map_io::default_field_ids)>,
-                                          std::remove_cvref_t<decltype(bio::map_io::field_types_sam<>)>,
+                                          std::remove_cvref_t<decltype(bio::map_io::field_types<>)>,
                                           seqan3::type_list<bio::sam>>;
 
     EXPECT_NO_THROW((bio::map_io::reader{std::move(str), bio::sam{}, opt}));

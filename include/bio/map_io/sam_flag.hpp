@@ -1,12 +1,12 @@
 // -----------------------------------------------------------------------------------------------------
-// Copyright (c) 2006-2021, Knut Reinert & Freie Universität Berlin
+// Copyright (c) 2006-2022, Knut Reinert & Freie Universität Berlin
 // Copyright (c) 2016-2021, Knut Reinert & MPI für molekulare Genetik
 // This file may be used, modified and/or redistributed under the terms of the 3-clause BSD-License
 // shipped with this file and also available at: https://github.com/seqan/b.i.o./blob/master/LICENSE.md
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides helper data structures for the seqan3::sam_file_output.
+ * \brief Provides helper data structures for the bio::map_io.
  * \author Svenja Mehringer <svenja.mehringer AT fu-berlin.de>
  */
 
@@ -20,8 +20,8 @@ namespace bio::map_io
 
 /*!\brief An enum flag that describes the properties of an aligned read (given as a SAM record).
  * \ingroup io_sam_file
- * \implements seqan3::enum_bitwise_operators
- * \sa seqan3::enum_bitwise_operators enables combining enum values.
+ * \implements bio::enum_bitwise_operators
+ * \sa bio::enum_bitwise_operators enables combining enum values.
  *
  * The SAM flag are bitwise flags, which means that each value corresponds to a specific bit that is set and that they
  * can be combined and tested using binary operations.
@@ -87,7 +87,7 @@ enum class sam_flag : uint16_t
 //!\cond DEV
 /*!\brief Enables bitwise operations for bio::map_io::sam_flags.
  * \ingroup io_sam_file
- * \sa seqan3::enum_bitwise_operators enables combining enum values.
+ * \sa bio::enum_bitwise_operators enables combining enum values.
  */
 template <>
 constexpr bool add_enum_bitwise_operators<sam_flag> = true;

@@ -2,27 +2,27 @@
 // Copyright (c) 2006-2021, Knut Reinert & Freie Universität Berlin
 // Copyright (c) 2016-2021, Knut Reinert & MPI für molekulare Genetik
 // This file may be used, modified and/or redistributed under the terms of the 3-clause BSD-License
-// shipped with this file and also available at: https://github.com/seqan/seqan3/blob/master/LICENSE.md
+// shipped with this file and also available at: https://github.com/seqan/b.i.o./blob/master/LICENSE.md
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides seqan3::add_enum_bitwise_operators.
- * \author Hannes Hauswedell <hannes.hauswedell AT fu-berlin.de>
+ * \brief Provides bio::add_enum_bitwise_operators.
+ * \author Svenja Mehringer <svenja.mehringer AT fu-berlin.de>
  */
 
 #pragma once
 
 #include <type_traits>
 
-#include <seqan3/core/platform.hpp>
+#include <bio/platform.hpp>
 
 namespace bio::map_io
 {
-/*!\interface seqan3::enum_bitwise_operators
- * \brief You can expect these functions on all types that overload seqan3::add_enum_bitwise_operators.
+/*!\interface bio::enum_bitwise_operators
+ * \brief You can expect these functions on all types that overload bio::add_enum_bitwise_operators.
  */
-/*!\name Requirements for seqan3::enum_bitwise_operators
- * \relates seqan3::enum_bitwise_operators
+/*!\name Requirements for bio::enum_bitwise_operators
+ * \relates bio::enum_bitwise_operators
  * \brief You can expect these member functions.
  * \{
  * \fn operator&(t lhs, t rhs)
@@ -93,12 +93,12 @@ constexpr bool add_enum_bitwise_operators = false;
 
 /*!\name Binary operators for scoped enums
  * \brief Perform binary operations like on ints or weak enums. These overloads are available if
- * seqan3::add_enum_bitwise_operators is defined for your type.
+ * bio::add_enum_bitwise_operators is defined for your type.
  * \ingroup core
  *
  * \details
  *
- * \see seqan3::add_enum_bitwise_operators
+ * \see bio::add_enum_bitwise_operators
  * \{
  */
 template <typename t>

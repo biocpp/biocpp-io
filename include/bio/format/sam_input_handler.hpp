@@ -1,13 +1,13 @@
 // -----------------------------------------------------------------------------------------------------
-// Copyright (c) 2006-2021, Knut Reinert & Freie Universität Berlin
+// Copyright (c) 2006-2022, Knut Reinert & Freie Universität Berlin
 // Copyright (c) 2016-2021, Knut Reinert & MPI für molekulare Genetik
 // Copyright (c) 2020-2021, deCODE Genetics
 // This file may be used, modified and/or redistributed under the terms of the 3-clause BSD-License
-// shipped with this file and also available at: https://github.com/seqan/seqan3/blob/master/LICENSE.md
+// shipped with this file and also available at: https://github.com/seqan/b.i.o./blob/master/LICENSE.md
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides the seqan3::format_input_handler<bio::sam>.
+ * \brief Provides the bio::format_input_handler<bio::sam>.
  * \author Svenja Mehringer <svenja.mehringer AT decode.is>
  */
 
@@ -21,7 +21,6 @@
 #include <vector>
 
 #include <seqan3/core/debug_stream.hpp>
-#include <seqan3/io/sam_file/detail/cigar.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
 
 #include <bio/format/format_input_handler.hpp>
@@ -88,7 +87,7 @@ private:
     }
 
     //!\brief Print a B.I.O warning message with current line number in diagnostic.
-    /* [[noreturn]] compiler says this returns something...? */ void warning(auto const &... messages) const
+    void warning(auto const &... messages) const
     {
         if (print_warnings)
         {
@@ -181,7 +180,7 @@ private:
 
         if (raw_field != "*")
         {
-            size_t rname_pos;
+            size_t rname_pos = 0;
 
             if (auto it = header.rname_to_pos().find(raw_field); it == header.rname_to_pos().end())
             { // rname name was not in header, insert!
@@ -289,17 +288,16 @@ private:
     //!\brief Overload for parsing the SAM tag dictionary.
     void parse_field(vtag_t<field::tags> const & /**/, map_io::sam_tag_dictionary & dictionary)
     {
-        std::string_view raw_field = get<field::tags>(raw_record);
-
-        if (!raw_field.empty())
-            for (std::string_view const tag_field : raw_field | detail::eager_split('\t'))
-                dictionary.parse_and_emplace(tag_field);
+        // we access the remaining fields from the iterator directly,
+        // so we don't have to split the raw_record field again
+        for (size_t i = 11; i < file_it->fields.size(); ++i)
+            dictionary.parse_and_emplace(file_it->fields[i]);
     }
 
     //!\brief Overload for parsing the private data.
     void parse_field(vtag_t<field::_private> const & /**/, map_io::record_private_data & parsed_field)
     {
-        parsed_field = map_io::record_private_data{.header_ptr = &header};
+        parsed_field.header_ptr = &header;
     }
     //!\}
 
