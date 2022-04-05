@@ -143,6 +143,88 @@ public:
         return *stream_buf->gptr();
     }
 
+    //!\brief Skip n characters in the input stream (works on non-seekable streams).
+    void skip_n(size_t const n)
+    {
+        ptrdiff_t todo      = n;
+        ptrdiff_t available = stream_buf->egptr() - stream_buf->gptr();
+        while (todo > 0)
+        {
+            if (todo <= available)
+            {
+                stream_buf->gbump(todo);
+                todo = 0;
+            }
+            else
+            {
+                todo -= available;
+
+                stream_buf->gbump(available);
+                stream_buf->underflow();
+                available = stream_buf->egptr() - stream_buf->gptr();
+
+                if (available == 0)
+                {
+                    throw unexpected_end_of_input{"Trying to read ",
+                                                  n,
+                                                  " characters, but only ",
+                                                  n - todo,
+                                                  " were available."};
+                }
+            }
+        }
+    }
+
+    /*!\brief Read n characters from the stream.
+     * \param[in] n Number of characters to read.
+     * \param[out] out The place to write to [must hold at least n bytes capacity].
+     */
+    void read_n_chars_into(size_t const n, char_t * out)
+    {
+        /* TODO
+         * This duplicates certain logic with the line reader.
+         * At some point this should be unified.
+         */
+        ptrdiff_t todo      = n;
+        ptrdiff_t available = stream_buf->egptr() - stream_buf->gptr();
+        while (todo > 0)
+        {
+            if (todo <= available)
+            {
+                std::ranges::copy_n(stream_buf->gptr(), todo, out);
+                stream_buf->gbump(todo);
+                todo = 0;
+            }
+            else
+            {
+                std::ranges::copy_n(stream_buf->gptr(), available, out);
+                todo -= available;
+
+                stream_buf->gbump(available);
+                stream_buf->underflow();
+                available = stream_buf->egptr() - stream_buf->gptr();
+
+                if (available == 0)
+                {
+                    throw unexpected_end_of_input{"Trying to read ",
+                                                  n,
+                                                  " characters, but only ",
+                                                  n - todo,
+                                                  " were available."};
+                }
+            }
+        }
+    }
+
+    //!\brief Read a POD datastructure bytewise from the stream.
+    template <typename t>
+        requires(std::is_trivially_copyable_v<t> && !std::ranges::range<t>)
+    void read_as_binary(t & pod)
+    {
+        // TODO enforce little endian on numbers
+        read_n_chars_into(sizeof(t), reinterpret_cast<char *>(&pod));
+    }
+
     /*!\name Comparison operators
      * \brief We define comparison only against the sentinel.
      * \{

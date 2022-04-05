@@ -104,6 +104,8 @@ private:
     std::filesystem::path       filename_;
     //!\brief Filename after possible compression extensions have been removed.
     std::filesystem::path       truncated_filename_;
+    //!\brief The decompressor selected.
+    compression_format          selected_compression{};
 
     //!\brief The type of the internal stream pointers. Allows dynamically setting ownership management.
     using stream_ptr_t = std::unique_ptr<std::basic_istream<char>, std::function<void(std::basic_istream<char> *)>>;
@@ -123,8 +125,7 @@ private:
         assert(primary_stream->good());
 
         /* detect compression format */
-        std::string        magic_header = detail::read_magic_header(*primary_stream);
-        compression_format selected_compression{};
+        std::string magic_header = detail::read_magic_header(*primary_stream);
 
         if (options_.compression == compression_format::detect)
         {
@@ -200,7 +201,34 @@ private:
         this->rdbuf(secondary_stream->rdbuf());
     }
 
+    //!\brief Reset secondary stream after seek on primary.
+    void post_seek(compression_format const old_compression)
+    {
+        if (primary_stream->fail())
+            throw bio_error{"Seek failed on input stream."};
+
+        secondary_stream.reset();
+
+        init();
+
+        if (old_compression != selected_compression)
+        {
+            throw bio_error{
+              "Cannot restart decompression after seek on compressed file.\nThe file is not compressed "
+              "blockwise and/or the seek position is not the beginning of a block."};
+        }
+    }
+
 public:
+    /*!\name Associated types
+     * \{
+     */
+    using char_type   = char;                   //!< The character type.
+    using traits_type = std::char_traits<char>; //!< Character traits.
+    using pos_type    = traits_type::pos_type;  //!< Position type (typically unsigned).
+    using off_type    = traits_type::off_type;  //!< Offset type (typically signed).
+    //!\}
+
     /*!\name Constructors, destructor and assignment
      * \{
      */
@@ -281,6 +309,36 @@ public:
      * If this object was not created from a file, an empty path is returned.
      */
     std::filesystem::path const & truncated_filename() { return truncated_filename_; }
+
+    /*!\brief Seek on the primary stream and reset secondary stream.
+     * \details
+     *
+     * The function enables seeking to the beginning of another block in a file using block-compression.
+     * This is used with indexed I/O on BGZF compressed files, but other forms of block-based
+     * compression should also be supported (the decompression stream is re-created after the seek).
+     */
+    transparent_istream & seekg_primary(pos_type const pos)
+    {
+        compression_format old_compression = selected_compression;
+
+        primary_stream->seekg(pos);
+
+        post_seek(old_compression);
+
+        return *this;
+    }
+
+    //!\overload
+    transparent_istream & seekg_primary(off_type const off, std::ios_base::seekdir dir)
+    {
+        compression_format old_compression = selected_compression;
+
+        primary_stream->seekg(off, dir);
+
+        post_seek(old_compression);
+
+        return *this;
+    }
 };
 
 } // namespace bio

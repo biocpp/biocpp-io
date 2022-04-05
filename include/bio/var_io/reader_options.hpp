@@ -222,7 +222,7 @@ struct reader_options
     std::filesystem::path region_index_file{};
 
     //!\brief Throw an exception if no index file is found or it is not usable.
-    bool region_index_require = false;
+    bool region_index_required = false;
     //!\}
 
     //!\brief Options that are passed on to the internal stream oject.

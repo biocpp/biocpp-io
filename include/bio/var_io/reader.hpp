@@ -15,6 +15,7 @@
 
 #include <filesystem>
 
+#include <bio/detail/index_tabix.hpp>
 #include <bio/detail/reader_base.hpp>
 #include <bio/format/bcf_input_handler.hpp>
 #include <bio/format/vcf_input_handler.hpp>
@@ -116,6 +117,7 @@ private:
      */
     //!\cond
     using base_t::at_end;
+    using base_t::format;
     using base_t::format_handler;
     using base_t::options;
     using base_t::record_buffer;
@@ -126,6 +128,122 @@ private:
     var_io::header const * header_ptr = nullptr;
     //!\}
 
+    //!\brief Initialise the format handler and read first record.
+    void init()
+    {
+        // set format-handler
+        std::visit([&](auto f) { format_handler = format_input_handler<decltype(f)>{stream, options}; }, format);
+
+        // region filtering
+
+        if (!options.region.chrom.empty())
+        {
+            if (auto index_path = stream.filename();
+                !stream.filename().empty() && std::filesystem::exists(index_path += ".tbi"))
+            {
+                detail::tabix_index index;
+                index.read(index_path);
+                std::vector<std::pair<uint64_t, uint64_t>> chunks = index.reg2chunks(options.region);
+
+#if 1 // linear implementation
+                /* IMPLEMENTATION NOTE
+                 * We are currently doing a simplified indexed access where we do not process all
+                 * possible chunks but just do a linear scan from the beginning of the first overlapping chunk.
+                 * This is definitely worse than what htslib is doing, but still very good for the tests performed.
+                 * I doubt that we can ever reach htslib's performance fullty while using C++ iostreams.
+                 */
+
+                // we take the smallest begin-offset
+                uint64_t const min_beg           = std::ranges::min(chunks | std::views::elements<0>);
+                auto [disk_offset, block_offset] = detail::decode_bgz_virtual_offset(min_beg);
+
+                // seek on-disk
+                stream.seekg_primary(disk_offset);
+                // seek inside block
+                detail::fast_istreambuf_iterator<char> it{stream};
+                it.skip_n(block_offset);
+                std::visit([](auto & f) { f.reset_stream(); }, format_handler);
+#else
+                /* IMPLEMENTATION NOTE
+                 * This implementation iterates over all chunks to find the first chunk with an actual overlap.
+                 * Runtime may be worse because chunks are overlapping and not yet filtered.
+                 * Runtime may be worse because more overhead of seeking.
+                 * Runtime may be better because early false positive intervals are skipped.
+                 * Runtime may be the same, because a large spanning interval usually comes first and this
+                 * contains the first hit with very high probability.
+                 * → currently this implementation seems to provide no benefit, but we should investigate further.
+                 */
+                bool found = false;
+
+                std::ranges::sort(chunks);
+
+                // this record holds the bare minimum to check if regions overlap; always shallow
+                using record_t = record<vtag_t<field::chrom, field::pos, field::ref>,
+                                        seqan3::type_list<std::string_view, int64_t, std::string_view>>;
+                record_t temp_record;
+
+                for (auto [chunk_beg, chunk_end] : chunks)
+                {
+                    auto [disk_offset_beg, block_offset_beg] = detail::decode_bgz_virtual_offset(chunk_beg);
+
+                    // seek on-disk
+                    stream.seekg_primary(disk_offset_beg);
+                    // seek inside block
+                    detail::fast_istreambuf_iterator<char> it{stream};
+                    it.skip_n(block_offset_beg);
+                    std::visit([](auto & f) { f.reset_stream(); }, format_handler);
+
+                    while (true)
+                    {
+                        // at end if we could not read further
+                        if (std::istreambuf_iterator<char>{stream} == std::istreambuf_iterator<char>{})
+                            break;
+
+                        std::visit([&](auto & f) { f.parse_next_record_into(temp_record); }, format_handler);
+
+                        // TODO undo "- 1" if interval notation gets decided on
+                        genomic_region<ownership::shallow> rec_reg{.chrom = temp_record.chrom(),
+                                                                   .beg   = temp_record.pos() - 1,
+                                                                   .end =
+                                                                     rec_reg.beg + (int64_t)temp_record.ref().size()};
+
+                        std::weak_ordering ordering = rec_reg.relative_to(options.region);
+                        if (ordering == std::weak_ordering::less) // records lies before the target region → skip
+                        {
+                            // we cannot tellg() on the primary to check if we are behind the block
+                            // because c++ iostream may have moved much further already
+                            // → we always continue until we are on or behind our target region
+                        }
+                        else if (ordering == std::weak_ordering::equivalent) // records overlaps target region → take it
+                        {
+                            found = true;
+                            break;
+                        }
+                        else if (ordering ==
+                                 std::weak_ordering::greater) // record begins after target region start → at end
+                        {
+                            break; // we cannot return here, because chunks are overlapping o_O
+                        }
+                    }
+
+                    if (found)
+                        break;
+                }
+
+                // no record was found
+                if (!found)
+                    at_end = true;
+#endif
+            }
+            else if (options.region_index_required)
+            {
+                throw bio::file_open_error{"options.region_index_required was set but no index was found."};
+            }
+        }
+
+        // read first record
+        read_next_record();
+    }
     //!\brief Tell the format to move to the next record and update the buffer.
     void read_next_record()
     {

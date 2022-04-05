@@ -147,6 +147,18 @@ public:
     {}
     //!\}
 
+    //!\brief Resets the state of this iterator to cope with changes in underlying stream.
+    void reset(std::basic_streambuf<char> & ibuf)
+    {
+        stream_buf = reinterpret_cast<bio::detail::stream_buffer_exposer<char> *>(&ibuf);
+        overflow_buffer.clear();
+        field_end_positions.clear();
+        at_end = false;
+    }
+
+    //!\overload
+    void reset(std::basic_istream<char> & istr) { reset(*istr.rdbuf()); }
+
     /*!\name Arithmetic operators
      * \{
      */
@@ -1029,6 +1041,9 @@ public:
 
     //!\brief Return a reference to the header contained in the input handler.
     var_io::header const & get_header() const { return header; }
+
+    //!\brief This resets the stream iterator after region-seek.
+    void reset_stream() { file_it.reset(*stream); }
 };
 
 /*!\brief Parse a "dynamically typed" field out of a BCF stream and store the content in a variant.
