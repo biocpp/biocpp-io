@@ -100,11 +100,24 @@ namespace bio::seq_io
  * For more advanced options, see bio::seq_io::reader_options.
  */
 template <typename... option_args_t>
-class reader : public reader_base<reader_options<option_args_t...>>
+class reader : public reader_base<reader<option_args_t...>, reader_options<option_args_t...>>
 {
 private:
+    /*!\name CRTP related entities
+     * \{
+     */
     //!\brief The base class.
-    using base_t = reader_base<reader_options<option_args_t...>>;
+    using base_t = reader_base<reader<option_args_t...>, reader_options<option_args_t...>>;
+    //!\brief Befriend CRTP-base.
+    friend base_t;
+    //!\cond
+    // Doxygen is confused by this for some reason
+    friend detail::in_file_iterator<reader>;
+    //!\endcond
+
+    //!\brief Expose the options type to the base-class.
+    using options_t = reader_options<option_args_t...>;
+    //!\}
 
 public:
     //!\brief Inherit the format_type definition.

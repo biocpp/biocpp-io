@@ -36,19 +36,32 @@ namespace bio
 // reader_base
 // ----------------------------------------------------------------------------
 
-/*!\brief This is a (non-CRTP) base-class for I/O readers.
+/*!\brief This is a CRTP base-class for I/O readers.
  * \ingroup bio
+ * \tparam derived_t Type of the derived class.
  * \tparam options_t Type of the reader options.
  * \details
  *
- * Most I/O readers inherit from this class to reduce implementation overhead. It is not relevant for most users
- * of the library.
+ * Most I/O readers inherit from this class to reduce implementation overhead. It is not relevant to the majority of
+ * users.
  */
-template <typename options_t>
+template <typename derived_t, typename options_t>
 class reader_base : public std::ranges::view_base
 {
-protected:
-    //!\privatesection
+private:
+    /*!\name CRTP related entities
+     * \{
+     */
+    //!\brief Befriend the derived type so it can instantiate.
+    friend derived_t;
+
+    //!\brief Downcast self to derived type.
+    derived_t & to_derived() { return *static_cast<derived_t *>(this); }
+
+    //!\brief Downcast self to derived type. [const-qualified version]
+    derived_t const & to_derived() const { return *static_cast<derived_t const *>(this); }
+    //!\}
+
     /*!\name Format handling
      * \{
      */
@@ -88,7 +101,7 @@ public:
      */
     using record_type = record<decltype(options_t::field_ids), decltype(options_t::field_types)>;
     //!\brief The iterator type of this view (an input iterator).
-    using iterator    = detail::in_file_iterator<reader_base>;
+    using iterator    = detail::in_file_iterator<derived_t>;
     //!\brief The type returned by end().
     using sentinel    = std::default_sentinel_t;
     //!\}
@@ -189,15 +202,10 @@ public:
         // buffer first record
         if (init_state)
         {
-            // set format-handler
-            std::visit([&](auto f) { format_handler = format_input_handler<decltype(f)>{stream, options}; }, format);
-
-            // read first record
-            read_next_record();
+            to_derived().init();
             init_state = false;
         }
-
-        return {*this};
+        return {to_derived()};
     }
 
     /*!\brief Returns a sentinel for comparison with iterator.
@@ -253,6 +261,16 @@ protected:
     //!\brief The respective input handler specialisation.
     format_handler_type format_handler;
     //!\}
+
+    //!\brief initialise the format handler (if necessary).
+    void init()
+    {
+        // set format-handler
+        std::visit([&](auto f) { format_handler = format_input_handler<decltype(f)>{stream, options}; }, format);
+
+        // read first record
+        to_derived().read_next_record();
+    }
 
     //!\brief Tell the format to move to the next record and update the buffer.
     void read_next_record()

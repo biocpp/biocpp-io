@@ -206,24 +206,34 @@ private:
     //!\}
 
 public:
+    /*!\name Read and parse record
+     * \brief Most users should not use these interfaces; use bio::*::reader instead.
+     * \{
+     */
+    //!\brief Advance to the next record and update the "raw record".
+    void read_next_raw_record() { to_derived()->read_raw_record(); }
+
+    /*!\brief Convert the currently held "raw record" into the record given as argument. This does not perform I/O.
+     * \param[out] parsed_record The out-parameter.
+     */
+    void parse_current_record_into(auto & parsed_record)
+    {
+        parsed_record.clear(); // TODO it might be beneficial to not clear and better reuse better memory
+        to_derived()->parse_record(typename derived_t::format_fields{}, parsed_record);
+    }
+
     /*!\brief Parse input into the record argument.
      * \param[out] parsed_record The out-parameter.
      * \details
      *
-     * ### Attention
-     *
-     * Most users should not use this interface and should instead use formatted readers, e.g.
-     * bio::map_io::reader, bio::seq_io::reader or bio::var_io::reader.
+     * Convenience function that reads the next raw record and then parses it.
      */
     void parse_next_record_into(auto & parsed_record)
     {
-        // create new raw record
-        to_derived()->read_raw_record();
-
-        // create new parsed record
-        parsed_record.clear();
-        to_derived()->parse_record(typename derived_t::format_fields{}, parsed_record);
+        read_next_raw_record();
+        parse_current_record_into(parsed_record);
     }
+    //!\}
 };
 
 } // namespace bio

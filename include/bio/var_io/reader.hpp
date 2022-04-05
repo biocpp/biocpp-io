@@ -92,24 +92,106 @@ namespace bio::var_io
  * For more advanced options, see bio::var_io::reader_options.
  */
 template <typename... option_args_t>
-class reader : public reader_base<reader_options<option_args_t...>>
+class reader : public reader_base<reader<option_args_t...>, reader_options<option_args_t...>>
 {
 private:
-    //!\brief The base class.
-    using base_t      = reader_base<reader_options<option_args_t...>>;
-    //!\brief Inherit the format_type definition.
-    using format_type = typename base_t::format_type;
-    /* Implementation note
-     * format_type is "inherited" as private here to avoid appearing twice in the documentation.
-     * Its actual visibility is public because it is public in the base class.
+    /*!\name CRTP related entities
+     * \{
      */
-    //!\brief Make the format handler visible.
+    //!\brief The base class.
+    using base_t = reader_base<reader<option_args_t...>, reader_options<option_args_t...>>;
+    //!\brief Befriend CRTP-base.
+    friend base_t;
+    //!\cond
+    // Doxygen is confused by this for some reason
+    friend detail::in_file_iterator<reader>;
+    //!\endcond
+
+    //!\brief Expose the options type to the base-class.
+    using options_t = reader_options<option_args_t...>;
+    //!\}
+
+    /*!\name Member data
+     * \{
+     */
+    //!\cond
+    using base_t::at_end;
     using base_t::format_handler;
+    using base_t::options;
+    using base_t::record_buffer;
+    using base_t::stream;
+    //!\endcond
 
     //!\brief A pointer to the header inside the format.
-    bio::var_io::header const * header_ptr = nullptr;
+    var_io::header const * header_ptr = nullptr;
+    //!\}
+
+    //!\brief Tell the format to move to the next record and update the buffer.
+    void read_next_record()
+    {
+        if (at_end)
+            return;
+
+        // at end if we could not read further
+        if (std::istreambuf_iterator<char>{stream} == std::istreambuf_iterator<char>{})
+        {
+            at_end = true;
+            return;
+        }
+
+        assert(!format_handler.valueless_by_exception());
+
+        if (options.region.chrom.empty()) // regular, unrestricted reading
+        {
+            std::visit([&](auto & f) { f.parse_next_record_into(record_buffer); }, format_handler);
+        }
+        else // only read on sub-region
+        {
+            // this record holds the bare minimum to check if regions overlap; always shallow
+            using record_t = record<vtag_t<field::chrom, field::pos, field::ref>,
+                                    seqan3::type_list<std::string_view, int64_t, std::string_view>>;
+            record_t temp_record;
+
+            while (true)
+            {
+                // at end if we could not read further
+                if (std::istreambuf_iterator<char>{stream} == std::istreambuf_iterator<char>{})
+                {
+                    at_end = true;
+                    break;
+                }
+
+                std::visit([&](auto & f) { f.parse_next_record_into(temp_record); }, format_handler);
+
+                // TODO undo "- 1" if interval notation gets decided on
+                genomic_region<ownership::shallow> rec_reg{.chrom = temp_record.chrom(),
+                                                           .beg   = temp_record.pos() - 1,
+                                                           .end   = rec_reg.beg + (int64_t)temp_record.ref().size()};
+
+                std::weak_ordering ordering = rec_reg.relative_to(options.region);
+                if (ordering == std::weak_ordering::less) // records lies before the target region → skip
+                {
+                    continue;
+                }
+                else if (ordering == std::weak_ordering::equivalent) // records overlaps target region → take it
+                {
+                    // full parsing of the same record
+                    std::visit([&](auto & f) { f.parse_current_record_into(record_buffer); }, format_handler);
+                    break;
+                }
+                else if (ordering == std::weak_ordering::greater) // record begins after target region start → at end
+                {
+                    at_end = true;
+                    break;
+                }
+            }
+        }
+    }
 
 public:
+    //!\brief Inherit the format_type definition.
+    using format_type = typename base_t::format_type;
+
     // clang-format off
     //!\copydoc bio::reader_base::reader_base(std::filesystem::path const & filename, format_type const & fmt, options_t const & opt = options_t{})
     // clang-format on
