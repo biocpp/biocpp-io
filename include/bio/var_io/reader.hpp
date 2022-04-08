@@ -80,6 +80,16 @@ namespace bio::var_io
  *
  * TODO
  *
+ *
+ * ### Region filtering
+ *
+ * Configure the reader to only show records in the region "20:17000-1230300":
+ *
+ * \snippet test/snippet/var_io/var_io_reader.cpp region
+ *
+ * This region filter requires an index, although region filtering without an index
+ * is also available; see bio::var_io::reader_options::region.
+ *
  * ### Views on readers
  *
  * Print information for the first five records where quality is better than 23:
@@ -131,11 +141,10 @@ private:
     //!\brief Initialise the format handler and read first record.
     void init()
     {
-        // set format-handler
+        /* set format-handler */
         std::visit([&](auto f) { format_handler = format_input_handler<decltype(f)>{stream, options}; }, format);
 
-        // region filtering
-
+        /* region filtering */
         if (!options.region.chrom.empty())
         {
             if (auto index_path = stream.filename();
@@ -145,7 +154,6 @@ private:
                 index.read(index_path);
                 std::vector<std::pair<uint64_t, uint64_t>> chunks = index.reg2chunks(options.region);
 
-#if 1 // linear implementation
                 /* IMPLEMENTATION NOTE
                  * We are currently doing a simplified indexed access where we do not process all
                  * possible chunks but just do a linear scan from the beginning of the first overlapping chunk.
@@ -163,85 +171,16 @@ private:
                 detail::fast_istreambuf_iterator<char> it{stream};
                 it.skip_n(block_offset);
                 std::visit([](auto & f) { f.reset_stream(); }, format_handler);
-#else
-                /* IMPLEMENTATION NOTE
-                 * This implementation iterates over all chunks to find the first chunk with an actual overlap.
-                 * Runtime may be worse because chunks are overlapping and not yet filtered.
-                 * Runtime may be worse because more overhead of seeking.
-                 * Runtime may be better because early false positive intervals are skipped.
-                 * Runtime may be the same, because a large spanning interval usually comes first and this
-                 * contains the first hit with very high probability.
-                 * → currently this implementation seems to provide no benefit, but we should investigate further.
-                 */
-                bool found = false;
-
-                std::ranges::sort(chunks);
-
-                // this record holds the bare minimum to check if regions overlap; always shallow
-                using record_t = record<vtag_t<field::chrom, field::pos, field::ref>,
-                                        seqan3::type_list<std::string_view, int64_t, std::string_view>>;
-                record_t temp_record;
-
-                for (auto [chunk_beg, chunk_end] : chunks)
-                {
-                    auto [disk_offset_beg, block_offset_beg] = detail::decode_bgz_virtual_offset(chunk_beg);
-
-                    // seek on-disk
-                    stream.seekg_primary(disk_offset_beg);
-                    // seek inside block
-                    detail::fast_istreambuf_iterator<char> it{stream};
-                    it.skip_n(block_offset_beg);
-                    std::visit([](auto & f) { f.reset_stream(); }, format_handler);
-
-                    while (true)
-                    {
-                        // at end if we could not read further
-                        if (std::istreambuf_iterator<char>{stream} == std::istreambuf_iterator<char>{})
-                            break;
-
-                        std::visit([&](auto & f) { f.parse_next_record_into(temp_record); }, format_handler);
-
-                        // TODO undo "- 1" if interval notation gets decided on
-                        genomic_region<ownership::shallow> rec_reg{.chrom = temp_record.chrom(),
-                                                                   .beg   = temp_record.pos() - 1,
-                                                                   .end =
-                                                                     rec_reg.beg + (int64_t)temp_record.ref().size()};
-
-                        std::weak_ordering ordering = rec_reg.relative_to(options.region);
-                        if (ordering == std::weak_ordering::less) // records lies before the target region → skip
-                        {
-                            // we cannot tellg() on the primary to check if we are behind the block
-                            // because c++ iostream may have moved much further already
-                            // → we always continue until we are on or behind our target region
-                        }
-                        else if (ordering == std::weak_ordering::equivalent) // records overlaps target region → take it
-                        {
-                            found = true;
-                            break;
-                        }
-                        else if (ordering ==
-                                 std::weak_ordering::greater) // record begins after target region start → at end
-                        {
-                            break; // we cannot return here, because chunks are overlapping o_O
-                        }
-                    }
-
-                    if (found)
-                        break;
-                }
-
-                // no record was found
-                if (!found)
-                    at_end = true;
-#endif
             }
-            else if (options.region_index_required)
+            else if (!options.region_index_optional)
             {
-                throw bio::file_open_error{"options.region_index_required was set but no index was found."};
+                throw bio::file_open_error{
+                  "No index file was found. To allow linear-time filtering without an index, "
+                  "set options.region_index_optional to true."};
             }
         }
 
-        // read first record
+        /* read first record */
         read_next_record();
     }
     //!\brief Tell the format to move to the next record and update the buffer.
@@ -259,11 +198,12 @@ private:
 
         assert(!format_handler.valueless_by_exception());
 
-        if (options.region.chrom.empty()) // regular, unrestricted reading
+        /* regular, unrestricted reading */
+        if (options.region.chrom.empty())
         {
             std::visit([&](auto & f) { f.parse_next_record_into(record_buffer); }, format_handler);
         }
-        else // only read on sub-region
+        else /* only read sub-region */
         {
             // this record holds the bare minimum to check if regions overlap; always shallow
             using record_t = record<vtag_t<field::chrom, field::pos, field::ref>,

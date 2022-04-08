@@ -287,6 +287,36 @@ TEST(var_io_reader, region_filter)
     bio::var_io::reader_options options{.region = region};
 
     {
+        std::ofstream os{"example.vcf.gz", std::ios::binary};
+        os << example_from_spec_bgzipped;
+    }
+
+    {
+        std::ofstream os{"example.vcf.gz.tbi", std::ios::binary};
+        os << example_from_spec_bgzipped_tbi;
+    }
+
+    {
+        bio::var_io::reader reader{"example.vcf.gz", options};
+
+        size_t count = 0;
+        for (auto & rec : reader)
+        {
+            ++count;
+            EXPECT_EQ(rec.chrom(), "20");
+            EXPECT_GE(rec.pos(), region.beg);
+            EXPECT_LT(rec.pos(), region.end);
+        }
+        EXPECT_EQ(count, 3);
+    }
+}
+
+TEST(var_io_reader, region_filter_linear)
+{
+    bio::genomic_region<>       region{.chrom = "20", .beg = 17000, .end = 1230300};
+    bio::var_io::reader_options options{.region = region, .region_index_optional = true};
+
+    {
         std::istringstream  str{static_cast<std::string>(example_from_spec)};
         bio::var_io::reader reader{str, bio::vcf{}, options};
 

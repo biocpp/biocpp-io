@@ -192,21 +192,25 @@ struct reader_options
     /*!\brief Only display records that overlap with the given region (ignored if default-initialised).
      * \details
      *
-     * The region must be specified as a **0-based, half-open interval** (even if VCF is 1-based).
+     * The region must be specified as a **0-based, half-open interval** (even though VCF is 1-based).
      *
-     * This option works with and without an index. If available and usable, an index will be used.
+     * This option works with and without an index, but reading without an index is disabled by default.
      * Indexes are not usable when the format is uncompressed VCF or if the input is read from STDIN.
+     *
+     * ### Region filter with an index
+     *
+     * An index file allows skipping regions of the file on-disk. This is usually a lot faster than filtering
+     * without an index. The filename is detected automatically but can also be specified manually (see
+     * #region_index_file).
      *
      * ### Region filter without an index
      *
      * The file will be scanned linearly for records that overlap the region.
      * Only minimal parts of the record are parsed to compare the positions, so this is faster than
      * using a `std::views::filter` on the file.
-     *
-     * ### Region filter with an index [TODO implement]
-     *
-     * An index file allows skipping regions of the file on-disk. This is usually a lot faster than filtering
-     * without an index.
+     * This option is disabled by default, so an exception is thrown when a region is given but no
+     * index file is found. To allow region filtering without an index, set #region_index_optional to
+     * `true`.
      */
     genomic_region<ownership::deep> region{};
 
@@ -216,13 +220,13 @@ struct reader_options
      * This option is ignored if no #region is specified, if the file format is uncompressed VCF or the data
      * are read from standard input.
      *
-     * If no path is given, the library will look for `FILE.csi` first and then for `FILE.tbi` where
-     * `FILE` is the filename of the input file.
+     * If no path is given, the library will look for `FILE.tbi` where `FILE` is the filename of the input
+     * file. CSI-indexes are not (yet) supported.
      */
     std::filesystem::path region_index_file{};
 
-    //!\brief Throw an exception if no index file is found or it is not usable.
-    bool region_index_required = false;
+    //!\brief Allow linear-time region filtering when no index file is available.
+    bool region_index_optional = false;
     //!\}
 
     //!\brief Options that are passed on to the internal stream oject.
