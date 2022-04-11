@@ -324,6 +324,8 @@ public:
     {
         compression_format old_compression = selected_compression;
 
+        std::cout << "seek_pos: " << pos << '\n';
+
         primary_stream->seekg(pos);
 
         post_seek(old_compression);

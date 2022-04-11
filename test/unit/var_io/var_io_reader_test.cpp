@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 #include <seqan3/test/expect_range_eq.hpp>
+#include <seqan3/test/tmp_directory.hpp>
 #include <seqan3/test/tmp_filename.hpp>
 
 #include <bio/var_io/reader.hpp>
@@ -286,18 +287,20 @@ TEST(var_io_reader, region_filter)
     bio::genomic_region<>       region{.chrom = "20", .beg = 17000, .end = 1230300};
     bio::var_io::reader_options options{.region = region};
 
+    seqan3::test::tmp_directory dir{};
+
     {
-        std::ofstream os{"example.vcf.gz", std::ios::binary};
+        std::ofstream os{dir.path() / "example.vcf.gz", std::ios::binary};
         os << example_from_spec_bgzipped;
     }
 
     {
-        std::ofstream os{"example.vcf.gz.tbi", std::ios::binary};
+        std::ofstream os{dir.path() / "example.vcf.gz.tbi", std::ios::binary};
         os << example_from_spec_bgzipped_tbi;
     }
 
     {
-        bio::var_io::reader reader{"example.vcf.gz", options};
+        bio::var_io::reader reader{dir.path() / "example.vcf.gz", options};
 
         size_t count = 0;
         for (auto & rec : reader)
@@ -309,6 +312,9 @@ TEST(var_io_reader, region_filter)
         }
         EXPECT_EQ(count, 3);
     }
+
+    std::filesystem::remove(dir.path() / "example.vcf.gz");
+    std::filesystem::remove(dir.path() / "example.vcf.gz.tbi");
 }
 
 TEST(var_io_reader, region_filter_linear)
