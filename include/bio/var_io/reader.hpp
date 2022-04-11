@@ -138,6 +138,50 @@ private:
     var_io::header const * header_ptr = nullptr;
     //!\}
 
+    //!\brief Jump to the region specified in the options.
+    void jump_to_region()
+    {
+        std::filesystem::path index_file = options.region_index_file;
+
+        // no index file was specified, try ".tbi"
+        if (std::filesystem::path index_file_tmp = stream.filename();
+            index_file.empty() && !index_file_tmp.empty() && std::filesystem::exists(index_file_tmp += ".tbi"))
+        {
+            index_file = index_file_tmp;
+        }
+
+        if (!index_file.empty())
+        {
+            detail::tabix_index index;
+            index.read(index_file);
+            std::vector<std::pair<uint64_t, uint64_t>> chunks = index.reg2chunks(options.region);
+
+            /* IMPLEMENTATION NOTE
+             * We are currently doing a simplified indexed access where we do not process all
+             * possible chunks but just do a linear scan from the beginning of the first overlapping chunk.
+             * This is definitely worse than what htslib is doing, but still very good for the tests performed.
+             * I doubt that we can ever reach htslib's performance fullty while using C++ iostreams.
+             */
+
+            // we take the smallest begin-offset
+            uint64_t const min_beg           = std::ranges::min(chunks | std::views::elements<0>);
+            auto [disk_offset, block_offset] = detail::decode_bgz_virtual_offset(min_beg);
+
+            // seek on-disk
+            stream.seekg_primary(disk_offset);
+            // seek inside block
+            detail::fast_istreambuf_iterator<char> it{stream};
+            it.skip_n(block_offset);
+            std::visit([](auto & f) { f.reset_stream(); }, format_handler);
+        }
+        else if (!options.region_index_optional)
+        {
+            throw bio::file_open_error{
+              "No index file was found. To allow linear-time filtering without an index, "
+              "set options.region_index_optional to true."};
+        }
+    }
+
     //!\brief Initialise the format handler and read first record.
     void init()
     {
@@ -146,39 +190,7 @@ private:
 
         /* region filtering */
         if (!options.region.chrom.empty())
-        {
-            if (auto index_path = stream.filename();
-                !stream.filename().empty() && std::filesystem::exists(index_path += ".tbi"))
-            {
-                detail::tabix_index index;
-                index.read(index_path);
-                std::vector<std::pair<uint64_t, uint64_t>> chunks = index.reg2chunks(options.region);
-
-                /* IMPLEMENTATION NOTE
-                 * We are currently doing a simplified indexed access where we do not process all
-                 * possible chunks but just do a linear scan from the beginning of the first overlapping chunk.
-                 * This is definitely worse than what htslib is doing, but still very good for the tests performed.
-                 * I doubt that we can ever reach htslib's performance fullty while using C++ iostreams.
-                 */
-
-                // we take the smallest begin-offset
-                uint64_t const min_beg           = std::ranges::min(chunks | std::views::elements<0>);
-                auto [disk_offset, block_offset] = detail::decode_bgz_virtual_offset(min_beg);
-
-                // seek on-disk
-                stream.seekg_primary(disk_offset);
-                // seek inside block
-                detail::fast_istreambuf_iterator<char> it{stream};
-                it.skip_n(block_offset);
-                std::visit([](auto & f) { f.reset_stream(); }, format_handler);
-            }
-            else if (!options.region_index_optional)
-            {
-                throw bio::file_open_error{
-                  "No index file was found. To allow linear-time filtering without an index, "
-                  "set options.region_index_optional to true."};
-            }
-        }
+            jump_to_region();
 
         /* read first record */
         read_next_record();
@@ -297,6 +309,21 @@ public:
         }
 
         return *header_ptr;
+    }
+
+    using base_t::reopen;
+
+    /*!\brief Re-create this reader on the specified region.
+     * \details
+     *
+     * Note that the header is not parsed again.
+     */
+    void reopen(genomic_region<ownership::deep> const & region)
+    {
+        at_end         = false;
+        options.region = region;
+        jump_to_region();
+        read_next_record();
     }
 };
 
