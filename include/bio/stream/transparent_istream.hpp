@@ -211,7 +211,7 @@ private:
 
         init();
 
-        if (old_compression != selected_compression)
+        if (old_compression != selected_compression || (old_compression == compression_format::bgzf && selected_compression == compression_format::gz))
         {
             throw bio_error{
               "Cannot restart decompression after seek on compressed file.\nThe file is not compressed "
