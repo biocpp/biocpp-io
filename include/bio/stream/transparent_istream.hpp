@@ -139,20 +139,16 @@ private:
         }
 
         // Thread handling
-        if (selected_compression == compression_format::bgzf)
-        {
-            if (options_.threads == 1)
-                selected_compression = compression_format::gz;
-            else
-                --options_.threads; // bgzf spawns **additional** threads, but user sets total
-        }
+        if (selected_compression == compression_format::bgzf && options_.threads == 1)
+            selected_compression = compression_format::gz;
 
         std::span<std::string> file_extensions{};
         std::istream *         sec = nullptr;
         switch (selected_compression)
         {
             case compression_format::bgzf:
-                sec             = detail::make_istream<compression_format::bgzf>(*primary_stream, options_.threads);
+                // "- 1" because bgzf spawns **additional** threads, but user sets total
+                sec             = detail::make_istream<compression_format::bgzf>(*primary_stream, options_.threads - 1);
                 file_extensions = compression_traits<compression_format::bgzf>::file_extensions;
                 break;
             case compression_format::gz:
@@ -209,6 +205,7 @@ private:
 
         secondary_stream.reset();
 
+        options_.compression = compression_format::detect;
         init();
 
         std::cout << "old_compression:      " << (size_t)old_compression << '\n';
