@@ -215,7 +215,10 @@ private:
         {
             throw bio_error{
               "Cannot restart decompression after seek on compressed file.\nThe file is not compressed "
-              "blockwise and/or the seek position is not the beginning of a block."};
+              "blockwise and/or the seek position is not the beginning of a block.\nOld: ",
+              (size_t)old_compression,
+                " new: ",
+                (size_t)selected_compression};
         }
     }
 
