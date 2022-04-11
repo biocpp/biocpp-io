@@ -506,6 +506,9 @@ public:
 
     //!\brief Return a reference to the header contained in the input handler.
     var_io::header const & get_header() const { return header; }
+
+    //!\brief This resets the stream iterator after region-seek.
+    void reset_stream() { file_it = lowlevel_iterator{*stream, false}; }
 };
 
 // ----------------------------------------------------------------------------

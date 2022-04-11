@@ -15,6 +15,7 @@
 
 #include <filesystem>
 
+#include <bio/detail/index_tabix.hpp>
 #include <bio/detail/reader_base.hpp>
 #include <bio/format/bcf_input_handler.hpp>
 #include <bio/format/vcf_input_handler.hpp>
@@ -79,6 +80,16 @@ namespace bio::var_io
  *
  * TODO
  *
+ *
+ * ### Region filtering
+ *
+ * Configure the reader to only show records in the region "20:17000-1230300":
+ *
+ * \snippet test/snippet/var_io/var_io_reader.cpp region
+ *
+ * This region filter requires an index, although region filtering without an index
+ * is also available; see bio::var_io::reader_options::region.
+ *
  * ### Views on readers
  *
  * Print information for the first five records where quality is better than 23:
@@ -116,6 +127,7 @@ private:
      */
     //!\cond
     using base_t::at_end;
+    using base_t::format;
     using base_t::format_handler;
     using base_t::options;
     using base_t::record_buffer;
@@ -126,6 +138,63 @@ private:
     var_io::header const * header_ptr = nullptr;
     //!\}
 
+    //!\brief Jump to the region specified in the options.
+    void jump_to_region()
+    {
+        std::filesystem::path index_file = options.region_index_file;
+
+        // no index file was specified, try ".tbi"
+        if (std::filesystem::path index_file_tmp = stream.filename();
+            index_file.empty() && !index_file_tmp.empty() && std::filesystem::exists(index_file_tmp += ".tbi"))
+        {
+            index_file = index_file_tmp;
+        }
+
+        if (!index_file.empty())
+        {
+            detail::tabix_index index;
+            index.read(index_file);
+            std::vector<std::pair<uint64_t, uint64_t>> chunks = index.reg2chunks(options.region);
+
+            /* IMPLEMENTATION NOTE
+             * We are currently doing a simplified indexed access where we do not process all
+             * possible chunks but just do a linear scan from the beginning of the first overlapping chunk.
+             * This is definitely worse than what htslib is doing, but still very good for the tests performed.
+             * I doubt that we can ever reach htslib's performance fullty while using C++ iostreams.
+             */
+
+            // we take the smallest begin-offset
+            uint64_t const min_beg           = std::ranges::min(chunks | std::views::elements<0>);
+            auto [disk_offset, block_offset] = detail::decode_bgz_virtual_offset(min_beg);
+
+            // seek on-disk
+            stream.seekg_primary(disk_offset);
+            // seek inside block
+            detail::fast_istreambuf_iterator<char> it{stream};
+            it.skip_n(block_offset);
+            std::visit([](auto & f) { f.reset_stream(); }, format_handler);
+        }
+        else if (!options.region_index_optional)
+        {
+            throw bio::file_open_error{
+              "No index file was found. To allow linear-time filtering without an index, "
+              "set options.region_index_optional to true."};
+        }
+    }
+
+    //!\brief Initialise the format handler and read first record.
+    void init()
+    {
+        /* set format-handler */
+        std::visit([&](auto f) { format_handler = format_input_handler<decltype(f)>{stream, options}; }, format);
+
+        /* region filtering */
+        if (!options.region.chrom.empty())
+            jump_to_region();
+
+        /* read first record */
+        read_next_record();
+    }
     //!\brief Tell the format to move to the next record and update the buffer.
     void read_next_record()
     {
@@ -141,11 +210,12 @@ private:
 
         assert(!format_handler.valueless_by_exception());
 
-        if (options.region.chrom.empty()) // regular, unrestricted reading
+        /* regular, unrestricted reading */
+        if (options.region.chrom.empty())
         {
             std::visit([&](auto & f) { f.parse_next_record_into(record_buffer); }, format_handler);
         }
-        else // only read on sub-region
+        else /* only read sub-region */
         {
             // this record holds the bare minimum to check if regions overlap; always shallow
             using record_t = record<vtag_t<field::chrom, field::pos, field::ref>,
@@ -239,6 +309,21 @@ public:
         }
 
         return *header_ptr;
+    }
+
+    using base_t::reopen;
+
+    /*!\brief Re-create this reader on the specified region.
+     * \details
+     *
+     * Note that the header is not parsed again.
+     */
+    void reopen(genomic_region<ownership::deep> const & region)
+    {
+        at_end         = false;
+        options.region = region;
+        jump_to_region();
+        read_next_record();
     }
 };
 

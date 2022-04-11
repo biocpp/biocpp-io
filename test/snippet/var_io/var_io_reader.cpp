@@ -14,6 +14,16 @@ int main()
         os << example_from_spec_records;
     }
 
+    {
+        std::ofstream os{"example.vcf.gz", std::ios::binary};
+        os << example_from_spec_bgzipped;
+    }
+
+    {
+        std::ofstream os{"example.vcf.gz.tbi", std::ios::binary};
+        os << example_from_spec_bgzipped_tbi;
+    }
+
     std::ifstream in{"example.vcf"};
     std::cin.rdbuf(in.rdbuf()); // rewire stdin
 
@@ -33,6 +43,8 @@ for (auto & rec : reader)
 //![simple_usage_file]
 }
 
+std::cerr << "--\n";
+
 {
 //![simple_usage_stream]
 bio::var_io::reader reader{std::cin, bio::vcf{}};
@@ -46,6 +58,26 @@ for (auto & rec : reader)
 }
 //![simple_usage_stream]
 }
+
+std::cerr << "--\n";
+
+{
+//![region]
+bio::genomic_region reg{.chrom = "20", .beg = 17000, .end = 1230300};
+bio::var_io::reader reader{"example.vcf.gz", bio::var_io::reader_options{.region = reg}};
+
+// this will only print 3 records instead of 5
+for (auto & rec : reader)
+{
+    seqan3::debug_stream << rec.chrom() << ':'
+                         << rec.pos()   << ':'
+                         << rec.ref()   << ':'
+                         << rec.alt()   << '\n';
+}
+//![region]
+}
+
+std::cerr << "--\n";
 
 {
 //![views]
@@ -65,4 +97,6 @@ for (auto & rec : reader | std::views::filter(min_qual) | std::views::take(5))
 
 //================= POST ==========================
     std::filesystem::remove("example.vcf");
+    std::filesystem::remove("example.vcf.gz");
+    std::filesystem::remove("example.vcf.gz.tbi");
 }

@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 #include <seqan3/test/expect_range_eq.hpp>
+#include <seqan3/test/tmp_directory.hpp>
 #include <seqan3/test/tmp_filename.hpp>
 
 #include <bio/var_io/reader.hpp>
@@ -286,6 +287,43 @@ TEST(var_io_reader, region_filter)
     bio::genomic_region<>       region{.chrom = "20", .beg = 17000, .end = 1230300};
     bio::var_io::reader_options options{.region = region};
 
+    seqan3::test::tmp_directory dir{};
+
+    {
+        std::ofstream os{dir.path() / "example.vcf.gz", std::ios::binary};
+        os << example_from_spec_bgzipped;
+    }
+
+    {
+        std::ofstream os{dir.path() / "example.vcf.gz.tbi", std::ios::binary};
+        os << example_from_spec_bgzipped_tbi;
+    }
+
+    {
+        bio::var_io::reader reader{dir.path() / "example.vcf.gz", options};
+
+        size_t count = 0;
+        for (auto & rec : reader)
+        {
+            ++count;
+            EXPECT_EQ(rec.chrom(), "20");
+            EXPECT_GE(rec.pos(), region.beg);
+            EXPECT_LT(rec.pos(), region.end);
+        }
+        EXPECT_EQ(count, 3);
+    }
+
+    std::filesystem::remove(dir.path() / "example.vcf.gz");
+    std::filesystem::remove(dir.path() / "example.vcf.gz.tbi");
+}
+
+// TODO region_filter_filename
+
+TEST(var_io_reader, region_filter_linear)
+{
+    bio::genomic_region<>       region{.chrom = "20", .beg = 17000, .end = 1230300};
+    bio::var_io::reader_options options{.region = region, .region_index_optional = true};
+
     {
         std::istringstream  str{static_cast<std::string>(example_from_spec)};
         bio::var_io::reader reader{str, bio::vcf{}, options};
@@ -308,3 +346,39 @@ TEST(var_io_reader, region_filter)
         EXPECT_EQ(count, 3);
     }
 }
+
+TEST(var_io_reader, reopen)
+{
+    seqan3::test::tmp_directory dir{};
+
+    {
+        std::ofstream os{dir.path() / "example.vcf.gz", std::ios::binary};
+        os << example_from_spec_bgzipped;
+    }
+
+    {
+        bio::var_io::reader reader{dir.path() / "example.vcf.gz"};
+
+        size_t count = 0;
+        for (auto & rec : reader)
+        {
+            ++count;
+            EXPECT_EQ(rec.chrom(), "20");
+        }
+        EXPECT_EQ(count, 5);
+
+        reader.reopen();
+
+        count = 0;
+        for (auto & rec : reader)
+        {
+            ++count;
+            EXPECT_EQ(rec.chrom(), "20");
+        }
+        EXPECT_EQ(count, 5);
+    }
+
+    std::filesystem::remove(dir.path() / "example.vcf.gz");
+}
+
+// TODO tests for reopen(region) on 1000G_chr10_sample.vcf.gz

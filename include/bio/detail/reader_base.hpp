@@ -179,6 +179,14 @@ public:
     {}
     //!\}
 
+    //!\brief Rewinds the underlying stream to the beginning and re-initialises the format reader.
+    void reopen()
+    {
+        stream.seekg_primary(0);
+        at_end = false;
+        to_derived().init();
+    }
+
     /*!\name Range interface
      * \brief Provides functions for record based reading of the file.
      * \{
