@@ -211,6 +211,8 @@ private:
 
         init();
 
+        std::cout << "old_compression:      " << (size_t)old_compression << '\n';
+        std::cout << "selected_compression: " << (size_t)selected_compression << '\n';
         if (old_compression != selected_compression && !(old_compression == compression_format::bgzf && selected_compression == compression_format::gz))
         {
             throw bio_error{
