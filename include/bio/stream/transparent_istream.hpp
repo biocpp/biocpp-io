@@ -208,16 +208,14 @@ private:
         options_.compression = compression_format::detect;
         init();
 
-        std::cout << "old_compression:      " << (size_t)old_compression << '\n';
-        std::cout << "selected_compression: " << (size_t)selected_compression << '\n';
-        if (old_compression != selected_compression)// && !(old_compression == compression_format::bgzf && selected_compression == compression_format::gz))
+        if (old_compression != selected_compression)
         {
             throw bio_error{
               "Cannot restart decompression after seek on compressed file.\nThe file is not compressed "
               "blockwise and/or the seek position is not the beginning of a block.\nOld: ",
               (size_t)old_compression,
-                " new: ",
-                (size_t)selected_compression};
+              " new: ",
+              (size_t)selected_compression};
         }
     }
 
@@ -322,8 +320,6 @@ public:
     transparent_istream & seekg_primary(pos_type const pos)
     {
         compression_format old_compression = selected_compression;
-
-        std::cout << "seek_pos: " << pos << '\n';
 
         primary_stream->seekg(pos);
 
