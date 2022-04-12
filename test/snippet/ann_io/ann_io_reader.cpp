@@ -29,7 +29,8 @@ for (auto & rec : reader)
                          << rec.chromEnd()     << '\n';
 }
 
-seqan3::debug_stream << reader.header().header_values << '\n';
+seqan3::debug_stream << reader.header().browser_values << '\n';
+seqan3::debug_stream << reader.header().track_values << '\n';
 //![simple_usage_file]
 }
 

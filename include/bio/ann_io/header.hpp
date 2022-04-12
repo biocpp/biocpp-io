@@ -133,19 +133,20 @@ private:
             return !s.empty() && it == s.end();
         };
 
-        /* First print out browser settings */
+        /* First print out browser settings one per line */
 
         for (auto const & e : browser_values)
         {
             (((((raw_data += "browser ") += e.first) += ' ') += e.second) += '\n');
         }
+        /* Then print out track settings all on the same line. */
         raw_data += "track ";
         for (auto const & e : track_values)
         {
             ((((raw_data += e.first) += '=') += is_number(e.second) ? e.second : quote_wrap(e.second)) += ' ');
         }
 
-        return raw_data.substr(0, raw_data.size() - 1);
+        return raw_data.substr(0, raw_data.size() - 1) + '\n';
     }
     //
     // //!\brief Turn bio::value_type_id into string.
