@@ -54,24 +54,24 @@ enum class field : uint64_t
     // Fields unique to alignment io
     qname = id,
     flag  = _private + 1, //!< The alignment flag (bit information), `uint16_t` value.
-    /*ref_id*/            //!< The identifier of the (reference) sequence that SEQ was aligned to.
+    rname = ref_id,       //!< The identifier of the (reference) sequence that SEQ was aligned to.
     /*pos*/
-    mapq,  //!< The mapping quality of the SEQ alignment, usually a ohred-scaled score.
-    cigar, //!< The cigar vector (std::vector<seqan3::cigar>) representing the alignment in SAM/BAM format.
-    next_ref_id,
-    next_pos,
-    tlen,
+    mapq  = flag + 1, //!< The mapping quality of the SEQ alignment, usually a ohred-scaled score.
+    cigar,            //!< The cigar vector (std::vector<seqan3::cigar>) representing the alignment in SAM/BAM format.
+    rnext,            //!< The identifier of the (reference) sequence that the mate mapped to.
+    pnext,            //!< The position where the mate mapped onto `rnext`.
+    tlen,             //!< The observed template length.
     /*seq*/
     /*qual*/
-    optionals, //!< The optional fields in the SAM format, stored in a dictionary.
+    tags, //!< The optional fields in the SAM format, stored in a dictionary.
     /*_private*/
 
     // Fields unique to variant io
     chrom = ref_id, //!< CHROM field in Var I/O.
     /*pos*/
     /*id*/
-    ref   = optionals + 1, //!< REF field in Var I/O.
-    alt,                   //!< ALT field in Var I/O.
+    ref   = tags + 1, //!< REF field in Var I/O.
+    alt,              //!< ALT field in Var I/O.
     /*qual*/
     filter,    //!< FILTER field in Var I/O.
     info,      //!< INFO field in Var I/O.
@@ -239,17 +239,17 @@ public:
     BIO_RECORD_MEMBER(qual)
     BIO_RECORD_MEMBER(seq_qual)
     BIO_RECORD_MEMBER(offset)
-    BIO_RECORD_MEMBER(ref_id)
+    BIO_RECORD_MEMBER(rname)
     BIO_RECORD_MEMBER(ref_seq)
     BIO_RECORD_MEMBER(pos)
     BIO_RECORD_MEMBER(qname)
     BIO_RECORD_MEMBER(flag)
     BIO_RECORD_MEMBER(mapq)
     BIO_RECORD_MEMBER(cigar)
-    BIO_RECORD_MEMBER(next_ref_id)
-    BIO_RECORD_MEMBER(next_pos)
+    BIO_RECORD_MEMBER(rnext)
+    BIO_RECORD_MEMBER(pnext)
     BIO_RECORD_MEMBER(tlen)
-    BIO_RECORD_MEMBER(optionals)
+    BIO_RECORD_MEMBER(tags)
     BIO_RECORD_MEMBER(chrom)
     BIO_RECORD_MEMBER(ref)
     BIO_RECORD_MEMBER(alt)
