@@ -24,7 +24,7 @@
 #include <seqan3/alphabet/quality/phred63.hpp>
 #include <seqan3/alphabet/views/char_strictly_to.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
-#include <seqan3/utility/views/to.hpp>
+#include <seqan3/utility/range/to.hpp>
 
 #include <bio/detail/concept.hpp>
 #include <bio/detail/misc.hpp>

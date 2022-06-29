@@ -22,7 +22,7 @@
 #include <seqan3/alphabet/nucleotide/dna5.hpp>
 #include <seqan3/alphabet/quality/phred63.hpp>
 #include <seqan3/alphabet/views/char_strictly_to.hpp>
-#include <seqan3/utility/views/to.hpp>
+#include <seqan3/utility/range/to.hpp>
 
 #include <bio/detail/reader_base.hpp>
 #include <bio/format/fasta_input_handler.hpp>
@@ -160,3 +160,9 @@ public:
 };
 
 } // namespace bio::seq_io
+
+namespace std::ranges
+{
+  template <typename... args_t>
+  inline constexpr bool enable_view<bio::seq_io::reader<args_t...>> = false;
+}

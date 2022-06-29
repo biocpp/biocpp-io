@@ -328,3 +328,9 @@ public:
 };
 
 } // namespace bio::var_io
+
+namespace std::ranges
+{
+  template <typename... args_t>
+  inline constexpr bool enable_view<bio::var_io::reader<args_t...>> = false;
+}

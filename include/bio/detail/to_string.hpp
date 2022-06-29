@@ -16,7 +16,7 @@
 #include <string>
 #include <string_view>
 
-#include <seqan3/utility/concept/exposition_only/core_language.hpp>
+#include <seqan3/utility/concept.hpp>
 
 #include <bio/platform.hpp>
 

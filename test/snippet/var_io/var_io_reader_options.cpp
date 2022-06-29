@@ -25,7 +25,7 @@ int main()
 bio::var_io::reader_options options{ .field_types = bio::var_io::field_types<bio::ownership::deep> };
 
 // read the entire file, copy all records into a vector; immediately closes file again
-std::vector records = bio::var_io::reader{"example.vcf", options} | seqan3::views::to<std::vector>;
+std::vector records = bio::var_io::reader{"example.vcf", options} | seqan3::ranges::to<std::vector>();
 
 /* do something else */
 

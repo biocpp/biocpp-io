@@ -625,3 +625,9 @@ reader(auto &&,
   -> reader<record_kind::line>;
 //!\}
 } // namespace bio::plain_io
+
+namespace std::ranges
+{
+    template <bio::plain_io::record_kind record_kind_>
+    inline constexpr bool enable_view<bio::plain_io::reader<record_kind_>> = false;
+}

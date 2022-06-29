@@ -26,7 +26,7 @@
 #include <seqan3/core/debug_stream/detail/to_string.hpp>
 #include <seqan3/core/range/type_traits.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
-#include <seqan3/utility/views/to.hpp>
+#include <seqan3/utility/range/to.hpp>
 
 #include <bio/detail/magic_get.hpp>
 #include <bio/format/format_input_handler.hpp>

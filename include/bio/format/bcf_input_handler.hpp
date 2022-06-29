@@ -27,7 +27,7 @@
 #include <seqan3/core/range/type_traits.hpp>
 #include <seqan3/utility/detail/to_little_endian.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
-#include <seqan3/utility/views/to.hpp>
+#include <seqan3/utility/range/to.hpp>
 
 #include <bio/detail/misc.hpp>
 #include <bio/detail/range.hpp>

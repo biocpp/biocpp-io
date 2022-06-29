@@ -11,7 +11,7 @@
 
 #include <seqan3/alphabet/views/char_strictly_to.hpp>
 #include <seqan3/core/debug_stream.hpp>
-#include <seqan3/utility/views/to.hpp>
+#include <seqan3/utility/range/to.hpp>
 
 #include <bio/detail/magic_get.hpp>
 #include <bio/var_io/reader.hpp>
@@ -251,7 +251,7 @@ auto make_ref(std::string_view const str)
           {    }
         };
     else
-        return str | seqan3::views::char_strictly_to<seqan3::dna5> | seqan3::views::to<std::vector>;
+        return str | seqan3::views::char_strictly_to<seqan3::dna5> | seqan3::ranges::to<std::vector>();
 }
 
 template <bio::ownership own, typename int_t = int32_t>
