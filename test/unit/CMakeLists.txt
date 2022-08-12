@@ -8,7 +8,7 @@
 cmake_minimum_required (VERSION 3.10)
 project (bio_test_unit CXX)
 
-find_package (BIO REQUIRED HINTS ${CMAKE_CURRENT_LIST_DIR}/../../build_system)
+find_package (biocpp_io REQUIRED HINTS ${CMAKE_CURRENT_LIST_DIR}/../../build_system)
 
 include (../../submodules/seqan3/test/seqan3-test.cmake)
 include (GoogleTest OPTIONAL)
@@ -28,7 +28,7 @@ macro (bio_test unit_test_cpp)
     seqan3_test_component (test_name "${unit_test}" TEST_NAME)
 
     add_executable (${target} ${unit_test_cpp})
-    target_link_libraries (${target} seqan3::test::unit bio::bio)
+    target_link_libraries (${target} seqan3::test::unit biocpp::io)
     add_include_dependencies (${target} "${BIOCPP_IO_TEST_CYCLIC_DEPENDING_INCLUDES}")
     collect_used_test (${target})
     if (BIOCPP_IO_VERBOSE_TESTS)

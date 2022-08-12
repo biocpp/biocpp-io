@@ -12,7 +12,7 @@
 # https://cmake.org/cmake/help/v3.16/module/CMakePackageConfigHelpers.html#command:write_basic_package_version_file
 
 # Note that bio-config.cmake can be standalone and thus BIOCPP_IO_CLONE_DIR might be empty.
-find_path (BIOCPP_IO_CLONE_DIR NAMES build_system/bio-config.cmake HINTS "${CMAKE_CURRENT_LIST_DIR}/..")
+find_path (BIOCPP_IO_CLONE_DIR NAMES build_system/biocpp_io-config.cmake HINTS "${CMAKE_CURRENT_LIST_DIR}/..")
 find_path (BIOCPP_IO_INCLUDE_DIR NAMES bio/io.hpp HINTS "${BIOCPP_IO_CLONE_DIR}/include")
 
 # extract version from io.hpp header

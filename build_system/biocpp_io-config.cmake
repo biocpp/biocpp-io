@@ -48,8 +48,8 @@
 #
 # Additionally, the following [IMPORTED][IMPORTED] targets are defined:
 #
-#   bio::bio          -- interface target where
-#                                  target_link_libraries(target bio::bio)
+#   biocpp::io          -- interface target where
+#                                  target_link_libraries(target biocpp::io)
 #                              automatically sets
 #                                  target_include_directories(target $BIOCPP_IO_INCLUDE_DIRS),
 #                                  target_link_libraries(target $BIOCPP_IO_LIBRARIES),
@@ -343,7 +343,7 @@ endif ()
 find_package_handle_standard_args (${CMAKE_FIND_PACKAGE_NAME} REQUIRED_VARS BIOCPP_IO_INCLUDE_DIR)
 
 # Set BIOCPP_IO_* variables with the content of ${CMAKE_FIND_PACKAGE_NAME}_(FOUND|...|VERSION)
-# This needs to be done, because `find_package(The BioC++ I/O library)` might be called in any case-sensitive way and we want to
+# This needs to be done, because `find_package(biocpp_io)` might be called in any case-sensitive way and we want to
 # guarantee that BIOCPP_IO_* are always set.
 foreach (package_var FOUND DIR ROOT CONFIG VERSION VERSION_MAJOR VERSION_MINOR VERSION_PATCH VERSION_TWEAK VERSION_COUNT)
     set (BIOCPP_IO_${package_var} "${${CMAKE_FIND_PACKAGE_NAME}_${package_var}}")
@@ -356,19 +356,19 @@ set (BIOCPP_IO_INCLUDE_DIRS ${BIOCPP_IO_INCLUDE_DIR} ${BIOCPP_IO_DEPENDENCY_INCL
 # Export targets
 # ----------------------------------------------------------------------------
 
-if (BIOCPP_IO_FOUND AND NOT TARGET bio::bio)
+if (BIOCPP_IO_FOUND AND NOT TARGET biocpp::io)
     separate_arguments (BIOCPP_IO_CXX_FLAGS_LIST UNIX_COMMAND "${BIOCPP_IO_CXX_FLAGS}")
 
-    add_library (bio_bio INTERFACE)
-    target_compile_definitions (bio_bio INTERFACE ${BIOCPP_IO_DEFINITIONS})
-    target_compile_options (bio_bio INTERFACE ${BIOCPP_IO_CXX_FLAGS_LIST})
-    target_link_libraries (bio_bio INTERFACE "${BIOCPP_IO_LIBRARIES}")
+    add_library (biocpp_io INTERFACE)
+    target_compile_definitions (biocpp_io INTERFACE ${BIOCPP_IO_DEFINITIONS})
+    target_compile_options (biocpp_io INTERFACE ${BIOCPP_IO_CXX_FLAGS_LIST})
+    target_link_libraries (biocpp_io INTERFACE "${BIOCPP_IO_LIBRARIES}")
     # include bio/include/ as -I, because bio should never produce warnings.
-    target_include_directories (bio_bio INTERFACE "${BIOCPP_IO_INCLUDE_DIR}")
+    target_include_directories (biocpp_io INTERFACE "${BIOCPP_IO_INCLUDE_DIR}")
     # include everything except bio/include/ as -isystem, i.e.
     # a system header which suppresses warnings of external libraries.
-    target_include_directories (bio_bio SYSTEM INTERFACE "${BIOCPP_IO_DEPENDENCY_INCLUDE_DIRS}")
-    add_library (bio::bio ALIAS bio_bio)
+    target_include_directories (biocpp_io SYSTEM INTERFACE "${BIOCPP_IO_DEPENDENCY_INCLUDE_DIRS}")
+    add_library (biocpp::io ALIAS biocpp_io)
 endif ()
 
 set (CMAKE_REQUIRED_QUIET ${CMAKE_REQUIRED_QUIET_SAVE})

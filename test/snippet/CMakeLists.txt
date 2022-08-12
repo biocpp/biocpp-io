@@ -8,7 +8,7 @@
 cmake_minimum_required (VERSION 3.10)
 project (bio_test_snippet CXX)
 
-find_package (BIO REQUIRED HINTS ${CMAKE_SOURCE_DIR}/../../build_system)
+find_package (biocpp_io REQUIRED HINTS ${CMAKE_SOURCE_DIR}/../../build_system)
 
 include (${CMAKE_SOURCE_DIR}/../../submodules/seqan3/test/seqan3-test.cmake)
 include (${CMAKE_SOURCE_DIR}/../../submodules/seqan3/test/cmake/diagnostics/list_unused_snippets.cmake)
@@ -23,7 +23,7 @@ macro (bio_snippet test_name_prefix snippet snippet_base_path)
     set (target "${snippet_target_name}_snippet")
 
     add_executable (${target} "${snippet_base_path}/${snippet}")
-    target_link_libraries (${target} PUBLIC snippet_main bio::bio)
+    target_link_libraries (${target} PUBLIC snippet_main biocpp::io)
     target_compile_options (${target} PUBLIC "-Wno-unused")
     set_target_properties(${target}
         PROPERTIES
