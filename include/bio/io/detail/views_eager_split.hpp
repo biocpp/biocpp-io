@@ -287,7 +287,7 @@ namespace bio::io::detail
  * \param[in] delimiter  The character on which to split.
  * \param[in] skip_quote Whether to ignore delimiters inside quotes.
  * \returns              A range of substrings given as string_views. See below for the properties of the returned
- * range. \ingroup bio
+ * range. \ingroup io
  *
  * \details
  *

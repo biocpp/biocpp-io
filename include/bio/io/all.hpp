@@ -13,14 +13,12 @@
 
 #pragma once
 
-// TODO
-
-/*!\defgroup bio B.I.O.
- * \brief The top-level module.
+/*!\defgroup io I/O
+ * \brief The Input/Output module from the I/O library.
  */
 
 /*!\namespace bio::io
- * \brief Main namespace for the B.I.O. library.
+ * \brief Main namespace for the I/O module.
  */
 
 /*!\if DEV

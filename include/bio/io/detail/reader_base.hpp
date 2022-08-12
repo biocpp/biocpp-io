@@ -37,7 +37,7 @@ namespace bio::io
 // ----------------------------------------------------------------------------
 
 /*!\brief This is a CRTP base-class for I/O readers.
- * \ingroup bio
+ * \ingroup io
  * \tparam derived_t Type of the derived class.
  * \tparam options_t Type of the reader options.
  * \details

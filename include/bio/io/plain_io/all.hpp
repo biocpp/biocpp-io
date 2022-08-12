@@ -16,7 +16,7 @@
 // TODO
 
 /*!\defgroup plain_io Plain I/O
- * \ingroup bio
+ * \ingroup io
  * \brief Reader and writer for plaintext and CSV/TSV files.
  */
 

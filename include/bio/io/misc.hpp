@@ -28,7 +28,7 @@ namespace bio::io
 //-----------------------------------------------------------------------------
 
 /*!\brief An enum used as an argument for templates that switch between owning and non-owning behaviour.
- * \ingroup bio
+ * \ingroup io
  * \details
  *
  * Typically used to configure a class template to have members that are vectors/strings VS members that are views.
@@ -49,7 +49,7 @@ enum class ownership
 
 /*!\brief The type of bio::io::vtag. [Default "specialisation" for 0 arguments.]
  * \tparam more_vs Any number of values [only 0 arguments pick this specialisation].
- * \ingroup bio
+ * \ingroup io
  * \see bio::io::vtag
  */
 template <auto... more_vs>
@@ -71,7 +71,7 @@ struct vtag_t
 /*!\brief The type of bio::io::vtag. [Specialisation for 1 or more arguments]
  * \tparam v       First value.
  * \tparam more_vs More values.
- * \ingroup bio
+ * \ingroup io
  * \see bio::io::vtag
  */
 template <auto v, auto... more_vs>
@@ -108,7 +108,7 @@ struct vtag_t<v, more_vs...>
 
 /*!\brief A value-tag template.
  * \tparam vs The values to store in the tag.
- * \ingroup bio
+ * \ingroup io
  * \details
  *
  * Using this template, you can easily turn a value, e.g. a literal value, into a compile-time constant with a unique
@@ -128,7 +128,7 @@ inline constinit vtag_t<vs...> vtag{};
 /*!\brief A type-tag template.
  * \tparam type The first type to store.
  * \tparam more_types More types to store (optional).
- * \ingroup bio
+ * \ingroup io
  * \see seqan3::type_list
  *
  * \details

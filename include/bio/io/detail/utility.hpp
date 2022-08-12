@@ -28,7 +28,7 @@
 namespace bio::io::detail
 {
 
-/*!\addtogroup bio
+/*!\addtogroup io
  * \{
  */
 
@@ -45,7 +45,7 @@ overloaded(functors...) -> overloaded<functors...>;
 //!\}
 
 //!\brief Can be included as a member to infer whether parent is in moved-from state.
-//!\ingroup bio
+//!\ingroup io
 struct move_tracker
 {
     //!\brief Defaulted.

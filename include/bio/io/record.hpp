@@ -30,7 +30,7 @@ namespace bio::io
 // ----------------------------------------------------------------------------
 
 /*!\brief An enumerator for the fields used in file formats.
- * \ingroup bio
+ * \ingroup io
  *
  * \details
  *
@@ -106,7 +106,7 @@ namespace bio::io
 
 /*!\brief The class template that file records are based on; behaves like an std::tuple.
  * \implements seqan3::tuple_like
- * \ingroup bio
+ * \ingroup io
  * \tparam field_ids   A vtag_t type with bio::io::field IDs corresponding to field_types.
  * \tparam field_types The types of the fields in this record as a seqan3::type_list.
  * \details

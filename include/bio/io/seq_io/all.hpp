@@ -16,7 +16,7 @@
 // TODO
 
 /*!\defgroup seq_io Seq I/O
- * \ingroup bio
+ * \ingroup io
  * \brief Reader and writer for sequence files (FastA, FastQ, …).
  */
 

@@ -23,7 +23,7 @@ namespace bio::io
 
 /*!\brief Represents an interval on a chromosome or contig.
  * \tparam own Ownership of the #chrom member. See \ref shallow_vs_deep for more details.
- * \ingroup bio
+ * \ingroup io
  * \details
  *
  * This structure can be used to describe regions on chromosomes, contigs or other sequences.

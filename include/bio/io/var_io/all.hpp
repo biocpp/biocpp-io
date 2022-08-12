@@ -16,7 +16,7 @@
 // TODO
 
 /*!\defgroup var_io Var I/O
- * \ingroup bio
+ * \ingroup io
  * \brief Reader and writer for variant files.
  *
  * This module provides high-level APIs to read and write VCF and BCF files.

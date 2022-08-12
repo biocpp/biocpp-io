@@ -15,6 +15,6 @@
 // TODO include all
 
 /*!\defgroup stream Stream
- * \ingroup bio
+ * \ingroup io
  * \brief Provides iostream and (de-)compression utilities.
  */

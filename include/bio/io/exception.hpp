@@ -21,7 +21,7 @@
 namespace bio::io
 {
 
-/*!\addtogroup bio
+/*!\addtogroup io
  * \{
  */
 

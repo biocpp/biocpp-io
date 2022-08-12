@@ -23,7 +23,7 @@ namespace bio::io::detail
 /*!\brief Input iterator that provides a range-like interface for readers.
  * \tparam file_type The data structure on which the iterator operates.
  * \implements std::input_Iterator
- * \ingroup bio
+ * \ingroup io
  *
  * This iterator is a single-pass input iterator for input files. All member types are resolved
  * via `file_type`'s member types, dereference is implemented via file's `front()` member
