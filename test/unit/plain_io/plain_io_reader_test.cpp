@@ -12,7 +12,7 @@
 
 #include <seqan3/test/tmp_filename.hpp>
 
-#include <bio/plain_io/reader.hpp>
+#include <bio/io/plain_io/reader.hpp>
 
 inline constexpr std::string_view input_no_header =
   R"raw(foo bar
@@ -69,7 +69,7 @@ TEST(reader, line_wise_stream)
 {
     std::istringstream str{static_cast<std::string>(input_no_header)};
 
-    bio::plain_io::reader reader{str};
+    bio::io::plain_io::reader reader{str};
 
     do_compare_linewise(reader);
 }
@@ -78,7 +78,7 @@ TEST(reader, line_wise_stream_header_first_line)
 {
     std::istringstream str{static_cast<std::string>(input_with_extraline)};
 
-    bio::plain_io::reader reader{str, bio::plain_io::header_kind::first_line};
+    bio::io::plain_io::reader reader{str, bio::io::plain_io::header_kind::first_line};
 
     EXPECT_EQ(reader.header(), "header");
 
@@ -89,7 +89,7 @@ TEST(reader, line_wise_stream_header_starts_with)
 {
     std::istringstream str{static_cast<std::string>(input_with_header)};
 
-    bio::plain_io::reader reader{str, bio::plain_io::header_kind::starts_with{'#'}};
+    bio::io::plain_io::reader reader{str, bio::io::plain_io::header_kind::starts_with{'#'}};
 
     EXPECT_EQ(reader.header(), "# header 1\n# header 2");
 
@@ -106,7 +106,7 @@ TEST(reader, line_wise_file)
         fi << input_no_header;
     }
 
-    bio::plain_io::reader reader{filename.get_path()};
+    bio::io::plain_io::reader reader{filename.get_path()};
 
     do_compare_linewise(reader);
 }
@@ -121,7 +121,7 @@ TEST(reader, line_wise_file_header_first_line)
         fi << input_with_extraline;
     }
 
-    bio::plain_io::reader reader{filename.get_path(), bio::plain_io::header_kind::first_line};
+    bio::io::plain_io::reader reader{filename.get_path(), bio::io::plain_io::header_kind::first_line};
 
     EXPECT_EQ(reader.header(), "header");
 
@@ -138,7 +138,7 @@ TEST(reader, line_wise_file_header_starts_with)
         fi << input_with_header;
     }
 
-    bio::plain_io::reader reader{filename.get_path(), bio::plain_io::header_kind::starts_with{'#'}};
+    bio::io::plain_io::reader reader{filename.get_path(), bio::io::plain_io::header_kind::starts_with{'#'}};
 
     EXPECT_EQ(reader.header(), "# header 1\n# header 2");
 
@@ -177,7 +177,7 @@ TEST(reader, field_wise_stream)
 {
     std::istringstream str{static_cast<std::string>(input_no_header)};
 
-    bio::plain_io::reader reader{str, ' '};
+    bio::io::plain_io::reader reader{str, ' '};
 
     do_compare_fields(reader);
 }
@@ -186,7 +186,7 @@ TEST(reader, field_wise_stream_move)
 {
     std::istringstream str{static_cast<std::string>(input_no_header)};
 
-    bio::plain_io::reader reader{std::move(str), ' '};
+    bio::io::plain_io::reader reader{std::move(str), ' '};
 
     do_compare_fields(reader);
 }
@@ -195,7 +195,7 @@ TEST(reader, field_wise_stream_header_first_line)
 {
     std::istringstream str{static_cast<std::string>(input_with_extraline)};
 
-    bio::plain_io::reader reader{str, ' ', bio::plain_io::header_kind::first_line};
+    bio::io::plain_io::reader reader{str, ' ', bio::io::plain_io::header_kind::first_line};
 
     EXPECT_EQ(reader.header(), "header");
 
@@ -206,7 +206,7 @@ TEST(reader, field_wise_stream_header_starts_with)
 {
     std::istringstream str{static_cast<std::string>(input_with_header)};
 
-    bio::plain_io::reader reader{str, ' ', bio::plain_io::header_kind::starts_with{'#'}};
+    bio::io::plain_io::reader reader{str, ' ', bio::io::plain_io::header_kind::starts_with{'#'}};
 
     EXPECT_EQ(reader.header(), "# header 1\n# header 2");
 
@@ -223,7 +223,7 @@ TEST(reader, field_wise_file)
         fi << input_no_header;
     }
 
-    bio::plain_io::reader reader{filename.get_path(), ' '};
+    bio::io::plain_io::reader reader{filename.get_path(), ' '};
 
     do_compare_fields(reader);
 }
@@ -238,7 +238,7 @@ TEST(reader, field_wise_file_header_first_line)
         fi << input_with_extraline;
     }
 
-    bio::plain_io::reader reader{filename.get_path(), ' ', bio::plain_io::header_kind::first_line};
+    bio::io::plain_io::reader reader{filename.get_path(), ' ', bio::io::plain_io::header_kind::first_line};
 
     EXPECT_EQ(reader.header(), "header");
 
@@ -255,7 +255,7 @@ TEST(reader, field_wise_file_header_starts_with)
         fi << input_with_header;
     }
 
-    bio::plain_io::reader reader{filename.get_path(), ' ', bio::plain_io::header_kind::starts_with{'#'}};
+    bio::io::plain_io::reader reader{filename.get_path(), ' ', bio::io::plain_io::header_kind::starts_with{'#'}};
 
     EXPECT_EQ(reader.header(), "# header 1\n# header 2");
 
@@ -272,7 +272,7 @@ TEST(reader, empty_file)
         std::ofstream fi{filename.get_path()};
     }
 
-    bio::plain_io::reader reader{filename.get_path()};
+    bio::io::plain_io::reader reader{filename.get_path()};
 
     EXPECT_TRUE(reader.begin() == reader.end());
 }
@@ -287,7 +287,7 @@ TEST(reader, empty_file_first_line)
         fi << "header\n";
     }
 
-    bio::plain_io::reader reader{filename.get_path(), ' ', bio::plain_io::header_kind::first_line};
+    bio::io::plain_io::reader reader{filename.get_path(), ' ', bio::io::plain_io::header_kind::first_line};
 
     auto it = reader.begin();
     ASSERT_TRUE(it == reader.end());
@@ -304,7 +304,7 @@ TEST(reader, empty_file_starts_with)
         fi << "# header 1\n# header 2\n";
     }
 
-    bio::plain_io::reader reader{filename.get_path(), ' ', bio::plain_io::header_kind::starts_with{'#'}};
+    bio::io::plain_io::reader reader{filename.get_path(), ' ', bio::io::plain_io::header_kind::starts_with{'#'}};
 
     auto it = reader.begin();
     EXPECT_TRUE(it == reader.end());
@@ -325,9 +325,9 @@ TEST(reader, overflow)
         fi << input_no_header;
     }
 
-    bio::plain_io::reader reader{filename.get_path(),
-                                 bio::plain_io::header_kind::none,
-                                 bio::transparent_istream_options{.buffer1_size = 3}};
+    bio::io::plain_io::reader reader{filename.get_path(),
+                                     bio::io::plain_io::header_kind::none,
+                                     bio::io::transparent_istream_options{.buffer1_size = 3}};
 
     do_compare_linewise(reader);
 }
@@ -343,7 +343,7 @@ TEST(reader, no_eol)
         fi << "header";
     }
 
-    bio::plain_io::reader reader{filename.get_path(), ' ', bio::plain_io::header_kind::first_line};
+    bio::io::plain_io::reader reader{filename.get_path(), ' ', bio::io::plain_io::header_kind::first_line};
 
     auto it = reader.begin();
     ASSERT_TRUE(it == reader.end());

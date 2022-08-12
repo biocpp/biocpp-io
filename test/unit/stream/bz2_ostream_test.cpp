@@ -7,19 +7,19 @@
 
 #include <gtest/gtest.h>
 
-#include <bio/stream/compression.hpp>
-#include <bio/stream/detail/bz2_ostream.hpp>
-#include <bio/stream/detail/make_stream.hpp>
+#include <bio/io/stream/compression.hpp>
+#include <bio/io/stream/detail/bz2_ostream.hpp>
+#include <bio/io/stream/detail/make_stream.hpp>
 
 #include "data.hpp"
 #include "ostream_test_template.hpp"
 
 TEST(bz2_ostream, regular)
 {
-    regular<bio::compression_format::bz2>();
+    regular<bio::io::compression_format::bz2>();
 }
 
 TEST(bz2_ostream, type_erased)
 {
-    type_erased<bio::compression_format::bz2>();
+    type_erased<bio::io::compression_format::bz2>();
 }

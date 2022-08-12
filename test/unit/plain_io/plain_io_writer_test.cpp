@@ -12,7 +12,7 @@
 
 #include <seqan3/test/tmp_filename.hpp>
 
-#include <bio/plain_io/writer.hpp>
+#include <bio/io/plain_io/writer.hpp>
 
 inline constexpr std::string_view compare =
   R"(foo bar
@@ -24,7 +24,7 @@ TEST(writer, line_wise_push_back_stream)
 {
     std::ostringstream str;
 
-    bio::plain_io::writer writer{str};
+    bio::io::plain_io::writer writer{str};
 
     writer.push_back("foo bar");
     writer.push_back("bax");
@@ -38,7 +38,7 @@ TEST(writer, line_wise_emplace_back_stream)
 {
     std::ostringstream str;
 
-    bio::plain_io::writer writer{str};
+    bio::io::plain_io::writer writer{str};
 
     writer.emplace_back("foo", " ", "bar");
     writer.emplace_back("bax");
@@ -53,7 +53,7 @@ TEST(writer, line_wise_push_back_file)
     seqan3::test::tmp_filename filename{"plain_io_test"};
 
     {
-        bio::plain_io::writer writer{filename.get_path()};
+        bio::io::plain_io::writer writer{filename.get_path()};
         writer.push_back("foo bar");
         writer.push_back("bax");
         writer.push_back("bat baz 3.4 7");
@@ -72,7 +72,7 @@ TEST(writer, line_wise_emplace_back_file)
     seqan3::test::tmp_filename filename{"plain_io_test"};
 
     {
-        bio::plain_io::writer writer{filename.get_path()};
+        bio::io::plain_io::writer writer{filename.get_path()};
         writer.emplace_back("foo", " ", "bar");
         writer.emplace_back("bax");
         writer.emplace_back("bat", " ", "baz", " ", 3.4, " ", 7);
@@ -94,7 +94,7 @@ TEST(writer, field_wise_push_back_stream)
 {
     std::ostringstream str;
 
-    bio::plain_io::writer writer{str, ' '};
+    bio::io::plain_io::writer writer{str, ' '};
 
     writer.push_back(rng_t{"foo", "bar"});
     writer.push_back(rng_t{"bax"});
@@ -108,7 +108,7 @@ TEST(writer, field_wise_emplace_back_stream)
 {
     std::ostringstream str;
 
-    bio::plain_io::writer writer{str, ' '};
+    bio::io::plain_io::writer writer{str, ' '};
 
     writer.emplace_back("foo", "bar"); // space is inserted automatically
     writer.emplace_back("bax");
@@ -123,7 +123,7 @@ TEST(writer, field_wise_push_back_file)
     seqan3::test::tmp_filename filename{"plain_io_test"};
 
     {
-        bio::plain_io::writer writer{filename.get_path(), ' '};
+        bio::io::plain_io::writer writer{filename.get_path(), ' '};
         writer.push_back(rng_t{"foo", "bar"});
         writer.push_back(rng_t{"bax"});
         writer.push_back(rng_t{"bat", "baz", "3.4", "7"});
@@ -142,7 +142,7 @@ TEST(writer, field_wise_emplace_back_file)
     seqan3::test::tmp_filename filename{"plain_io_test"};
 
     {
-        bio::plain_io::writer writer{filename.get_path(), ' '};
+        bio::io::plain_io::writer writer{filename.get_path(), ' '};
         writer.emplace_back("foo", "bar"); // space is inserted automatically
         writer.emplace_back("bax");
         writer.emplace_back("bat", "baz", 3.4, 7); // space is inserted automatically

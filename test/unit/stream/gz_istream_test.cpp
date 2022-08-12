@@ -7,19 +7,19 @@
 
 #include <gtest/gtest.h>
 
-#include <bio/stream/compression.hpp>
-#include <bio/stream/detail/gz_istream.hpp>
-#include <bio/stream/detail/make_stream.hpp>
+#include <bio/io/stream/compression.hpp>
+#include <bio/io/stream/detail/gz_istream.hpp>
+#include <bio/io/stream/detail/make_stream.hpp>
 
 #include "data.hpp"
 #include "istream_test_template.hpp"
 
 TEST(gz_istream, regular)
 {
-    regular<bio::compression_format::gz>();
+    regular<bio::io::compression_format::gz>();
 }
 
 TEST(gz_istream, type_erased)
 {
-    type_erased<bio::compression_format::gz>();
+    type_erased<bio::io::compression_format::gz>();
 }

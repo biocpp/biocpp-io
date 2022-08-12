@@ -1,34 +1,34 @@
-PROJECT_NAME           = "B.I.O."
-PROJECT_BRIEF          = "The Biological Input and Output library."
-PROJECT_LOGO           = ${BIO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/seqan_logo.png
-PROJECT_NUMBER         = ${BIO_VERSION}
-LAYOUT_FILE            = ${BIO_DOXYGEN_SOURCE_DIR}/test/documentation/DoxygenLayout.xml
+PROJECT_NAME           = "BioC++"
+PROJECT_BRIEF          = "The BioC++ I/O library."
+PROJECT_LOGO           = ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/seqan_logo.png
+PROJECT_NUMBER         = ${BIOCPP_IO_VERSION}
+LAYOUT_FILE            = ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/test/documentation/DoxygenLayout.xml
 
 ## PATHS
-OUTPUT_DIRECTORY       = ${BIO_DOXYGEN_OUTPUT_DIR}
-INCLUDE_PATH           = ${BIO_DOXYGEN_SOURCE_DIR}/include
-INPUT                  = ${BIO_DOXYGEN_SOURCE_DIR}/include               \
-                         ${BIO_DOXYGEN_SOURCE_DIR}/doc                   \
-                         ${BIO_DOXYGEN_SOURCE_DIR}/LICENSE
-##                       ${BIO_DOXYGEN_SOURCE_DIR}/CHANGELOG.md          \
-##                       ${BIO_DOXYGEN_SOURCE_DIR}/CODE_OF_CONDUCT.md    \
-##                       ${BIO_DOXYGEN_SOURCE_DIR}/CONTRIBUTING.md
-STRIP_FROM_PATH        = ${BIO_DOXYGEN_SOURCE_DIR}/include
-STRIP_FROM_INC_PATH    = ${BIO_DOXYGEN_SOURCE_DIR}/include
-EXAMPLE_PATH           = ${BIO_DOXYGEN_SOURCE_DIR}
-IMAGE_PATH             = ${BIO_DOXYGEN_SOURCE_DIR}/doc \
-                         ${BIO_DOXYGEN_SOURCE_DIR}/test/documentation
+OUTPUT_DIRECTORY       = ${BIOCPP_IO_DOXYGEN_OUTPUT_DIR}
+INCLUDE_PATH           = ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/include
+INPUT                  = ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/include               \
+                         ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/doc                   \
+                         ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/LICENSE
+##                       ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/CHANGELOG.md          \
+##                       ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/CODE_OF_CONDUCT.md    \
+##                       ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/CONTRIBUTING.md
+STRIP_FROM_PATH        = ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/include
+STRIP_FROM_INC_PATH    = ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/include
+EXAMPLE_PATH           = ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}
+IMAGE_PATH             = ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/doc \
+                         ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/test/documentation
 
 ## DOT SUPPORT
-HAVE_DOT               = ${BIO_DOXYGEN_HAVE_DOT}
-DOT_NUM_THREADS        = ${BIO_DOXYGEN_DOT_NUM_THREADS}
+HAVE_DOT               = ${BIOCPP_IO_DOXYGEN_HAVE_DOT}
+DOT_NUM_THREADS        = ${BIOCPP_IO_DOXYGEN_DOT_NUM_THREADS}
 DOT_IMAGE_FORMAT       = svg
 DOT_GRAPH_MAX_NODES    = 500
-INTERACTIVE_SVG        = ${BIO_DOXYGEN_HAVE_DOT}
+INTERACTIVE_SVG        = ${BIOCPP_IO_DOXYGEN_HAVE_DOT}
 
 ## MISC OPTIONS
 GENERATE_LATEX         = NO
-USE_MATHJAX            = ${BIO_DOXYGEN_USE_MATHJAX}
+USE_MATHJAX            = ${BIOCPP_IO_DOXYGEN_USE_MATHJAX}
 HTML_TIMESTAMP         = YES
 EXT_LINKS_IN_WINDOW    = YES
 RECURSIVE              = YES
@@ -43,24 +43,19 @@ EXPAND_ONLY_PREDEF     = YES
 SKIP_FUNCTION_MACROS   = NO
 SORT_BRIEF_DOCS        = YES
 TOC_INCLUDE_HEADINGS   = 2
-HTML_EXTRA_STYLESHEET  = ${BIO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/seqan3.css
-HTML_FOOTER            = ${BIO_DOXYGEN_OUTPUT_DIR}/bio_footer.html
+HTML_EXTRA_STYLESHEET  = ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/seqan3.css
+HTML_FOOTER            = ${BIOCPP_IO_DOXYGEN_OUTPUT_DIR}/bio_footer.html
 INPUT_ENCODING         = UTF-8
 EXTRA_PACKAGES         = {amsfonts}
 
-PREDEFINED             = "CEREAL_SERIALIZE_FUNCTION_NAME=serialize" \
-                         "CEREAL_LOAD_FUNCTION_NAME=load" \
-                         "CEREAL_SAVE_FUNCTION_NAME=save" \
-                         "CEREAL_LOAD_MINIMAL_FUNCTION_NAME=load_minimal" \
-                         "CEREAL_SAVE_MINIMAL_FUNCTION_NAME=save_minimal" \
-                         "BIO_DOXYGEN_ONLY(x)= x" \
-                         "${BIO_DOXYGEN_PREDEFINED_NDEBUG}"
+PREDEFINED             = "BIOCPP_IO_DOXYGEN_ONLY(x)= x" \
+                         "${BIOCPP_IO_DOXYGEN_PREDEFINED_NDEBUG}"
 
-EXPAND_AS_DEFINED      = BIO_RECORD_MEMBER
+EXPAND_AS_DEFINED      = BIOCPP_IO_RECORD_MEMBER BIOCPP_IO_NO_VIEWBASE
 
-TAGFILES               += "${BIO_DOXYGEN_STD_TAGFILE}=https://en.cppreference.com/w/"
+TAGFILES               += "${BIOCPP_IO_DOXYGEN_STD_TAGFILE}=https://en.cppreference.com/w/"
 
-EXCLUDE_SYMBOLS        = bio::contrib
+EXCLUDE_SYMBOLS        = io::contrib
 
 FORMULA_FONTSIZE       = 14
 HTML_DYNAMIC_SECTIONS  = YES
@@ -71,9 +66,9 @@ FILE_PATTERNS          = *
 EXCLUDE_PATTERNS       = */doc/*.cpp
 
 ## Developer VS user mode
-EXTRACT_PRIVATE        = ${BIO_DOXYGEN_EXTRACT_PRIVATE}
-ENABLED_SECTIONS       = ${BIO_DOXYGEN_ENABLED_SECTIONS}
-EXCLUDE_SYMBOLS        += ${BIO_DOXYGEN_EXCLUDE_SYMBOLS}
+EXTRACT_PRIVATE        = ${BIOCPP_IO_DOXYGEN_EXTRACT_PRIVATE}
+ENABLED_SECTIONS       = ${BIOCPP_IO_DOXYGEN_ENABLED_SECTIONS}
+EXCLUDE_SYMBOLS        += ${BIOCPP_IO_DOXYGEN_EXCLUDE_SYMBOLS}
 
 ## Custom doxygen commands
 ALIASES += tutorial_head{4}="<table><tr><th>Difficulty</th><td>\1</td></tr><tr><th>Duration</th><td>\2</td></tr><tr><th>Prerequisite tutorials</th><td>\3</td></tr><tr><th>Recommended reading</th><td>\4</td></tr></table>"
@@ -96,6 +91,6 @@ ALIASES += header_file{1}="\htmlonly<b>Header File</b><br><div style='text-inden
 
 ### Extra files that we can link to
 
-HTML_EXTRA_FILES       += ${BIO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/version.js
-HTML_EXTRA_FILES       += ${BIO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/version.php
-${BIO_DOXYFILE_OPTION_POWERED_BY_VERCEL}
+HTML_EXTRA_FILES       += ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/version.js
+HTML_EXTRA_FILES       += ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/version.php
+${BIOCPP_IO_DOXYFILE_OPTION_POWERED_BY_VERCEL}

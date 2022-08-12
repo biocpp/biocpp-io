@@ -12,22 +12,23 @@
 #include <seqan3/test/expect_range_eq.hpp>
 #include <seqan3/test/tmp_filename.hpp>
 
-#include <bio/format/fasta.hpp>
-#include <bio/stream/transparent_istream.hpp>
-#include <bio/var_io/writer.hpp>
+#include <bio/io/format/fasta.hpp>
+#include <bio/io/stream/transparent_istream.hpp>
+#include <bio/io/var_io/writer.hpp>
 
 #include "../format/vcf_data.hpp"
 
-using custom_field_ids_t = bio::vtag_t<bio::field::chrom, bio::field::pos, bio::field::ref>;
+using custom_field_ids_t = bio::io::vtag_t<bio::io::field::chrom, bio::io::field::pos, bio::io::field::ref>;
 
 TEST(var_io_writer, concepts)
 {
-    using rec_t = bio::record<decltype(bio::var_io::default_field_ids), decltype(bio::var_io::field_types_bcf_style<>)>;
+    using rec_t =
+      bio::io::record<decltype(bio::io::var_io::default_field_ids), decltype(bio::io::var_io::field_types_bcf_style<>)>;
 
-    using t = bio::var_io::writer<>;
+    using t = bio::io::var_io::writer<>;
     EXPECT_TRUE((std::ranges::output_range<t, rec_t>));
 
-    using ct = bio::var_io::writer<> const;
+    using ct = bio::io::var_io::writer<> const;
     // not const-iterable
     EXPECT_FALSE((std::ranges::output_range<ct, rec_t>));
 }
@@ -35,7 +36,7 @@ TEST(var_io_writer, concepts)
 void var_io_writer_filename_constructor(bool ext_check, auto &&... args)
 {
     using t =
-      decltype(bio::var_io::writer{std::declval<std::filesystem::path &>(), std::forward<decltype(args)>(args)...});
+      decltype(bio::io::var_io::writer{std::declval<std::filesystem::path &>(), std::forward<decltype(args)>(args)...});
     [[maybe_unused]] t * ptr = nullptr;
 
     /* just the filename */
@@ -43,10 +44,11 @@ void var_io_writer_filename_constructor(bool ext_check, auto &&... args)
         seqan3::test::tmp_filename filename{"var_io_writer_constructor.vcf"};
 
         // constructor
-        EXPECT_NO_THROW((ptr = new bio::var_io::writer{filename.get_path(), std::forward<decltype(args)>(args)...}));
+        EXPECT_NO_THROW(
+          (ptr = new bio::io::var_io::writer{filename.get_path(), std::forward<decltype(args)>(args)...}));
 
         // destructor
-        EXPECT_THROW(delete ptr, bio::missing_header_error);
+        EXPECT_THROW(delete ptr, bio::io::missing_header_error);
         ptr = nullptr;
     }
 
@@ -54,8 +56,8 @@ void var_io_writer_filename_constructor(bool ext_check, auto &&... args)
     if (ext_check)
     {
         seqan3::test::tmp_filename filename{"var_io_writer_constructor.xyz"};
-        EXPECT_THROW((ptr = new bio::var_io::writer{filename.get_path(), std::forward<decltype(args)>(args)...}),
-                     bio::unhandled_extension_error);
+        EXPECT_THROW((ptr = new bio::io::var_io::writer{filename.get_path(), std::forward<decltype(args)>(args)...}),
+                     bio::io::unhandled_extension_error);
 
         // destructor, nothrow because already thrown during construction
         EXPECT_NO_THROW(delete ptr);
@@ -65,64 +67,64 @@ void var_io_writer_filename_constructor(bool ext_check, auto &&... args)
 TEST(var_io_writer, constructor1_just_filename)
 {
     var_io_writer_filename_constructor(true);
-    EXPECT_TRUE((std::same_as<decltype(bio::var_io::writer{""}), bio::var_io::writer<>>));
+    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::writer{""}), bio::io::var_io::writer<>>));
 }
 
 TEST(var_io_writer, constructor1_with_opts)
 {
-    bio::var_io::writer_options opt{.formats = bio::ttag<bio::vcf>};
-    using control_t = bio::var_io::writer<seqan3::type_list<bio::vcf>>;
+    bio::io::var_io::writer_options opt{.formats = bio::io::ttag<bio::io::vcf>};
+    using control_t = bio::io::var_io::writer<seqan3::type_list<bio::io::vcf>>;
 
     var_io_writer_filename_constructor(true, std::move(opt));
-    EXPECT_TRUE((std::same_as<decltype(bio::var_io::writer{"", opt}), control_t>));
+    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::writer{"", opt}), control_t>));
 }
 
 TEST(var_io_writer, constructor2_just_filename_direct_format)
 {
-    var_io_writer_filename_constructor(false, bio::vcf{});
-    EXPECT_TRUE((std::same_as<decltype(bio::var_io::writer{"", bio::vcf{}}), bio::var_io::writer<>>));
+    var_io_writer_filename_constructor(false, bio::io::vcf{});
+    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::writer{"", bio::io::vcf{}}), bio::io::var_io::writer<>>));
 }
 
 TEST(var_io_writer, constructor2_with_opts_direct_format)
 {
-    bio::var_io::writer_options opt{.formats = bio::ttag<bio::vcf>};
-    using control_t = bio::var_io::writer<seqan3::type_list<bio::vcf>>;
+    bio::io::var_io::writer_options opt{.formats = bio::io::ttag<bio::io::vcf>};
+    using control_t = bio::io::var_io::writer<seqan3::type_list<bio::io::vcf>>;
 
-    var_io_writer_filename_constructor(false, bio::vcf{}, std::move(opt));
-    EXPECT_TRUE((std::same_as<decltype(bio::var_io::writer{"", bio::vcf{}, opt}), control_t>));
+    var_io_writer_filename_constructor(false, bio::io::vcf{}, std::move(opt));
+    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::writer{"", bio::io::vcf{}, opt}), control_t>));
 }
 
 TEST(var_io_writer, constructor2_just_filename_format_variant)
 {
-    std::variant<bio::bcf, bio::vcf> var{};
+    std::variant<bio::io::bcf, bio::io::vcf> var{};
 
     var_io_writer_filename_constructor(false, var);
-    EXPECT_TRUE((std::same_as<decltype(bio::var_io::writer{"", var}), bio::var_io::writer<>>));
+    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::writer{"", var}), bio::io::var_io::writer<>>));
 }
 
 TEST(var_io_writer, constructor2_with_opts_format_variant)
 {
-    std::variant<bio::vcf>      var{};
-    bio::var_io::writer_options opt{.formats = bio::ttag<bio::vcf>};
-    using control_t = bio::var_io::writer<seqan3::type_list<bio::vcf>>;
+    std::variant<bio::io::vcf>      var{};
+    bio::io::var_io::writer_options opt{.formats = bio::io::ttag<bio::io::vcf>};
+    using control_t = bio::io::var_io::writer<seqan3::type_list<bio::io::vcf>>;
 
     var_io_writer_filename_constructor(false, var, std::move(opt));
-    EXPECT_TRUE((std::same_as<decltype(bio::var_io::writer{"", var, std::move(opt)}), control_t>));
+    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::writer{"", var, std::move(opt)}), control_t>));
 }
 
 void var_io_writer_stream_constructor(auto &&... args)
 {
-    using t                  = decltype(bio::var_io::writer{std::forward<decltype(args)>(args)...});
+    using t                  = decltype(bio::io::var_io::writer{std::forward<decltype(args)>(args)...});
     [[maybe_unused]] t * ptr = nullptr;
 
     {
         std::ostringstream str;
 
         // constructor
-        EXPECT_NO_THROW((ptr = new bio::var_io::writer{std::forward<decltype(args)>(args)...}));
+        EXPECT_NO_THROW((ptr = new bio::io::var_io::writer{std::forward<decltype(args)>(args)...}));
 
         // destructor
-        EXPECT_THROW(delete ptr, bio::missing_header_error);
+        EXPECT_THROW(delete ptr, bio::io::missing_header_error);
         ptr = nullptr;
     }
 }
@@ -130,56 +132,57 @@ void var_io_writer_stream_constructor(auto &&... args)
 TEST(var_io_writer, constructor3)
 {
     std::ostringstream str;
-    var_io_writer_stream_constructor(str, bio::vcf{});
+    var_io_writer_stream_constructor(str, bio::io::vcf{});
 
-    EXPECT_TRUE((std::same_as<decltype(bio::var_io::writer{str, bio::vcf{}}), bio::var_io::writer<>>));
+    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::writer{str, bio::io::vcf{}}), bio::io::var_io::writer<>>));
 }
 
 TEST(var_io_writer, constructor3_with_opts)
 {
-    std::ostringstream          str;
-    bio::var_io::writer_options opt{.formats = bio::ttag<bio::vcf>};
-    var_io_writer_stream_constructor(str, bio::vcf{}, opt);
+    std::ostringstream              str;
+    bio::io::var_io::writer_options opt{.formats = bio::io::ttag<bio::io::vcf>};
+    var_io_writer_stream_constructor(str, bio::io::vcf{}, opt);
 
-    using control_t = bio::var_io::writer<seqan3::type_list<bio::vcf>>;
-    EXPECT_TRUE((std::same_as<decltype(bio::var_io::writer{str, bio::vcf{}, opt}), control_t>));
+    using control_t = bio::io::var_io::writer<seqan3::type_list<bio::io::vcf>>;
+    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::writer{str, bio::io::vcf{}, opt}), control_t>));
 }
 
 TEST(var_io_writer, constructor4)
 {
     std::ostringstream str;
-    var_io_writer_stream_constructor(std::move(str), bio::vcf{});
+    var_io_writer_stream_constructor(std::move(str), bio::io::vcf{});
 
-    EXPECT_TRUE((std::same_as<decltype(bio::var_io::writer{std::move(str), bio::vcf{}}), bio::var_io::writer<>>));
+    EXPECT_TRUE(
+      (std::same_as<decltype(bio::io::var_io::writer{std::move(str), bio::io::vcf{}}), bio::io::var_io::writer<>>));
 }
 
 TEST(var_io_writer, constructor4_with_opts)
 {
-    std::ostringstream          str;
-    bio::var_io::writer_options opt{.formats = bio::ttag<bio::vcf>};
-    var_io_writer_stream_constructor(std::move(str), bio::vcf{}, opt);
+    std::ostringstream              str;
+    bio::io::var_io::writer_options opt{.formats = bio::io::ttag<bio::io::vcf>};
+    var_io_writer_stream_constructor(std::move(str), bio::io::vcf{}, opt);
 
-    using control_t = bio::var_io::writer<seqan3::type_list<bio::vcf>>;
-    EXPECT_TRUE((std::same_as<decltype(bio::var_io::writer{std::move(str), bio::vcf{}, opt}), control_t>));
+    using control_t = bio::io::var_io::writer<seqan3::type_list<bio::io::vcf>>;
+    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::writer{std::move(str), bio::io::vcf{}, opt}), control_t>));
 }
 
 template <size_t i>
 void write_record_test_impl()
 {
-    bio::var_io::header hdr{example_from_spec_header};
+    bio::io::var_io::header hdr{example_from_spec_header};
 
-    bio::var_io::record_private_data priv{};
+    bio::io::var_io::record_private_data priv{};
 
-    std::ostringstream  stream{};
-    bio::var_io::writer writer{stream, bio::vcf{}};
+    std::ostringstream      stream{};
+    bio::io::var_io::writer writer{stream, bio::io::vcf{}};
 
-    auto records = example_records_bcf_style<bio::ownership::shallow>();
+    auto records = example_records_bcf_style<bio::io::ownership::shallow>();
 
     if constexpr (i == 3)
     {
         priv.header_ptr = &hdr;
         for (auto & rec : records)
-            get<bio::field::_private>(rec) = priv;
+            get<bio::io::field::_private>(rec) = priv;
     }
     else
     {
@@ -252,10 +255,10 @@ TEST(var_io_writer, emplace_back)
 
 TEST(var_io_writer, minimal_fields)
 {
-    std::ostringstream  stream{};
-    bio::var_io::writer writer{stream, bio::vcf{}};
+    std::ostringstream      stream{};
+    bio::io::var_io::writer writer{stream, bio::io::vcf{}};
 
-    writer.set_header(bio::var_io::header{example_from_spec_header});
+    writer.set_header(bio::io::var_io::header{example_from_spec_header});
 
     writer.emplace_back(custom_field_ids_t{}, "20", 14370, "G");
     writer.emplace_back(custom_field_ids_t{}, "20", 17330, "T");
@@ -271,26 +274,26 @@ TEST(var_io_writer, minimal_fields)
 TEST(var_io_writer, no_header1) // record contains header_ptr but this is == nullptr
 {
     std::ostringstream stream{};
-    auto *             writer = new bio::var_io::writer{stream, bio::vcf{}};
+    auto *             writer = new bio::io::var_io::writer{stream, bio::io::vcf{}};
 
-    auto records = example_records_bcf_style<bio::ownership::shallow>();
+    auto records = example_records_bcf_style<bio::io::ownership::shallow>();
 
-    EXPECT_THROW(writer->push_back(records[0]), bio::missing_header_error);
+    EXPECT_THROW(writer->push_back(records[0]), bio::io::missing_header_error);
 
     // destructor
-    EXPECT_THROW(delete writer, bio::missing_header_error);
+    EXPECT_THROW(delete writer, bio::io::missing_header_error);
     writer = nullptr;
 }
 
 TEST(var_io_writer, no_header2) // record does not contain header_ptr
 {
     std::ostringstream stream{};
-    auto *             writer = new bio::var_io::writer{stream, bio::vcf{}};
+    auto *             writer = new bio::io::var_io::writer{stream, bio::io::vcf{}};
 
-    EXPECT_THROW(writer->emplace_back(custom_field_ids_t{}, "20", 14370, "G"), bio::missing_header_error);
+    EXPECT_THROW(writer->emplace_back(custom_field_ids_t{}, "20", 14370, "G"), bio::io::missing_header_error);
 
     // destructor
-    EXPECT_THROW(delete writer, bio::missing_header_error);
+    EXPECT_THROW(delete writer, bio::io::missing_header_error);
     writer = nullptr;
 }
 
@@ -299,14 +302,15 @@ TEST(var_io_writer, compression)
     std::ostringstream stream{};
 
     {
-        bio::var_io::writer writer{stream,
-                                   bio::vcf{},
-                                   bio::var_io::writer_options{.stream_options = bio::transparent_ostream_options{
-                                                                 .compression = bio::compression_format::bgzf}}};
+        bio::io::var_io::writer writer{
+          stream,
+          bio::io::vcf{},
+          bio::io::var_io::writer_options{
+            .stream_options = bio::io::transparent_ostream_options{.compression = bio::io::compression_format::bgzf}}};
 
-        writer.set_header(bio::var_io::header{example_from_spec_header});
+        writer.set_header(bio::io::var_io::header{example_from_spec_header});
 
-        auto records = example_records_bcf_style<bio::ownership::shallow>();
+        auto records = example_records_bcf_style<bio::io::ownership::shallow>();
 
         writer.push_back(records[0]);
         writer.push_back(records[1]);
@@ -318,8 +322,8 @@ TEST(var_io_writer, compression)
     std::string str = stream.str();
     EXPECT_TRUE(str.starts_with("\x1f\x8b\x08")); // Gzip header
 
-    std::istringstream       control_stream{str};
-    bio::transparent_istream decompressor{control_stream};
-    std::string              buffer(std::istreambuf_iterator<char>{decompressor}, std::istreambuf_iterator<char>{});
+    std::istringstream           control_stream{str};
+    bio::io::transparent_istream decompressor{control_stream};
+    std::string                  buffer(std::istreambuf_iterator<char>{decompressor}, std::istreambuf_iterator<char>{});
     EXPECT_RANGE_EQ(buffer, example_from_spec_header_regenerated_no_IDX + example_from_spec_records);
 }

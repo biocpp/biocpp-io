@@ -7,19 +7,19 @@
 
 #include <gtest/gtest.h>
 
-#include <bio/stream/compression.hpp>
-#include <bio/stream/detail/bgzf_ostream.hpp>
-#include <bio/stream/detail/make_stream.hpp>
+#include <bio/io/stream/compression.hpp>
+#include <bio/io/stream/detail/bgzf_ostream.hpp>
+#include <bio/io/stream/detail/make_stream.hpp>
 
 #include "data.hpp"
 #include "ostream_test_template.hpp"
 
 TEST(bgzf_ostream, regular)
 {
-    regular<bio::compression_format::bgzf>();
+    regular<bio::io::compression_format::bgzf>();
 }
 
 TEST(bgzf_ostream, type_erased)
 {
-    type_erased<bio::compression_format::bgzf>();
+    type_erased<bio::io::compression_format::bgzf>();
 }

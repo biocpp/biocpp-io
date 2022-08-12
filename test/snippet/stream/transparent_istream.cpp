@@ -1,7 +1,7 @@
 #include <fstream>
 
-#include <bio/stream/transparent_istream.hpp>
-#include <bio/stream/transparent_ostream.hpp>
+#include <bio/io/stream/transparent_istream.hpp>
+#include <bio/io/stream/transparent_ostream.hpp>
 
 int main()
 {
@@ -13,7 +13,7 @@ int main()
     }
 
     { // create my_file.txt.gz so the code below works
-        bio::transparent_ostream os{"my_file.txt.gz"};
+        bio::io::transparent_ostream os{"my_file.txt.gz"};
         os << "Foo";
     }
 
@@ -25,13 +25,13 @@ int main()
     //![construction]
     std::string buffer;
 
-    bio::transparent_istream s1{"my_file.txt"};      // behaves like std::ifstream
+    bio::io::transparent_istream s1{"my_file.txt"};      // behaves like std::ifstream
     s1 >> buffer;
 
-    bio::transparent_istream s2{"my_file.txt.gz"};   // file is transparently decompressed
+    bio::io::transparent_istream s2{"my_file.txt.gz"};   // file is transparently decompressed
     s2 >> buffer;
 
-    bio::transparent_istream s3{std::cin};        // wrap standard input
+    bio::io::transparent_istream s3{std::cin};        // wrap standard input
     s3 >> buffer;
     //![construction]
     }
@@ -40,7 +40,7 @@ int main()
     //![decompression]
     std::string buffer;
 
-    bio::transparent_istream s1{"my_file.txt.gz", { .threads = 1} };
+    bio::io::transparent_istream s1{"my_file.txt.gz", { .threads = 1} };
     s1 >> buffer;
     //![decompression]
     }

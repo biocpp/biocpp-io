@@ -14,7 +14,7 @@
 #include <seqan3/test/expect_range_eq.hpp>
 #include <seqan3/test/pretty_printing.hpp>
 
-#include <bio/detail/views_eager_split.hpp>
+#include <bio/io/detail/views_eager_split.hpp>
 
 using seqan3::operator""_dna4;
 
@@ -22,7 +22,7 @@ TEST(view_eager_split, basic)
 {
     {
         std::string s  = "FOO|BAR|BAX|BAT";
-        auto        v  = s | bio::detail::eager_split('|');
+        auto        v  = s | bio::io::detail::eager_split('|');
         auto        it = v.begin();
 
         ASSERT_FALSE(it == v.end());
@@ -46,7 +46,7 @@ TEST(view_eager_split, basic)
 
     {
         std::string s  = "|FOO||BAR|BAX|BAT||";
-        auto        v  = s | bio::detail::eager_split('|');
+        auto        v  = s | bio::io::detail::eager_split('|');
         auto        it = v.begin();
 
         ASSERT_FALSE(it == v.end());
@@ -91,7 +91,7 @@ TEST(view_eager_split, quotes)
 
     {
         /* ignores quotation marks by default */
-        auto v  = s | bio::detail::eager_split(',');
+        auto v  = s | bio::io::detail::eager_split(',');
         auto it = v.begin();
 
         ASSERT_FALSE(it == v.end());
@@ -123,7 +123,7 @@ TEST(view_eager_split, quotes)
 
     {
         /* skips the delimeter inside quotation marks */
-        auto v  = s | bio::detail::eager_split(',', true);
+        auto v  = s | bio::io::detail::eager_split(',', true);
         auto it = v.begin();
 
         ASSERT_FALSE(it == v.end());
@@ -145,7 +145,7 @@ TEST(view_eager_split, quotes)
 TEST(view_eager_split, concepts)
 {
     std::string s = "FOO|BAR|BAX|BAT";
-    auto        v = s | bio::detail::eager_split('|');
+    auto        v = s | bio::io::detail::eager_split('|');
 
     EXPECT_TRUE(std::ranges::input_range<decltype(v)>);
     EXPECT_TRUE(std::ranges::forward_range<decltype(v)>);

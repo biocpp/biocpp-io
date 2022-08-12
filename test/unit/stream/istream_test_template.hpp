@@ -11,15 +11,15 @@
 #include <iostream>
 #include <string>
 
-#include <bio/misc.hpp>
+#include <bio/io/misc.hpp>
 #include <seqan3/test/tmp_filename.hpp>
 
-#include <bio/stream/compression.hpp>
-#include <bio/stream/detail/make_stream.hpp>
+#include <bio/io/stream/compression.hpp>
+#include <bio/io/stream/detail/make_stream.hpp>
 
 #include "data.hpp"
 
-template <bio::compression_format f, typename stream_t = typename bio::detail::compression_stream<f>::istream>
+template <bio::io::compression_format f, typename stream_t = typename bio::io::detail::compression_stream<f>::istream>
 void regular()
 {
     seqan3::test::tmp_filename filename{"istream_test"};
@@ -37,7 +37,7 @@ void regular()
     EXPECT_EQ(buffer, uncompressed);
 }
 
-template <bio::compression_format f, typename stream_t = typename bio::detail::compression_stream<f>::istream>
+template <bio::io::compression_format f, typename stream_t = typename bio::io::detail::compression_stream<f>::istream>
 void type_erased()
 {
     seqan3::test::tmp_filename filename{"istream_test"};

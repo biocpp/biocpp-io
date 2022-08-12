@@ -13,8 +13,8 @@
 #include <seqan3/core/debug_stream.hpp>
 #include <seqan3/utility/views/to.hpp>
 
-#include <bio/detail/magic_get.hpp>
-#include <bio/var_io/reader.hpp>
+#include <bio/io/detail/magic_get.hpp>
+#include <bio/io/var_io/reader.hpp>
 
 //=============================================================================
 // Official example
@@ -225,7 +225,7 @@ namespace seqan3
 
 template <typename char_t, typename byte_type>
     //!\cond
-    requires std::same_as<std::remove_cvref_t<byte_type>, bio::var_io::record_private_data>
+    requires std::same_as<std::remove_cvref_t<byte_type>, bio::io::var_io::record_private_data>
 //!\endcond
 inline debug_stream_type<char_t> & operator<<(debug_stream_type<char_t> & s, byte_type &&)
 {
@@ -233,19 +233,19 @@ inline debug_stream_type<char_t> & operator<<(debug_stream_type<char_t> & s, byt
 }
 
 template <typename char_t, typename agg_t>
-    requires bio::detail::aggregate_of_two<std::remove_cvref_t<agg_t>>
+    requires bio::io::detail::aggregate_of_two<std::remove_cvref_t<agg_t>>
 inline debug_stream_type<char_t> & operator<<(debug_stream_type<char_t> & s, agg_t && agg)
 {
-    s << '[' << bio::detail::get_first(agg) << ", " << bio::detail::get_second(agg) << ']';
+    s << '[' << bio::io::detail::get_first(agg) << ", " << bio::io::detail::get_second(agg) << ']';
     return s;
 }
 
 } // namespace seqan3
 
-template <bio::ownership own>
+template <bio::io::ownership own>
 auto make_ref(std::string_view const str)
 {
-    if constexpr (own == bio::ownership::shallow)
+    if constexpr (own == bio::io::ownership::shallow)
         return tf_view{
           {str, {}},
           {    }
@@ -254,18 +254,19 @@ auto make_ref(std::string_view const str)
         return str | seqan3::views::char_strictly_to<seqan3::dna5> | seqan3::views::to<std::vector>;
 }
 
-template <bio::ownership own, typename int_t = int32_t>
+template <bio::io::ownership own, typename int_t = int32_t>
 auto example_records_default_style()
 {
-    using record_t = bio::record<decltype(bio::var_io::default_field_ids), decltype(bio::var_io::field_types<own>)>;
+    using record_t =
+      bio::io::record<decltype(bio::io::var_io::default_field_ids), decltype(bio::io::var_io::field_types<own>)>;
 
-    bio::var_io::record_private_data priv{};
-    constexpr int_t                  mv = bio::var_io::missing_value<int_t>;
-    using ivec                          = std::vector<int_t>;
-    using ivecvec                       = seqan3::concatenated_sequences<std::vector<int_t>>;
-    using fvec                          = std::vector<float>;
+    bio::io::var_io::record_private_data priv{};
+    constexpr int_t                      mv = bio::io::var_io::missing_value<int_t>;
+    using ivec                              = std::vector<int_t>;
+    using ivecvec                           = seqan3::concatenated_sequences<std::vector<int_t>>;
+    using fvec                              = std::vector<float>;
     using svec =
-      std::conditional_t<own == bio::ownership::shallow, std::vector<std::string_view>, std::vector<std::string>>;
+      std::conditional_t<own == bio::io::ownership::shallow, std::vector<std::string_view>, std::vector<std::string>>;
 
     // clang-format off
     std::vector<record_t> recs{
@@ -280,19 +281,19 @@ auto example_records_default_style()
     return recs;
 }
 
-template <bio::ownership own, typename int_t = int32_t>
+template <bio::io::ownership own, typename int_t = int32_t>
 auto example_records_bcf_style()
 {
-    using record_t =
-      bio::record<decltype(bio::var_io::default_field_ids), decltype(bio::var_io::field_types_bcf_style<own>)>;
+    using record_t = bio::io::record<decltype(bio::io::var_io::default_field_ids),
+                                     decltype(bio::io::var_io::field_types_bcf_style<own>)>;
 
-    bio::var_io::record_private_data priv{};
-    constexpr int_t                  mv = bio::var_io::missing_value<int_t>;
-    using ivec                          = std::vector<int_t>;
-    using ivecvec                       = seqan3::concatenated_sequences<std::vector<int_t>>;
-    using fvec                          = std::vector<float>;
+    bio::io::var_io::record_private_data priv{};
+    constexpr int_t                      mv = bio::io::var_io::missing_value<int_t>;
+    using ivec                              = std::vector<int_t>;
+    using ivecvec                           = seqan3::concatenated_sequences<std::vector<int_t>>;
+    using fvec                              = std::vector<float>;
     using svec =
-      std::conditional_t<own == bio::ownership::shallow, std::vector<std::string_view>, std::vector<std::string>>;
+      std::conditional_t<own == bio::io::ownership::shallow, std::vector<std::string_view>, std::vector<std::string>>;
 
     // clang-format off
     std::vector<record_t> recs{
@@ -311,15 +312,15 @@ auto example_records_novariant()
 {
     using namespace std::string_view_literals;
 
-    bio::var_io::record_private_data priv{};
-    constexpr int32_t                mv = bio::var_io::missing_value<int32_t>;
-    using ivec                          = std::vector<int32_t>;
-    using ivecvec                       = seqan3::concatenated_sequences<std::vector<int32_t>>;
-    using fvec                          = std::vector<float>;
-    using svec                          = std::vector<std::string_view>;
+    bio::io::var_io::record_private_data priv{};
+    constexpr int32_t                    mv = bio::io::var_io::missing_value<int32_t>;
+    using ivec                              = std::vector<int32_t>;
+    using ivecvec                           = seqan3::concatenated_sequences<std::vector<int32_t>>;
+    using fvec                              = std::vector<float>;
+    using svec                              = std::vector<std::string_view>;
 
     // clang-format off
-    auto rec0 = bio::make_record(bio::var_io::default_field_ids,
+    auto rec0 = bio::io::make_record(bio::io::var_io::default_field_ids,
                                  "20",
                                  14370,
                                  "rs6054257",
@@ -338,7 +339,7 @@ auto example_records_novariant()
                                             std::pair{"HQ", ivecvec{ivec{51, 51}, {51, 51}, {mv, mv}}}},
                                  priv);
 
-    auto rec1 = bio::make_record(bio::var_io::default_field_ids,
+    auto rec1 = bio::io::make_record(bio::io::var_io::default_field_ids,
                                  "20",
                                  17330,
                                  ".",
@@ -355,7 +356,7 @@ auto example_records_novariant()
                                             std::pair{"HQ", ivecvec{ivec{58, 50}, {65, 3}}}},
                                  priv);
 
-    auto rec2 = bio::make_record(bio::var_io::default_field_ids,
+    auto rec2 = bio::io::make_record(bio::io::var_io::default_field_ids,
                                  "20",
                                  1110696,
                                  "rs6040355",
@@ -374,7 +375,7 @@ auto example_records_novariant()
                                             std::pair{"HQ", ivecvec{ivec{23, 27}, {18, 2}}}},
                                  priv);
 
-    auto rec3 = bio::make_record(bio::var_io::default_field_ids,
+    auto rec3 = bio::io::make_record(bio::io::var_io::default_field_ids,
                                  "20",
                                  1230237,
                                  ".",
@@ -391,7 +392,7 @@ auto example_records_novariant()
                                             std::pair{"HQ", ivecvec{ivec{56, 60}, {51, 51}}}},
                                  priv);
 
-    auto rec4 = bio::make_record(bio::var_io::default_field_ids,
+    auto rec4 = bio::io::make_record(bio::io::var_io::default_field_ids,
                                  "20",
                                  1234567,
                                  "microsat1",
