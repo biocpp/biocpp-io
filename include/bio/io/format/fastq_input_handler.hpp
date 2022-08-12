@@ -77,7 +77,7 @@ private:
     //!\brief Print an error message with current line number in diagnostic.
     [[noreturn]] void error(auto const &... messages) const
     {
-        std::string message = "[B.I.O. FastQ format error in line " + detail::to_string(line) + "] ";
+        std::string message = "[BioC++ FastQ format error in line " + detail::to_string(line) + "] ";
         ((message += detail::to_string(messages)), ...);
 
         throw parse_error{message};

@@ -302,7 +302,7 @@ private:
         {
             var_io::header::info_t info;
             info.id          = info_name;
-            info.description = "\"Automatically added by B.I.O..\"";
+            info.description = "\"Automatically added by BioC++.\"";
 
             if (info_value.empty()) // no "=" → flag
             {
@@ -437,7 +437,7 @@ private:
             format.number      = 1;
             format.type        = "String";
             format.type_id     = var_io::value_type_id::string;
-            format.description = "\"Automatically added by B.I.O..\"";
+            format.description = "\"Automatically added by BioC++.\"";
 
             // create a new header with new format and replace current one
             header.formats.push_back(std::move(format));

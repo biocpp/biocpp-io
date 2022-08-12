@@ -83,7 +83,7 @@ private:
     //!\brief Print an error message with current line number in diagnostic.
     [[noreturn]] void error(auto const &... messages) const
     {
-        throw parse_error{"[B.I.O. FASTA format error in line ", line, "] ", messages...};
+        throw parse_error{"[BioC++ FASTA format error in line ", line, "] ", messages...};
     }
 
     /*!\name Options
