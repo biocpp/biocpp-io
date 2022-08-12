@@ -10,28 +10,28 @@ endif ()
 
 if (NOT ${DOXYGEN_DOT_FOUND})
     message (STATUS "Could not find dot tool. Disabling dot support.")
-    set (BIO_DOXYGEN_HAVE_DOT "NO")
+    set (BIOCPP_IO_DOXYGEN_HAVE_DOT "NO")
 else ()
     message (STATUS "Found dot tool. Enabling dot support.")
-    set (BIO_DOXYGEN_HAVE_DOT "YES")
+    set (BIOCPP_IO_DOXYGEN_HAVE_DOT "YES")
 endif ()
 
 ### Use mathjax instead of latex to render formulas.
-set (BIO_DOXYGEN_USE_MATHJAX "NO")
+set (BIOCPP_IO_DOXYGEN_USE_MATHJAX "NO")
 
 ### Number of threads to use for dot. Doxygen's default is 0 (all threads).
-set (BIO_DOXYGEN_DOT_NUM_THREADS "0")
+set (BIOCPP_IO_DOXYGEN_DOT_NUM_THREADS "0")
 
 ### Configure doc/developer targets.
-set (BIO_DOXYGEN_SOURCE_DIR "${BIO_CLONE_DIR}")
-set (BIO_DOXYFILE_IN ${BIO_DOXYGEN_INPUT_DIR}/bio_doxygen_cfg.in)
-set (BIO_FOOTER_HTML_IN ${BIO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/seqan3_footer.html.in)
+set (BIOCPP_IO_DOXYGEN_SOURCE_DIR "${BIOCPP_IO_CLONE_DIR}")
+set (BIOCPP_IO_DOXYFILE_IN ${BIOCPP_IO_DOXYGEN_INPUT_DIR}/bio_doxygen_cfg.in)
+set (BIOCPP_IO_FOOTER_HTML_IN ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/seqan3_footer.html.in)
 
-option(BIO_USER_DOC "Create build target and test for user documentation." ON)
-option(BIO_DEV_DOC "Create build target and test for developer documentation." ON)
+option(BIOCPP_IO_USER_DOC "Create build target and test for user documentation." ON)
+option(BIOCPP_IO_DEV_DOC "Create build target and test for developer documentation." ON)
 
 ### Download and extract cppreference-doxygen-web.tag.xml for std:: documentation links
-set(BIO_DOXYGEN_STD_TAGFILE "${PROJECT_BINARY_DIR}/cppreference-doxygen-web.tag.xml")
+set(BIOCPP_IO_DOXYGEN_STD_TAGFILE "${PROJECT_BINARY_DIR}/cppreference-doxygen-web.tag.xml")
 include(ExternalProject)
 ExternalProject_Add (
     download-cppreference-doxygen-web-tag
@@ -50,13 +50,13 @@ ExternalProject_Add (
 ### TEST HELPER
 
 # doxygen does not show any warnings (doxygen prints warnings / errors to cerr)
-set (BIO_TEST_DOXYGEN_FAIL_ON_WARNINGS "
+set (BIOCPP_IO_TEST_DOXYGEN_FAIL_ON_WARNINGS "
     ${DOXYGEN_EXECUTABLE} > doxygen.cout 2> doxygen.cerr;
     cat \"doxygen.cerr\";
     test ! -s \"doxygen.cerr\"")
 
 # We search the HTML output to ensure that no `requires` clauses are at wrong places.
-set (BIO_TEST_DOXYGEN_FAIL_ON_UNCOND_REQUIRES
+set (BIOCPP_IO_TEST_DOXYGEN_FAIL_ON_UNCOND_REQUIRES
      "! find . -not -name \"*_source.html\" -name \"*.html\" -print0 | xargs -0 grep \"requires\" | grep \"memname\"")
 
 
