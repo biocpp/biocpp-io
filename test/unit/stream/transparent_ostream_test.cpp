@@ -24,7 +24,7 @@ TEST(transparent_ostream, type_erased_none)
     type_erased<bio::io::compression_format::none, bio::io::transparent_ostream>();
 }
 
-#if BIO_HAS_ZLIB
+#if BIOCPP_IO_HAS_ZLIB
 TEST(transparent_ostream, regular_bgzf)
 {
     regular<bio::io::compression_format::bgzf, bio::io::transparent_ostream>();
@@ -46,7 +46,7 @@ TEST(transparent_ostream, type_erased_gz)
 }
 #endif
 
-#if BIO_HAS_BZIP2
+#if BIOCPP_IO_HAS_BZIP2
 TEST(transparent_ostream, regular_bz2)
 {
     regular<bio::io::compression_format::bz2, bio::io::transparent_ostream>();

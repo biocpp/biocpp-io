@@ -18,11 +18,11 @@
 #include <vector>
 
 #include <bio/io/stream/compression.hpp>
-#ifdef BIO_HAS_BZIP2
+#ifdef BIOCPP_IO_HAS_BZIP2
 #    include <bio/io/stream/detail/bz2_istream.hpp>
 #    include <bio/io/stream/detail/bz2_ostream.hpp>
 #endif
-#ifdef BIO_HAS_ZLIB
+#ifdef BIOCPP_IO_HAS_ZLIB
 #    include <bio/io/stream/detail/bgzf_istream.hpp>
 #    include <bio/io/stream/detail/bgzf_ostream.hpp>
 #    include <bio/io/stream/detail/bgzf_stream_util.hpp>
@@ -57,7 +57,7 @@ struct compression_stream
 template <>
 struct compression_stream<compression_format::bgzf> : compression_stream<compression_format::none>
 {
-#ifdef BIO_HAS_ZLIB
+#ifdef BIOCPP_IO_HAS_ZLIB
     //!\copydoc bio::io::compression_traits<compression_format::none>::basic_istream
     using istream = contrib::bgzf_istream;
 
@@ -72,7 +72,7 @@ struct compression_stream<compression_format::bgzf> : compression_stream<compres
 template <>
 struct compression_stream<compression_format::gz> : compression_stream<compression_format::none>
 {
-#ifdef BIO_HAS_ZLIB
+#ifdef BIOCPP_IO_HAS_ZLIB
     //!\copydoc bio::io::compression_traits<compression_format::none>::basic_istream
     using istream = contrib::gz_istream;
 
@@ -87,7 +87,7 @@ struct compression_stream<compression_format::gz> : compression_stream<compressi
 template <>
 struct compression_stream<compression_format::bz2> : compression_stream<compression_format::none>
 {
-#ifdef BIO_HAS_BZIP2
+#ifdef BIOCPP_IO_HAS_BZIP2
     //!\copydoc bio::io::compression_traits<compression_format::none>::basic_istream
     using istream = contrib::bz2_istream;
 

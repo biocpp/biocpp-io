@@ -23,7 +23,7 @@
 
 // C++ standard [required]
 #ifdef __cplusplus
-static_assert(__cplusplus >= 201709, "B.I.O. requires C++20, make sure that you have set -std=c++20.");
+static_assert(__cplusplus >= 201709, "The BioC++ I/O library requires C++20, make sure that you have set -std=c++20.");
 #else
 #    error "This is not a C++ compiler."
 #endif
@@ -36,18 +36,18 @@ static_assert(__cplusplus >= 201709, "B.I.O. requires C++20, make sure that you 
 //  Dependencies
 // ============================================================================
 
-// B.I.O. [required]
-#if __has_include(<bio/io/version.hpp>)
-#    include <bio/io/version.hpp>
+// The BioC++ I/O library [required]
+#if __has_include(<bio/io.hpp>)
+#    include <bio/io.hpp>
 #else
-#    error B.I.O. include directory not set correctly. Forgot to add -I ${INSTALLDIR}/include to your CXXFLAGS?
+#    error The BioC++ I/O library include directory is not set correctly. Forgot to add -I ${INSTALLDIR}/include to your CXXFLAGS?
 #endif
 
 // SeqAn3 [required]
 #if __has_include(<seqan3/version.hpp>)
 #    include <seqan3/version.hpp>
-static_assert(seqan3::seqan3_version_major == 3, "SeqAn >= 3.1 is required by B.I.O..");
-static_assert(seqan3::seqan3_version_minor >= 1, "SeqAn >= 3.1 is required by B.I.O..");
+static_assert(seqan3::seqan3_version_major == 3, "SeqAn >= 3.1 is required by the BioC++ I/O library.");
+static_assert(seqan3::seqan3_version_minor >= 1, "SeqAn >= 3.1 is required by the BioC++ I/O library.");
 #else
 #    error The SeqAn3 library was not included.
 #endif
@@ -70,6 +70,6 @@ static_assert(seqan3::seqan3_version_minor >= 1, "SeqAn >= 3.1 is required by B.
 
 // Doxygen related
 // this macro is a NO-OP unless doxygen parses it, in which case it resolves to the argument
-#ifndef BIO_DOXYGEN_ONLY
-#    define BIO_DOXYGEN_ONLY(x)
+#ifndef BIOCPP_IO_DOXYGEN_ONLY
+#    define BIOCPP_IO_DOXYGEN_ONLY(x)
 #endif

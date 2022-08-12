@@ -104,7 +104,7 @@ struct compression_traits<compression_format::bgzf> : compression_traits<compres
                                                    "\x42\x43\x02\x00\x00\x00",
                                                    18};
 
-#ifdef BIO_HAS_ZLIB
+#ifdef BIOCPP_IO_HAS_ZLIB
     //!\copydoc bio::io::compression_traits<compression_format::none>::available
     static constexpr bool available = true;
 #endif
@@ -126,7 +126,7 @@ struct compression_traits<compression_format::gz> : compression_traits<compressi
     //!\copydoc bio::io::compression_traits<compression_format::none>::magic_header
     static constexpr std::string_view magic_header{"\x1f\x8b\x08", 3};
 
-#ifdef BIO_HAS_ZLIB
+#ifdef BIOCPP_IO_HAS_ZLIB
     //!\copydoc bio::io::compression_traits<compression_format::none>::available
     static constexpr bool available = true;
 #endif
@@ -148,7 +148,7 @@ struct compression_traits<compression_format::bz2> : compression_traits<compress
     //!\copydoc bio::io::compression_traits<compression_format::none>::magic_header
     static constexpr std::string_view magic_header{"\x42\x5a\x68", 3};
 
-#ifdef BIO_HAS_BZIP2
+#ifdef BIOCPP_IO_HAS_BZIP2
     //!\copydoc bio::io::compression_traits<compression_format::none>::available
     static constexpr bool available = true;
 #endif

@@ -26,7 +26,7 @@
 
 #pragma once
 
-#ifndef BIO_HAS_ZLIB
+#ifndef BIOCPP_IO_HAS_ZLIB
 #    error "This file cannot be used when building without ZLIB-support."
 #endif
 

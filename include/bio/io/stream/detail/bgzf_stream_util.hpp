@@ -20,12 +20,12 @@
 #include <span>
 #include <thread>
 
-#if BIO_HAS_ZLIB
+#if BIOCPP_IO_HAS_ZLIB
 // Zlib headers
 #    include <zlib.h>
 #else
 #    error "This file cannot be used when building without GZip-support."
-#endif // BIO_HAS_ZLIB
+#endif // BIOCPP_IO_HAS_ZLIB
 
 #include <seqan3/core/range/type_traits.hpp>
 #include <seqan3/utility/detail/to_little_endian.hpp>

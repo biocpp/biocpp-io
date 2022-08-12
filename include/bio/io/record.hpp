@@ -218,7 +218,7 @@ public:
     //!\}
 
 //!\brief A macro that defines all getter functions for fields contained in bio::io::record.
-#define BIO_RECORD_MEMBER(F)                                                                                           \
+#define BIOCPP_IO_RECORD_MEMBER(F)                                                                                     \
     /*!\brief Return the bio::io::field F if available.*/                                                              \
     decltype(auto) F() noexcept(noexcept(get<field::F>()))                                                             \
     {                                                                                                                  \
@@ -234,30 +234,30 @@ public:
      * \brief This is the same as calling #get<field::X>(); functions are only defined if record has that element.
      * \{
      */
-    BIO_RECORD_MEMBER(seq)
-    BIO_RECORD_MEMBER(id)
-    BIO_RECORD_MEMBER(qual)
-    BIO_RECORD_MEMBER(seq_qual)
-    BIO_RECORD_MEMBER(offset)
-    BIO_RECORD_MEMBER(ref_id)
-    BIO_RECORD_MEMBER(ref_seq)
-    BIO_RECORD_MEMBER(pos)
-    BIO_RECORD_MEMBER(qname)
-    BIO_RECORD_MEMBER(flag)
-    BIO_RECORD_MEMBER(mapq)
-    BIO_RECORD_MEMBER(cigar)
-    BIO_RECORD_MEMBER(next_ref_id)
-    BIO_RECORD_MEMBER(next_pos)
-    BIO_RECORD_MEMBER(tlen)
-    BIO_RECORD_MEMBER(optionals)
-    BIO_RECORD_MEMBER(chrom)
-    BIO_RECORD_MEMBER(ref)
-    BIO_RECORD_MEMBER(alt)
-    BIO_RECORD_MEMBER(filter)
-    BIO_RECORD_MEMBER(info)
-    BIO_RECORD_MEMBER(genotypes)
+    BIOCPP_IO_RECORD_MEMBER(seq)
+    BIOCPP_IO_RECORD_MEMBER(id)
+    BIOCPP_IO_RECORD_MEMBER(qual)
+    BIOCPP_IO_RECORD_MEMBER(seq_qual)
+    BIOCPP_IO_RECORD_MEMBER(offset)
+    BIOCPP_IO_RECORD_MEMBER(ref_id)
+    BIOCPP_IO_RECORD_MEMBER(ref_seq)
+    BIOCPP_IO_RECORD_MEMBER(pos)
+    BIOCPP_IO_RECORD_MEMBER(qname)
+    BIOCPP_IO_RECORD_MEMBER(flag)
+    BIOCPP_IO_RECORD_MEMBER(mapq)
+    BIOCPP_IO_RECORD_MEMBER(cigar)
+    BIOCPP_IO_RECORD_MEMBER(next_ref_id)
+    BIOCPP_IO_RECORD_MEMBER(next_pos)
+    BIOCPP_IO_RECORD_MEMBER(tlen)
+    BIOCPP_IO_RECORD_MEMBER(optionals)
+    BIOCPP_IO_RECORD_MEMBER(chrom)
+    BIOCPP_IO_RECORD_MEMBER(ref)
+    BIOCPP_IO_RECORD_MEMBER(alt)
+    BIOCPP_IO_RECORD_MEMBER(filter)
+    BIOCPP_IO_RECORD_MEMBER(info)
+    BIOCPP_IO_RECORD_MEMBER(genotypes)
     //!\}
-#undef BIO_RECORD_MEMBER
+#undef BIOCPP_IO_RECORD_MEMBER
 };
 
 } // namespace bio::io
@@ -386,7 +386,7 @@ auto const && get(record<field_ids, field_types> const && r)
  * \snippet test/snippet/record.cpp make_and_tie_record
  */
 template <auto... field_ids, typename... field_type_ts>
-constexpr auto make_record(vtag_t<field_ids...> BIO_DOXYGEN_ONLY(tag), field_type_ts &&... fields)
+constexpr auto make_record(vtag_t<field_ids...> BIOCPP_IO_DOXYGEN_ONLY(tag), field_type_ts &&... fields)
   -> record<vtag_t<field_ids...>, seqan3::type_list<std::decay_t<field_type_ts>...>>
 {
     return {std::forward<field_type_ts>(fields)...};
@@ -411,7 +411,7 @@ constexpr auto make_record(vtag_t<field_ids...> BIO_DOXYGEN_ONLY(tag), field_typ
  * \snippet test/snippet/record.cpp make_and_tie_record
  */
 template <auto... field_ids, typename... field_type_ts>
-constexpr auto tie_record(vtag_t<field_ids...> BIO_DOXYGEN_ONLY(tag), field_type_ts &... fields)
+constexpr auto tie_record(vtag_t<field_ids...> BIOCPP_IO_DOXYGEN_ONLY(tag), field_type_ts &... fields)
   -> record<vtag_t<field_ids...>, seqan3::type_list<field_type_ts &...>>
 {
     return {fields...};

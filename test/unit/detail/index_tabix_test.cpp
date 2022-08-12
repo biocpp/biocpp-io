@@ -15,13 +15,13 @@
 #include <bio/io/detail/index_tabix.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
 
-#ifndef BIO_DATA_DIR
-#    error "BIO_DATA_DIR not defined. This is required."
+#ifndef BIOCPP_IO_DATA_DIR
+#    error "BIOCPP_IO_DATA_DIR not defined. This is required."
 #endif
 
 TEST(index_tabix, read_write)
 {
-    std::filesystem::path input = BIO_DATA_DIR;
+    std::filesystem::path input = BIOCPP_IO_DATA_DIR;
     input /= "../format/1000G_chr10_sample.vcf.gz.tbi";
 
     seqan3::test::tmp_directory dir{};

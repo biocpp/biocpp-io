@@ -29,7 +29,7 @@
 #include <iostream>
 #include <vector>
 
-#ifndef BIO_HAS_BZIP2
+#ifndef BIOCPP_IO_HAS_BZIP2
 #    error "This file cannot be used when building without BZIP2-support."
 #endif
 
