@@ -123,8 +123,11 @@ public:
     explicit plaintext_output_iterator(std::ostream & ostr) : stream_it{ostr} {}
 
     //!\brief Construct from a stream and a seperator.
-    plaintext_output_iterator(std::ostream & ostr,
-                              char const     sep) requires(record_kind_ == plain_io::record_kind::line_and_fields) :
+    plaintext_output_iterator(std::ostream & ostr, char const sep)
+      //!\cond REQ
+      requires(record_kind_ == plain_io::record_kind::line_and_fields)
+      //!\endcond
+      :
       stream_it{ostr}, field_sep{sep}
     {}
     //!\}
@@ -152,8 +155,10 @@ public:
      * \{
      */
     //!\brief Writes a character to the associated output stream.
-    plaintext_output_iterator & operator=(std::string_view const line) requires(record_kind_ ==
-                                                                                plain_io::record_kind::line)
+    plaintext_output_iterator & operator=(std::string_view const line)
+      //!\cond REQ
+      requires(record_kind_ == plain_io::record_kind::line)
+    //!\endcond
     {
         write_line(line);
         return *this;
@@ -161,9 +166,11 @@ public:
 
     //!\brief Writes a character to the associated output stream.
     template <typename range_of_fields_t>
+        //!\cond REQ
         requires((record_kind_ == plain_io::record_kind::line_and_fields) &&
                  std::ranges::input_range<range_of_fields_t> &&
                  plain_io::writable_to_output<std::ranges::range_reference_t<range_of_fields_t>>)
+    //!\endcond
     plaintext_output_iterator & operator=(range_of_fields_t && range_of_fields)
     {
         write_range_as_fields(std::forward<range_of_fields_t>(range_of_fields));
@@ -171,8 +178,10 @@ public:
     }
 
     //!\brief Writes a character to the associated output stream.
-    plaintext_output_iterator & operator=(plain_io::record const & record) requires(
-      record_kind_ == plain_io::record_kind::line_and_fields)
+    plaintext_output_iterator & operator=(plain_io::record const & record)
+      //!\cond REQ
+      requires(record_kind_ == plain_io::record_kind::line_and_fields)
+    //!\endcond
     {
         write_range_as_fields(record.fields);
         return *this;
@@ -206,8 +215,10 @@ public:
 
     //!\brief Write all elements from the given range to the file.
     template <std::ranges::input_range range_of_fields_t>
+        //!\cond REQ
         requires((record_kind_ == plain_io::record_kind::line_and_fields) &&
                  plain_io::writable_to_output<std::ranges::range_reference_t<range_of_fields_t>>)
+    //!\endcond
     void write_range_as_fields(range_of_fields_t && range_of_fields)
     {
         auto it = std::ranges::begin(range_of_fields);
@@ -344,15 +355,21 @@ public:
      */
     writer(std::filesystem::path const &       filename,
            char const                          field_separator,
-           transparent_ostream_options const & ostream_options =
-             transparent_ostream_options{}) requires(record_kind_ == record_kind::line_and_fields) :
+           transparent_ostream_options const & ostream_options = transparent_ostream_options{})
+      //!\cond REQ
+      requires(record_kind_ == record_kind::line_and_fields)
+      //!\endcond
+      :
       stream{filename, ostream_options}, it{stream, field_separator}
     {}
 
     //!\overload
     explicit writer(std::filesystem::path const &       filename,
-                    transparent_ostream_options const & ostream_options =
-                      transparent_ostream_options{}) requires(record_kind_ == record_kind::line) :
+                    transparent_ostream_options const & ostream_options = transparent_ostream_options{})
+      //!\cond REQ
+      requires(record_kind_ == record_kind::line)
+      //!\endcond
+      :
       stream{filename, ostream_options}, it{stream}
     {}
 
@@ -371,15 +388,21 @@ public:
      */
     writer(std::ostream &                      str,
            char const                          field_separator,
-           transparent_ostream_options const & ostream_options =
-             transparent_ostream_options{}) requires(record_kind_ == record_kind::line_and_fields) :
+           transparent_ostream_options const & ostream_options = transparent_ostream_options{})
+      //!\cond REQ
+      requires(record_kind_ == record_kind::line_and_fields)
+      //!\endcond
+      :
       stream{str, ostream_options}, it{stream, field_separator}
     {}
 
     //!\overload
     explicit writer(std::ostream &                      str,
-                    transparent_ostream_options const & ostream_options =
-                      transparent_ostream_options{}) requires(record_kind_ == record_kind::line) :
+                    transparent_ostream_options const & ostream_options = transparent_ostream_options{})
+      //!\cond REQ
+      requires(record_kind_ == record_kind::line)
+      //!\endcond
+      :
       stream{str, ostream_options}, it{stream}
     {}
 
@@ -490,7 +513,13 @@ public:
      *
      * A newline is inserted after the argument is written.
      */
-    void push_back(std::string_view const line) requires(record_kind_ == record_kind::line) { *it = line; }
+    void push_back(std::string_view const line)
+      //!\cond REQ
+      requires(record_kind_ == record_kind::line)
+    //!\endcond
+    {
+        *it = line;
+    }
 
     /*!\brief Write a range of fields separated by the delimiter the file.
      * \tparam range_of_fields_t A std::ranges::input_range.
@@ -505,8 +534,10 @@ public:
      * A newline is inserted after the arguments are written.
      */
     template <std::ranges::input_range range_of_fields_t>
+        //!\cond REQ
         requires((record_kind_ == record_kind::line_and_fields) &&
                  writable_to_output<std::ranges::range_reference_t<range_of_fields_t>>)
+    //!\endcond
     void push_back(range_of_fields_t && range_of_fields) { *it = std::forward<range_of_fields_t>(range_of_fields); }
 
     /*!\brief Write a record to the file.
@@ -518,7 +549,10 @@ public:
      *
      * The same as calling push_back(record.fields).
      */
-    void push_back(record const & record) requires(record_kind_ == record_kind::line_and_fields)
+    void push_back(record const & record)
+      //!\cond REQ
+      requires(record_kind_ == record_kind::line_and_fields)
+    //!\endcond
     {
         *it = record.fields;
     }
@@ -546,7 +580,9 @@ public:
      * Basic exception safety.
      */
     template <std::ranges::input_range rng_t>
+        //!\cond REQ
         requires(std::convertible_to<std::ranges::range_reference_t<rng_t>, value_type>)
+    //!\endcond
     writer & operator=(rng_t && range)
     {
         for (auto && record : range)
@@ -582,7 +618,9 @@ public:
      * \include test/snippet/io/sequence_file/sequence_file_output_view_pipeline.cpp
      */
     template <std::ranges::input_range rng_t>
+        //!\cond REQ
         requires std::convertible_to<std::ranges::range_reference_t<rng_t>, value_type>
+    //!\endcond
     friend writer & operator|(rng_t && range, writer & f)
     {
         f = range;
@@ -591,7 +629,9 @@ public:
 
     //!\overload
     template <std::ranges::input_range rng_t>
+        //!\cond REQ
         requires std::convertible_to<std::ranges::range_reference_t<rng_t>, value_type>
+    //!\endcond
     friend writer operator|(rng_t && range, writer && f)
     {
         f = range;

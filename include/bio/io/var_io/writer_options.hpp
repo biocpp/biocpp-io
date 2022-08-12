@@ -21,6 +21,7 @@
 namespace bio::io::detail
 {
 
+//!\brief A char, signed_integral, floating point number or CString.
 template <typename t>
 concept var_io_legal_type_aux =
   std::same_as<t, char> || std::signed_integral<t> || std::floating_point<t> || std::same_as < std::decay_t<t>,

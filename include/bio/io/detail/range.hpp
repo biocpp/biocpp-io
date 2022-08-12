@@ -80,6 +80,7 @@ template <typename rng_t>
 concept out_string = back_insertable_with<rng_t, char> || std::same_as<rng_t &, std::string_view &>;
 //!\endcond
 
+//!\brief Range that is random-access, output, sized and has .resize() and .clear()
 template <typename rng_t>
 concept vector_like = std::ranges::random_access_range<rng_t> && std::ranges::sized_range<rng_t> &&
   std::ranges::output_range<rng_t, std::ranges::range_reference_t<rng_t>> && requires(rng_t & v)

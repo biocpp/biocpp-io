@@ -403,7 +403,9 @@ private:
 
     //!\brief Generic writing function that dispatches depending on the type of the argument.
     template <typename elem_t>
+        //!\cond REQ
         requires(seqan3::alphabet<elem_t> || seqan3::arithmetic<elem_t>)
+    //!\endcond
     void write_typed_data(elem_t const num, detail::bcf_type_descriptor const desc)
     {
         write_type_descriptor1(desc);
@@ -444,7 +446,9 @@ private:
 
     //!\overload
     template <std::ranges::forward_range data_t>
+        //!\cond REQ
         requires detail::char_range_or_cstring<std::ranges::range_value_t<data_t>>
+    //!\endcond
     void write_typed_data(data_t && vector_of_string, [[maybe_unused]] detail::bcf_type_descriptor const desc)
     {
         assert(desc == detail::bcf_type_descriptor::char8);

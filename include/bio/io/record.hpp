@@ -311,14 +311,18 @@ struct record_element;
 
 //!\brief Like std::tuple_element but with bio::io::field on bio::io::record. [implementation]
 template <field f, typename field_ids, typename field_types>
+    //!\cond REQ
     requires(field_ids::contains(f))
+//!\endcond
 struct record_element<f, record<field_ids, field_types>> :
   public std::tuple_element<field_ids::index_of(f), record<field_ids, field_types>>
 {};
 
 //!\brief Like std::tuple_element but with bio::io::field on bio::io::record. [type trait shortcut]
 template <field f, typename t>
+    //!\cond REQ
     requires(requires { typename record_element<f, t>::type; })
+//!\endcond
 using record_element_t = typename record_element<f, t>::type;
 
 //-------------------------------------------------------------------------------

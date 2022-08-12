@@ -158,7 +158,9 @@ private:
 
     // implementation after class
     template <typename t>
-        requires detail::is_info_element_value_type<t> || detail::is_genotype_element_value_type<t>
+        //!\cond REQ
+        requires(detail::is_info_element_value_type<t> || detail::is_genotype_element_value_type<t>)
+    //!\endcond
     static void init_element_value_type(var_io::value_type_id const id, t & output);
 
     // implementation after class
@@ -448,7 +450,9 @@ private:
 
     //!\brief Overload for parsing GENOTYPES.
     template <detail::back_insertable field_t>
+        //!\cond REQ
         requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
+    //!\endcond
     void parse_field(vtag_t<field::genotypes> const & /**/, field_t & parsed_field);
 
     //!\brief Overload for parsing the private data.
@@ -521,7 +525,9 @@ public:
  * \param[out] output   The object being initialised.
  */
 template <typename t>
-    requires detail::is_info_element_value_type<t> || detail::is_genotype_element_value_type<t>
+    //!\cond REQ
+    requires(detail::is_info_element_value_type<t> || detail::is_genotype_element_value_type<t>)
+//!\endcond
 inline void format_input_handler<vcf>::init_element_value_type(var_io::value_type_id const id, t & output)
 {
     switch (id)

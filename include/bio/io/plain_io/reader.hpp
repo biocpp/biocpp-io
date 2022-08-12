@@ -101,10 +101,11 @@ public:
     }
 
     //!\overload
-    plaintext_input_iterator(std::basic_streambuf<char> & ibuf,
-                             char const                   sep,
-                             bool const                   read_first_record = true) requires(record_kind_ ==
-                                                                           plain_io::record_kind::line_and_fields) :
+    plaintext_input_iterator(std::basic_streambuf<char> & ibuf, char const sep, bool const read_first_record = true)
+      //!\cond REQ
+      requires(record_kind_ == plain_io::record_kind::line_and_fields)
+      //!\endcond
+      :
       stream_buf{reinterpret_cast<bio::io::detail::stream_buffer_exposer<char> *>(&ibuf)}, field_sep{sep}
     {
         init(read_first_record);
@@ -116,8 +117,11 @@ public:
     {}
 
     //!\overload
-    plaintext_input_iterator(std::istream & istr, char const sep, bool const read_first_record = true) requires(
-      record_kind_ == plain_io::record_kind::line_and_fields) :
+    plaintext_input_iterator(std::istream & istr, char const sep, bool const read_first_record = true)
+      //!\cond REQ
+      requires(record_kind_ == plain_io::record_kind::line_and_fields)
+      //!\endcond
+      :
       plaintext_input_iterator{*istr.rdbuf(), sep, read_first_record}
     {}
 
@@ -416,9 +420,12 @@ public:
      */
     explicit reader(std::filesystem::path const &       filename,
                     char const                          field_separator,
-                    header_kind                         header = header_kind::none,
-                    transparent_istream_options const & istream_options =
-                      transparent_istream_options{}) requires(record_kind_ == record_kind::line_and_fields) :
+                    header_kind                         header          = header_kind::none,
+                    transparent_istream_options const & istream_options = transparent_istream_options{})
+      //!\cond REQ
+      requires(record_kind_ == record_kind::line_and_fields)
+      //!\endcond
+      :
       stream{filename, istream_options}, it{stream, field_separator}
     {
         read_header(header);
@@ -426,9 +433,12 @@ public:
 
     //!\overload
     explicit reader(std::filesystem::path const &       filename,
-                    header_kind                         header = header_kind::none,
-                    transparent_istream_options const & istream_options =
-                      transparent_istream_options{}) requires(record_kind_ == record_kind::line) :
+                    header_kind                         header          = header_kind::none,
+                    transparent_istream_options const & istream_options = transparent_istream_options{})
+      //!\cond REQ
+      requires(record_kind_ == record_kind::line)
+      //!\endcond
+      :
       stream{filename, istream_options}, it{stream}
     {
         read_header(header);
@@ -457,9 +467,12 @@ public:
      */
     reader(std::istream &                      str,
            char const                          field_separator,
-           header_kind                         header = header_kind::none,
-           transparent_istream_options const & istream_options =
-             transparent_istream_options{}) requires(record_kind_ == record_kind::line_and_fields) :
+           header_kind                         header          = header_kind::none,
+           transparent_istream_options const & istream_options = transparent_istream_options{})
+      //!\cond REQ
+      requires(record_kind_ == record_kind::line_and_fields)
+      //!\endcond
+      :
       stream{str, istream_options}, it{stream, field_separator}
     {
         read_header(header);
@@ -467,9 +480,12 @@ public:
 
     //!\overload
     explicit reader(std::istream &                      str,
-                    header_kind                         header = header_kind::none,
-                    transparent_istream_options const & istream_options =
-                      transparent_istream_options{}) requires(record_kind_ == record_kind::line) :
+                    header_kind                         header          = header_kind::none,
+                    transparent_istream_options const & istream_options = transparent_istream_options{})
+      //!\cond REQ
+      requires(record_kind_ == record_kind::line)
+      //!\endcond
+      :
       stream{str, istream_options}, it{stream}
     {
         read_header(header);
