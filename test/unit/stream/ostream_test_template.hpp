@@ -11,12 +11,12 @@
 #include <iostream>
 #include <string>
 
-#include <bio/misc.hpp>
+#include <bio/io/misc.hpp>
 #include <seqan3/test/tmp_filename.hpp>
 
-#include <bio/stream/compression.hpp>
-#include <bio/stream/detail/make_stream.hpp>
-#include <bio/stream/transparent_ostream.hpp>
+#include <bio/io/stream/compression.hpp>
+#include <bio/io/stream/detail/make_stream.hpp>
+#include <bio/io/stream/transparent_ostream.hpp>
 
 #include "data.hpp"
 

@@ -17,7 +17,7 @@
 #include <seqan3/test/expect_range_eq.hpp>
 #include <seqan3/test/expect_same_type.hpp>
 
-#include <bio/format/fasta_input_handler.hpp>
+#include <bio/io/format/fasta_input_handler.hpp>
 
 using seqan3::                             operator""_dna5;
 using seqan3::                             operator""_phred42;

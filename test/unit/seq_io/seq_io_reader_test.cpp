@@ -16,8 +16,8 @@
 #include <seqan3/test/expect_same_type.hpp>
 #include <seqan3/test/tmp_filename.hpp>
 
-#include <bio/seq_io/reader.hpp>
-#include <bio/stream/detail/fast_streambuf_iterator.hpp>
+#include <bio/io/seq_io/reader.hpp>
+#include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
 
 #include "data.hpp"
 

@@ -12,7 +12,7 @@
 #include <seqan3/test/tmp_directory.hpp>
 #include <seqan3/test/tmp_filename.hpp>
 
-#include <bio/var_io/reader.hpp>
+#include <bio/io/var_io/reader.hpp>
 
 #include "../format/vcf_data.hpp"
 

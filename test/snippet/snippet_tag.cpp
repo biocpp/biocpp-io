@@ -1,4 +1,4 @@
-#include <bio/misc.hpp>
+#include <bio/io/misc.hpp>
 
 //![vtag]
 void foo(bio::vtag_t<1>) { /* do one thing     */ }

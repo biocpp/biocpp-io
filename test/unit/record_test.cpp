@@ -16,8 +16,8 @@
 #include <seqan3/test/expect_same_type.hpp>
 #include <seqan3/utility/tuple/concept.hpp>
 
-#include <bio/misc.hpp>
-#include <bio/record.hpp>
+#include <bio/io/misc.hpp>
+#include <bio/io/record.hpp>
 
 using seqan3::operator""_dna4;
 

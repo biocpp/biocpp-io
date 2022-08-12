@@ -10,7 +10,7 @@
 
 #include <string_view>
 
-#include <bio/stream/compression.hpp>
+#include <bio/io/stream/compression.hpp>
 
 inline constexpr std::string_view uncompressed = "The quick brown fox jumps over the lazy dog";
 

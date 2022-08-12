@@ -12,9 +12,9 @@
 #include <seqan3/test/expect_range_eq.hpp>
 #include <seqan3/test/tmp_filename.hpp>
 
-#include <bio/format/fasta.hpp>
-#include <bio/stream/transparent_istream.hpp>
-#include <bio/var_io/writer.hpp>
+#include <bio/io/format/fasta.hpp>
+#include <bio/io/stream/transparent_istream.hpp>
+#include <bio/io/var_io/writer.hpp>
 
 #include "../format/vcf_data.hpp"
 

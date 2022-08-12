@@ -13,8 +13,8 @@
 #include <seqan3/core/debug_stream.hpp>
 #include <seqan3/utility/views/to.hpp>
 
-#include <bio/detail/magic_get.hpp>
-#include <bio/var_io/reader.hpp>
+#include <bio/io/detail/magic_get.hpp>
+#include <bio/io/var_io/reader.hpp>
 
 //=============================================================================
 // Official example

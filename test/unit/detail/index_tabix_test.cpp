@@ -12,8 +12,8 @@
 #include <seqan3/test/tmp_directory.hpp>
 #include <seqan3/test/tmp_filename.hpp>
 
-#include <bio/detail/index_tabix.hpp>
-#include <bio/stream/detail/fast_streambuf_iterator.hpp>
+#include <bio/io/detail/index_tabix.hpp>
+#include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
 
 #ifndef BIO_DATA_DIR
 #    error "BIO_DATA_DIR not defined. This is required."

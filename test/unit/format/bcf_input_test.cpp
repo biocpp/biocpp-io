@@ -12,8 +12,8 @@
 #include <seqan3/test/expect_range_eq.hpp>
 #include <seqan3/test/tmp_filename.hpp>
 
-#include <bio/format/bcf_input_handler.hpp>
-#include <bio/var_io/reader.hpp>
+#include <bio/io/format/bcf_input_handler.hpp>
+#include <bio/io/var_io/reader.hpp>
 
 #include "bcf_data.hpp"
 #include "vcf_data.hpp"

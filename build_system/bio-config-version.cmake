@@ -13,10 +13,10 @@
 
 # Note that bio-config.cmake can be standalone and thus BIO_CLONE_DIR might be empty.
 find_path (BIO_CLONE_DIR NAMES build_system/bio-config.cmake HINTS "${CMAKE_CURRENT_LIST_DIR}/..")
-find_path (BIO_INCLUDE_DIR NAMES bio/version.hpp HINTS "${BIO_CLONE_DIR}/include")
+find_path (BIO_INCLUDE_DIR NAMES bio/io/version.hpp HINTS "${BIO_CLONE_DIR}/include")
 
 # extract version from bio/version.hpp header
-file(STRINGS "${BIO_INCLUDE_DIR}/bio/version.hpp" BIO_VERSION_HPP REGEX "#define BIO_VERSION_(MAJOR|MINOR|PATCH)")
+file(STRINGS "${BIO_INCLUDE_DIR}/bio/io/version.hpp" BIO_VERSION_HPP REGEX "#define BIO_VERSION_(MAJOR|MINOR|PATCH)")
 string(REGEX REPLACE "#define BIO_VERSION_(MAJOR|MINOR|PATCH) " "" PACKAGE_VERSION "${BIO_VERSION_HPP}")
 string(REGEX REPLACE ";" "." PACKAGE_VERSION "${PACKAGE_VERSION}")
 

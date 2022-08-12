@@ -10,7 +10,7 @@
 
 #include <seqan3/test/expect_range_eq.hpp>
 
-#include <bio/var_io/header.hpp>
+#include <bio/io/var_io/header.hpp>
 
 #include "../format/vcf_data.hpp"
 

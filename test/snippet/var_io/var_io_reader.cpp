@@ -1,7 +1,7 @@
 #include <filesystem>
 
 #include <seqan3/core/debug_stream.hpp>
-#include <bio/var_io/reader.hpp>
+#include <bio/io/var_io/reader.hpp>
 
 #include "../../unit/format/vcf_data.hpp"
 

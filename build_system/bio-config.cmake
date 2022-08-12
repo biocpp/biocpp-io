@@ -317,7 +317,7 @@ endif ()
 # ----------------------------------------------------------------------------
 
 set (CXXSTD_TEST_SOURCE
-     "#include <bio/platform.hpp>
+     "#include <bio/io/platform.hpp>
      int main() {}")
 
 # using try_compile instead of check_cxx_source_compiles to capture output in case of failure

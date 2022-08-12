@@ -1,6 +1,6 @@
 #include <seqan3/alphabet/nucleotide/dna4.hpp>
 #include <seqan3/alphabet/quality/phred42.hpp>
-#include <bio/seq_io/reader_options.hpp>
+#include <bio/io/seq_io/reader_options.hpp>
 
 int main()
 {

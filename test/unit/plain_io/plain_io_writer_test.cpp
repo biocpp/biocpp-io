@@ -12,7 +12,7 @@
 
 #include <seqan3/test/tmp_filename.hpp>
 
-#include <bio/plain_io/writer.hpp>
+#include <bio/io/plain_io/writer.hpp>
 
 inline constexpr std::string_view compare =
   R"(foo bar

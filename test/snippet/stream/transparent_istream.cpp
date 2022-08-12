@@ -1,7 +1,7 @@
 #include <fstream>
 
-#include <bio/stream/transparent_istream.hpp>
-#include <bio/stream/transparent_ostream.hpp>
+#include <bio/io/stream/transparent_istream.hpp>
+#include <bio/io/stream/transparent_ostream.hpp>
 
 int main()
 {

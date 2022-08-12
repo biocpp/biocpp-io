@@ -8,8 +8,8 @@
 
 #include <gtest/gtest.h>
 
-#include <bio/format/vcf_input_handler.hpp>
-#include <bio/var_io/reader.hpp>
+#include <bio/io/format/vcf_input_handler.hpp>
+#include <bio/io/var_io/reader.hpp>
 #include <seqan3/core/debug_stream.hpp>
 #include <seqan3/test/expect_range_eq.hpp>
 

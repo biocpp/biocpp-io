@@ -14,7 +14,7 @@
 #include <seqan3/test/expect_range_eq.hpp>
 #include <seqan3/test/pretty_printing.hpp>
 
-#include <bio/detail/views_eager_split.hpp>
+#include <bio/io/detail/views_eager_split.hpp>
 
 using seqan3::operator""_dna4;
 

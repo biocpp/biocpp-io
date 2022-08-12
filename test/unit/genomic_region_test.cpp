@@ -10,7 +10,7 @@
 
 #include <gtest/gtest.h>
 
-#include <bio/genomic_region.hpp>
+#include <bio/io/genomic_region.hpp>
 
 struct genomic_region : public ::testing::Test
 {

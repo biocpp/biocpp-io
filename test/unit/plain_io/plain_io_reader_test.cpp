@@ -12,7 +12,7 @@
 
 #include <seqan3/test/tmp_filename.hpp>
 
-#include <bio/plain_io/reader.hpp>
+#include <bio/io/plain_io/reader.hpp>
 
 inline constexpr std::string_view input_no_header =
   R"raw(foo bar

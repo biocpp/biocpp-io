@@ -1,7 +1,7 @@
 #include <seqan3/alphabet/nucleotide/dna5.hpp>
 #include <seqan3/alphabet/quality/phred42.hpp>
 
-#include <bio/record.hpp>
+#include <bio/io/record.hpp>
 
 int main()
 {
