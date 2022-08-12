@@ -27,21 +27,22 @@ TEST(index_tabix, read_write)
     seqan3::test::tmp_directory dir{};
     std::filesystem::path       output = dir.path() / "out.tbi";
 
-    using stream_rng_t = std::ranges::subrange<bio::detail::fast_istreambuf_iterator<char>, std::default_sentinel_t>;
+    using stream_rng_t =
+      std::ranges::subrange<bio::io::detail::fast_istreambuf_iterator<char>, std::default_sentinel_t>;
 
     {
-        bio::detail::tabix_index idx{};
+        bio::io::detail::tabix_index idx{};
         idx.read(input);
         idx.write(output);
     }
 
     // verify by comparing the decompressed contents
     {
-        bio::transparent_istream input_f{input};
-        stream_rng_t             input_s{bio::detail::fast_istreambuf_iterator<char>{input_f}, {}};
+        bio::io::transparent_istream input_f{input};
+        stream_rng_t                 input_s{bio::io::detail::fast_istreambuf_iterator<char>{input_f}, {}};
 
-        bio::transparent_istream output_f{output};
-        stream_rng_t             output_s{bio::detail::fast_istreambuf_iterator<char>{output_f}, {}};
+        bio::io::transparent_istream output_f{output};
+        stream_rng_t                 output_s{bio::io::detail::fast_istreambuf_iterator<char>{output_f}, {}};
 
         EXPECT_TRUE((std::ranges::equal(input_s, output_s)));
     }

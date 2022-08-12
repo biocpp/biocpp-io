@@ -36,7 +36,7 @@
 #define BZ_NO_STDIO
 #include <bzlib.h>
 
-namespace bio::contrib
+namespace bio::io::contrib
 {
 
 // --------------------------------------------------------------------------
@@ -267,4 +267,4 @@ private:
 typedef basic_bz2_istream<char>    bz2_istream;
 typedef basic_bz2_istream<wchar_t> bz2_wistream;
 
-} // namespace bio::contrib
+} // namespace bio::io::contrib

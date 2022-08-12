@@ -19,7 +19,7 @@
 #include <bio/io/stream/transparent_istream.hpp>
 #include <bio/io/stream/transparent_ostream.hpp>
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 //!\brief Converts a BGZip "virtual offset" into the on-disk offset to the beginning of the GZ-block and the distance
@@ -265,4 +265,4 @@ inline std::vector<std::pair<uint64_t, uint64_t>> tabix_index::reg2chunks(genomi
     return ret;
 }
 
-} // namespace bio::detail
+} // namespace bio::io::detail

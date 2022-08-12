@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::transparent_istream.
+ * \brief Provides bio::io::transparent_istream.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -25,10 +25,10 @@
 #include <bio/io/stream/concept.hpp>
 #include <bio/io/stream/detail/make_stream.hpp>
 
-namespace bio
+namespace bio::io
 {
 
-//!\brief Options that can be provided to bio::transparent_istream.
+//!\brief Options that can be provided to bio::io::transparent_istream.
 //!\ingroup stream
 struct transparent_istream_options
 {
@@ -42,7 +42,7 @@ struct transparent_istream_options
      * \details
      *
      * In almost all cases, you will want to have this auto-detected. You can explicitly set this to
-     * bio::compression_format::gz when opening BGZF-compressed files to use the regular, single-threaded
+     * bio::io::compression_format::gz when opening BGZF-compressed files to use the regular, single-threaded
      * GZ-decompressor, but it is simpler to just set threads to 1.
      */
     compression_format compression = compression_format::detect;
@@ -72,7 +72,7 @@ struct transparent_istream_options
  * uncompressed or compressed files with this stream and will always get uncompressed data. The format of compression
  * is detected automatically by default.
  *
- * See bio::compression_format for a list of currently supported formats.
+ * See bio::io::compression_format for a list of currently supported formats.
  *
  * A filename may be provided, in which case this stream behaves like a file stream. Or an existing input stream can be
  * given which is then wrapped by this stream.
@@ -253,7 +253,7 @@ public:
 
     /*!\brief Construct from a filename.
      * \param[in] filename  The filename to open.
-     * \param[in] options   See bio::transparent_istream_options.
+     * \param[in] options   See bio::io::transparent_istream_options.
      */
     explicit transparent_istream(std::filesystem::path       filename,
                                  transparent_istream_options options = transparent_istream_options{}) :
@@ -275,7 +275,7 @@ public:
 
     /*!\brief Construct from a stream.
      * \param[in] stream    The stream to wrap.
-     * \param[in] options   See bio::transparent_istream_options.
+     * \param[in] options   See bio::io::transparent_istream_options.
      */
     explicit transparent_istream(std::basic_istream<char> &  stream,
                                  transparent_istream_options options = transparent_istream_options{}) :
@@ -341,4 +341,4 @@ public:
     }
 };
 
-} // namespace bio
+} // namespace bio::io

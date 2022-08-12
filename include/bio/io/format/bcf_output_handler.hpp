@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides the bio::format_output_handler<bcf>.
+ * \brief Provides the bio::io::format_output_handler<bcf>.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -29,10 +29,10 @@
 #include <bio/io/var_io/misc.hpp>
 #include <bio/io/var_io/writer_options.hpp>
 
-namespace bio
+namespace bio::io
 {
 
-/*!\brief Format output handler for the VCF format (bio::bcf).
+/*!\brief Format output handler for the VCF format (bio::io::bcf).
  * \ingroup format
  * \details
  *
@@ -359,7 +359,7 @@ private:
      * value ("EOV") is written.
      *
      * In the case where a vector in a vector-of-vectors is completely absent, you need to set
-     * front_missing. In that case the first value written will be bio::var_io::missing_value instead of EOV.
+     * front_missing. In that case the first value written will be bio::io::var_io::missing_value instead of EOV.
      */
     void write_range_padding(size_t num, detail::bcf_type_descriptor const desc, bool front_missing)
     {
@@ -1175,8 +1175,8 @@ public:
      * \param[in] options An object with options for the output handler.
      * \details
      *
-     * The options argument is typically bio::var_io::writer_options, but any object with a subset of similarly named
-     * members is also accepted. See bio::format_output_handler<bcf> for the supported options and defaults.
+     * The options argument is typically bio::io::var_io::writer_options, but any object with a subset of similarly
+     * named members is also accepted. See bio::io::format_output_handler<bcf> for the supported options and defaults.
      */
     format_output_handler(std::ostream & str, auto const & options) : base_t{str}
     {
@@ -1260,4 +1260,4 @@ public:
     }
 };
 
-} // namespace bio
+} // namespace bio::io

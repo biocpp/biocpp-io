@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides the bio::bcf.
+ * \brief Provides the bio::io::bcf.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -18,7 +18,7 @@
 
 #include <bio/io/platform.hpp>
 
-namespace bio
+namespace bio::io
 {
 
 /*!\brief The BCF format, a binary version of VCF.
@@ -26,24 +26,24 @@ namespace bio
  *
  * \details
  *
- * This is the BCF format tag. If you want to read BCF files, use bio::var_io::reader, and if you want
- * to write BCF files, use bio::var_io::writer.
+ * This is the BCF format tag. If you want to read BCF files, use bio::io::var_io::reader, and if you want
+ * to write BCF files, use bio::io::var_io::writer.
  *
  * ### Fields
  *
  * The format consists of the following fields:
  *
- *   1. bio::field::chrom
- *   2. bio::field::pos
- *   3. bio::field::id
- *   4. bio::field::ref
- *   5. bio::field::alt
- *   6. bio::field::qual
- *   7. bio::field::filter
- *   8. bio::field::info
- *   9. bio::field::genotypes
+ *   1. bio::io::field::chrom
+ *   2. bio::io::field::pos
+ *   3. bio::io::field::id
+ *   4. bio::io::field::ref
+ *   5. bio::io::field::alt
+ *   6. bio::io::field::qual
+ *   7. bio::io::field::filter
+ *   8. bio::io::field::info
+ *   9. bio::io::field::genotypes
  *
- * See bio::var_io::reader and bio::var_io::writer for more details.
+ * See bio::io::var_io::reader and bio::io::var_io::writer for more details.
  *
  * ### Implementation
  *
@@ -65,4 +65,4 @@ struct bcf
     static inline std::vector<std::string> file_extensions{{"bcf"}};
 };
 
-} // namespace bio
+} // namespace bio::io

@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides the bio::format_output_handler<vcf>.
+ * \brief Provides the bio::io::format_output_handler<vcf>.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -22,10 +22,10 @@
 #include <bio/io/var_io/misc.hpp>
 #include <bio/io/var_io/writer_options.hpp>
 
-namespace bio
+namespace bio::io
 {
 
-/*!\brief Format output handler for the VCF format (bio::vcf).
+/*!\brief Format output handler for the VCF format (bio::io::vcf).
  * \ingroup format
  * \details
  *
@@ -566,8 +566,8 @@ public:
      * \param[in] options An object with options for the output handler.
      * \details
      *
-     * The options argument is typically bio::var_io::writer_options, but any object with a subset of similarly named
-     * members is also accepted. See bio::format_output_handler<vcf> for the supported options and defaults.
+     * The options argument is typically bio::io::var_io::writer_options, but any object with a subset of similarly
+     * named members is also accepted. See bio::io::format_output_handler<vcf> for the supported options and defaults.
      */
     format_output_handler(std::ostream & str, auto const & options) : base_t{str}
     {
@@ -646,4 +646,4 @@ public:
     }
 };
 
-} // namespace bio
+} // namespace bio::io

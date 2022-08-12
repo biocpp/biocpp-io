@@ -14,25 +14,25 @@
 
 struct genomic_region : public ::testing::Test
 {
-    bio::genomic_region<> reg0{"chr20", 100, 200};
-    bio::genomic_region<> reg1{"chr20", 100, 200};
-    bio::genomic_region<> reg2{"chr20", 100, 150};
-    bio::genomic_region<> reg3{"chr20", 150, 200};
-    bio::genomic_region<> reg4{"chr20", 50, 100};
-    bio::genomic_region<> reg5{"chr20", 200, 250};
-    bio::genomic_region<> reg6{"chr21", 100, 200};
+    bio::io::genomic_region<> reg0{"chr20", 100, 200};
+    bio::io::genomic_region<> reg1{"chr20", 100, 200};
+    bio::io::genomic_region<> reg2{"chr20", 100, 150};
+    bio::io::genomic_region<> reg3{"chr20", 150, 200};
+    bio::io::genomic_region<> reg4{"chr20", 50, 100};
+    bio::io::genomic_region<> reg5{"chr20", 200, 250};
+    bio::io::genomic_region<> reg6{"chr21", 100, 200};
 };
 
 TEST_F(genomic_region, construction_deduction)
 {
-    bio::genomic_region reg0{"chr20", 100, 200};
-    EXPECT_TRUE((std::same_as<decltype(reg0), bio::genomic_region<>>));
+    bio::io::genomic_region reg0{"chr20", 100, 200};
+    EXPECT_TRUE((std::same_as<decltype(reg0), bio::io::genomic_region<>>));
 
-    bio::genomic_region<bio::ownership::deep> reg1{"chr20", 100, 200};
-    EXPECT_TRUE((std::same_as<decltype(reg1), bio::genomic_region<>>));
+    bio::io::genomic_region<bio::io::ownership::deep> reg1{"chr20", 100, 200};
+    EXPECT_TRUE((std::same_as<decltype(reg1), bio::io::genomic_region<>>));
     EXPECT_TRUE((std::same_as<decltype(reg1)::string_t, std::string>));
 
-    bio::genomic_region<bio::ownership::shallow> reg2{"chr20", 100, 200};
+    bio::io::genomic_region<bio::io::ownership::shallow> reg2{"chr20", 100, 200};
     EXPECT_TRUE((std::same_as<decltype(reg2)::string_t, std::string_view>));
 }
 

@@ -16,10 +16,10 @@
 
 TEST(bz2_istream, regular)
 {
-    regular<bio::compression_format::bz2>();
+    regular<bio::io::compression_format::bz2>();
 }
 
 TEST(bz2_istream, type_erased)
 {
-    type_erased<bio::compression_format::bz2>();
+    type_erased<bio::io::compression_format::bz2>();
 }

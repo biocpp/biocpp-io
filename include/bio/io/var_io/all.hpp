@@ -21,11 +21,11 @@
  *
  * This module provides high-level APIs to read and write VCF and BCF files.
  *
- * To read files, have a look at bio::var_io::reader and to write files have a look at bio::var_io::writer.
+ * To read files, have a look at bio::io::var_io::reader and to write files have a look at bio::io::var_io::writer.
  *
  *
  */
 
-/*!\namespace bio::var_io
+/*!\namespace bio::io::var_io
  * \brief Namespace for the Var I/O module.
  */

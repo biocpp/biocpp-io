@@ -39,7 +39,7 @@
 //!\brief The full version as null terminated string.
 #define BIO_VERSION_CSTRING BIO_VERSION_CSTRING_HELPER_FUNC(BIO_VERSION_MAJOR, BIO_VERSION_MINOR, BIO_VERSION_PATCH)
 
-namespace bio
+namespace bio::io
 {
 
 //!\brief The major version.
@@ -55,7 +55,7 @@ constexpr std::size_t bio_version = BIO_VERSION;
 //!\brief The full version as null terminated string.
 constexpr char const * bio_version_cstring = BIO_VERSION_CSTRING;
 
-} // namespace bio
+} // namespace bio::io
 
 #undef BIO_VERSION_CSTRING_HELPER_STR
 #undef BIO_VERSION_CSTRING_HELPER_FUNC

@@ -36,7 +36,7 @@
 
 #include <zlib.h>
 
-namespace bio::contrib
+namespace bio::io::contrib
 {
 
 // Default gzip buffer size, change this to suite your needs.
@@ -414,4 +414,4 @@ typedef basic_gz_ostream<char>    gz_ostream;
 // A typedef for basic_gz_ostream<wchar_t>
 typedef basic_gz_ostream<wchar_t> gz_wostream;
 
-} // namespace bio::contrib
+} // namespace bio::io::contrib

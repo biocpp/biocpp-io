@@ -23,10 +23,10 @@
 // Implementation of single pass input view.
 //-----------------------------------------------------------------------------
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
-/*!\brief The iterator for bio::detail::eager_split_view
+/*!\brief The iterator for bio::io::detail::eager_split_view
  * \implements std::input_iterator
  * \ingroup views
  * \tparam view_type The type of the associated type.
@@ -272,14 +272,14 @@ struct eager_split_fn
     }
 };
 
-} // namespace bio::detail
+} // namespace bio::io::detail
 
 //-----------------------------------------------------------------------------
 // View shortcut for functor.
 //-----------------------------------------------------------------------------
 
 //![adaptor_def]
-namespace bio::detail
+namespace bio::io::detail
 {
 /*!\brief                A view adapter that returns a view over delimited substrings.
  * \tparam urng_t        The type of the range being processed. See below for requirements.
@@ -329,5 +329,5 @@ namespace bio::detail
 inline constexpr auto eager_split = detail::eager_split_fn{};
 
 //!\}
-} // namespace bio::detail
+} // namespace bio::io::detail
 //![adaptor_def]

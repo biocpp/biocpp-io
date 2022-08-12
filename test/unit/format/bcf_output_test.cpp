@@ -23,15 +23,15 @@ enum class style
     bcf
 };
 
-template <style s, bio::ownership own>
+template <style s, bio::io::ownership own>
 void field_types()
 {
     std::ostringstream ostr{};
 
     {
-        bio::format_output_handler<bio::bcf> handler{ostr, bio::var_io::writer_options{}};
+        bio::io::format_output_handler<bio::io::bcf> handler{ostr, bio::io::var_io::writer_options{}};
 
-        bio::var_io::header hdr{example_from_spec_bcf_header};
+        bio::io::var_io::header hdr{example_from_spec_bcf_header};
         hdr.add_missing();
         handler.set_header(std::move(hdr));
 
@@ -52,22 +52,22 @@ void field_types()
 
 TEST(bcf_output, default_style_shallow)
 {
-    field_types<style::def, bio::ownership::shallow>();
+    field_types<style::def, bio::io::ownership::shallow>();
 }
 
 TEST(bcf_output, default_style_deep)
 {
-    field_types<style::def, bio::ownership::deep>();
+    field_types<style::def, bio::io::ownership::deep>();
 }
 
 TEST(bcf_output, bcf_style_shallow)
 {
-    field_types<style::bcf, bio::ownership::shallow>();
+    field_types<style::bcf, bio::io::ownership::shallow>();
 }
 
 TEST(bcf_output, bcf_style_deep)
 {
-    field_types<style::bcf, bio::ownership::deep>();
+    field_types<style::bcf, bio::io::ownership::deep>();
 }
 
 TEST(bcf_output, novariant)
@@ -75,9 +75,9 @@ TEST(bcf_output, novariant)
     std::ostringstream ostr{};
 
     {
-        bio::format_output_handler<bio::bcf> handler{ostr, bio::var_io::writer_options{}};
+        bio::io::format_output_handler<bio::io::bcf> handler{ostr, bio::io::var_io::writer_options{}};
 
-        bio::var_io::header hdr{example_from_spec_header};
+        bio::io::var_io::header hdr{example_from_spec_header};
         hdr.add_missing();
         handler.set_header(std::move(hdr));
 

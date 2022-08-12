@@ -19,12 +19,12 @@
  * \brief The top-level module.
  */
 
-/*!\namespace bio
+/*!\namespace bio::io
  * \brief Main namespace for the B.I.O. library.
  */
 
 /*!\if DEV
- * \namespace bio::detail
+ * \namespace bio::io::detail
  * \brief The internal namespace.
  * \details
  * The contents of this namespace are not visible to consumers of the library and the documentation is

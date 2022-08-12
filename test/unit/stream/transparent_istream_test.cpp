@@ -16,44 +16,44 @@
 
 TEST(transparent_istream, regular_none)
 {
-    regular<bio::compression_format::none, bio::transparent_istream>();
+    regular<bio::io::compression_format::none, bio::io::transparent_istream>();
 }
 
 TEST(transparent_istream, type_erased_none)
 {
-    type_erased<bio::compression_format::none, bio::transparent_istream>();
+    type_erased<bio::io::compression_format::none, bio::io::transparent_istream>();
 }
 
 #if BIO_HAS_ZLIB
 TEST(transparent_istream, regular_bgzf)
 {
-    regular<bio::compression_format::bgzf, bio::transparent_istream>();
+    regular<bio::io::compression_format::bgzf, bio::io::transparent_istream>();
 }
 
 TEST(transparent_istream, type_erased_bgzf)
 {
-    type_erased<bio::compression_format::bgzf, bio::transparent_istream>();
+    type_erased<bio::io::compression_format::bgzf, bio::io::transparent_istream>();
 }
 
 TEST(transparent_istream, regular_gz)
 {
-    regular<bio::compression_format::gz, bio::transparent_istream>();
+    regular<bio::io::compression_format::gz, bio::io::transparent_istream>();
 }
 
 TEST(transparent_istream, type_erased_gz)
 {
-    type_erased<bio::compression_format::gz, bio::transparent_istream>();
+    type_erased<bio::io::compression_format::gz, bio::io::transparent_istream>();
 }
 #endif
 
 #if BIO_HAS_BZIP2
 TEST(transparent_istream, regular_bz2)
 {
-    regular<bio::compression_format::bz2, bio::transparent_istream>();
+    regular<bio::io::compression_format::bz2, bio::io::transparent_istream>();
 }
 
 TEST(transparent_istream, type_erased_bz2)
 {
-    type_erased<bio::compression_format::bz2, bio::transparent_istream>();
+    type_erased<bio::io::compression_format::bz2, bio::io::transparent_istream>();
 }
 #endif

@@ -31,7 +31,7 @@ int main()
 
 {
 //![simple_usage_file]
-bio::var_io::reader reader{"example.vcf"};
+bio::io::var_io::reader reader{"example.vcf"};
 
 for (auto & rec : reader)
 {
@@ -47,7 +47,7 @@ std::cerr << "--\n";
 
 {
 //![simple_usage_stream]
-bio::var_io::reader reader{std::cin, bio::vcf{}};
+bio::io::var_io::reader reader{std::cin, bio::io::vcf{}};
 
 for (auto & rec : reader)
 {
@@ -63,8 +63,8 @@ std::cerr << "--\n";
 
 {
 //![region]
-bio::genomic_region reg{.chrom = "20", .beg = 17000, .end = 1230300};
-bio::var_io::reader reader{"example.vcf.gz", bio::var_io::reader_options{.region = reg}};
+bio::io::genomic_region reg{.chrom = "20", .beg = 17000, .end = 1230300};
+bio::io::var_io::reader reader{"example.vcf.gz", bio::io::var_io::reader_options{.region = reg}};
 
 // this will only print 3 records instead of 5
 for (auto & rec : reader)
@@ -81,7 +81,7 @@ std::cerr << "--\n";
 
 {
 //![views]
-bio::var_io::reader reader{"example.vcf"};
+bio::io::var_io::reader reader{"example.vcf"};
 
 auto min_qual = [](auto & rec) { return rec.qual() > 23; };
 

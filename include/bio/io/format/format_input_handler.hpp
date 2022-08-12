@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::format_input_handler and bio::format_input_handler_base.
+ * \brief Provides bio::io::format_input_handler and bio::io::format_input_handler_base.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -25,7 +25,7 @@
 #include <bio/io/exception.hpp>
 #include <bio/io/record.hpp>
 
-namespace bio
+namespace bio::io
 {
 
 /*!\brief A template that provides the reading and parsing functionality of the specified format.
@@ -37,7 +37,7 @@ namespace bio
  * ```cpp
  * void parse_next_record_into(auto & parsed_record);
  * ```
- * It must accept any bio::record and "fill" that record with the content found in that file.
+ * It must accept any bio::io::record and "fill" that record with the content found in that file.
  *
  * This template may be specialised with a user-provided type, however the process is non-trivial. Documentation
  * can be found here (TODO).
@@ -45,7 +45,7 @@ namespace bio
 template <typename format_t>
 class format_input_handler;
 
-/*!\brief A CRTP base class that helps implement bio::format_input_handler.
+/*!\brief A CRTP base class that helps implement bio::io::format_input_handler.
  * \ingroup format
  * \details
  *
@@ -201,13 +201,13 @@ private:
     format_input_handler_base(std::istream & str) : stream{&str}
     {
         if (std::istreambuf_iterator<char>{*stream} == std::istreambuf_iterator<char>{})
-            throw bio::file_open_error{"The file was empty."};
+            throw bio::io::file_open_error{"The file was empty."};
     }
     //!\}
 
 public:
     /*!\name Read and parse record
-     * \brief Most users should not use these interfaces; use bio::*::reader instead.
+     * \brief Most users should not use these interfaces; use bio::io::*::reader instead.
      * \{
      */
     //!\brief Advance to the next record and update the "raw record".
@@ -236,4 +236,4 @@ public:
     //!\}
 };
 
-} // namespace bio
+} // namespace bio::io

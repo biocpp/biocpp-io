@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides utility types for bio::plain_io::reader and bio::plain_io::writer.
+ * \brief Provides utility types for bio::io::plain_io::reader and bio::io::plain_io::writer.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -19,14 +19,14 @@
 
 #include <bio/io/exception.hpp>
 
-namespace bio::plain_io
+namespace bio::io::plain_io
 {
 
 /*!\addtogroup plain_io
  * \{
  */
 
-/*!\brief The value type of bio::plaintext_file_input if every line is split into fields.
+/*!\brief The value type of bio::io::plaintext_file_input if every line is split into fields.
  * \details
  *
  * Plain I/O records are always shallow.
@@ -43,10 +43,10 @@ struct record
 enum class record_kind
 {
     line,           //!< Only the line is provided.
-    line_and_fields //!< The line is provided and also individual fields (bio::plaintext_record).
+    line_and_fields //!< The line is provided and also individual fields (bio::io::plaintext_record).
 };
 
-/*!\brief A helper for specifying the header of a bio::plaintext_file_input.
+/*!\brief A helper for specifying the header of a bio::io::plaintext_file_input.
  * \tparam record_kind Whether to split lines on delimiter (e.g. TSV files) or not.
  *
  * \details
@@ -54,17 +54,18 @@ enum class record_kind
  * This class can be used similar to an enum to specify the kind of header present in a plain IO file.
  * It can be constructed from the kinds of state:
  *
- *   * bio::plain_io::header_kind::none -> no header
- *   * bio::plain_io::header_kind::first_line -> first line is treated as header
- *   * bio::plain_io::header_kind::starts_with{c} -> all lines starting with character "c" are header
+ *   * bio::io::plain_io::header_kind::none -> no header
+ *   * bio::io::plain_io::header_kind::first_line -> first line is treated as header
+ *   * bio::io::plain_io::header_kind::starts_with{c} -> all lines starting with character "c" are header
  *
  * ### Example
  *
  * ```cpp
- * bio::plain_io::reader r{"example.txt"};                                               // Implicitly no header
- * bio::plain_io::reader r{"example.txt", bio::plain_io::header_kind::none};             // Explicitly no header
- * bio::plain_io::reader r{"example.txt", bio::plain_io::header_kind::first_line};       // First line
- * bio::plain_io::reader r{"example.txt", bio::plain_io::header_kind::starts_with{'#'}}; // Lines starting with '#'
+ * bio::io::plain_io::reader r{"example.txt"};                                               // Implicitly no header
+ * bio::io::plain_io::reader r{"example.txt", bio::io::plain_io::header_kind::none};             // Explicitly no header
+ * bio::io::plain_io::reader r{"example.txt", bio::io::plain_io::header_kind::first_line};       // First line
+ * bio::io::plain_io::reader r{"example.txt", bio::io::plain_io::header_kind::starts_with{'#'}}; // Lines starting with
+ * '#'
  * ```
  */
 class header_kind
@@ -138,4 +139,4 @@ public:
 
 //!\}
 
-} // namespace bio::plain_io
+} // namespace bio::io::plain_io

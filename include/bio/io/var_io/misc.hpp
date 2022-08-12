@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides the bio::var_io::tag_dictionary class and auxiliaries.
+ * \brief Provides the bio::io::var_io::tag_dictionary class and auxiliaries.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -32,14 +32,14 @@
 // forwards
 //-----------------------------------------------------------------------------
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 struct bcf_record_core;
 
-} // namespace bio::detail
+} // namespace bio::io::detail
 
-namespace bio::var_io
+namespace bio::io::var_io
 {
 
 class header;
@@ -84,13 +84,13 @@ inline float missing_value<float> = []()
 }();
 //!\}
 //!\}
-} // namespace bio::var_io
+} // namespace bio::io::var_io
 
 //-----------------------------------------------------------------------------
 // end_of_vector
 //-----------------------------------------------------------------------------
 
-namespace bio::detail
+namespace bio::io::detail
 {
 /*!\addtogroup var_io
  * \{
@@ -128,9 +128,9 @@ inline float end_of_vector<float> = []()
 }();
 //!\}
 //!\}
-} // namespace bio::detail
+} // namespace bio::io::detail
 
-namespace bio::var_io
+namespace bio::io::var_io
 {
 
 //-----------------------------------------------------------------------------
@@ -155,14 +155,14 @@ enum class value_type_id : size_t
     flag               //!< Used for "Flat" fields (size must be 0).
 };
 
-} // namespace bio::var_io
+} // namespace bio::io::var_io
 
 namespace seqan3
 {
 
 //!\brief TODO implement me properly
 template <typename char_t>
-inline debug_stream_type<char_t> & operator<<(debug_stream_type<char_t> & s, bio::var_io::value_type_id const & id)
+inline debug_stream_type<char_t> & operator<<(debug_stream_type<char_t> & s, bio::io::var_io::value_type_id const & id)
 {
     // TODO print nice string
     s << (size_t)id;
@@ -171,7 +171,7 @@ inline debug_stream_type<char_t> & operator<<(debug_stream_type<char_t> & s, bio
 
 } // namespace seqan3
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 //!\brief int* and vector_of_int* are each "compatible" with each other; the rest only with self.
@@ -211,9 +211,9 @@ constexpr bool type_id_is_compatible(var_io::value_type_id const lhs, var_io::va
     }
 }
 
-} // namespace bio::detail
+} // namespace bio::io::detail
 
-namespace bio::var_io
+namespace bio::io::var_io
 {
 
 //-----------------------------------------------------------------------------
@@ -243,24 +243,24 @@ using info_element_value_type =
                std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>,
                bool>;
 
-} // namespace bio::var_io
+} // namespace bio::io::var_io
 
-namespace bio::detail
+namespace bio::io::detail
 {
-//!\brief Auxilliary concept that encompasses bio::var_io::info_element_value_type.
+//!\brief Auxilliary concept that encompasses bio::io::var_io::info_element_value_type.
 //!\ingroup var_io
 template <typename t>
 concept is_info_element_value_type =
   one_of<t, var_io::info_element_value_type<ownership::shallow>, var_io::info_element_value_type<ownership::deep>>;
 
-} // namespace bio::detail
+} // namespace bio::io::detail
 
-namespace bio::var_io
+namespace bio::io::var_io
 {
 
 /*!\brief The type of elements in an INFO field. [default]
  * \ingroup var_io
- * \tparam own Ownership of the type; see bio::ownership.
+ * \tparam own Ownership of the type; see bio::io::ownership.
  */
 template <ownership own = ownership::shallow>
 struct info_element
@@ -279,7 +279,7 @@ struct info_element
 
 /*!\brief The type of elements in an INFO field. [full BCF-style]
  * \ingroup var_io
- * \tparam own Ownership of the type; see bio::ownership.
+ * \tparam own Ownership of the type; see bio::io::ownership.
  */
 template <ownership own = ownership::shallow>
 struct info_element_bcf
@@ -301,9 +301,10 @@ struct info_element_bcf
  * \ingroup var_io
  * \details
  *
- * This type is similar to bio::var_io::info_element_value_type except that it encodes a range of the respective value.
+ * This type is similar to bio::io::var_io::info_element_value_type except that it encodes a range of the respective
+ * value.
  *
- * It does not contain an entry for bio::var_io::value_type_id::flag, because flags cannot appear in
+ * It does not contain an entry for bio::io::var_io::value_type_id::flag, because flags cannot appear in
  * the genotype field.
  */
 template <ownership own = ownership::shallow>
@@ -321,21 +322,21 @@ using genotype_element_value_type =
                std::vector<std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>>
                /* no flag here */>;
 
-} // namespace bio::var_io
+} // namespace bio::io::var_io
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
-//!\brief Auxilliary concept that encompasses bio::var_io::genotype_element_value_type.
+//!\brief Auxilliary concept that encompasses bio::io::var_io::genotype_element_value_type.
 //!\ingroup var_io
 template <typename t>
 concept is_genotype_element_value_type = one_of<t,
                                                 var_io::genotype_element_value_type<ownership::shallow>,
                                                 var_io::genotype_element_value_type<ownership::deep>>;
 
-} // namespace bio::detail
+} // namespace bio::io::detail
 
-namespace bio::var_io
+namespace bio::io::var_io
 {
 
 /*!\brief A type representing an element in the GENOTYPES field.
@@ -353,12 +354,12 @@ namespace bio::var_io
  *   * 0 -- if the field is missing from all samples.
  *
  * The variant vector is guaranteed to be over the type defined in the header. Note that this is a vector over such
- * types (one element per sample!), so bio::var_io::value_type_id::vector_of_int32 corresponds to
- * std::vector<std::vector<int32_t>>. See bio::var_io::genotype_element_value_type for more details.
+ * types (one element per sample!), so bio::io::var_io::value_type_id::vector_of_int32 corresponds to
+ * std::vector<std::vector<int32_t>>. See bio::io::var_io::genotype_element_value_type for more details.
  *
  * If fields are missing from some samples but not others, the vector will have full size but the respective values
- * will be set to the missing value (see bio::var_io::missing_value) or be the empty vector (in case the element type
- * is a vector).
+ * will be set to the missing value (see bio::io::var_io::missing_value) or be the empty vector (in case the element
+ * type is a vector).
  */
 template <ownership own = ownership::shallow>
 struct genotype_element
@@ -380,7 +381,7 @@ struct genotype_element
  *
  * \details
  *
- * The same as bio::var_io::genotype_element except that a numeric IDX is used instead of the ID string.
+ * The same as bio::io::var_io::genotype_element except that a numeric IDX is used instead of the ID string.
  */
 template <ownership own = ownership::shallow>
 struct genotype_element_bcf
@@ -398,7 +399,7 @@ struct genotype_element_bcf
 // default_field_ids
 //-----------------------------------------------------------------------------
 
-//!\brief Default fields for bio::var_io::reader_options.
+//!\brief Default fields for bio::io::var_io::reader_options.
 //!\ingroup var_io
 inline constinit auto default_field_ids = vtag<field::chrom,
                                                field::pos,
@@ -443,7 +444,8 @@ struct record_private_data
 //-----------------------------------------------------------------------------
 
 /*!\name Pre-defined field types
- * \brief These can be used to configure the behaviour of the bio::var_io::reader via bio::var_io::reader_options.
+ * \brief These can be used to configure the behaviour of the bio::io::var_io::reader via
+ * bio::io::var_io::reader_options.
  * \{
  */
 /*!\brief The default field types for variant io.
@@ -458,7 +460,7 @@ struct record_private_data
  * represented as string/string_views. **However,** the genotypes are encoded by-genotype (BCF-style) and not by-sample
  * (VCF-style) for performance reasons.
  *
- * See bio::var_io::genotypes_bcf_style for more information on the latter.
+ * See bio::io::var_io::genotypes_bcf_style for more information on the latter.
  */
 template <ownership own = ownership::shallow>
 inline constinit auto field_types =
@@ -473,7 +475,7 @@ inline constinit auto field_types =
        std::vector<genotype_element<ownership::shallow>>,                            // field::genotypes,
        record_private_data>;                                                         // field::_private
 
-//!\brief Deep version of bio::var_io::field_types.
+//!\brief Deep version of bio::io::var_io::field_types.
 //!\ingroup var_io
 template <>
 inline constinit auto field_types<ownership::deep> =
@@ -493,7 +495,7 @@ inline constinit auto field_types<ownership::deep> =
  *
  * \details
  *
- * See bio::var_io::reader_options for when and why to choose these field types.
+ * See bio::io::var_io::reader_options for when and why to choose these field types.
  */
 template <ownership own = ownership::shallow>
 inline constinit auto field_types_bcf_style =
@@ -513,7 +515,7 @@ inline constinit auto field_types_bcf_style =
  *
  * \details
  *
- * See bio::var_io::reader_options for when and why to choose these field types.
+ * See bio::io::var_io::reader_options for when and why to choose these field types.
  */
 template <>
 inline constinit auto field_types_bcf_style<ownership::deep> =
@@ -536,19 +538,19 @@ inline constinit auto field_types_raw =
 
 //!\}
 
-/*!\brief A alias for bio::record that is usable with variant IO.
+/*!\brief A alias for bio::io::record that is usable with variant IO.
  * \ingroup var_io
  * \details
  *
  * This alias is provided purely for convenience. See the documentation for
- * bio::var_io::writer for an example of how to use it.
+ * bio::io::var_io::writer for an example of how to use it.
  */
 template <ownership own = ownership::deep>
 using default_record = record<decltype(default_field_ids), decltype(field_types<own>)>;
 
-} // namespace bio::var_io
+} // namespace bio::io::var_io
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 //-----------------------------------------------------------------------------
@@ -559,14 +561,14 @@ namespace bio::detail
 //!\ingroup var_io
 struct bcf_record_core
 {
-    int32_t  chrom         = -1;                                //!< CHROM as IDX.
-    int32_t  pos           = -1;                                //!< POS.
-    int32_t  rlen          = -1;                                //!< Not used by this implementation.
-    float    qual          = bio::var_io::missing_value<float>; //!< QUAL.
-    uint16_t n_info        = 0;                                 //!< Number of INFOS values.
-    uint16_t n_allele      = 0;                                 //!< Number of alleles.
-    uint32_t n_sample : 24 = 0;                                 //!< Number of samples.
-    uint8_t  n_fmt         = 0;                                 //!< Number of FORMAT values.
+    int32_t  chrom         = -1;                                    //!< CHROM as IDX.
+    int32_t  pos           = -1;                                    //!< POS.
+    int32_t  rlen          = -1;                                    //!< Not used by this implementation.
+    float    qual          = bio::io::var_io::missing_value<float>; //!< QUAL.
+    uint16_t n_info        = 0;                                     //!< Number of INFOS values.
+    uint16_t n_allele      = 0;                                     //!< Number of alleles.
+    uint32_t n_sample : 24 = 0;                                     //!< Number of samples.
+    uint8_t  n_fmt         = 0;                                     //!< Number of FORMAT values.
 };
 
 static_assert(sizeof(bcf_record_core) == 24, "Bit alignment problem in declaration of bcf_record_core.");
@@ -671,7 +673,7 @@ inline bool type_descriptor_is_int(bcf_type_descriptor const type_desc)
     }
 }
 
-//!\brief Convert from bio::var_io::value_type_id to bio::detail::bcf_type_descriptor.
+//!\brief Convert from bio::io::var_io::value_type_id to bio::io::detail::bcf_type_descriptor.
 inline bcf_type_descriptor value_type_id_2_type_descriptor(var_io::value_type_id const type_id)
 {
     switch (type_id)
@@ -703,7 +705,7 @@ inline bcf_type_descriptor value_type_id_2_type_descriptor(var_io::value_type_id
 /*!\addtogroup var_io
  * \{
  */
-/*!\name A compile-time mapping of types to bio::detail::bcf_type_descriptor
+/*!\name A compile-time mapping of types to bio::io::detail::bcf_type_descriptor
  * \{
  */
 //!\brief Default implementation.
@@ -768,4 +770,4 @@ constexpr size_t vcf_gt_formula(size_t const a, size_t const b)
 }
 
 //!\}
-} // namespace bio::detail
+} // namespace bio::io::detail

@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::plain_io::reader.
+ * \brief Provides bio::io::plain_io::reader.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -23,7 +23,7 @@
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
 #include <bio/io/stream/transparent_istream.hpp>
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 /*!\brief An input iterator that parses files line-wise and exposes string_views into the read buffer.
@@ -35,7 +35,7 @@ class plaintext_input_iterator
 {
 private:
     //!\brief Down-cast pointer to the stream-buffer.
-    bio::detail::stream_buffer_exposer<char> * stream_buf = nullptr;
+    bio::io::detail::stream_buffer_exposer<char> * stream_buf = nullptr;
 
     //!\brief Place to store lines that overlap buffer boundaries.
     std::string         overflow_buffer;
@@ -95,7 +95,7 @@ public:
 
     //!\brief Construct from a stream buffer.
     explicit plaintext_input_iterator(std::basic_streambuf<char> & ibuf, bool const read_first_record = true) :
-      stream_buf{reinterpret_cast<bio::detail::stream_buffer_exposer<char> *>(&ibuf)}
+      stream_buf{reinterpret_cast<bio::io::detail::stream_buffer_exposer<char> *>(&ibuf)}
     {
         init(read_first_record);
     }
@@ -105,7 +105,7 @@ public:
                              char const                   sep,
                              bool const                   read_first_record = true) requires(record_kind_ ==
                                                                            plain_io::record_kind::line_and_fields) :
-      stream_buf{reinterpret_cast<bio::detail::stream_buffer_exposer<char> *>(&ibuf)}, field_sep{sep}
+      stream_buf{reinterpret_cast<bio::io::detail::stream_buffer_exposer<char> *>(&ibuf)}, field_sep{sep}
     {
         init(read_first_record);
     }
@@ -310,9 +310,9 @@ public:
     //!\}
 };
 
-} // namespace bio::detail
+} // namespace bio::io::detail
 
-namespace bio::plain_io
+namespace bio::io::plain_io
 {
 
 /*!\brief Line-wise reader of plaintext files; supports transparent decompression.
@@ -345,7 +345,7 @@ namespace bio::plain_io
  *
  * Read and print a text file linewise:
  * ```cpp
- * bio::plain_io::reader reader{"foobar.txt"}
+ * bio::io::plain_io::reader reader{"foobar.txt"}
  *
  * for (std::string_view const line : reader)
  *    std::cout << line << '\n';
@@ -353,7 +353,7 @@ namespace bio::plain_io
  *
  * Read a (b)gzipped VCF file and print only SNPs:
  * ```cpp
- * bio::plain_io::reader reader{"example.vcf.gz", '\t', bio::plain_io::header_kind::starts_with{'#'}};
+ * bio::io::plain_io::reader reader{"example.vcf.gz", '\t', bio::io::plain_io::header_kind::starts_with{'#'}};
  *
  * // print header
  * std::cout << reader.header();
@@ -399,9 +399,10 @@ public:
     /*!\brief Construct from filename.
      * \param[in] filename        Path to the file you wish to open.
      * \param[in] field_separator Delimiter between fields in a line. [optional]
-     * \param[in] header          Whether to treat certain lines as header; see bio::plain_io::header_kind. [optional]
-     * \param[in] istream_options Options passed to the underlying stream; see bio::transparent_istream_options.
-     * [optional] \throws bio::file_open_error If the file could not be opened, e.g. non-existant or non-readable.
+     * \param[in] header          Whether to treat certain lines as header; see bio::io::plain_io::header_kind.
+     * [optional] \param[in] istream_options Options passed to the underlying stream; see
+     * bio::io::transparent_istream_options. [optional] \throws bio::io::file_open_error If the file could not be
+     * opened, e.g. non-existant or non-readable.
      *
      * \details
      *
@@ -436,9 +437,10 @@ public:
     /*!\brief Construct from an existing stream and with specified format.
      * \param[in] str             The stream to open from.
      * \param[in] field_separator Delimiter between fields in a line. [optional]
-     * \param[in] header          Whether to treat certain lines as header; see bio::plain_io::header_kind. [optional]
-     * \param[in] istream_options Options passed to the underlying stream; see bio::transparent_istream_options.
-     * [optional] \throws bio::file_open_error If the file could not be opened, e.g. non-existant or non-readable.
+     * \param[in] header          Whether to treat certain lines as header; see bio::io::plain_io::header_kind.
+     * [optional] \param[in] istream_options Options passed to the underlying stream; see
+     * bio::io::transparent_istream_options. [optional] \throws bio::io::file_open_error If the file could not be
+     * opened, e.g. non-existant or non-readable.
      *
      * \details
      *
@@ -536,7 +538,7 @@ public:
     sentinel end() noexcept { return {}; }
 
     /*!\brief Return the record we are currently at in the file.
-     * \returns A std::string_view of the current line or a reference to bio::plain_io::record.
+     * \returns A std::string_view of the current line or a reference to bio::io::plain_io::record.
      *
      * This function is identical to calling *begin().
      *
@@ -608,7 +610,7 @@ protected:
 };
 
 /*!\name Deduction guides
- * \relates bio::plain_io::reader
+ * \relates bio::io::plain_io::reader
  * \{
  */
 //!\brief Deduce to line_and_fields specialisation.
@@ -624,4 +626,4 @@ reader(auto &&,
        transparent_istream_options const & istream_options = transparent_istream_options{})
   -> reader<record_kind::line>;
 //!\}
-} // namespace bio::plain_io
+} // namespace bio::io::plain_io

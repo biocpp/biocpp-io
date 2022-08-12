@@ -19,7 +19,7 @@
 #include <seqan3/alphabet/concept.hpp>
 #include <seqan3/alphabet/views/to_char.hpp>
 
-namespace bio
+namespace bio::io
 {
 
 /*!\brief A template that provides the writing functionality of the specified format.
@@ -30,9 +30,9 @@ namespace bio
  * public member function with the following signature:
  *
  * ```cpp
- * void write_record(bio::record<field_types, field_ids> && record)
+ * void write_record(bio::io::record<field_types, field_ids> && record)
  * ```
- * It must accept any bio::record and write that record's fields to the file.
+ * It must accept any bio::io::record and write that record's fields to the file.
  *
  * This template may be specialised with a user-provided type, however the process is non-trivial. Documentation
  * can be found here (TODO).
@@ -40,7 +40,7 @@ namespace bio
 template <typename format_t>
 class format_output_handler;
 
-/*!\brief A CRTP base class that helps implement bio::format_output_handler specialisation.
+/*!\brief A CRTP base class that helps implement bio::io::format_output_handler specialisation.
  * \ingroup format
  * \details
  *
@@ -152,4 +152,4 @@ private:
     //!\}
 };
 
-} // namespace bio
+} // namespace bio::io

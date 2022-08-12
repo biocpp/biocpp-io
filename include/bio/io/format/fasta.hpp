@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides the bio::fasta.
+ * \brief Provides the bio::io::fasta.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -18,7 +18,7 @@
 
 #include <bio/io/platform.hpp>
 
-namespace bio
+namespace bio::io
 {
 
 /*!\brief       The FastA format.
@@ -26,8 +26,8 @@ namespace bio
  *
  * \details
  *
- * This is the FastA format tag. If you want to read FastA files, use bio::seq_io::reader, and if you want
- * to write FastA files, use bio::seq_io::writer.
+ * This is the FastA format tag. If you want to read FastA files, use bio::io::seq_io::reader, and if you want
+ * to write FastA files, use bio::io::seq_io::writer.
  *
  * ### Introduction
  *
@@ -36,7 +36,8 @@ namespace bio
  *
  * ### Fields
  *
- * The FastA format provides the fields bio::field::seq and bio::field::id. Both fields are required when writing.
+ * The FastA format provides the fields bio::io::field::seq and bio::io::field::id. Both fields are required when
+ * writing.
  *
  * ### Implementation notes
  *
@@ -67,4 +68,4 @@ struct fasta
     };
 };
 
-} // namespace bio
+} // namespace bio::io

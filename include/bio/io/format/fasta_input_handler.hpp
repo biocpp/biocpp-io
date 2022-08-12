@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides the bio::format_input_handler implementation for bio::fasta.
+ * \brief Provides the bio::io::format_input_handler implementation for bio::io::fasta.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -31,10 +31,10 @@
 #include <bio/io/format/format_input_handler.hpp>
 #include <bio/io/plain_io/reader.hpp>
 
-namespace bio
+namespace bio::io
 {
 
-/*!\brief Format input handler for the FASTA format (bio::fasta).
+/*!\brief Format input handler for the FASTA format (bio::io::fasta).
  * \ingroup format
  * \details
  *
@@ -202,8 +202,9 @@ public:
      * \param[in] options An object with options for the input handler.
      * \details
      *
-     * The options argument is typically bio::seq_io::reader_options, but any object with a subset of similarly named
-     * members is also accepted. See bio::format_input_handler<bio::fasta> for the supported options and defaults.
+     * The options argument is typically bio::io::seq_io::reader_options, but any object with a subset of similarly
+     * named members is also accepted. See bio::io::format_input_handler<bio::io::fasta> for the supported options and
+     * defaults.
      */
     format_input_handler(std::istream & str, auto const & options) : base_t{str}, it{str, false}
     {
@@ -218,4 +219,4 @@ public:
     //!\}
 };
 
-} // namespace bio
+} // namespace bio::io

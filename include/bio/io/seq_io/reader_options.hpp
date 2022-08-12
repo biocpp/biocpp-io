@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::seq_io::reader_options and various field_types definitions.
+ * \brief Provides bio::io::seq_io::reader_options and various field_types definitions.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -35,7 +35,7 @@
 #include <bio/io/seq_io/misc.hpp>
 #include <bio/io/stream/transparent_istream.hpp>
 
-namespace bio::seq_io
+namespace bio::io::seq_io
 {
 
 /*!\addtogroup seq_io
@@ -43,7 +43,8 @@ namespace bio::seq_io
  */
 
 /*!\name Pre-defined field types
- * \brief These can be used to configure the behaviour of the bio::seq_io::reader via bio::seq_io::reader_options.
+ * \brief These can be used to configure the behaviour of the bio::io::seq_io::reader via
+ * bio::io::seq_io::reader_options.
  * \{
  */
 
@@ -60,12 +61,12 @@ namespace bio::seq_io
  * Type of the ID will be std::string, type of the sequence will be std::vector<seqan3::dna4> and
  * type of the qualities will be std::vector<seqan3::phred42>.
  */
-template <bio::ownership   ownership   = bio::ownership::shallow,
-          seqan3::alphabet seq_alph_t  = seqan3::dna5,
-          seqan3::alphabet qual_alph_t = seqan3::phred63>
+template <bio::io::ownership ownership   = bio::io::ownership::shallow,
+          seqan3::alphabet   seq_alph_t  = seqan3::dna5,
+          seqan3::alphabet   qual_alph_t = seqan3::phred63>
 inline constinit auto field_types = []()
 {
-    if constexpr (ownership == bio::ownership::deep)
+    if constexpr (ownership == bio::io::ownership::deep)
     {
         return ttag<std::string,
                     std::conditional_t<std::same_as<seq_alph_t, char>, std::string, std::vector<seq_alph_t>>,
@@ -118,8 +119,8 @@ inline constinit auto field_types_char = field_types<ownership::shallow, char, c
  * \ingroup seq_io
  * \details
  *
- * By default, the reader options assume DNA data. You can select bio::seq_io::field_types_protein to
- * read protein data or bio::seq_io::field_types_char to store in an agnostic type.
+ * By default, the reader options assume DNA data. You can select bio::io::seq_io::field_types_protein to
+ * read protein data or bio::io::seq_io::field_types_char to store in an agnostic type.
  *
  * ### Example
  *
@@ -136,7 +137,7 @@ inline constinit auto field_types_char = field_types<ownership::shallow, char, c
  * Please be aware that those options that you modify need to be set in the correct order -- **which is
  * alphabetical order** for all option classes in this library.
  *
- * Typically, the options are set as part of the bio::seq_io::reader construction. See the respective
+ * Typically, the options are set as part of the bio::io::seq_io::reader construction. See the respective
  * documentation page for more information.
  *
  * ### Example (advanced)
@@ -156,15 +157,15 @@ inline constinit auto field_types_char = field_types<ownership::shallow, char, c
  * This section is only relevant if you specify the #field_types member manually, i.e. if you
  * change the field_types but do not use one of the predefined tags.
  *
- * 1. bio::field::id
+ * 1. bio::io::field::id
  *   * any back-insertable range over the `char` alphabet (copy of elements returned)
  *   * std::string_view (view into a buffer is returned)
- * 2. bio::field::seq
+ * 2. bio::io::field::seq
  *   * any back-insertable range over the `char` alphabet (copy of elements returned)
  *   * any back-insertable range over a seqan3::alphabet (elements are transformed via seqan3::views::char_strictly_to)
  *   * std::string_view (view into a buffer is returned)
  *   * a std::ranges::transform_view defined on a std::string_view (transformation view is returned)
- * 3. bio::field::qual
+ * 3. bio::io::field::qual
  *   * any back-insertable range over the `char` alphabet (copy of elements returned)
  *   * any back-insertable range over a seqan3::alphabet (elements are transformed via seqan3::views::char_strictly_to)
  *   * std::string_view (view into a buffer is returned)
@@ -175,7 +176,7 @@ template <typename field_ids_t   = decltype(default_field_ids),
           typename formats_t     = seqan3::type_list<fasta, fastq>>
 struct reader_options
 {
-    /*!\brief The fields that shall be contained in each record; a bio::vtag over bio::field.
+    /*!\brief The fields that shall be contained in each record; a bio::io::vtag over bio::io::field.
      * \details
      *
      * It is usually not necessary to change this.
@@ -183,7 +184,7 @@ struct reader_options
      */
     field_ids_t field_ids = default_field_ids;
 
-    /*!\brief The types corresponding to each field; a bio::ttag over the types.
+    /*!\brief The types corresponding to each field; a bio::io::ttag over the types.
      *
      * \details
      *
@@ -191,7 +192,7 @@ struct reader_options
      */
     field_types_t field_types = field_types_dna;
 
-    /*!\brief The formats that input files can take; a bio::ttag over the types.
+    /*!\brief The formats that input files can take; a bio::io::ttag over the types.
      *
      * \details
      *
@@ -206,40 +207,45 @@ struct reader_options
     bool truncate_ids = false;
 
 private:
-    static_assert(detail::is_fields_tag<field_ids_t>, "field_ids must be a bio::vtag over bio::field.");
+    static_assert(detail::is_fields_tag<field_ids_t>, "field_ids must be a bio::io::vtag over bio::io::field.");
 
-    static_assert(detail::is_type_list<field_types_t>, "field_types must be a bio::ttag / seqan3::type_list.");
+    static_assert(detail::is_type_list<field_types_t>, "field_types must be a bio::io::ttag / seqan3::type_list.");
 
-    static_assert(detail::is_type_list<formats_t>, "formats must be a bio::ttag / seqan3::type_list.");
+    static_assert(detail::is_type_list<formats_t>, "formats must be a bio::io::ttag / seqan3::type_list.");
 
     static_assert(field_ids_t::size == field_types_t::size(), "field_ids and field_types must have the same size.");
 
     //!\brief Type of the record.
     using record_t = record<field_ids_t, field_types_t>;
 
-    static_assert(
-      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
-        !field_ids_t::contains(field::id) || detail::back_insertable_with<record_element_t<field::id, rec_t>, char> ||
-        std::same_as<std::string_view, record_element_t<field::id, rec_t>>) { return std::true_type{}; }),
-      "Requirements for the field-type of the ID-field not met. See documentation for bio::seq_io::reader_options.");
+    static_assert(detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+                    !field_ids_t::contains(field::id) ||
+                    detail::back_insertable_with<record_element_t<field::id, rec_t>, char> ||
+                    std::same_as<std::string_view, record_element_t<field::id, rec_t>>) { return std::true_type{}; }),
+                  "Requirements for the field-type of the ID-field not met. See documentation for "
+                  "bio::io::seq_io::reader_options.");
 
-    static_assert(
-      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
-        !field_ids_t::contains(field::seq) ||
-        (detail::back_insertable<record_element_t<field::seq, rec_t>> &&
-         seqan3::alphabet<std::ranges::range_reference_t<record_element_t<field::seq, rec_t>>>) ||
-        std::same_as<std::string_view, record_element_t<field::seq, rec_t>> ||
-        detail::transform_view_on_string_view<record_element_t<field::seq, rec_t>>) { return std::true_type{}; }),
-      "Requirements for the field-type of the SEQ-field not met. See documentation for bio::seq_io::reader_options.");
+    static_assert(detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+                    !field_ids_t::contains(field::seq) ||
+                    (detail::back_insertable<record_element_t<field::seq, rec_t>> &&
+                     seqan3::alphabet<std::ranges::range_reference_t<record_element_t<field::seq, rec_t>>>) ||
+                    std::same_as<std::string_view, record_element_t<field::seq, rec_t>> ||
+                    detail::transform_view_on_string_view<record_element_t<field::seq, rec_t>>) {
+                      return std::true_type{};
+                  }),
+                  "Requirements for the field-type of the SEQ-field not met. See documentation for "
+                  "bio::io::seq_io::reader_options.");
 
-    static_assert(
-      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
-        !field_ids_t::contains(field::qual) ||
-        (detail::back_insertable<record_element_t<field::qual, rec_t>> &&
-         seqan3::alphabet<std::ranges::range_reference_t<record_element_t<field::qual, rec_t>>>) ||
-        std::same_as<std::string_view, record_element_t<field::qual, rec_t>> ||
-        detail::transform_view_on_string_view<record_element_t<field::qual, rec_t>>) { return std::true_type{}; }),
-      "Requirements for the field-type of the QUAL-field not met. See documentation for bio::seq_io::reader_options.");
+    static_assert(detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+                    !field_ids_t::contains(field::qual) ||
+                    (detail::back_insertable<record_element_t<field::qual, rec_t>> &&
+                     seqan3::alphabet<std::ranges::range_reference_t<record_element_t<field::qual, rec_t>>>) ||
+                    std::same_as<std::string_view, record_element_t<field::qual, rec_t>> ||
+                    detail::transform_view_on_string_view<record_element_t<field::qual, rec_t>>) {
+                      return std::true_type{};
+                  }),
+                  "Requirements for the field-type of the QUAL-field not met. See documentation for "
+                  "bio::io::seq_io::reader_options.");
 };
 
-} // namespace bio::seq_io
+} // namespace bio::io::seq_io

@@ -33,7 +33,7 @@
 #include <bio/io/exception.hpp>
 #include <bio/io/stream/compression.hpp>
 
-namespace bio::contrib
+namespace bio::io::contrib
 {
 
 /*!\brief A static variable indicating the number of threads to use for the bgzf-streams.
@@ -279,7 +279,7 @@ inline TDestCapacity _decompressBlock(TDestValue *                              
     if (srcLength <= BLOCK_HEADER_LENGTH + BLOCK_FOOTER_LENGTH)
         throw io_error("BGZF block too short.");
 
-    if (!bio::detail::header_matches<compression_format::bgzf>({srcBegin, srcLength}))
+    if (!bio::io::detail::header_matches<compression_format::bgzf>({srcBegin, srcLength}))
         throw io_error("Invalid BGZF block header.");
 
     size_t compressedLen = _bgzfUnpack16(srcBegin + 16) + 1u;
@@ -321,4 +321,4 @@ inline TDestCapacity _decompressBlock(TDestValue *                              
     return (dstCapacity - ctx.strm.avail_out) / sizeof(TDestValue);
 }
 
-} // namespace bio::contrib
+} // namespace bio::io::contrib

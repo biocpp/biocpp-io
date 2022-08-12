@@ -20,6 +20,6 @@
  * \brief Reader and writer for sequence files (FastA, FastQ, …).
  */
 
-/*!\namespace bio::seq_io
+/*!\namespace bio::io::seq_io
  * \brief Namespace for the Seq I/O submodule.
  */

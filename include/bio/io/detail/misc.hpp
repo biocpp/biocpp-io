@@ -25,7 +25,7 @@
 
 #include <bio/io/exception.hpp>
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 /*!\addtogroup bio
@@ -73,4 +73,4 @@ void set_format(auto & format, std::filesystem::path const & file_name)
 
 //!\}
 
-} // namespace bio::detail
+} // namespace bio::io::detail

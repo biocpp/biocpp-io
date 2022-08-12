@@ -25,7 +25,7 @@
 #include <bio/io/detail/to_string.hpp>
 #include <bio/io/exception.hpp>
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 /*!\addtogroup bio
@@ -99,7 +99,7 @@ std::from_chars_result from_chars(char const * first, char const * last, auto & 
  * Relies on std::from_chars to efficiently convert but accepts std::string_view and throws on error so
  * there is no return value that needs to be checked.
  *
- * TODO make this public (bio::) since it is useful for people doing plain IO
+ * TODO make this public (bio::io::) since it is useful for people doing plain IO
  */
 void string_to_number(std::string_view const input, seqan3::arithmetic auto & number)
 {
@@ -112,4 +112,4 @@ void string_to_number(std::string_view const input, seqan3::arithmetic auto & nu
 
 //!\}
 
-} // namespace bio::detail
+} // namespace bio::io::detail

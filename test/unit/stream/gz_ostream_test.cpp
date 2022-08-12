@@ -16,10 +16,10 @@
 
 TEST(gz_ostream, regular)
 {
-    regular<bio::compression_format::gz>();
+    regular<bio::io::compression_format::gz>();
 }
 
 TEST(gz_ostream, type_erased)
 {
-    type_erased<bio::compression_format::gz>();
+    type_erased<bio::io::compression_format::gz>();
 }

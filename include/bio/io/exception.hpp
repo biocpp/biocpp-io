@@ -18,7 +18,7 @@
 
 #include <bio/io/detail/to_string.hpp>
 
-namespace bio
+namespace bio::io
 {
 
 /*!\addtogroup bio
@@ -110,4 +110,4 @@ struct missing_header_error : bio_error
 
 //!\}
 
-} // namespace bio
+} // namespace bio::io

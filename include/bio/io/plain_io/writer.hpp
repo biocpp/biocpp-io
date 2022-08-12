@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::plain_io::writer.
+ * \brief Provides bio::io::plain_io::writer.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -23,7 +23,7 @@
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
 #include <bio/io/stream/transparent_ostream.hpp>
 
-namespace bio::plain_io
+namespace bio::io::plain_io
 {
 
 /*!\brief A concept that describes types directly writable via plain_io
@@ -47,9 +47,9 @@ concept writable_to_output =
    (std::ranges::input_range<arg_t> && std::convertible_to<std::ranges::range_reference_t<arg_t>, char>) ||
    (std::ranges::input_range<arg_t> && seqan3::alphabet<std::ranges::range_reference_t<arg_t>>));
 
-} // namespace bio::plain_io
+} // namespace bio::io::plain_io
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 //!\brief An output iterator for writing into plaintext files via certain convenience functions.
@@ -59,7 +59,7 @@ class plaintext_output_iterator
 {
 private:
     //!\brief The stream iterator.
-    bio::detail::fast_ostreambuf_iterator<char> stream_it;
+    bio::io::detail::fast_ostreambuf_iterator<char> stream_it;
 
     //!\brief Delimiter between fields.
     char field_sep  = '\t';
@@ -262,9 +262,9 @@ public:
     //!\}
 };
 
-} // namespace bio::detail
+} // namespace bio::io::detail
 
-namespace bio::plain_io
+namespace bio::io::plain_io
 {
 
 /*!\brief Line-wise writer of plaintext files; supports transparent compression.
@@ -277,7 +277,7 @@ namespace bio::plain_io
  *
  * Line-wise writing:
  * ```cpp
- * bio::plain_io::writer writer{"example.txt"};
+ * bio::io::plain_io::writer writer{"example.txt"};
  *
  * writer.push_back("line 1");
  * writer.emplace_back("line 2 contains the integer ", 3, " and the float ", 4.3, "!");
@@ -286,7 +286,7 @@ namespace bio::plain_io
  *
  * Column-wise writing:
  *```cpp
- * bio::plain_io::writer writer{"example.tsv.gz", '\t'}; // transparent compression supported
+ * bio::io::plain_io::writer writer{"example.tsv.gz", '\t'}; // transparent compression supported
  *
  * writer.push_back("This is the header line");
  * writer.emplace_back("col1", 3.4, "col3", 4);          // will be printed tab-separated
@@ -331,8 +331,8 @@ public:
     /*!\brief Construct from filename.
      * \param[in] filename        Path that you wish to write to.
      * \param[in] field_separator Delimiter between fields in a line. [optional]
-     * \param[in] ostream_options Options passed to the underlying stream; see bio::transparent_ostream_options.
-     * [optional] \throws bio::file_open_error If the file could not be opened, e.g. non-existant or non-readable.
+     * \param[in] ostream_options Options passed to the underlying stream; see bio::io::transparent_ostream_options.
+     * [optional] \throws bio::io::file_open_error If the file could not be opened, e.g. non-existant or non-readable.
      *
      * \details
      *
@@ -360,7 +360,7 @@ public:
      * \param[in] str             The stream to open from; lvalues and rvalues are supported.
      * \param[in] field_separator Delimiter between fields in a line. [optional]
      * \param[in] ostream_options Options passed to the underlying stream; see bio:transparent_ostream_options.
-     * [optional] \throws bio::file_open_error If the file could not be opened, e.g. non-existant or non-readable.
+     * [optional] \throws bio::io::file_open_error If the file could not be opened, e.g. non-existant or non-readable.
      *
      * \details
      *
@@ -453,7 +453,7 @@ public:
      *
      * \details
      *
-     * See bio::plain_io::writable_to_output for a list of the types supported.
+     * See bio::io::plain_io::writable_to_output for a list of the types supported.
      *
      * If the file is a delimited file, the delimiter character is written between values -- otherwise they are simply
      * concatenated.
@@ -471,7 +471,7 @@ public:
      *
      * \details
      *
-     * See bio::plain_io::writable_to_output for a list of the types supported.
+     * See bio::io::plain_io::writable_to_output for a list of the types supported.
      *
      * If the file is a delimited file, the delimiter character is written between values -- otherwise they are
      * simply concatenated.
@@ -500,7 +500,7 @@ public:
      *
      * This function is only available for delimited files and the delimiter is inserted between each value.
      *
-     * The element type of the range must be one of the types described in bio::plain_io::writable_to_output.
+     * The element type of the range must be one of the types described in bio::io::plain_io::writable_to_output.
      *
      * A newline is inserted after the arguments are written.
      */
@@ -619,7 +619,7 @@ protected:
 };
 
 /*!\name Deduction guides
- * \relates bio::plain_io::writer
+ * \relates bio::io::plain_io::writer
  * \{
  */
 //!\brief Deduce to line_and_fields specialisation.
@@ -631,4 +631,4 @@ writer(auto &&, transparent_ostream_options const & ostream_options = transparen
   -> writer<record_kind::line>;
 //!\}
 
-} // namespace bio::plain_io
+} // namespace bio::io::plain_io

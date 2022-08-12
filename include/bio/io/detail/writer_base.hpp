@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::writer_base.
+ * \brief Provides bio::io::writer_base.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -29,7 +29,7 @@
 #include <bio/io/stream/transparent_ostream.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
 
-namespace bio
+namespace bio::io
 {
 
 // ----------------------------------------------------------------------------
@@ -124,7 +124,8 @@ public:
      * \param[in] filename  Path to the file you wish to open.
      * \param[in] fmt      The file format given as e.g. `fasta{}` [optional]
      * \param[in] opt       Writer options (exact type depends on specialisation). [optional]
-     * \throws bio::file_open_error If the file could not be opened, e.g. non-existant, non-readable, unknown format.
+     * \throws bio::io::file_open_error If the file could not be opened, e.g. non-existant, non-readable, unknown
+     * format.
      *
      * \details
      *
@@ -225,7 +226,7 @@ public:
      */
     sentinel end() noexcept { return {}; }
 
-    /*!\brief Write a bio::record to the file.
+    /*!\brief Write a bio::io::record to the file.
      * \tparam field_types Types of the fields in the record.
      * \tparam field_ids   IDs of the fields in the record.
      * \param[in] r        The record to write.
@@ -261,7 +262,7 @@ public:
     }
 
     /*!\brief Write a record to the file by passing individual fields.
-     * \param[in] ids    The composition of fields; a bio::vtag over bio::field.
+     * \param[in] ids    The composition of fields; a bio::io::vtag over bio::io::field.
      * \param[in] args   The fields to be written.
      *
      * \details
@@ -284,7 +285,7 @@ public:
     }
 
     /*!\brief Write a range of records to the file.
-     * \tparam rng_t     Type of the range, must be a std::ranges::input_range over bio::record.
+     * \tparam rng_t     Type of the range, must be a std::ranges::input_range over bio::io::record.
      * \param[in] range  The range to write.
      *
      * \details
@@ -301,7 +302,7 @@ public:
      */
     template <std::ranges::input_range rng_t>
     requires seqan3::detail::template_specialisation_of<std::remove_cvref_t<std::ranges::range_reference_t<rng_t>>,
-                                                        bio::record>
+                                                        bio::io::record>
       writer_base & operator=(rng_t && range)
     {
         for (auto && record : range)
@@ -310,7 +311,7 @@ public:
     }
 
     /*!\brief            Write a range of records (or tuples) to the file.
-     * \tparam rng_t     Type of the range, must be a std::ranges::input_range over bio::record.
+     * \tparam rng_t     Type of the range, must be a std::ranges::input_range over bio::io::record.
      * \param[in] range  The range to write.
      * \param[in] f      The file being written to.
      *
@@ -329,7 +330,7 @@ public:
      */
     template <std::ranges::input_range rng_t>
         requires seqan3::detail::template_specialisation_of<std::remove_cvref_t<std::ranges::range_reference_t<rng_t>>,
-                                                            bio::record>
+                                                            bio::io::record>
     friend writer_base & operator|(rng_t && range, writer_base & f)
     {
         f = range;
@@ -339,7 +340,7 @@ public:
     //!\overload
     template <std::ranges::input_range rng_t>
         requires seqan3::detail::template_specialisation_of<std::remove_cvref_t<std::ranges::range_reference_t<rng_t>>,
-                                                            bio::record>
+                                                            bio::io::record>
     friend writer_base operator|(rng_t && range, writer_base && f)
     {
         f = range;
@@ -387,4 +388,4 @@ protected:
     //!\}
 };
 
-} // namespace bio
+} // namespace bio::io

@@ -19,10 +19,10 @@
 
 #include <bio/io/platform.hpp>
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
-/*!\interface   bio::detail::tuple_of_two <>
+/*!\interface   bio::io::detail::tuple_of_two <>
  * \ingroup bio
  * \tparam t    The type to check.
  * \brief       A tuple/pair with exactly two elements.
@@ -54,7 +54,7 @@ struct converts_to_any_lref
     }
 };
 
-/*!\interface   bio::detail::aggregate_of_two <>
+/*!\interface   bio::io::detail::aggregate_of_two <>
  * \ingroup bio
  * \tparam t    The type to check.
  * \brief       A aggregate type with exactly two elements.
@@ -68,10 +68,10 @@ concept aggregate_of_two = std::is_aggregate_v<t> &&
 // clang-format on
 //!\endcond
 
-/*!\interface   bio::detail::decomposable_into_two <>
+/*!\interface   bio::io::detail::decomposable_into_two <>
  * \ingroup bio
  * \tparam t    The type to check.
- * \brief       Either bio::detail::tuple_of_two or bio::detail::aggregate_of_two. CVREF is removed.
+ * \brief       Either bio::io::detail::tuple_of_two or bio::io::detail::aggregate_of_two. CVREF is removed.
  */
 //!\cond
 template <typename t>
@@ -80,7 +80,7 @@ concept decomposable_into_two = tuple_of_two<std::remove_cvref_t<t>> || aggregat
 
 /*!\brief Get the first element.
  * \ingroup bio
- * \see bio::detail::decomposable_into_two
+ * \see bio::io::detail::decomposable_into_two
  */
 auto & get_first(decomposable_into_two auto & val)
 {
@@ -90,14 +90,14 @@ auto & get_first(decomposable_into_two auto & val)
 
 /*!\brief Type of the first element with CVREF removed.
  * \ingroup bio
- * \see bio::detail::decomposable_into_two
+ * \see bio::io::detail::decomposable_into_two
  */
 template <typename t>
 using first_elem_t = std::remove_cvref_t<decltype(get_first(std::declval<t &>()))>;
 
 /*!\brief Get the second element.
  * \ingroup bio
- * \see bio::detail::decomposable_into_two
+ * \see bio::io::detail::decomposable_into_two
  */
 auto & get_second(decomposable_into_two auto & val)
 {
@@ -107,16 +107,16 @@ auto & get_second(decomposable_into_two auto & val)
 
 /*!\brief Type of the second element with CVREF removed.
  * \ingroup bio
- * \see bio::detail::decomposable_into_two
+ * \see bio::io::detail::decomposable_into_two
  */
 template <typename t>
 using second_elem_t = std::remove_cvref_t<decltype(get_second(std::declval<t &>()))>;
 
-//!\brief Overload of bio::detail::range_or_tuple_size for aggregates of two.
+//!\brief Overload of bio::io::detail::range_or_tuple_size for aggregates of two.
 //!\ingroup bio
 constexpr size_t range_or_tuple_size(aggregate_of_two auto &&)
 {
     return 2;
 }
 
-} // namespace bio::detail
+} // namespace bio::io::detail

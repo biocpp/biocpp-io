@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides the bio::detail::compression_stream trait.
+ * \brief Provides the bio::io::detail::compression_stream trait.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -30,11 +30,11 @@
 #    include <bio/io/stream/detail/gz_ostream.hpp>
 #endif
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 /*!\brief Stream aliases for the respective compression formats.
- * \tparam format The bio::compression_format whose traits are provided.
+ * \tparam format The bio::io::compression_format whose traits are provided.
  * \ingroup io
  *
  * \details
@@ -51,53 +51,53 @@ struct compression_stream
     using ostream = void;
 };
 
-/*!\brief Traits for the bio::compression_format::bgzf.
- * \see bio::compression_traits
+/*!\brief Traits for the bio::io::compression_format::bgzf.
+ * \see bio::io::compression_traits
  */
 template <>
 struct compression_stream<compression_format::bgzf> : compression_stream<compression_format::none>
 {
 #ifdef BIO_HAS_ZLIB
-    //!\copydoc bio::compression_traits<compression_format::none>::basic_istream
+    //!\copydoc bio::io::compression_traits<compression_format::none>::basic_istream
     using istream = contrib::bgzf_istream;
 
-    //!\copydoc bio::compression_traits<compression_format::none>::basic_ostream
+    //!\copydoc bio::io::compression_traits<compression_format::none>::basic_ostream
     using ostream = contrib::bgzf_ostream;
 #endif
 };
 
-/*!\brief Traits for the bio::compression_format::gz.
- * \see bio::compression_traits
+/*!\brief Traits for the bio::io::compression_format::gz.
+ * \see bio::io::compression_traits
  */
 template <>
 struct compression_stream<compression_format::gz> : compression_stream<compression_format::none>
 {
 #ifdef BIO_HAS_ZLIB
-    //!\copydoc bio::compression_traits<compression_format::none>::basic_istream
+    //!\copydoc bio::io::compression_traits<compression_format::none>::basic_istream
     using istream = contrib::gz_istream;
 
-    //!\copydoc bio::compression_traits<compression_format::none>::basic_ostream
+    //!\copydoc bio::io::compression_traits<compression_format::none>::basic_ostream
     using ostream = contrib::gz_ostream;
 #endif
 };
 
-/*!\brief Traits for the bio::compression_format::bz2.
- * \see bio::compression_traits
+/*!\brief Traits for the bio::io::compression_format::bz2.
+ * \see bio::io::compression_traits
  */
 template <>
 struct compression_stream<compression_format::bz2> : compression_stream<compression_format::none>
 {
 #ifdef BIO_HAS_BZIP2
-    //!\copydoc bio::compression_traits<compression_format::none>::basic_istream
+    //!\copydoc bio::io::compression_traits<compression_format::none>::basic_istream
     using istream = contrib::bz2_istream;
 
-    //!\copydoc bio::compression_traits<compression_format::none>::basic_ostream
+    //!\copydoc bio::io::compression_traits<compression_format::none>::basic_ostream
     using ostream = contrib::bz2_ostream;
 #endif
 };
 
-/*!\brief Traits for the bio::compression_format::zstd.
- * \see bio::compression_traits
+/*!\brief Traits for the bio::io::compression_format::zstd.
+ * \see bio::io::compression_traits
  */
 template <>
 struct compression_stream<compression_format::zstd> : compression_stream<compression_format::none>
@@ -146,4 +146,4 @@ std::ostream * make_ostream(args_t &&... args)
     }
 }
 
-} // namespace bio::detail
+} // namespace bio::io::detail

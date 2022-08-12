@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::transparent_ostream.
+ * \brief Provides bio::io::transparent_ostream.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -25,10 +25,10 @@
 #include <bio/io/stream/concept.hpp>
 #include <bio/io/stream/detail/make_stream.hpp>
 
-namespace bio
+namespace bio::io
 {
 
-//!\brief Options that can be provided to bio::transparent_ostream.
+//!\brief Options that can be provided to bio::io::transparent_ostream.
 //!\ingroup stream
 struct transparent_ostream_options
 {
@@ -85,7 +85,7 @@ struct transparent_ostream_options
  * This is a c++ iostream compatible type that transparently compresses streams, i.e. depending on run-time arguments
  * provided to this stream object, the data written to it will be compressed (or not).
  *
- * See bio::compression_format for a list of currently supported formats.
+ * See bio::io::compression_format for a list of currently supported formats.
  *
  * A filename may be provided, in which case this stream behaves like a file stream and the format of compression is
  * detected from the filename (extension). Or an existing input stream can be given which is then wrapped by this
@@ -96,17 +96,17 @@ struct transparent_ostream_options
  * ```cpp
  * std::string_view content = "FOOBAR";
  *
- * bio::transparent_ostream s1{"my_file.txt"};      // behaves like std::ofstream
+ * bio::io::transparent_ostream s1{"my_file.txt"};      // behaves like std::ofstream
  * s1 << content;
  *
- * bio::transparent_ostream s2{"my_file.txt.gz"};   // data is written GZ compressed
+ * bio::io::transparent_ostream s2{"my_file.txt.gz"};   // data is written GZ compressed
  * s2 << content;
  *
- * bio::transparent_ostream s3{std::cout};          // wrap standard input; no compression
+ * bio::io::transparent_ostream s3{std::cout};          // wrap standard input; no compression
  * s3 << content;
  *
- * bio::transparent_ostream s4{std::cout, { .compression = bio::compression_format::bgzf } }; // use BGZF compression
- * s4 << content;
+ * bio::io::transparent_ostream s4{std::cout, { .compression = bio::io::compression_format::bgzf } }; // use BGZF
+ * compression s4 << content;
  * ```
  *
  * Explicitly request BZGF compression and a total of two threads (one extra thread for compression):
@@ -114,8 +114,8 @@ struct transparent_ostream_options
  * ```cpp
  * std::string_view content = "FOOBAR";
  *
- * bio::transparent_ostream s{std::cout,
- *                            { .compression = bio::compression_format::bgzf, .threads = 2 } };
+ * bio::io::transparent_ostream s{std::cout,
+ *                            { .compression = bio::io::compression_format::bgzf, .threads = 2 } };
  * s << content;
  * ```
  */
@@ -252,7 +252,7 @@ public:
     }
     /*!\brief Construct from a filename.
      * \param[in] filename  The filename to open.
-     * \param[in] options   See bio::transparent_ostream_options.
+     * \param[in] options   See bio::io::transparent_ostream_options.
      *
      * \details
      *
@@ -281,7 +281,7 @@ public:
 
     /*!\brief Construct from a stream.
      * \param[in] stream  The stream to wrap.
-     * \param[in] options See bio::transparent_ostream_options.
+     * \param[in] options See bio::io::transparent_ostream_options.
      *
      * \details
      *
@@ -326,4 +326,4 @@ public:
     std::basic_streambuf<char> * rdbuf() const { return secondary_stream->rdbuf(); }
 };
 
-} // namespace bio
+} // namespace bio::io

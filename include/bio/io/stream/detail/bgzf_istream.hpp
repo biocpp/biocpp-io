@@ -35,7 +35,7 @@
 #include <bio/io/exception.hpp>
 #include <bio/io/stream/detail/bgzf_stream_util.hpp>
 
-namespace bio::contrib
+namespace bio::io::contrib
 {
 
 // ===========================================================================
@@ -198,7 +198,7 @@ private:
                         }
 
                         // check header
-                        if (!bio::detail::header_matches<compression_format::bgzf>(
+                        if (!bio::io::detail::header_matches<compression_format::bgzf>(
                               {job.inputBuffer.begin(), job.inputBuffer.end()}))
                         {
                             streamBuf->serializer.fileOfs = -1;
@@ -602,4 +602,4 @@ typedef basic_bgzf_istream<char>    bgzf_istream;
 // A typedef for basic_bgzf_istream<wchart>
 typedef basic_bgzf_istream<wchar_t> bgzf_wistream;
 
-} // namespace bio::contrib
+} // namespace bio::io::contrib

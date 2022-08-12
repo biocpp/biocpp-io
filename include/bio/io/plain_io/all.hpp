@@ -20,6 +20,6 @@
  * \brief Reader and writer for plaintext and CSV/TSV files.
  */
 
-/*!\namespace bio::plain_io
+/*!\namespace bio::io::plain_io
  * \brief Namespace for the Plain I/O submodule.
  */

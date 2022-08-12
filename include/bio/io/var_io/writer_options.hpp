@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::var_io::writer_options.
+ * \brief Provides bio::io::var_io::writer_options.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -18,7 +18,7 @@
 #include <bio/io/stream/transparent_ostream.hpp>
 #include <bio/io/var_io/misc.hpp>
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 template <typename t>
@@ -26,9 +26,9 @@ concept var_io_legal_type_aux =
   std::same_as<t, char> || std::signed_integral<t> || std::floating_point<t> || std::same_as < std::decay_t<t>,
 char const * > ;
 
-/*!\interface bio::detail::var_io_legal_type <>
+/*!\interface bio::io::detail::var_io_legal_type <>
  * \tparam t The type to check.
- * \brief A type that is similar to one of the alternatives of bio::var_io::info_element_value_type
+ * \brief A type that is similar to one of the alternatives of bio::io::var_io::info_element_value_type
  */
 //!\cond CONCEPT_DEF
 template <typename t>
@@ -38,9 +38,9 @@ concept var_io_legal_type = var_io_legal_type_aux<std::remove_cvref_t<t>> || std
                                       std::same_as<char const &, std::ranges::range_reference_t<t> const &>)));
 //!\endcond
 
-/*!\interface bio::detail::var_io_legal_vector_type <>
+/*!\interface bio::io::detail::var_io_legal_vector_type <>
  * \tparam t The type to check.
- * \brief A type that is similar to one of the alternatives of bio::var_io::info_element_value_type
+ * \brief A type that is similar to one of the alternatives of bio::io::var_io::info_element_value_type
  */
 //!\cond CONCEPT_DEF
 template <typename t>
@@ -49,27 +49,27 @@ concept var_io_legal_vector_type =
   !std::same_as<bool const &, std::ranges::range_reference_t<t>>;
 //!\endcond
 
-/*!\interface bio::detail::var_io_legal_or_dynamic <>
+/*!\interface bio::io::detail::var_io_legal_or_dynamic <>
  * \tparam t The type to check.
- * \brief A type that is similar to one of the alternatives of bio::var_io::info_element_value_type
+ * \brief A type that is similar to one of the alternatives of bio::io::var_io::info_element_value_type
  */
 //!\cond CONCEPT_DEF
 template <typename t>
 concept var_io_legal_or_dynamic = var_io_legal_type<t> || is_info_element_value_type<t>;
 //!\endcond
 
-/*!\interface bio::detail::var_io_vector_legal_or_dynamic <>
+/*!\interface bio::io::detail::var_io_vector_legal_or_dynamic <>
  * \tparam t The type to check.
- * \brief A type that is similar to one of the alternatives of bio::var_io::info_element_value_type
+ * \brief A type that is similar to one of the alternatives of bio::io::var_io::info_element_value_type
  */
 //!\cond CONCEPT_DEF
 template <typename t>
 concept var_io_vector_legal_or_dynamic = var_io_legal_vector_type<t> || is_genotype_element_value_type<t>;
 //!\endcond
 
-/*!\interface bio::detail::info_element_writer_concept <>
+/*!\interface bio::io::detail::info_element_writer_concept <>
  * \tparam t The type to check.
- * \brief Types "similar" to bio::var_io::info_element / bio::var_io::info_element_bcf.
+ * \brief Types "similar" to bio::io::var_io::info_element / bio::io::var_io::info_element_bcf.
  */
 //!\cond CONCEPT_DEF
 template <typename t>
@@ -78,9 +78,9 @@ concept info_element_writer_concept = detail::decomposable_into_two<t> &&
    std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::var_io_legal_or_dynamic<detail::second_elem_t<t>>;
 //!\endcond
 
-/*!\interface bio::detail::genotype_writer_concept <>
+/*!\interface bio::io::detail::genotype_writer_concept <>
  * \tparam t The type to check.
- * \brief Types "similar" to bio::var_io::genotype_element / bio::var_io::genotype_element_bcf.
+ * \brief Types "similar" to bio::io::var_io::genotype_element / bio::io::var_io::genotype_element_bcf.
  */
 //!\cond CONCEPT_DEF
 template <typename t>
@@ -89,12 +89,12 @@ concept genotype_writer_concept = detail::decomposable_into_two<t> &&
    std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::var_io_vector_legal_or_dynamic<detail::second_elem_t<t>>;
 //!\endcond
 
-} // namespace bio::detail
+} // namespace bio::io::detail
 
-namespace bio::var_io
+namespace bio::io::var_io
 {
 
-/*!\brief Options that can be used to configure the behaviour of bio::var_io::writer.
+/*!\brief Options that can be used to configure the behaviour of bio::io::var_io::writer.
  * \tparam formats_t     Type of the formats member (usually deduced).
  * \ingroup var_io
  *
@@ -116,11 +116,11 @@ struct writer_options
      */
     bool compress_integers = true;
 
-    /*!\brief The formats that output files can take; a bio::ttag over the types.
+    /*!\brief The formats that output files can take; a bio::io::ttag over the types.
      *
      * \details
      *
-     * See bio::var_io::writer for an overview of the the supported formats.
+     * See bio::io::var_io::writer for an overview of the the supported formats.
      */
     formats_t formats = ttag<bcf, vcf>;
 
@@ -150,7 +150,7 @@ struct writer_options
      *
      * ¹ There are two sets of IDX values: one for contigs and one for INFO, FILTER and FORMAT entries (combined).
      *
-     * This option is always assumed to be true for bio::bcf.
+     * This option is always assumed to be true for bio::io::bcf.
      */
     bool write_IDX = false;
 
@@ -170,7 +170,7 @@ struct writer_options
     bool verify_header_types = false;
 
 private:
-    static_assert(detail::is_type_list<formats_t>, "formats must be a bio::ttag / seqan3::type_list.");
+    static_assert(detail::is_type_list<formats_t>, "formats must be a bio::io::ttag / seqan3::type_list.");
 };
 
-} // namespace bio::var_io
+} // namespace bio::io::var_io

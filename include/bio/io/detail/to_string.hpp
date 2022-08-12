@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::detail::to_string().
+ * \brief Provides bio::io::detail::to_string().
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -20,7 +20,7 @@
 
 #include <bio/io/platform.hpp>
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 /*!\brief Convert something to a string.
@@ -43,4 +43,4 @@ std::string to_string(auto && in)
         static_assert(std::constructible_from<std::string, in_t>, "Type cannot be converted to string");
 }
 
-} // namespace bio::detail
+} // namespace bio::io::detail

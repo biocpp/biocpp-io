@@ -19,7 +19,7 @@
 
 #include "data.hpp"
 
-template <bio::compression_format f, typename stream_t = typename bio::detail::compression_stream<f>::istream>
+template <bio::io::compression_format f, typename stream_t = typename bio::io::detail::compression_stream<f>::istream>
 void regular()
 {
     seqan3::test::tmp_filename filename{"istream_test"};
@@ -37,7 +37,7 @@ void regular()
     EXPECT_EQ(buffer, uncompressed);
 }
 
-template <bio::compression_format f, typename stream_t = typename bio::detail::compression_stream<f>::istream>
+template <bio::io::compression_format f, typename stream_t = typename bio::io::detail::compression_stream<f>::istream>
 void type_erased()
 {
     seqan3::test::tmp_filename filename{"istream_test"};

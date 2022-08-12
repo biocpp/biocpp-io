@@ -19,14 +19,14 @@
 
 #include <bio/io/detail/utility.hpp>
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 /*!\addtogroup bio
  * \{
  */
 
-/*!\interface   bio::detail::one_of <>
+/*!\interface   bio::io::detail::one_of <>
  * \tparam t    The query type to compare.
  * \tparam ts   The reference types.
  * \brief       Checks whether the list of reference types contains the query type.
@@ -36,7 +36,7 @@ template <typename t, typename... ts>
 concept one_of = (std::same_as<t, ts> || ...);
 //!\endcond
 
-/*!\interface   bio::detail::deliberate_alphabet <>
+/*!\interface   bio::io::detail::deliberate_alphabet <>
  * \tparam t    The query type to compare.
  * \brief       A seqan3::alphabet that is **not** a character or a number (any std::integral).
  */
@@ -45,7 +45,7 @@ template <typename t>
 concept deliberate_alphabet = seqan3::alphabet<t> && !std::integral<std::remove_cvref_t<t>>;
 //!\endcond
 
-/*!\interface   bio::detail::decays_to <>
+/*!\interface   bio::io::detail::decays_to <>
  * \tparam t    The type to check.
  * \brief       Shortcut for `std::same_as<std::decay_t<from_t>, to_t>`.
  */
@@ -57,7 +57,7 @@ concept decays_to = std::same_as<std::decay_t<from_t>, to_t>;
 /*!\brief Pass this function a constrained functor that accepts one argument and returns std::true_type.
  * \details
  *
- * See e.g. bio::seq_io::reader_options to see how this is used.
+ * See e.g. bio::io::seq_io::reader_options to see how this is used.
  */
 constexpr bool lazy_concept_checker(auto fun)
 {
@@ -71,4 +71,4 @@ constexpr bool lazy_concept_checker(auto fun)
 
 //!\}
 
-} // namespace bio::detail
+} // namespace bio::io::detail

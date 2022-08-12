@@ -30,7 +30,7 @@
 
 #include <bio/io/stream/detail/bgzf_stream_util.hpp>
 
-namespace bio::contrib
+namespace bio::io::contrib
 {
 
 // --------------------------------------------------------------------------
@@ -385,4 +385,4 @@ typedef basic_bgzf_ostream<char>    bgzf_ostream;
 // A typedef for basic_bgzf_ostream<wchar_t>
 typedef basic_bgzf_ostream<wchar_t> bgzf_wostream;
 
-} // namespace bio::contrib
+} // namespace bio::io::contrib

@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::var_io::reader.
+ * \brief Provides bio::io::var_io::reader.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -22,7 +22,7 @@
 #include <bio/io/var_io/header.hpp>
 #include <bio/io/var_io/reader_options.hpp>
 
-namespace bio::var_io
+namespace bio::io::var_io
 {
 
 // ----------------------------------------------------------------------------
@@ -30,7 +30,7 @@ namespace bio::var_io
 // ----------------------------------------------------------------------------
 
 /*!\brief A class for reading variant files, e.g. VCF, BCF, GVCF.
- * \tparam option_args_t Arguments that are forwarded to bio::var_io::reader_options.
+ * \tparam option_args_t Arguments that are forwarded to bio::io::var_io::reader_options.
  * \ingroup var_io
  *
  * \details
@@ -42,15 +42,15 @@ namespace bio::var_io
  *
  * The Variant I/O reader supports reading the following fields:
  *
- *   1. bio::field::chrom
- *   2. bio::field::pos
- *   3. bio::field::id
- *   4. bio::field::ref
- *   5. bio::field::alt
- *   6. bio::field::qual
- *   7. bio::field::filter
- *   8. bio::field::info
- *   9. bio::field::genotypes
+ *   1. bio::io::field::chrom
+ *   2. bio::io::field::pos
+ *   3. bio::io::field::id
+ *   4. bio::io::field::ref
+ *   5. bio::io::field::alt
+ *   6. bio::io::field::qual
+ *   7. bio::io::field::filter
+ *   8. bio::io::field::info
+ *   9. bio::io::field::genotypes
  *
  * These fields correspond to the order and names defined in the VCF specification. The types and values that
  * are returned by default also correspond to VCF specification (i.e. 1-based positions, string as strings and not
@@ -60,11 +60,11 @@ namespace bio::var_io
  *
  * This reader supports the following formats:
  *
- *   1. VCF (see also bio::vcf)
- *   2. BCF (see also bio::bcf)
+ *   1. VCF (see also bio::io::vcf)
+ *   2. BCF (see also bio::io::bcf)
  *
  * If you only need to read VCF and not BCF and you do not want to parse the fields into high-level data structures
- * (and simply use them as strings), you can use bio::plain_io::reader instead of this reader.
+ * (and simply use them as strings), you can use bio::io::plain_io::reader instead of this reader.
  *
  * ### Simple usage
  *
@@ -88,7 +88,7 @@ namespace bio::var_io
  * \snippet test/snippet/var_io/var_io_reader.cpp region
  *
  * This region filter requires an index, although region filtering without an index
- * is also available; see bio::var_io::reader_options::region.
+ * is also available; see bio::io::var_io::reader_options::region.
  *
  * ### Views on readers
  *
@@ -100,7 +100,7 @@ namespace bio::var_io
  *
  * TODO
  *
- * For more advanced options, see bio::var_io::reader_options.
+ * For more advanced options, see bio::io::var_io::reader_options.
  */
 template <typename... option_args_t>
 class reader : public reader_base<reader<option_args_t...>, reader_options<option_args_t...>>
@@ -176,7 +176,7 @@ private:
         }
         else if (!options.region_index_optional)
         {
-            throw bio::file_open_error{
+            throw bio::io::file_open_error{
               "No index file was found. To allow linear-time filtering without an index, "
               "set options.region_index_optional to true."};
         }
@@ -263,7 +263,7 @@ public:
     using format_type = typename base_t::format_type;
 
     // clang-format off
-    //!\copydoc bio::reader_base::reader_base(std::filesystem::path const & filename, format_type const & fmt, options_t const & opt = options_t{})
+    //!\copydoc bio::io::reader_base::reader_base(std::filesystem::path const & filename, format_type const & fmt, options_t const & opt = options_t{})
     // clang-format on
     reader(std::filesystem::path const &            filename,
            format_type const &                      fmt,
@@ -278,7 +278,7 @@ public:
     {}
 
     // clang-format off
-    //!\copydoc bio::reader_base::reader_base(std::istream & str, format_type const & fmt, options_t const & opt = options_t{})
+    //!\copydoc bio::io::reader_base::reader_base(std::istream & str, format_type const & fmt, options_t const & opt = options_t{})
     // clang-format on
     reader(std::istream &                           str,
            format_type const &                      fmt,
@@ -298,7 +298,7 @@ public:
     {}
 
     //!\brief Access the header.
-    bio::var_io::header const & header()
+    bio::io::var_io::header const & header()
     {
         if (header_ptr == nullptr)
         {
@@ -327,4 +327,4 @@ public:
     }
 };
 
-} // namespace bio::var_io
+} // namespace bio::io::var_io

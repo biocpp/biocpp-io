@@ -39,14 +39,14 @@
 #include <bio/io/var_io/misc.hpp>
 #include <bio/io/var_io/reader_options.hpp> //TODO for field_types_raw; move somewhere else
 
-namespace bio::detail
+namespace bio::io::detail
 {
 //!\brief Low-level input iterator that points to the byte-region of a BCF record in the input file.
 class bcf_input_iterator
 {
 private:
     //!\brief Down-cast pointer to the stream-buffer.
-    bio::detail::stream_buffer_exposer<char> * stream_buf = nullptr;
+    bio::io::detail::stream_buffer_exposer<char> * stream_buf = nullptr;
 
     //!\brief Place to store lines that overlap buffer boundaries.
     std::basic_string<char> overflow_buffer;
@@ -86,7 +86,7 @@ public:
 
     //!\brief Construct from a stream buffer.
     explicit bcf_input_iterator(std::basic_streambuf<char> & ibuf, bool const init = true) :
-      stream_buf{reinterpret_cast<bio::detail::stream_buffer_exposer<char> *>(&ibuf)}
+      stream_buf{reinterpret_cast<bio::io::detail::stream_buffer_exposer<char> *>(&ibuf)}
     {
         assert(stream_buf != nullptr);
         stream_buf->underflow(); // ensure the stream buffer has content on construction
@@ -150,7 +150,7 @@ public:
     //!\brief Resets the state of this iterator to cope with changes in underlying stream.
     void reset(std::basic_streambuf<char> & ibuf)
     {
-        stream_buf = reinterpret_cast<bio::detail::stream_buffer_exposer<char> *>(&ibuf);
+        stream_buf = reinterpret_cast<bio::io::detail::stream_buffer_exposer<char> *>(&ibuf);
         overflow_buffer.clear();
         field_end_positions.clear();
         at_end = false;
@@ -304,11 +304,11 @@ public:
     //!\}
 };
 
-} // namespace bio::detail
+} // namespace bio::io::detail
 
-namespace bio
+namespace bio::io
 {
-/*!\brief Format input handler for the BCF format (bio::bcf).
+/*!\brief Format input handler for the BCF format (bio::io::bcf).
  * \ingroup format
  * \details
  *
@@ -1009,8 +1009,9 @@ public:
      * \param[in] options An object with options for the input handler.
      * \details
      *
-     * The options argument is typically bio::var_io::reader_options, but any object with a subset of similarly named
-     * members is also accepted. See bio::format_input_handler<bio::bcf> for the supported options and defaults.
+     * The options argument is typically bio::io::var_io::reader_options, but any object with a subset of similarly
+     * named members is also accepted. See bio::io::format_input_handler<bio::io::bcf> for the supported options and
+     * defaults.
      */
     template <typename options_t>
     format_input_handler(std::istream & str, options_t const & options) : base_t{str}, file_it{str, false /*no_init!*/}
@@ -1353,4 +1354,4 @@ inline void format_input_handler<bcf>::parse_element_value_type(var_io::value_ty
     }
 }
 
-} // namespace bio
+} // namespace bio::io

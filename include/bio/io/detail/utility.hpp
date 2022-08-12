@@ -25,7 +25,7 @@
 
 #include <bio/io/exception.hpp>
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 /*!\addtogroup bio
@@ -39,7 +39,7 @@ struct overloaded : functors...
     using functors::operator()...;
 };
 
-//!\brief Deduction guide for bio::detail::overloaded.
+//!\brief Deduction guide for bio::io::detail::overloaded.
 template <typename... functors>
 overloaded(functors...) -> overloaded<functors...>;
 //!\}
@@ -67,4 +67,4 @@ struct move_tracker
     bool moved_from = false;
 };
 
-} // namespace bio::detail
+} // namespace bio::io::detail

@@ -18,7 +18,7 @@
 
 #include <bio/io/platform.hpp>
 
-namespace bio
+namespace bio::io
 {
 
 template <typename stream_type, typename char_type = char>
@@ -27,4 +27,4 @@ concept movable_istream = std::derived_from<stream_type, std::basic_istream<char
 template <typename stream_type, typename char_type = char>
 concept movable_ostream = std::derived_from<stream_type, std::basic_ostream<char_type>> && std::movable<stream_type>;
 
-} // namespace bio
+} // namespace bio::io

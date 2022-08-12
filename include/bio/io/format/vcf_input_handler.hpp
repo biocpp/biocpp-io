@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides the seqan3::format_input_handler<bio::vcf>.
+ * \brief Provides the seqan3::format_input_handler<bio::io::vcf>.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -38,10 +38,10 @@
 #include <bio/io/var_io/misc.hpp>
 #include <bio/io/var_io/reader_options.hpp>
 
-namespace bio
+namespace bio::io
 {
 
-/*!\brief Format input handler for the VCF format (bio::vcf).
+/*!\brief Format input handler for the VCF format (bio::io::vcf).
  * \ingroup format
  * \details
  *
@@ -187,7 +187,7 @@ private:
 
                 if (print_warnings)
                 {
-                    seqan3::debug_stream << "[bio::var_io::warning] The contig name \"" << raw_field
+                    seqan3::debug_stream << "[bio::io::var_io::warning] The contig name \"" << raw_field
                                          << "\" found on line " << line << " is not present in the header.\n";
                 }
             }
@@ -269,7 +269,7 @@ private:
 
                 if (print_warnings)
                 {
-                    seqan3::debug_stream << "[bio::var_io::warning] The filter name \"" << subfield
+                    seqan3::debug_stream << "[bio::io::var_io::warning] The filter name \"" << subfield
                                          << "\" found on line " << line << " was not present in the header.\n";
                 }
             }
@@ -290,7 +290,7 @@ private:
     {
         if (print_warnings)
         {
-            seqan3::debug_stream << "[bio::var_io::warning] The INFO name \"" << info_name << "\" found on line "
+            seqan3::debug_stream << "[bio::io::var_io::warning] The INFO name \"" << info_name << "\" found on line "
                                  << line << " was not present in the header.\n";
         }
 
@@ -401,7 +401,7 @@ private:
                     if (int32_t exp_val = header.infos[info_pos].number;
                         print_warnings && num_val != exp_val && exp_val >= 0)
                     {
-                        seqan3::debug_stream << "[bio::var_io::warning] Expected to find " << exp_val
+                        seqan3::debug_stream << "[bio::io::var_io::warning] Expected to find " << exp_val
                                              << " values for the INFO field " << key << " but found: " << num_val
                                              << "\n";
                     }
@@ -421,8 +421,8 @@ private:
     {
         if (print_warnings)
         {
-            seqan3::debug_stream << "[bio::var_io::warning] The FORMAT name \"" << format_name << "\" found on line "
-                                 << line << " was not present in the header.\n";
+            seqan3::debug_stream << "[bio::io::var_io::warning] The FORMAT name \"" << format_name
+                                 << "\" found on line " << line << " was not present in the header.\n";
         }
 
         if (var_io::reserved_formats.contains(format_name))
@@ -476,8 +476,8 @@ public:
      * \param[in] options An object with options for the input handler.
      * \details
      *
-     * The options argument is typically bio::var_io::reader_options, but any object with a subset of similarly named
-     * members is also accepted. See bio::format_input_handler<vcf> for the supported options and defaults.
+     * The options argument is typically bio::io::var_io::reader_options, but any object with a subset of similarly
+     * named members is also accepted. See bio::io::format_input_handler<vcf> for the supported options and defaults.
      */
     template <typename options_t>
     format_input_handler(std::istream & str, options_t const & options) : base_t{str}, file_it{str, false /*no_init!*/}
@@ -681,11 +681,10 @@ struct format_input_handler<vcf>::parse_element_value_type_fn
     }
 };
 
-/*!\brief Parse text input into a bio::var_io::info_element_value_type / bio::var_io::genotype_element_value_type.
- * \param[in]  id           ID of the type that shall be read.
- * \param[in]  input_string The string data to read from.
- * \param[out] output       The object to store the result into.
- * \returns The number of elements stored in the output in case ID is one of the "vector_of_"-types; 1 otherwise.
+/*!\brief Parse text input into a bio::io::var_io::info_element_value_type /
+ * bio::io::var_io::genotype_element_value_type. \param[in]  id           ID of the type that shall be read. \param[in]
+ * input_string The string data to read from. \param[out] output       The object to store the result into. \returns The
+ * number of elements stored in the output in case ID is one of the "vector_of_"-types; 1 otherwise.
  */
 template <detail::is_info_element_value_type output_t>
 inline size_t format_input_handler<vcf>::parse_element_value_type(var_io::value_type_id const id,
@@ -751,16 +750,16 @@ inline void format_input_handler<vcf>::parse_field(vtag_t<field::genotypes> cons
 
               switch (format.number)
               {
-                  case bio::var_io::header_number::A:
+                  case bio::io::var_io::header_number::A:
                       concat_capacity = n_samples * n_alts;
                       break;
-                  case bio::var_io::header_number::R:
+                  case bio::io::var_io::header_number::R:
                       concat_capacity = n_samples * (n_alts + 1);
                       break;
-                  case bio::var_io::header_number::G:
+                  case bio::io::var_io::header_number::G:
                       concat_capacity = n_samples * (detail::vcf_gt_formula(n_alts, n_alts) + 1);
                       break;
-                  case bio::var_io::header_number::dot:
+                  case bio::io::var_io::header_number::dot:
                       // assume 1 value per sample if nothing else is known
                       concat_capacity = n_samples;
                       break;
@@ -829,4 +828,4 @@ inline void format_input_handler<vcf>::parse_field(vtag_t<field::genotypes> cons
     }
 }
 
-} // namespace bio
+} // namespace bio::io

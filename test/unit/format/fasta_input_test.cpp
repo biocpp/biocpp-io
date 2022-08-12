@@ -30,9 +30,9 @@ using std::literals::string_view_literals::operator""sv;
 struct read : public ::testing::Test
 {
     using default_rec_t =
-      bio::record<bio::vtag_t<bio::field::id, bio::field::seq>,
-                  seqan3::type_list<std::string_view,
-                                    decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>)>>;
+      bio::io::record<bio::io::vtag_t<bio::io::field::id, bio::io::field::seq>,
+                      seqan3::type_list<std::string_view,
+                                        decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>)>>;
 
     std::vector<std::string> ids{
       {"ID1"},
@@ -57,9 +57,9 @@ struct read : public ::testing::Test
     {
         std::istringstream istream{input};
 
-        bio::format_input_handler<bio::fasta> input_handler{istream};
+        bio::io::format_input_handler<bio::io::fasta> input_handler{istream};
 
-        bio::record<bio::vtag_t<bio::field::id, bio::field::seq>, seqan3::type_list<id_t, seq_t>> rec;
+        bio::io::record<bio::io::vtag_t<bio::io::field::id, bio::io::field::seq>, seqan3::type_list<id_t, seq_t>> rec;
 
         for (unsigned i = 0; i < 3; ++i)
         {
@@ -203,9 +203,9 @@ ACGTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 ACGTTTA
 )raw";
 
-    std::istringstream                    istream{input};
-    bio::format_input_handler<bio::fasta> input_handler{istream, options_t{}};
-    default_rec_t                         rec;
+    std::istringstream                            istream{input};
+    bio::io::format_input_handler<bio::io::fasta> input_handler{istream, options_t{}};
+    default_rec_t                                 rec;
 
     input_handler.parse_next_record_into(rec);
     EXPECT_RANGE_EQ(rec.id(), "ID1 foo"sv);
@@ -229,9 +229,9 @@ ACGTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 ACGTTTA
 )raw";
 
-    std::istringstream                    istream{input};
-    bio::format_input_handler<bio::fasta> input_handler{istream, options_t{.truncate_ids = true}};
-    default_rec_t                         rec;
+    std::istringstream                            istream{input};
+    bio::io::format_input_handler<bio::io::fasta> input_handler{istream, options_t{.truncate_ids = true}};
+    default_rec_t                                 rec;
 
     input_handler.parse_next_record_into(rec);
     EXPECT_RANGE_EQ(rec.id(), "ID1"sv);
@@ -253,50 +253,50 @@ TEST_F(read, fail_no_input)
     std::string input{};
 
     std::istringstream istream{input};
-    EXPECT_THROW(bio::format_input_handler<bio::fasta>{istream}, bio::file_open_error);
+    EXPECT_THROW(bio::io::format_input_handler<bio::io::fasta>{istream}, bio::io::file_open_error);
 }
 
 TEST_F(read, fail_no_id)
 {
     std::string input{"foo\nACGT"};
 
-    std::istringstream                    istream{input};
-    bio::format_input_handler<bio::fasta> input_handler{istream};
-    default_rec_t                         rec;
+    std::istringstream                            istream{input};
+    bio::io::format_input_handler<bio::io::fasta> input_handler{istream};
+    default_rec_t                                 rec;
 
-    EXPECT_THROW(input_handler.parse_next_record_into(rec), bio::parse_error);
+    EXPECT_THROW(input_handler.parse_next_record_into(rec), bio::io::parse_error);
 }
 
 TEST_F(read, fail_only_id)
 {
     std::string input{">foo"};
 
-    std::istringstream                    istream{input};
-    bio::format_input_handler<bio::fasta> input_handler{istream};
-    default_rec_t                         rec;
+    std::istringstream                            istream{input};
+    bio::io::format_input_handler<bio::io::fasta> input_handler{istream};
+    default_rec_t                                 rec;
 
-    EXPECT_THROW(input_handler.parse_next_record_into(rec), bio::parse_error);
+    EXPECT_THROW(input_handler.parse_next_record_into(rec), bio::io::parse_error);
 }
 
 TEST_F(read, fail_no_seq)
 {
     std::string input{">foo\n>bar"};
 
-    std::istringstream                    istream{input};
-    bio::format_input_handler<bio::fasta> input_handler{istream};
-    default_rec_t                         rec;
+    std::istringstream                            istream{input};
+    bio::io::format_input_handler<bio::io::fasta> input_handler{istream};
+    default_rec_t                                 rec;
 
-    EXPECT_THROW(input_handler.parse_next_record_into(rec), bio::parse_error);
+    EXPECT_THROW(input_handler.parse_next_record_into(rec), bio::io::parse_error);
 }
 
 TEST_F(read, fail_illegal_alphabet)
 {
     std::string input{">foo\nFOOBAR\n"};
 
-    std::istringstream                    istream{input};
-    bio::format_input_handler<bio::fasta> input_handler{istream};
-    using rec_t = bio::record<bio::vtag_t<bio::field::id, bio::field::seq>,
-                              seqan3::type_list<std::string_view, std::vector<seqan3::dna5>>>;
+    std::istringstream                            istream{input};
+    bio::io::format_input_handler<bio::io::fasta> input_handler{istream};
+    using rec_t = bio::io::record<bio::io::vtag_t<bio::io::field::id, bio::io::field::seq>,
+                                  seqan3::type_list<std::string_view, std::vector<seqan3::dna5>>>;
 
     rec_t rec;
 

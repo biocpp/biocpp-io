@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::compression_format and bio::compression_traits.
+ * \brief Provides bio::io::compression_format and bio::io::compression_traits.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -22,7 +22,7 @@
 
 #include <bio/io/platform.hpp>
 
-namespace bio
+namespace bio::io
 {
 
 //!\brief Possible formats for stream (de-)compression.
@@ -38,7 +38,7 @@ enum class compression_format
 };
 
 /*!\brief Traits of the compression formats.
- * \tparam format The bio::compression_format whose traits are provided.
+ * \tparam format The bio::io::compression_format whose traits are provided.
  * \ingroup stream
  *
  * \details
@@ -79,23 +79,23 @@ struct compression_traits
     static constexpr bool available = false;
 };
 
-/*!\brief Traits for the bio::compression_format::bgzf.
- * \see bio::compression_traits
+/*!\brief Traits for the bio::io::compression_format::bgzf.
+ * \see bio::io::compression_traits
  * \ingroup stream
  */
 template <>
 struct compression_traits<compression_format::bgzf> : compression_traits<compression_format::none>
 {
-    //!\copydoc bio::compression_traits<compression_format::none>::as_string
+    //!\copydoc bio::io::compression_traits<compression_format::none>::as_string
     static constexpr std::string_view as_string = "BGZF";
 
-    //!\copydoc bio::compression_traits<compression_format::none>::file_extensions
+    //!\copydoc bio::io::compression_traits<compression_format::none>::file_extensions
     static inline std::vector<std::string> file_extensions = {"gz", "bgz", "bgzf"};
 
-    //!\copydoc bio::compression_traits<compression_format::none>::implied_file_extensions
+    //!\copydoc bio::io::compression_traits<compression_format::none>::implied_file_extensions
     static inline std::vector<std::string> implied_file_extensions = {"bcf", "bam"};
 
-    //!\copydoc bio::compression_traits<compression_format::none>::magic_header
+    //!\copydoc bio::io::compression_traits<compression_format::none>::magic_header
     static constexpr std::string_view magic_header{// GZip header
                                                    "\x1f\x8b\x08"
                                                    // FLG[MTIME         ] XFL OS [XLEN  ]
@@ -105,77 +105,77 @@ struct compression_traits<compression_format::bgzf> : compression_traits<compres
                                                    18};
 
 #ifdef BIO_HAS_ZLIB
-    //!\copydoc bio::compression_traits<compression_format::none>::available
+    //!\copydoc bio::io::compression_traits<compression_format::none>::available
     static constexpr bool available = true;
 #endif
 };
 
-/*!\brief Traits for the bio::compression_format::gz.
+/*!\brief Traits for the bio::io::compression_format::gz.
  * \ingroup stream
- * \see bio::compression_traits
+ * \see bio::io::compression_traits
  */
 template <>
 struct compression_traits<compression_format::gz> : compression_traits<compression_format::none>
 {
-    //!\copydoc bio::compression_traits<compression_format::none>::as_string
+    //!\copydoc bio::io::compression_traits<compression_format::none>::as_string
     static constexpr std::string_view as_string = "GZip";
 
-    //!\copydoc bio::compression_traits<compression_format::none>::file_extensions
+    //!\copydoc bio::io::compression_traits<compression_format::none>::file_extensions
     static inline std::vector<std::string> file_extensions = {"gz"};
 
-    //!\copydoc bio::compression_traits<compression_format::none>::magic_header
+    //!\copydoc bio::io::compression_traits<compression_format::none>::magic_header
     static constexpr std::string_view magic_header{"\x1f\x8b\x08", 3};
 
 #ifdef BIO_HAS_ZLIB
-    //!\copydoc bio::compression_traits<compression_format::none>::available
+    //!\copydoc bio::io::compression_traits<compression_format::none>::available
     static constexpr bool available = true;
 #endif
 };
 
-/*!\brief Traits for the bio::compression_format::bz2.
+/*!\brief Traits for the bio::io::compression_format::bz2.
  * \ingroup stream
- * \see bio::compression_traits
+ * \see bio::io::compression_traits
  */
 template <>
 struct compression_traits<compression_format::bz2> : compression_traits<compression_format::none>
 {
-    //!\copydoc bio::compression_traits<compression_format::none>::as_string
+    //!\copydoc bio::io::compression_traits<compression_format::none>::as_string
     static constexpr std::string_view as_string = "BZip2";
 
-    //!\copydoc bio::compression_traits<compression_format::none>::file_extensions
+    //!\copydoc bio::io::compression_traits<compression_format::none>::file_extensions
     static inline std::vector<std::string> file_extensions = {"bz2"};
 
-    //!\copydoc bio::compression_traits<compression_format::none>::magic_header
+    //!\copydoc bio::io::compression_traits<compression_format::none>::magic_header
     static constexpr std::string_view magic_header{"\x42\x5a\x68", 3};
 
 #ifdef BIO_HAS_BZIP2
-    //!\copydoc bio::compression_traits<compression_format::none>::available
+    //!\copydoc bio::io::compression_traits<compression_format::none>::available
     static constexpr bool available = true;
 #endif
 };
 
-/*!\brief Traits for the bio::compression_format::zstd.
+/*!\brief Traits for the bio::io::compression_format::zstd.
  * \ingroup stream
- * \see bio::compression_traits
+ * \see bio::io::compression_traits
  */
 template <>
 struct compression_traits<compression_format::zstd> : compression_traits<compression_format::none>
 {
-    //!\copydoc bio::compression_traits<compression_format::none>::as_string
+    //!\copydoc bio::io::compression_traits<compression_format::none>::as_string
     static constexpr std::string_view as_string = "ZStandard";
 
-    //!\copydoc bio::compression_traits<compression_format::none>::file_extensions
+    //!\copydoc bio::io::compression_traits<compression_format::none>::file_extensions
     static inline std::vector<std::string> file_extensions = {"zstd"};
 
-    //!\copydoc bio::compression_traits<compression_format::none>::magic_header
+    //!\copydoc bio::io::compression_traits<compression_format::none>::magic_header
     static constexpr std::string_view magic_header{"\x28\xb5\x2f\xfd", 4};
 
     // NOT YET SUPPORTED BY BIO
 };
 
-} // namespace bio
+} // namespace bio::io
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 //-------------------------------------------------------------------------------
@@ -190,7 +190,7 @@ constexpr bool header_matches(std::string_view const to_compare)
     return to_compare.starts_with(compression_traits<format>::magic_header);
 }
 
-//!\brief For bio::compression_format::bgzf not all values are compared.
+//!\brief For bio::io::compression_format::bgzf not all values are compared.
 //!\ingroup stream
 template <>
 constexpr bool header_matches<compression_format::bgzf>(std::string_view const to_compare)
@@ -231,7 +231,7 @@ constexpr bool header_matches<compression_format::detect>(std::string_view)
 // header_matches_dyn
 //-------------------------------------------------------------------------------
 
-//!\brief A runtime-dispatching version of bio::detail::header_matches.
+//!\brief A runtime-dispatching version of bio::io::detail::header_matches.
 //!\ingroup stream
 inline bool header_matches_dyn(compression_format const format, std::string_view const to_compare)
 {
@@ -285,7 +285,7 @@ inline std::string read_magic_header(std::istream & istr)
 // detect_format_from_magic_header
 //-------------------------------------------------------------------------------
 
-/*!\brief Deduce bio::compression_format from a magic header string.
+/*!\brief Deduce bio::io::compression_format from a magic header string.
  * \ingroup stream
  * \details
  *
@@ -309,7 +309,7 @@ inline compression_format detect_format_from_magic_header(std::string_view const
 // detect_format_from_extension
 //-------------------------------------------------------------------------------
 
-/*!\brief Deduce bio::compression_format from a filename extension.
+/*!\brief Deduce bio::io::compression_format from a filename extension.
  * \ingroup stream
  * \details
  *
@@ -344,7 +344,7 @@ inline compression_format detect_format_from_extension(std::filesystem::path con
     return compression_format::none;
 }
 
-/*!\brief Deduce bio::compression_format from a filename extension.
+/*!\brief Deduce bio::io::compression_format from a filename extension.
  * \ingroup stream
  * \details
  *
@@ -379,4 +379,4 @@ inline compression_format detect_format_from_implied_extension(std::filesystem::
     return compression_format::none;
 }
 
-} // namespace bio::detail
+} // namespace bio::io::detail

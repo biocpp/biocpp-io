@@ -20,7 +20,7 @@
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
-namespace bio
+namespace bio::io
 {
 
 //-----------------------------------------------------------------------------
@@ -47,10 +47,10 @@ enum class ownership
 // vtag
 //-----------------------------------------------------------------------------
 
-/*!\brief The type of bio::vtag. [Default "specialisation" for 0 arguments.]
+/*!\brief The type of bio::io::vtag. [Default "specialisation" for 0 arguments.]
  * \tparam more_vs Any number of values [only 0 arguments pick this specialisation].
  * \ingroup bio
- * \see bio::vtag
+ * \see bio::io::vtag
  */
 template <auto... more_vs>
 struct vtag_t
@@ -68,11 +68,11 @@ struct vtag_t
     static constexpr size_t index_of(auto &&) { return static_cast<size_t>(-1ULL); }
 };
 
-/*!\brief The type of bio::vtag. [Specialisation for 1 or more arguments]
+/*!\brief The type of bio::io::vtag. [Specialisation for 1 or more arguments]
  * \tparam v       First value.
  * \tparam more_vs More values.
  * \ingroup bio
- * \see bio::vtag
+ * \see bio::io::vtag
  */
 template <auto v, auto... more_vs>
 struct vtag_t<v, more_vs...>
@@ -80,23 +80,23 @@ struct vtag_t<v, more_vs...>
     //!\brief The first value in the tag.
     static constexpr auto first_value = v;
 
-    //!\copybrief bio::vtag_t::size
+    //!\copybrief bio::io::vtag_t::size
     static constexpr size_t size = sizeof...(more_vs) + 1;
 
-    //!\copybrief bio::vtag_t::as_tuple
+    //!\copybrief bio::io::vtag_t::as_tuple
     static constexpr auto as_tuple = std::tuple{v, more_vs...};
 
     //!\brief Whether all values in the tag are unique.
     static constexpr bool unique_values = ((v != more_vs) && ...);
 
-    //!\copybrief bio::vtag_t::contains
+    //!\copybrief bio::io::vtag_t::contains
     static constexpr bool contains(auto && s) requires std::equality_comparable_with<decltype(s), decltype(v)> &&
       (std::equality_comparable_with<decltype(s), decltype(more_vs)> &&...)
     {
         return s == v || ((s == more_vs) || ...);
     }
 
-    //!\copybrief bio::vtag_t::index_of
+    //!\copybrief bio::io::vtag_t::index_of
     static constexpr size_t index_of(auto && s) requires std::equality_comparable_with<decltype(s), decltype(v)> &&
       (std::equality_comparable_with<decltype(s), decltype(more_vs)> &&...)
     {
@@ -142,9 +142,9 @@ inline constinit vtag_t<vs...> vtag{};
 template <typename type, typename... more_types>
 inline constinit seqan3::type_list<type, more_types...> ttag{};
 
-} // namespace bio
+} // namespace bio::io
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 //!\brief Check whether a type is a specialisation of seqan3::type_list.
@@ -155,4 +155,4 @@ inline constexpr bool is_type_list = false;
 template <typename... ts>
 inline constexpr bool is_type_list<seqan3::type_list<ts...>> = true;
 
-} // namespace bio::detail
+} // namespace bio::io::detail

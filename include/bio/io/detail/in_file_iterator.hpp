@@ -17,7 +17,7 @@
 
 #include <bio/io/platform.hpp>
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 /*!\brief Input iterator that provides a range-like interface for readers.
@@ -163,4 +163,4 @@ private:
     file_type * host{};
 };
 
-} // namespace bio::detail
+} // namespace bio::io::detail

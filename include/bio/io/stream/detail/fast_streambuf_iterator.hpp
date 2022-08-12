@@ -7,8 +7,8 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::detail::fast_istreambuf_iterator and bio::detail::fast_ostreambuf_iterator.
- *        and bio::ostreambuf iterator.
+ * \brief Provides bio::io::detail::fast_istreambuf_iterator and bio::io::detail::fast_ostreambuf_iterator.
+ *        and bio::io::ostreambuf iterator.
  * \author Rene Rahn <rene.rahn AT fu-berlin.de>
  * \author Svenja Mehringer <svenja.mehringer AT fu-berlin.de>
  */
@@ -24,7 +24,7 @@
 #include <bio/io/detail/charconv.hpp>
 #include <bio/io/detail/concept.hpp>
 
-namespace bio::detail
+namespace bio::io::detail
 {
 // ============================================================================
 //  fast_istreambuf_iterator
@@ -264,7 +264,7 @@ public:
  *
  * \details
  *
- * The functions bio::fast_ostreambuf_iterator::write_range and bio::fast_ostreambuf_iterator::write_n allow
+ * The functions bio::io::fast_ostreambuf_iterator::write_range and bio::io::fast_ostreambuf_iterator::write_n allow
  * more efficient writing of ranges by writing in chunks that avoiding overflow checks.
  *
  * \include test/snippet/io/detail/iterator_write_range.cpp
@@ -496,4 +496,4 @@ public:
     }
 };
 
-} // namespace bio::detail
+} // namespace bio::io::detail

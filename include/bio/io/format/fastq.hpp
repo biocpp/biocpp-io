@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides the bio::fastq.
+ * \brief Provides the bio::io::fastq.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -18,7 +18,7 @@
 
 #include <bio/io/platform.hpp>
 
-namespace bio
+namespace bio::io
 {
 
 /*!\brief       The FastQ format.
@@ -26,8 +26,8 @@ namespace bio
  *
  * \details
  *
- * This is the FastQ format tag. If you want to read FastQ files, use bio::seq_io::reader, and if you want
- * to write FastQ files, use bio::seq_io::writer.
+ * This is the FastQ format tag. If you want to read FastQ files, use bio::io::seq_io::reader, and if you want
+ * to write FastQ files, use bio::io::seq_io::writer.
  *
  * ### Introduction
  *
@@ -36,7 +36,7 @@ namespace bio
  *
  * ### Fields
  *
- * The FastQ format provides the fields bio::field::seq, bio::field::id and bio::field::qual.
+ * The FastQ format provides the fields bio::io::field::seq, bio::io::field::id and bio::io::field::qual.
  * All fields are required when writing.
  *
  * ### Implementation notes
@@ -55,4 +55,4 @@ struct fastq
     static inline std::vector<std::string> file_extensions{"fastq", "fq"};
 };
 
-} // namespace bio
+} // namespace bio::io

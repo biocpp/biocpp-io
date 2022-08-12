@@ -23,7 +23,7 @@ int main()
     //================= SNIPPETS ======================
 {
 //![simple_usage_file]
-bio::seq_io::reader reader{"example.fasta"};
+bio::io::seq_io::reader reader{"example.fasta"};
 
 for (auto & rec : reader)
 {
@@ -39,7 +39,7 @@ using Y2 = decltype(get_arg_t(reader.begin()->qual()).second);
 
 static_assert(std::same_as<decltype(reader)::record_type,
 //![simple_usage_file_type]
-bio::record<bio::vtag_t<bio::field::id, bio::field::seq, bio::field::qual>,     // identifiers of the fields
+bio::io::record<bio::io::vtag_t<bio::io::field::id, bio::io::field::seq, bio::io::field::qual>,     // identifiers of the fields
             seqan3::type_list<std::string_view,                                 // type of the ID field
                               std::ranges::transform_view<X1, X2>,              // type of the SEQ field
                               std::ranges::transform_view<Y1, Y2>>>             // type of the QUAL field
@@ -50,7 +50,7 @@ bio::record<bio::vtag_t<bio::field::id, bio::field::seq, bio::field::qual>,     
 
 {
 //![simple_usage_stream]
-bio::seq_io::reader reader{std::cin, bio::fasta{}};
+bio::io::seq_io::reader reader{std::cin, bio::io::fasta{}};
 
 for (auto & rec : reader)
 {
@@ -62,7 +62,7 @@ for (auto & rec : reader)
 
 {
 //![decomposed]
-bio::seq_io::reader reader{"example.fasta"};
+bio::io::seq_io::reader reader{"example.fasta"};
 
 for (auto & [ i, s, q ] : reader)
 {
@@ -74,7 +74,7 @@ for (auto & [ i, s, q ] : reader)
 
 {
 //![views]
-bio::seq_io::reader reader{"example.fasta"};
+bio::io::seq_io::reader reader{"example.fasta"};
 
 auto min_length = [](auto & rec) { return rec.seq().size() > 10; };
 
@@ -88,8 +88,8 @@ for (auto & rec : reader | std::views::filter(min_length) | std::views::take(5))
 
 {
 //![options]
-bio::seq_io::reader reader{"example.fasta",
-                           bio::seq_io::reader_options{.field_types = bio::seq_io::field_types_protein,
+bio::io::seq_io::reader reader{"example.fasta",
+                           bio::io::seq_io::reader_options{.field_types = bio::io::seq_io::field_types_protein,
                                                        .truncate_ids = true }};
 
 for (auto & rec : reader)
@@ -104,8 +104,8 @@ for (auto & rec : reader)
 //![options2]
 using namespace seqan3::literals;
 
-bio::seq_io::reader reader{"example.fasta",
-                           bio::seq_io::reader_options{.field_types = bio::seq_io::field_types<bio::ownership::deep>}};
+bio::io::seq_io::reader reader{"example.fasta",
+                           bio::io::seq_io::reader_options{.field_types = bio::io::seq_io::field_types<bio::io::ownership::deep>}};
 
 for (auto & rec : reader)
 {
@@ -119,7 +119,7 @@ for (auto & rec : reader)
 
 static_assert(std::same_as<decltype(reader)::record_type,
 //![options2_type]
-bio::record<bio::vtag_t<bio::field::id, bio::field::seq, bio::field::qual>,         // identifiers of the fields
+bio::io::record<bio::io::vtag_t<bio::io::field::id, bio::io::field::seq, bio::io::field::qual>,         // identifiers of the fields
             seqan3::type_list<std::string,                                          // type of the ID field
                               std::vector<seqan3::dna5>,                            // type of the SEQ field
                               std::vector<seqan3::phred63>>>                        // type of the QUAL field

@@ -18,7 +18,7 @@
 
 #include <bio/io/platform.hpp>
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 /*!\addtogroup bio
@@ -29,7 +29,7 @@ namespace bio::detail
 // concepts
 // ----------------------------------------------------------------------------
 
-/*!\interface bio::detail::back_insertable_with <>
+/*!\interface bio::io::detail::back_insertable_with <>
  * \extends std::ranges::output_range
  * \tparam rng_t The container type.
  * \tparam val_t The type to append to the container.
@@ -43,7 +43,7 @@ concept back_insertable_with = std::ranges::output_range<rng_t, val_t> && requir
 };
 //!\endcond
 
-/*!\interface bio::detail::back_insertable <>
+/*!\interface bio::io::detail::back_insertable <>
  * \extends std::ranges::output_range
  * \extends std::ranges::input_range
  * \tparam rng_t The container type.
@@ -71,7 +71,7 @@ concept int_range =
   std::ranges::forward_range<t> && std::integral<std::remove_cvref_t<std::ranges::range_value_t<t>>> &&
   !std::same_as<char, std::remove_cvref_t<std::ranges::range_value_t<t>>>;
 
-/*!\interface bio::detail::out_string <>
+/*!\interface bio::io::detail::out_string <>
  * \tparam rng_t The container type.
  * \brief A range that `char` can be back-inserted to, or a string_view.
  */
@@ -88,18 +88,18 @@ concept vector_like = std::ranges::random_access_range<rng_t> && std::ranges::si
     v.clear();
 };
 
-//!\brief Helper for bio::detail::transform_view_on_string_view.
+//!\brief Helper for bio::io::detail::transform_view_on_string_view.
 template <std::regular_invocable<char> fun_t>
 void transform_view_on_string_view_impl(std::ranges::transform_view<std::string_view, fun_t> &)
 {}
 
-//!\brief Helper for bio::detail::transform_view_on_string_view.
+//!\brief Helper for bio::io::detail::transform_view_on_string_view.
 template <std::regular_invocable<char> fun1_t, std::regular_invocable<char> fun2_t>
 void transform_view_on_string_view_impl(
   std::ranges::transform_view<std::ranges::transform_view<std::string_view, fun1_t>, fun2_t> &)
 {}
 
-/*!\interface   bio::detail::transform_view_on_string_view <>
+/*!\interface   bio::io::detail::transform_view_on_string_view <>
  * \tparam t    The query type to check.
  * \brief       Whether a type is a transform view (possibly nested) over std::string_view.
  *
@@ -150,7 +150,7 @@ void sized_range_copy(std::ranges::input_range auto &&                          
     }
 }
 
-//!\brief Like bio::detail::sized_range_copy except that if input and output are both std::string_view, it assigns.
+//!\brief Like bio::io::detail::sized_range_copy except that if input and output are both std::string_view, it assigns.
 void string_copy(std::string_view const in, out_string auto & out)
 {
     if constexpr (std::same_as<decltype(out), std::string_view &>)
@@ -206,4 +206,4 @@ constexpr size_t range_or_tuple_size(tuple_t)
 
 //!\}
 
-} // namespace bio::detail
+} // namespace bio::io::detail

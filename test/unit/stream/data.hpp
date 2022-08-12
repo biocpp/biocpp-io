@@ -14,15 +14,15 @@
 
 inline constexpr std::string_view uncompressed = "The quick brown fox jumps over the lazy dog";
 
-template <bio::compression_format f>
+template <bio::io::compression_format f>
 inline constexpr std::string_view compressed = "";
 
 template <>
-inline constexpr std::string_view compressed<bio::compression_format::none> =
+inline constexpr std::string_view compressed<bio::io::compression_format::none> =
   "The quick brown fox jumps over the lazy dog";
 
 template <>
-inline constexpr std::string_view compressed<bio::compression_format::bgzf>{
+inline constexpr std::string_view compressed<bio::io::compression_format::bgzf>{
   "\x1F\x8B\x08\x04\x00\x00\x00\x00\x00\x00\x06\x00\x42\x43"
   "\x02\x00\x45\x00\x0B\xC9\x48\x55\x28\x2C\xCD\x4C\xCE\x56"
   "\x48\x2A\xCA\x2F\xCF\x53\x48\xCB\xAF\x50\xC8\x2A\xCD\x2D"
@@ -33,7 +33,7 @@ inline constexpr std::string_view compressed<bio::compression_format::bgzf>{
   98};
 
 template <>
-inline constexpr std::string_view compressed<bio::compression_format::bz2>{
+inline constexpr std::string_view compressed<bio::io::compression_format::bz2>{
   "\x42\x5A\x68\x39\x31\x41\x59\x26\x53\x59\x45\x9D\xEE\x61\x00\x00"
   "\x04\x13\x80\x40\x00\x04\x00\x3F\xFF\xFF\xF0\x20\x00\x31\x46\x86"
   "\x80\x00\x00\x31\xE9\xA9\xA6\x4C\x86\x11\xB4\x6D\x47\x62\x62\x08"
@@ -42,7 +42,7 @@ inline constexpr std::string_view compressed<bio::compression_format::bz2>{
   80};
 
 template <>
-inline constexpr std::string_view compressed<bio::compression_format::gz>{
+inline constexpr std::string_view compressed<bio::io::compression_format::gz>{
   "\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\x03\x0b\xc9\x48\x55\x28\x2c"
   "\xcd\x4c\xce\x56\x48\x2a\xca\x2f\xcf\x53\x48\xcb\xaf\x50\xc8\x2a"
   "\xcd\x2d\x28\x56\xc8\x2f\x4b\x2d\x52\x28\x01\x4a\xe7\x24\x56\x55"

@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::var_io::writer.
+ * \brief Provides bio::io::var_io::writer.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -22,7 +22,7 @@
 #include <bio/io/var_io/header.hpp>
 #include <bio/io/var_io/writer_options.hpp>
 
-namespace bio::var_io
+namespace bio::io::var_io
 {
 
 // ----------------------------------------------------------------------------
@@ -30,7 +30,7 @@ namespace bio::var_io
 // ----------------------------------------------------------------------------
 
 /*!\brief A class for writing variant files, e.g. VCF, BCF, GVCF.
- * \tparam option_args_t Arguments that are forwarded to bio::var_io::writer_options.
+ * \tparam option_args_t Arguments that are forwarded to bio::io::var_io::writer_options.
  * \ingroup var_io
  *
  * \details
@@ -42,15 +42,15 @@ namespace bio::var_io
  *
  * The Variant I/O writer supports writing the following fields:
  *
- *   1. bio::field::chrom
- *   2. bio::field::pos
- *   3. bio::field::id
- *   4. bio::field::ref
- *   5. bio::field::alt
- *   6. bio::field::qual
- *   7. bio::field::filter
- *   8. bio::field::info
- *   9. bio::field::genotypes
+ *   1. bio::io::field::chrom
+ *   2. bio::io::field::pos
+ *   3. bio::io::field::id
+ *   4. bio::io::field::ref
+ *   5. bio::io::field::alt
+ *   6. bio::io::field::qual
+ *   7. bio::io::field::filter
+ *   8. bio::io::field::info
+ *   9. bio::io::field::genotypes
  *
  * These fields correspond to the order and names defined in the VCF specification. The value conventions
  * also correspond to the VCF specification (i.e. 1-based positions) although many fields can
@@ -59,11 +59,11 @@ namespace bio::var_io
  *
  * This writer supports the following formats:
  *
- *   1. VCF (see also bio::vcf)
- *   2. BCF (see also bio::bcf) [TODO NOT YET]
+ *   1. VCF (see also bio::io::vcf)
+ *   2. BCF (see also bio::io::bcf) [TODO NOT YET]
  *
  * If you only need to write VCF and not BCF and you have all your column data as strings,
- * you can use bio::plain_io::writer instead of this writer (it will be easier to use and faster).
+ * you can use bio::io::plain_io::writer instead of this writer (it will be easier to use and faster).
  *
  * ### Creating a writer
  *
@@ -78,7 +78,7 @@ namespace bio::var_io
  *
  * ### Writing a record
  *
- * Create a record using the bio::var_io::default_record and setting the members:
+ * Create a record using the bio::io::var_io::default_record and setting the members:
  *
  * \snippet test/snippet/var_io/var_io_writer.cpp simple_usage_file
  *
@@ -90,8 +90,8 @@ namespace bio::var_io
  *
  * This is especially helpful if your fields exist in other separate data structures already.
  * Be aware that it is easier to mess up the order of the arguments this way.
- * The order/composition can specified by bio::vtag as first argument (see next example).
- * If it is omitted, it is equal to bio::var_io::default_field_ids.
+ * The order/composition can specified by bio::io::vtag as first argument (see next example).
+ * If it is omitted, it is equal to bio::io::var_io::default_field_ids.
  *
  * The #emplace_back() function can be used to write fewer fields:
  *
@@ -105,7 +105,7 @@ namespace bio::var_io
  *
  * \snippet test/snippet/var_io/var_io_writer.cpp options
  *
- * For more advanced options, see bio::var_io::writer_options.
+ * For more advanced options, see bio::io::var_io::writer_options.
  *
  * ### Combining reading and writing
  *
@@ -149,7 +149,7 @@ public:
     using base_t::operator=;
 
     // clang-format off
-    //!\copydoc bio::writer_base::writer_base(std::filesystem::path const & filename, format_type const & fmt, options_t const & opt = options_t{})
+    //!\copydoc bio::io::writer_base::writer_base(std::filesystem::path const & filename, format_type const & fmt, options_t const & opt = options_t{})
     // clang-format on
     writer(std::filesystem::path const &            filename,
            format_type const &                      fmt,
@@ -164,7 +164,7 @@ public:
     {}
 
     // clang-format off
-    //!\copydoc bio::writer_base::writer_base(std::ostream & str, format_type const & fmt, options_t const & opt = options_t{})
+    //!\copydoc bio::io::writer_base::writer_base(std::ostream & str, format_type const & fmt, options_t const & opt = options_t{})
     // clang-format on
     writer(std::ostream &                           str,
            format_type const &                      fmt,
@@ -194,8 +194,8 @@ public:
      *
      * \details
      *
-     * This function is the same as bio::writer_base::emplace_back, except that the field_ids can be
-     * omitted. If the number of arguments 10, bio::var_io::default_field_ids is chosen; if it is
+     * This function is the same as bio::io::writer_base::emplace_back, except that the field_ids can be
+     * omitted. If the number of arguments 10, bio::io::var_io::default_field_ids is chosen; if it is
      */
     void emplace_back(auto &&... args)
     {
@@ -223,7 +223,7 @@ public:
     }
 
     //!\brief Get the header used by the format.
-    bio::var_io::header const & header()
+    bio::io::var_io::header const & header()
     {
         return std::visit(
           detail::overloaded{[](std::monostate) {}, [](auto const & handler) { return handler.get_header(); }},
@@ -232,7 +232,7 @@ public:
 
     //!\brief Set the header to the given value.
     template <typename header_t>
-        requires std::same_as<bio::var_io::header, std::remove_cvref_t<header_t>>
+        requires std::same_as<bio::io::var_io::header, std::remove_cvref_t<header_t>>
     void set_header(header_t && hdr)
     {
         if (!init_state)
@@ -244,4 +244,4 @@ public:
     }
 };
 
-} // namespace bio::var_io
+} // namespace bio::io::var_io

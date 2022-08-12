@@ -18,7 +18,7 @@
 
 #include <bio/io/platform.hpp>
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 /*!\brief Output iterator necessary for providing a range-like interface in output file.
@@ -146,4 +146,4 @@ private:
     file_type * host{};
 };
 
-} // namespace bio::detail
+} // namespace bio::io::detail

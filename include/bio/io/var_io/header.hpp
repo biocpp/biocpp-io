@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::var_io::header and various auxiliary classes.
+ * \brief Provides bio::io::var_io::header and various auxiliary classes.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -25,9 +25,9 @@
 #include <bio/io/misc.hpp>
 #include <bio/io/var_io/misc.hpp>
 
-namespace bio::var_io
+namespace bio::io::var_io
 {
-/*!\brief Scoped (but weakly typed) enum for "Number" special values in bio::var_io::header INFO fields.
+/*!\brief Scoped (but weakly typed) enum for "Number" special values in bio::io::var_io::header INFO fields.
  * \ingroup var_io
  * \details
  *
@@ -36,7 +36,7 @@ namespace bio::var_io
  * TODO externalise
  * ```cpp
  * int32_t number = 3;
- * number = bio::header_number::A;
+ * number = bio::io::header_number::A;
  * ```
  */
 struct header_number
@@ -101,7 +101,7 @@ public:
     struct info_t
     {
         std::string    id;             //!< The ID.
-        int32_t        number{};       //!< Number of values, see also bio::var_io::header_number.
+        int32_t        number{};       //!< Number of values, see also bio::io::var_io::header_number.
         std::string    type{};         //!< Type of the field.
         value_type_id  type_id{};      //!< Type of the field as vio::var_io::value_type_id.
         std::string    description{};  //!< Description.
@@ -433,7 +433,7 @@ private:
     }
 
     /*!\name Advanced data fields
-     * \brief You don't have to set these manually when creating a bio::var_io::header.
+     * \brief You don't have to set these manually when creating a bio::io::var_io::header.
      * \{
      */
     string_to_pos_t string_to_filter_pos_; //!< ID-string to position in #filters.
@@ -559,7 +559,7 @@ private:
         return raw_data;
     }
 
-    //!\brief Turn bio::value_type_id into string.
+    //!\brief Turn bio::io::value_type_id into string.
     static std::string_view unparse_type(std::string_view const type, value_type_id const type_id)
     {
         // TODO replace with string_view
@@ -862,7 +862,7 @@ private:
         return (in.size() < 2 || in.front() != '"' || in.back() != '"') ? in : in.substr(1, in.size() - 2);
     }
 
-    //!\brief Turn a string into a bio::var_io::header_number.
+    //!\brief Turn a string into a bio::io::var_io::header_number.
     static int32_t parse_number(std::string_view const in)
     {
         switch (in[0])
@@ -885,7 +885,7 @@ private:
         return header_number::dot;
     }
 
-    /*!\brief Turn a string into bio::var_io::value_type_id.
+    /*!\brief Turn a string into bio::io::var_io::value_type_id.
      * \param[in] in        The input string.
      * \param[in] number    The accompanying number value from the header.
      * \return The dynamic type id.
@@ -1017,9 +1017,9 @@ inline std::unordered_map<std::string_view, header::format_t> const reserved_for
 };
 // clang-format on
 
-} // namespace bio::var_io
+} // namespace bio::io::var_io
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
 //!\brief Data structure that represents the beginning of a BCF file.
@@ -1032,4 +1032,4 @@ struct bcf_header
     std::string         text;            //!< The text (VCF) header.
 };
 
-} // namespace bio::detail
+} // namespace bio::io::detail

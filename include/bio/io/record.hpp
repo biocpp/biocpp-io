@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides the bio::record template and the bio::field enum.
+ * \brief Provides the bio::io::record template and the bio::io::field enum.
  * \author Hannes Hauswedell <hannes.hauswedell AT fu-berlin.de>
  */
 
@@ -22,7 +22,7 @@
 #include <bio/io/detail/concept.hpp>
 #include <bio/io/misc.hpp>
 
-namespace bio
+namespace bio::io
 {
 
 // ----------------------------------------------------------------------------
@@ -82,22 +82,22 @@ enum class field : uint64_t
     user_defined = uint64_t{1} << 32, //!< Identifier for user defined file formats and specialisations.
 };
 
-} // namespace bio
+} // namespace bio::io
 
-namespace bio::detail
+namespace bio::io::detail
 {
 
-//!\brief Checks whether a type is a bio::vtag_t over bio::field.
+//!\brief Checks whether a type is a bio::io::vtag_t over bio::io::field.
 template <typename t>
 inline constexpr bool is_fields_tag = false;
 
-//!\brief Checks whether a type is a bio::vtag_t over bio::field.
+//!\brief Checks whether a type is a bio::io::vtag_t over bio::io::field.
 template <field... vs>
 inline constexpr bool is_fields_tag<vtag_t<vs...>> = true;
 
-} // namespace bio::detail
+} // namespace bio::io::detail
 
-namespace bio
+namespace bio::io
 {
 
 // ----------------------------------------------------------------------------
@@ -107,18 +107,18 @@ namespace bio
 /*!\brief The class template that file records are based on; behaves like an std::tuple.
  * \implements seqan3::tuple_like
  * \ingroup bio
- * \tparam field_ids   A vtag_t type with bio::field IDs corresponding to field_types.
+ * \tparam field_ids   A vtag_t type with bio::io::field IDs corresponding to field_types.
  * \tparam field_types The types of the fields in this record as a seqan3::type_list.
  * \details
  *
  * This class template behaves like a std::tuple, with the exception that it provides an additional
- * get-interface that takes a bio::field identifier. The traditional get interfaces (via index and
- * via type) are also supported, but discouraged, because accessing via bio::field is unambiguous and
+ * get-interface that takes a bio::io::field identifier. The traditional get interfaces (via index and
+ * via type) are also supported, but discouraged, because accessing via bio::io::field is unambiguous and
  * better readable.
  *
  * In addition to the get()-interfaces, member accessors are provided with the same name as the fields.
  *
- * See bio::seq_io::reader for how this data structure is used in practice.
+ * See bio::io::seq_io::reader for how this data structure is used in practice.
  *
  * See #make_record() and #tie_record() for easy ways to create stand-alone record variables.
  *
@@ -174,7 +174,7 @@ public:
     //!\}
 
     static_assert(seqan3::list_traits::size<field_types> == field_ids::size,
-                  "You must give as many IDs as types to bio::record.");
+                  "You must give as many IDs as types to bio::io::record.");
 
     //!\brief Clears containers that provide `.clear()` and (re-)initialises all other elements with `= {}`.
     void clear() noexcept(noexcept(std::apply(expander, std::declval<record &>()))) { std::apply(expander, *this); }
@@ -217,14 +217,14 @@ public:
     }
     //!\}
 
-//!\brief A macro that defines all getter functions for fields contained in bio::record.
+//!\brief A macro that defines all getter functions for fields contained in bio::io::record.
 #define BIO_RECORD_MEMBER(F)                                                                                           \
-    /*!\brief Return the bio::field F if available.*/                                                                  \
+    /*!\brief Return the bio::io::field F if available.*/                                                              \
     decltype(auto) F() noexcept(noexcept(get<field::F>()))                                                             \
     {                                                                                                                  \
         return get<field::F>();                                                                                        \
     }                                                                                                                  \
-    /*!\brief Return the bio::field F if available. [const-qualified version] */                                       \
+    /*!\brief Return the bio::io::field F if available. [const-qualified version] */                                   \
     decltype(auto) F() const noexcept(noexcept(get<field::F>()))                                                       \
     {                                                                                                                  \
         return get<field::F>();                                                                                        \
@@ -260,7 +260,7 @@ public:
 #undef BIO_RECORD_MEMBER
 };
 
-} // namespace bio
+} // namespace bio::io
 
 //-------------------------------------------------------------------------------
 // tuple traits
@@ -271,66 +271,66 @@ namespace std
 
 /*!\brief Provides access to the number of elements in a tuple as a compile-time constant expression.
  * \implements seqan3::unary_type_trait
- * \relates bio::record
+ * \relates bio::io::record
  * \see std::tuple_size_v
  */
 template <typename field_ids, typename field_types>
-struct tuple_size<bio::record<field_ids, field_types>>
+struct tuple_size<bio::io::record<field_ids, field_types>>
 {
     //!\brief The value member. Delegates to same value on base_type.
-    static constexpr size_t value = tuple_size_v<typename bio::record<field_ids, field_types>::base_type>;
+    static constexpr size_t value = tuple_size_v<typename bio::io::record<field_ids, field_types>::base_type>;
 };
 
 /*!\brief Obtains the type of the specified element.
  * \implements seqan3::transformation_trait
- * \relates bio::record
+ * \relates bio::io::record
  * \see [std::tuple_element](https://en.cppreference.com/w/cpp/utility/tuple/tuple_element)
  */
 template <size_t elem_no, typename field_ids, typename field_types>
-struct tuple_element<elem_no, bio::record<field_ids, field_types>>
+struct tuple_element<elem_no, bio::io::record<field_ids, field_types>>
 {
     //!\brief The member type. Delegates to same type on base_type.
-    using type = std::tuple_element_t<elem_no, typename bio::record<field_ids, field_types>::base_type>;
+    using type = std::tuple_element_t<elem_no, typename bio::io::record<field_ids, field_types>::base_type>;
 };
 
 } // namespace std
 
-namespace bio
+namespace bio::io
 {
 
 //-------------------------------------------------------------------------------
 // record_element
 //-------------------------------------------------------------------------------
 
-/*!\brief Like std::tuple_element but with bio::field on bio::record. [declaration]
+/*!\brief Like std::tuple_element but with bio::io::field on bio::io::record. [declaration]
  * \implements seqan3::transformation_trait
- * \relates bio::record
+ * \relates bio::io::record
  */
 template <field f, typename t>
 struct record_element;
 
-//!\brief Like std::tuple_element but with bio::field on bio::record. [implementation]
+//!\brief Like std::tuple_element but with bio::io::field on bio::io::record. [implementation]
 template <field f, typename field_ids, typename field_types>
     requires(field_ids::contains(f))
 struct record_element<f, record<field_ids, field_types>> :
   public std::tuple_element<field_ids::index_of(f), record<field_ids, field_types>>
 {};
 
-//!\brief Like std::tuple_element but with bio::field on bio::record. [type trait shortcut]
+//!\brief Like std::tuple_element but with bio::io::field on bio::io::record. [type trait shortcut]
 template <field f, typename t>
     requires(requires { typename record_element<f, t>::type; })
 using record_element_t = typename record_element<f, t>::type;
 
 //-------------------------------------------------------------------------------
-// bio::get
+// bio::io::get
 //-------------------------------------------------------------------------------
 
-/*!\name Free function get() interface for bio::record based on bio::field.
- * \brief This is the tuple interface via bio::field, e.g. `get<field::seq>(tuple)`.
- * \relates bio::record
+/*!\name Free function get() interface for bio::io::record based on bio::io::field.
+ * \brief This is the tuple interface via bio::io::field, e.g. `get<field::seq>(tuple)`.
+ * \relates bio::io::record
  * \{
  */
-//!\brief Free function get() for bio::record based on bio::field.
+//!\brief Free function get() for bio::io::record based on bio::io::field.
 template <field f, typename field_ids, typename field_types>
 auto & get(record<field_ids, field_types> & r)
 {
@@ -363,18 +363,18 @@ auto const && get(record<field_ids, field_types> const && r)
 }
 //!\}
 
-// Implementation note: for some reason, the following is already "related" do bio::record
-/*!\name Convenience functions for creating bio::record.
+// Implementation note: for some reason, the following is already "related" do bio::io::record
+/*!\name Convenience functions for creating bio::io::record.
  * \{
  */
 //-------------------------------------------------------------------------------
 // make_record
 //-------------------------------------------------------------------------------
 
-/*!\brief Create a deep bio::record from the arguments (like std::make_tuple for std::tuple).
+/*!\brief Create a deep bio::io::record from the arguments (like std::make_tuple for std::tuple).
  * \param[in] tag    A tag that specifies the identifiers of the subsequent arguments.
  * \param[in] fields The arguments to put into the record.
- * \returns A bio::record with copies of the field arguments.
+ * \returns A bio::io::record with copies of the field arguments.
  * \details
  *
  * The record will contain copies of the arguments.
@@ -396,10 +396,10 @@ constexpr auto make_record(vtag_t<field_ids...> BIO_DOXYGEN_ONLY(tag), field_typ
 // tie_record
 //-------------------------------------------------------------------------------
 
-/*!\brief Create a shallow bio::record from the arguments (like std::tie for std::tuple).
+/*!\brief Create a shallow bio::io::record from the arguments (like std::tie for std::tuple).
  * \param[in] tag    A tag that specifies the identifiers of the subsequent arguments.
  * \param[in] fields The arguments to represent in the record.
- * \returns A bio::record with references to the field arguments.
+ * \returns A bio::io::record with references to the field arguments.
  * \details
  *
  * The record will contain references to the arguments.
@@ -419,4 +419,4 @@ constexpr auto tie_record(vtag_t<field_ids...> BIO_DOXYGEN_ONLY(tag), field_type
 
 //!\}
 
-} // namespace bio
+} // namespace bio::io

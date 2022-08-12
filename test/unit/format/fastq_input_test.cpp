@@ -28,11 +28,11 @@ using std::literals::string_view_literals::operator""sv;
 
 struct read : public ::testing::Test
 {
-    using default_rec_t =
-      bio::record<bio::vtag_t<bio::field::id, bio::field::seq, bio::field::qual>,
-                  seqan3::type_list<std::string_view,
-                                    decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>),
-                                    decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::phred42>)>>;
+    using default_rec_t = bio::io::record<
+      bio::io::vtag_t<bio::io::field::id, bio::io::field::seq, bio::io::field::qual>,
+      seqan3::type_list<std::string_view,
+                        decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>),
+                        decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::phred42>)>>;
 
     std::string default_input =
       R"raw(@ID1
@@ -72,10 +72,10 @@ ACGTTTA
     {
         std::istringstream istream{input};
 
-        bio::format_input_handler<bio::fastq> input_handler{istream};
+        bio::io::format_input_handler<bio::io::fastq> input_handler{istream};
 
-        bio::record<bio::vtag_t<bio::field::id, bio::field::seq, bio::field::qual>,
-                    seqan3::type_list<id_t, seq_t, qual_t>>
+        bio::io::record<bio::io::vtag_t<bio::io::field::id, bio::io::field::seq, bio::io::field::qual>,
+                        seqan3::type_list<id_t, seq_t, qual_t>>
           rec;
 
         for (unsigned i = 0; i < 3; ++i)
@@ -183,9 +183,9 @@ TEST_F(read, empty_seq)
 
 )raw";
 
-    std::istringstream                    istream{input};
-    bio::format_input_handler<bio::fastq> input_handler{istream};
-    default_rec_t                         rec;
+    std::istringstream                            istream{input};
+    bio::io::format_input_handler<bio::io::fastq> input_handler{istream};
+    default_rec_t                                 rec;
 
     input_handler.parse_next_record_into(rec);
     EXPECT_RANGE_EQ(rec.id(), "ID1"sv);
@@ -210,9 +210,9 @@ struct options_t
 
 TEST_F(read, truncate_ids_off)
 {
-    std::istringstream                    istream{default_input};
-    bio::format_input_handler<bio::fastq> input_handler{istream, options_t{}};
-    default_rec_t                         rec;
+    std::istringstream                            istream{default_input};
+    bio::io::format_input_handler<bio::io::fastq> input_handler{istream, options_t{}};
+    default_rec_t                                 rec;
 
     input_handler.parse_next_record_into(rec);
     EXPECT_RANGE_EQ(rec.id(), "ID1"sv);
@@ -232,9 +232,9 @@ TEST_F(read, truncate_ids_off)
 
 TEST_F(read, truncate_ids_on)
 {
-    std::istringstream                    istream{default_input};
-    bio::format_input_handler<bio::fastq> input_handler{istream, options_t{.truncate_ids = true}};
-    default_rec_t                         rec;
+    std::istringstream                            istream{default_input};
+    bio::io::format_input_handler<bio::io::fastq> input_handler{istream, options_t{.truncate_ids = true}};
+    default_rec_t                                 rec;
 
     input_handler.parse_next_record_into(rec);
     EXPECT_RANGE_EQ(rec.id(), "ID1"sv);
@@ -261,29 +261,29 @@ TEST_F(read, fail_no_input)
     std::string const input{};
 
     std::istringstream istream{input};
-    EXPECT_THROW(bio::format_input_handler<bio::fastq>{istream}, bio::file_open_error);
+    EXPECT_THROW(bio::io::format_input_handler<bio::io::fastq>{istream}, bio::io::file_open_error);
 }
 
 TEST_F(read, fail_no_id)
 {
     std::string const input{"foo\nACGT"};
 
-    std::istringstream                    istream{input};
-    bio::format_input_handler<bio::fastq> input_handler{istream};
-    default_rec_t                         rec;
+    std::istringstream                            istream{input};
+    bio::io::format_input_handler<bio::io::fastq> input_handler{istream};
+    default_rec_t                                 rec;
 
-    EXPECT_THROW(input_handler.parse_next_record_into(rec), bio::parse_error);
+    EXPECT_THROW(input_handler.parse_next_record_into(rec), bio::io::parse_error);
 }
 
 TEST_F(read, fail_no_plus)
 {
     std::string const input{"@foo\nACGT\nbar"};
 
-    std::istringstream                    istream{input};
-    bio::format_input_handler<bio::fastq> input_handler{istream};
-    default_rec_t                         rec;
+    std::istringstream                            istream{input};
+    bio::io::format_input_handler<bio::io::fastq> input_handler{istream};
+    default_rec_t                                 rec;
 
-    EXPECT_THROW(input_handler.parse_next_record_into(rec), bio::parse_error);
+    EXPECT_THROW(input_handler.parse_next_record_into(rec), bio::io::parse_error);
 }
 
 TEST_F(read, fail_size_mismatch)
@@ -295,21 +295,21 @@ ACGTTTTTTTTTTTTTTT
 !##$%&'()*+,-./++
 )raw";
 
-    std::istringstream                    istream{input};
-    bio::format_input_handler<bio::fastq> input_handler{istream};
-    default_rec_t                         rec;
+    std::istringstream                            istream{input};
+    bio::io::format_input_handler<bio::io::fastq> input_handler{istream};
+    default_rec_t                                 rec;
 
-    EXPECT_THROW(input_handler.parse_next_record_into(rec), bio::parse_error);
+    EXPECT_THROW(input_handler.parse_next_record_into(rec), bio::io::parse_error);
 }
 
 TEST_F(read, fail_illegal_alphabet)
 {
     std::string input{"@foo\nFOOBAR\n+\n!!!!!!\n"};
 
-    std::istringstream                    istream{input};
-    bio::format_input_handler<bio::fastq> input_handler{istream};
-    using rec_t = bio::record<bio::vtag_t<bio::field::id, bio::field::seq>,
-                              seqan3::type_list<std::string_view, std::vector<seqan3::dna5>>>;
+    std::istringstream                            istream{input};
+    bio::io::format_input_handler<bio::io::fastq> input_handler{istream};
+    using rec_t = bio::io::record<bio::io::vtag_t<bio::io::field::id, bio::io::field::seq>,
+                                  seqan3::type_list<std::string_view, std::vector<seqan3::dna5>>>;
 
     rec_t rec;
 

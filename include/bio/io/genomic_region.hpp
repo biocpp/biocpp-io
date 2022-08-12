@@ -14,11 +14,11 @@
 #include <bio/io/misc.hpp>
 
 /*!\file
- * \brief Provides bio::genomic_region.
+ * \brief Provides bio::io::genomic_region.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
-namespace bio
+namespace bio::io
 {
 
 /*!\brief Represents an interval on a chromosome or contig.
@@ -121,4 +121,4 @@ struct genomic_region
     }
 };
 
-} // namespace bio
+} // namespace bio::io

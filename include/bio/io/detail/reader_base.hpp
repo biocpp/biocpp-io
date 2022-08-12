@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::reader_base.
+ * \brief Provides bio::io::reader_base.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -29,7 +29,7 @@
 #include <bio/io/record.hpp>
 #include <bio/io/stream/transparent_istream.hpp>
 
-namespace bio
+namespace bio::io
 {
 
 // ----------------------------------------------------------------------------
@@ -86,7 +86,7 @@ public:
      * \brief The exact type of the record depends on the options!
      * \{
      */
-    /*!\brief The type of the record, a specialisation of bio::record.
+    /*!\brief The type of the record, a specialisation of bio::io::record.
      * \details
      *
      * ### Example
@@ -193,8 +193,8 @@ public:
      */
     /*!\brief Returns an iterator to current position in the file.
      * \returns An iterator pointing to the current position in the file.
-     * \throws bio::unexpected_end_of_input If the file end unexpectedly.
-     * \throws bio::parse_error If there is an unspecific error parsing the format.
+     * \throws bio::io::unexpected_end_of_input If the file end unexpectedly.
+     * \throws bio::io::parse_error If there is an unspecific error parsing the format.
      *
      * It is safe to call this function repeatedly, but it will always return an iterator pointing to the current
      * record in the file (and not seek back to the beginning).
@@ -301,4 +301,4 @@ protected:
     friend iterator;
 };
 
-} // namespace bio
+} // namespace bio::io

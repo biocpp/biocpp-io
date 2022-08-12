@@ -16,10 +16,10 @@
 
 TEST(bgzf_ostream, regular)
 {
-    regular<bio::compression_format::bgzf>();
+    regular<bio::io::compression_format::bgzf>();
 }
 
 TEST(bgzf_ostream, type_erased)
 {
-    type_erased<bio::compression_format::bgzf>();
+    type_erased<bio::io::compression_format::bgzf>();
 }

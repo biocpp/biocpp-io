@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides bio::seq_io::reader.
+ * \brief Provides bio::io::seq_io::reader.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -29,7 +29,7 @@
 #include <bio/io/format/fastq_input_handler.hpp>
 #include <bio/io/seq_io/reader_options.hpp>
 
-namespace bio::seq_io
+namespace bio::io::seq_io
 {
 
 // ----------------------------------------------------------------------------
@@ -49,16 +49,16 @@ namespace bio::seq_io
  *
  * The Sequence I/O reader supports reading the following fields:
  *
- *   1. bio::field::seq
- *   2. bio::field::id
- *   3. bio::field::qual
+ *   1. bio::io::field::seq
+ *   2. bio::io::field::id
+ *   3. bio::io::field::qual
  *
  * And it supports the following formats:
  *
- *   1. FastA (see also bio::fasta)
- *   2. FastQ (see also bio::fastq)
+ *   1. FastA (see also bio::io::fasta)
+ *   2. FastQ (see also bio::io::fastq)
  *
- * Fields that are not present in a format (e.g. bio::field::qual in FastA) will be returned empty.
+ * Fields that are not present in a format (e.g. bio::io::field::qual in FastA) will be returned empty.
  *
  * ### Simple usage
  *
@@ -77,7 +77,7 @@ namespace bio::seq_io
  *
  * \snippet test/snippet/seq_io/seq_io_reader.cpp decomposed
  *
- * Note that the order of the fields is defined by bio::seq_io::default_field_ids and independent
+ * Note that the order of the fields is defined by bio::io::seq_io::default_field_ids and independent
  * of the names you give to the bindings.
  *
  * ### Views on files
@@ -97,7 +97,7 @@ namespace bio::seq_io
  *
  * For more information on *shallow* vs *deep*, see \ref shallow_vs_deep
  *
- * For more advanced options, see bio::seq_io::reader_options.
+ * For more advanced options, see bio::io::seq_io::reader_options.
  */
 template <typename... option_args_t>
 class reader : public reader_base<reader<option_args_t...>, reader_options<option_args_t...>>
@@ -124,7 +124,7 @@ public:
     using format_type = typename base_t::format_type;
 
     // clang-format off
-    //!\copydoc bio::reader_base::reader_base(std::filesystem::path const & filename, format_type const & fmt, options_t const & opt = options_t{})
+    //!\copydoc bio::io::reader_base::reader_base(std::filesystem::path const & filename, format_type const & fmt, options_t const & opt = options_t{})
     // clang-format on
     reader(std::filesystem::path const &            filename,
            format_type const &                      fmt,
@@ -139,7 +139,7 @@ public:
     {}
 
     // clang-format off
-    //!\copydoc bio::reader_base::reader_base(std::istream & str, format_type const & fmt, options_t const & opt = options_t{})
+    //!\copydoc bio::io::reader_base::reader_base(std::istream & str, format_type const & fmt, options_t const & opt = options_t{})
     // clang-format on
     reader(std::istream &                           str,
            format_type const &                      fmt,
@@ -159,4 +159,4 @@ public:
     {}
 };
 
-} // namespace bio::seq_io
+} // namespace bio::io::seq_io
