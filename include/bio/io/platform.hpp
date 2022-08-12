@@ -53,6 +53,18 @@ static_assert(seqan3::seqan3_version_minor >= 1, "SeqAn >= 3.1 is required by B.
 #endif
 
 // ============================================================================
+//  WORKAROUNDS
+// ============================================================================
+
+#ifndef BIOCPP_IO_NO_VIEWBASE
+#    if defined(__GNUC__) && ((__GNUC__ == 11 && __GNUC_MINOR__ < 3) || (__GNUC__ == 12 && __GNUC_MINOR__ < 1))
+#        define BIOCPP_IO_NO_VIEWBASE 1
+#    else
+#        define BIOCPP_IO_NO_VIEWBASE 0
+#    endif
+#endif
+
+// ============================================================================
 //  Documentation
 // ============================================================================
 
