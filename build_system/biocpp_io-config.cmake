@@ -1,4 +1,5 @@
 # -----------------------------------------------------------------------------------------------------
+# Copyright (c) 2020-2022, deCODE Genetics
 # Copyright (c) 2006-2021, Knut Reinert & Freie Universität Berlin
 # Copyright (c) 2016-2021, Knut Reinert & MPI für molekulare Genetik
 # This file may be used, modified and/or redistributed under the terms of the 3-clause BSD-License
@@ -88,7 +89,6 @@ endif ()
 # ----------------------------------------------------------------------------
 
 include (CheckIncludeFileCXX)
-include (CheckCXXSourceCompiles)
 include (FindPackageHandleStandardArgs)
 
 # ----------------------------------------------------------------------------
@@ -119,41 +119,11 @@ endmacro ()
 # Note that bio-config.cmake can be standalone and thus BIOCPP_IO_CLONE_DIR might be empty.
 # * `BIOCPP_IO_CLONE_DIR` was already found in bio-config-version.cmake
 # * `BIOCPP_IO_INCLUDE_DIR` was already found in bio-config-version.cmake
-find_path (BIOCPP_IO_SUBMODULES_DIR NAMES submodules/seqan3 HINTS "${BIOCPP_IO_CLONE_DIR}" "${BIOCPP_IO_INCLUDE_DIR}/bio")
-
 if (BIOCPP_IO_INCLUDE_DIR)
-    bio_config_print ("The BioC++ I/O library include dir found:   ${BIOCPP_IO_INCLUDE_DIR}")
+    bio_config_print ("Include dir found:          ${BIOCPP_IO_INCLUDE_DIR}")
 else ()
-    bio_config_error ("The BioC++ I/O library include directory could not be found (BIOCPP_IO_INCLUDE_DIR: '${BIOCPP_IO_INCLUDE_DIR}')")
+    bio_config_error ("The include directory could not be found (BIOCPP_IO_INCLUDE_DIR: '${BIOCPP_IO_INCLUDE_DIR}')")
 endif ()
-
-# ----------------------------------------------------------------------------
-# Detect if we are a clone of repository and if yes auto-add submodules
-# ----------------------------------------------------------------------------
-
-if (BIOCPP_IO_CLONE_DIR)
-    bio_config_print ("Detected as running from a repository checkout…")
-endif ()
-
-if (BIOCPP_IO_SUBMODULES_DIR)
-    file (GLOB submodules ${BIOCPP_IO_SUBMODULES_DIR}/submodules/*/include)
-    foreach (submodule ${submodules})
-        if (IS_DIRECTORY ${submodule})
-            bio_config_print ("  …adding submodule include:  ${submodule}")
-            set (BIOCPP_IO_DEPENDENCY_INCLUDE_DIRS ${submodule} ${BIOCPP_IO_DEPENDENCY_INCLUDE_DIRS})
-        endif ()
-    endforeach ()
-endif ()
-
-# ----------------------------------------------------------------------------
-# Options for CheckCXXSourceCompiles
-# ----------------------------------------------------------------------------
-
-# deactivate messages in check_*
-set (CMAKE_REQUIRED_QUIET       1)
-# use global variables in Check* calls
-set (CMAKE_REQUIRED_INCLUDES    ${CMAKE_INCLUDE_PATH} ${BIOCPP_IO_INCLUDE_DIR} ${BIOCPP_IO_DEPENDENCY_INCLUDE_DIRS})
-set (CMAKE_REQUIRED_FLAGS       ${CMAKE_CXX_FLAGS})
 
 # ----------------------------------------------------------------------------
 # Force-deactivate optional dependencies
@@ -163,55 +133,6 @@ set (CMAKE_REQUIRED_FLAGS       ${CMAKE_CXX_FLAGS})
 # If you want to force-require these, just do find_package (zlib REQUIRED) before find_package(biocpp_io)
 option (BIOCPP_IO_NO_ZLIB  "Don't use ZLIB, even if present." OFF)
 option (BIOCPP_IO_NO_BZIP2 "Don't use BZip2, even if present." OFF)
-
-# ----------------------------------------------------------------------------
-# Require C++20
-# ----------------------------------------------------------------------------
-
-set (CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
-
-set (CXXSTD_TEST_SOURCE
-    "#if !defined (__cplusplus) || (__cplusplus < 201709L)
-    #error NOCXX20
-    #endif
-    int main() {}")
-
-check_cxx_source_compiles ("${CXXSTD_TEST_SOURCE}" CXX20_BUILTIN)
-
-if (CXX20_BUILTIN)
-    bio_config_print ("C++ Standard-20 support:    builtin")
-else ()
-    set (CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -std=c++20")
-
-    check_cxx_source_compiles ("${CXXSTD_TEST_SOURCE}" CXX20_FLAG)
-
-    if (CXX20_FLAG)
-        bio_config_print ("C++ Standard-20 support:    via -std=c++20")
-    else ()
-        bio_config_error ("The BioC++ I/O library requires C++20, but your compiler does not support it.")
-    endif ()
-
-    set (BIOCPP_IO_CXX_FLAGS "${BIOCPP_IO_CXX_FLAGS} -std=c++20")
-endif ()
-
-# ----------------------------------------------------------------------------
-# Require C++ Concepts
-# ----------------------------------------------------------------------------
-
-#set (CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
-
-#set (CXXSTD_TEST_SOURCE
-    #"static_assert (__cpp_concepts >= 201507);
-    #int main() {}")
-
-#set (CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} ${BIOCPP_IO_CXX_FLAGS}")
-#check_cxx_source_compiles ("${CXXSTD_TEST_SOURCE}" BIOCPP_IO_CONCEPTS)
-
-#if (BIOCPP_IO_CONCEPTS_FLAG)
-    #bio_config_print ("C++ Concepts support:       builtin")
-#else ()
-    #bio_config_error ("The BioC++ I/O library requires C++ Concepts, but your compiler does not support them.")
-#endif ()
 
 # ----------------------------------------------------------------------------
 # thread support (pthread, windows threads)
@@ -232,6 +153,25 @@ else ()
 endif ()
 
 # ----------------------------------------------------------------------------
+# Require Core library
+# ----------------------------------------------------------------------------
+
+if (BIOCPP_CORE_FOUND)
+    bio_config_print ("Required dependency:        already loaded (${BIOCPP_CORE_VERSION}).")
+else ()
+    find_package (biocpp_core REQUIRED QUIET
+                  HINTS ${BIOCPP_IO_CLONE_DIR}/submodule/biocpp-core/build_system
+                        ${CMAKE_CURRENT_LIST_DIR}/../../biocpp-core/build_system)
+
+    if (BIOCPP_CORE_FOUND)
+        bio_config_print ("Required dependency:        BioC++ core library found (${BIOCPP_CORE_VERSION}).")
+        set (BIOCPP_IO_LIBRARIES ${BIOCPP_IO_LIBRARIES} biocpp_core)
+    else ()
+        bio_config_print ("The BioC++ core library is required, but wasn't found. Get it from https://github.com/biocpp/biocpp-core")
+    endif ()
+endif ()
+
+# ----------------------------------------------------------------------------
 # Require SeqAn3
 # ----------------------------------------------------------------------------
 
@@ -239,7 +179,8 @@ find_package (SeqAn3 REQUIRED QUIET
               HINTS ${CMAKE_CURRENT_LIST_DIR}/../submodules/seqan3/build_system)
 
 if (SEQAN3_FOUND)
-    bio_config_print ("Required dependency:        SeqAn3 found.")
+    bio_config_print ("Required dependency:        SeqAn3 found (${SEQAN3_VERSION}).")
+    set (BIOCPP_IO_LIBRARIES ${BIOCPP_IO_LIBRARIES} seqan3_seqan3)
 else ()
     bio_config_print ("The SeqAn3 library is required, but wasn't found. Get it from https://github.com/seqan/seqan3")
 endif ()
@@ -254,9 +195,8 @@ endif ()
 
 if (ZLIB_FOUND)
     set (BIOCPP_IO_LIBRARIES         ${BIOCPP_IO_LIBRARIES}         ${ZLIB_LIBRARIES})
-    set (BIOCPP_IO_DEPENDENCY_INCLUDE_DIRS      ${BIOCPP_IO_DEPENDENCY_INCLUDE_DIRS}      ${ZLIB_INCLUDE_DIRS})
     set (BIOCPP_IO_DEFINITIONS       ${BIOCPP_IO_DEFINITIONS}       "-DBIOCPP_IO_HAS_ZLIB=1")
-    bio_config_print ("Optional dependency:        ZLIB-${ZLIB_VERSION_STRING} found.")
+    bio_config_print ("Optional dependency:        ZLIB found (${ZLIB_VERSION_STRING}).")
 else ()
     bio_config_print ("Optional dependency:        ZLIB not found.")
 endif ()
@@ -279,61 +219,10 @@ endif ()
 
 if (BZIP2_FOUND)
     set (BIOCPP_IO_LIBRARIES         ${BIOCPP_IO_LIBRARIES}         ${BZIP2_LIBRARIES})
-    set (BIOCPP_IO_DEPENDENCY_INCLUDE_DIRS      ${BIOCPP_IO_DEPENDENCY_INCLUDE_DIRS}      ${BZIP2_INCLUDE_DIRS})
     set (BIOCPP_IO_DEFINITIONS       ${BIOCPP_IO_DEFINITIONS}       "-DBIOCPP_IO_HAS_BZIP2=1")
-    bio_config_print ("Optional dependency:        BZip2-${BZIP2_VERSION_STRING} found.")
+    bio_config_print ("Optional dependency:        BZip2 found (${BZIP2_VERSION_STRING}).")
 else ()
     bio_config_print ("Optional dependency:        BZip2 not found.")
-endif ()
-
-# ----------------------------------------------------------------------------
-# System dependencies
-# ----------------------------------------------------------------------------
-
-# librt
-if ((${CMAKE_SYSTEM_NAME} STREQUAL "Linux") OR
-    (${CMAKE_SYSTEM_NAME} STREQUAL "kFreeBSD") OR
-    (${CMAKE_SYSTEM_NAME} STREQUAL "GNU"))
-    set (BIOCPP_IO_LIBRARIES ${BIOCPP_IO_LIBRARIES} rt)
-endif ()
-
-# libexecinfo -- implicit
-check_include_file_cxx (execinfo.h _BIOCPP_IO_HAVE_EXECINFO)
-mark_as_advanced (_BIOCPP_IO_HAVE_EXECINFO)
-if (_BIOCPP_IO_HAVE_EXECINFO)
-    if ((${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD") OR (${CMAKE_SYSTEM_NAME} STREQUAL "OpenBSD"))
-        bio_config_print ("Optional dependency:        libexecinfo found.")
-        set (BIOCPP_IO_LIBRARIES ${BIOCPP_IO_LIBRARIES} execinfo elf)
-    endif ()
-else ()
-    bio_config_print ("Optional dependency:        libexecinfo not found.")
-endif ()
-
-# ----------------------------------------------------------------------------
-# Perform compilability test of platform.hpp (tests some requirements)
-# ----------------------------------------------------------------------------
-
-set (CXXSTD_TEST_SOURCE
-     "#include <bio/io/platform.hpp>
-     int main() {}")
-
-# using try_compile instead of check_cxx_source_compiles to capture output in case of failure
-file (WRITE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/src.cxx" "${CXXSTD_TEST_SOURCE}\n")
-
-try_compile (BIOCPP_IO_PLATFORM_TEST
-             ${CMAKE_BINARY_DIR}
-             ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/src.cxx
-             CMAKE_FLAGS         "-DCOMPILE_DEFINITIONS:STRING=${CMAKE_CXX_FLAGS} ${BIOCPP_IO_CXX_FLAGS}"
-                                 "-DINCLUDE_DIRECTORIES:STRING=${CMAKE_INCLUDE_PATH};${BIOCPP_IO_INCLUDE_DIR};${BIOCPP_IO_DEPENDENCY_INCLUDE_DIRS}"
-             COMPILE_DEFINITIONS ${BIOCPP_IO_DEFINITIONS}
-             LINK_LIBRARIES      ${BIOCPP_IO_LIBRARIES}
-             OUTPUT_VARIABLE     BIOCPP_IO_PLATFORM_TEST_OUTPUT)
-
-if (BIOCPP_IO_PLATFORM_TEST)
-    bio_config_print ("The BioC++ I/O library platform.hpp build:  passed.")
-else ()
-    bio_config_error ("The BioC++ I/O library platform.hpp build:  failed!\n\
-                        ${BIOCPP_IO_PLATFORM_TEST_OUTPUT}")
 endif ()
 
 # ----------------------------------------------------------------------------
@@ -357,17 +246,14 @@ set (BIOCPP_IO_INCLUDE_DIRS ${BIOCPP_IO_INCLUDE_DIR} ${BIOCPP_IO_DEPENDENCY_INCL
 # ----------------------------------------------------------------------------
 
 if (BIOCPP_IO_FOUND AND NOT TARGET biocpp::io)
-    separate_arguments (BIOCPP_IO_CXX_FLAGS_LIST UNIX_COMMAND "${BIOCPP_IO_CXX_FLAGS}")
-
     add_library (biocpp_io INTERFACE)
     target_compile_definitions (biocpp_io INTERFACE ${BIOCPP_IO_DEFINITIONS})
-    target_compile_options (biocpp_io INTERFACE ${BIOCPP_IO_CXX_FLAGS_LIST})
     target_link_libraries (biocpp_io INTERFACE "${BIOCPP_IO_LIBRARIES}")
     # include bio/include/ as -I, because bio should never produce warnings.
     target_include_directories (biocpp_io INTERFACE "${BIOCPP_IO_INCLUDE_DIR}")
     # include everything except bio/include/ as -isystem, i.e.
-    # a system header which suppresses warnings of external libraries.
-    target_include_directories (biocpp_io SYSTEM INTERFACE "${BIOCPP_IO_DEPENDENCY_INCLUDE_DIRS}")
+    # a system header which suppresses warnings of external libraries. CURRENTLY EMPTY
+    #target_include_directories (biocpp_io SYSTEM INTERFACE "${BIOCPP_IO_DEPENDENCY_INCLUDE_DIRS}")
     add_library (biocpp::io ALIAS biocpp_io)
 endif ()
 
