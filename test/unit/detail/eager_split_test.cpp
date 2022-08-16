@@ -10,9 +10,8 @@
 
 #include <ranges>
 
+#include <bio/test/expect_range_eq.hpp>
 #include <seqan3/alphabet/nucleotide/dna4.hpp>
-#include <seqan3/test/expect_range_eq.hpp>
-#include <seqan3/test/pretty_printing.hpp>
 
 #include <bio/io/detail/views_eager_split.hpp>
 

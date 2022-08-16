@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-#include <seqan3/test/expect_range_eq.hpp>
+#include <bio/test/expect_range_eq.hpp>
 
 #include <bio/io/format/bcf_output_handler.hpp>
 #include <bio/io/var_io/reader.hpp>

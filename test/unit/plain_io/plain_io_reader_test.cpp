@@ -10,7 +10,7 @@
 
 #include <gtest/gtest.h>
 
-#include <seqan3/test/tmp_filename.hpp>
+#include <bio/test/tmp_filename.hpp>
 
 #include <bio/io/plain_io/reader.hpp>
 
@@ -98,7 +98,7 @@ TEST(reader, line_wise_stream_header_starts_with)
 
 TEST(reader, line_wise_file)
 {
-    seqan3::test::tmp_filename filename{"plain_io_test"};
+    bio::test::tmp_filename filename{"plain_io_test"};
 
     {
         std::ofstream fi{filename.get_path()};
@@ -113,7 +113,7 @@ TEST(reader, line_wise_file)
 
 TEST(reader, line_wise_file_header_first_line)
 {
-    seqan3::test::tmp_filename filename{"plain_io_test"};
+    bio::test::tmp_filename filename{"plain_io_test"};
 
     {
         std::ofstream fi{filename.get_path()};
@@ -130,7 +130,7 @@ TEST(reader, line_wise_file_header_first_line)
 
 TEST(reader, line_wise_file_header_starts_with)
 {
-    seqan3::test::tmp_filename filename{"plain_io_test"};
+    bio::test::tmp_filename filename{"plain_io_test"};
 
     {
         std::ofstream fi{filename.get_path()};
@@ -152,20 +152,20 @@ void do_compare_fields(auto & reader)
     auto it = reader.begin();
     ASSERT_TRUE(it != reader.end());
     EXPECT_EQ(it->line, lines_comp[0]);
-    ASSERT_EQ(it->fields.size(), 2);
+    ASSERT_EQ(it->fields.size(), 2ull);
     EXPECT_EQ(it->fields[0], fields_comp[0][0]);
     EXPECT_EQ(it->fields[1], fields_comp[0][1]);
 
     ++it;
     ASSERT_TRUE(it != reader.end());
     EXPECT_EQ(it->line, lines_comp[1]);
-    ASSERT_EQ(it->fields.size(), 1);
+    ASSERT_EQ(it->fields.size(), 1ull);
     EXPECT_EQ(it->fields[0], fields_comp[1][0]);
 
     ++it;
     ASSERT_TRUE(it != reader.end());
     EXPECT_EQ(it->line, lines_comp[2]);
-    ASSERT_EQ(it->fields.size(), 2);
+    ASSERT_EQ(it->fields.size(), 2ull);
     EXPECT_EQ(it->fields[0], fields_comp[2][0]);
     EXPECT_EQ(it->fields[1], fields_comp[2][1]);
 
@@ -215,7 +215,7 @@ TEST(reader, field_wise_stream_header_starts_with)
 
 TEST(reader, field_wise_file)
 {
-    seqan3::test::tmp_filename filename{"plain_io_test"};
+    bio::test::tmp_filename filename{"plain_io_test"};
 
     {
         std::ofstream fi{filename.get_path()};
@@ -230,7 +230,7 @@ TEST(reader, field_wise_file)
 
 TEST(reader, field_wise_file_header_first_line)
 {
-    seqan3::test::tmp_filename filename{"plain_io_test"};
+    bio::test::tmp_filename filename{"plain_io_test"};
 
     {
         std::ofstream fi{filename.get_path()};
@@ -247,7 +247,7 @@ TEST(reader, field_wise_file_header_first_line)
 
 TEST(reader, field_wise_file_header_starts_with)
 {
-    seqan3::test::tmp_filename filename{"plain_io_test"};
+    bio::test::tmp_filename filename{"plain_io_test"};
 
     {
         std::ofstream fi{filename.get_path()};
@@ -266,7 +266,7 @@ TEST(reader, field_wise_file_header_starts_with)
 
 TEST(reader, empty_file)
 {
-    seqan3::test::tmp_filename filename{"plain_io_test"};
+    bio::test::tmp_filename filename{"plain_io_test"};
 
     {
         std::ofstream fi{filename.get_path()};
@@ -279,7 +279,7 @@ TEST(reader, empty_file)
 
 TEST(reader, empty_file_first_line)
 {
-    seqan3::test::tmp_filename filename{"plain_io_test"};
+    bio::test::tmp_filename filename{"plain_io_test"};
 
     {
         std::ofstream fi{filename.get_path()};
@@ -296,7 +296,7 @@ TEST(reader, empty_file_first_line)
 
 TEST(reader, empty_file_starts_with)
 {
-    seqan3::test::tmp_filename filename{"plain_io_test"};
+    bio::test::tmp_filename filename{"plain_io_test"};
 
     {
         std::ofstream fi{filename.get_path()};
@@ -317,7 +317,7 @@ TEST(reader, empty_file_starts_with)
 // (even more than one per line)
 TEST(reader, overflow)
 {
-    seqan3::test::tmp_filename filename{"plain_io_test"};
+    bio::test::tmp_filename filename{"plain_io_test"};
 
     {
         std::ofstream fi{filename.get_path()};
@@ -335,7 +335,7 @@ TEST(reader, overflow)
 // no EOL character at end of line / file
 TEST(reader, no_eol)
 {
-    seqan3::test::tmp_filename filename{"plain_io_test"};
+    bio::test::tmp_filename filename{"plain_io_test"};
 
     {
         std::ofstream fi{filename.get_path()};
