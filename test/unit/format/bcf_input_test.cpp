@@ -9,8 +9,8 @@
 #include <gtest/gtest.h>
 
 // #include <seqan3/core/debug_stream.hpp>
-#include <seqan3/test/expect_range_eq.hpp>
-#include <seqan3/test/tmp_filename.hpp>
+#include <bio/test/expect_range_eq.hpp>
+#include <bio/test/tmp_filename.hpp>
 
 #include <bio/io/format/bcf_input_handler.hpp>
 #include <bio/io/var_io/reader.hpp>
@@ -32,23 +32,23 @@ TEST(bcf, iterator)
     EXPECT_EQ(it.header.text, example_from_spec_bcf_header);
 
     EXPECT_TRUE(it != std::default_sentinel);
-    EXPECT_EQ(it->first.size(), 91);
+    EXPECT_EQ(it->first.size(), 91ull);
 
     ++it;
     EXPECT_TRUE(it != std::default_sentinel);
-    EXPECT_EQ(it->first.size(), 76);
+    EXPECT_EQ(it->first.size(), 76ull);
 
     ++it;
     EXPECT_TRUE(it != std::default_sentinel);
-    EXPECT_EQ(it->first.size(), 98);
+    EXPECT_EQ(it->first.size(), 98ull);
 
     ++it;
     EXPECT_TRUE(it != std::default_sentinel);
-    EXPECT_EQ(it->first.size(), 71);
+    EXPECT_EQ(it->first.size(), 71ull);
 
     ++it;
     EXPECT_TRUE(it != std::default_sentinel);
-    EXPECT_EQ(it->first.size(), 80);
+    EXPECT_EQ(it->first.size(), 80ull);
 
     ++it;
     EXPECT_TRUE(it == std::default_sentinel);
@@ -56,7 +56,7 @@ TEST(bcf, iterator)
 
 TEST(bcf, iterator_underflow)
 {
-    seqan3::test::tmp_filename filename{"bcf_iterator_overflow.unbcf"};
+    bio::test::tmp_filename filename{"bcf_iterator_overflow.unbcf"};
 
     {
         std::ofstream filecreator{filename.get_path(), std::ios::out | std::ios::binary};
@@ -72,23 +72,23 @@ TEST(bcf, iterator_underflow)
     EXPECT_EQ(it.header.text, example_from_spec_bcf_header);
 
     EXPECT_TRUE(it != std::default_sentinel);
-    EXPECT_EQ(it->first.size(), 91);
+    EXPECT_EQ(it->first.size(), 91ull);
 
     ++it;
     EXPECT_TRUE(it != std::default_sentinel);
-    EXPECT_EQ(it->first.size(), 76);
+    EXPECT_EQ(it->first.size(), 76ull);
 
     ++it;
     EXPECT_TRUE(it != std::default_sentinel);
-    EXPECT_EQ(it->first.size(), 98);
+    EXPECT_EQ(it->first.size(), 98ull);
 
     ++it;
     EXPECT_TRUE(it != std::default_sentinel);
-    EXPECT_EQ(it->first.size(), 71);
+    EXPECT_EQ(it->first.size(), 71ull);
 
     ++it;
     EXPECT_TRUE(it != std::default_sentinel);
-    EXPECT_EQ(it->first.size(), 80);
+    EXPECT_EQ(it->first.size(), 80ull);
 
     ++it;
     EXPECT_TRUE(it == std::default_sentinel);

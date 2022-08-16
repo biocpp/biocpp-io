@@ -12,7 +12,7 @@
 #include <string>
 
 #include <bio/io/misc.hpp>
-#include <seqan3/test/tmp_filename.hpp>
+#include <bio/test/tmp_filename.hpp>
 
 #include <bio/io/stream/compression.hpp>
 #include <bio/io/stream/detail/make_stream.hpp>
@@ -23,7 +23,7 @@
 template <bio::io::compression_format f, typename stream_t = typename bio::io::detail::compression_stream<f>::ostream>
 void regular()
 {
-    seqan3::test::tmp_filename filename{"ostream_test"};
+    bio::test::tmp_filename filename{"ostream_test"};
 
     {
         std::ofstream of{filename.get_path()};
@@ -51,7 +51,7 @@ void regular()
 template <bio::io::compression_format f, typename stream_t = typename bio::io::detail::compression_stream<f>::ostream>
 void type_erased()
 {
-    seqan3::test::tmp_filename filename{"ostream_test"};
+    bio::test::tmp_filename filename{"ostream_test"};
 
     {
         std::ofstream of{filename.get_path()};

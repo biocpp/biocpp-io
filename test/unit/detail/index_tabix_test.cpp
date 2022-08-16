@@ -8,9 +8,9 @@
 
 #include <gtest/gtest.h>
 
-#include <seqan3/test/expect_range_eq.hpp>
-#include <seqan3/test/tmp_directory.hpp>
-#include <seqan3/test/tmp_filename.hpp>
+#include <bio/test/expect_range_eq.hpp>
+#include <bio/test/tmp_directory.hpp>
+#include <bio/test/tmp_filename.hpp>
 
 #include <bio/io/detail/index_tabix.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
@@ -24,8 +24,7 @@ TEST(index_tabix, read_write)
     std::filesystem::path input = BIOCPP_IO_DATA_DIR;
     input /= "../format/1000G_chr10_sample.vcf.gz.tbi";
 
-    seqan3::test::tmp_directory dir{};
-    std::filesystem::path       output = dir.path() / "out.tbi";
+    bio::test::tmp_filename output{"out.tbi"};
 
     using stream_rng_t =
       std::ranges::subrange<bio::io::detail::fast_istreambuf_iterator<char>, std::default_sentinel_t>;
@@ -33,7 +32,7 @@ TEST(index_tabix, read_write)
     {
         bio::io::detail::tabix_index idx{};
         idx.read(input);
-        idx.write(output);
+        idx.write(output.get_path());
     }
 
     // verify by comparing the decompressed contents
@@ -41,13 +40,11 @@ TEST(index_tabix, read_write)
         bio::io::transparent_istream input_f{input};
         stream_rng_t                 input_s{bio::io::detail::fast_istreambuf_iterator<char>{input_f}, {}};
 
-        bio::io::transparent_istream output_f{output};
+        bio::io::transparent_istream output_f{output.get_path()};
         stream_rng_t                 output_s{bio::io::detail::fast_istreambuf_iterator<char>{output_f}, {}};
 
         EXPECT_TRUE((std::ranges::equal(input_s, output_s)));
     }
-
-    std::filesystem::remove(output);
 }
 
 // TODO explicit tests for reg2chunks? Is implicitly tests by indexed var_io tests

@@ -8,9 +8,9 @@
 
 #include <gtest/gtest.h>
 
-#include <seqan3/test/expect_range_eq.hpp>
-#include <seqan3/test/tmp_directory.hpp>
-#include <seqan3/test/tmp_filename.hpp>
+#include <bio/test/expect_range_eq.hpp>
+#include <bio/test/tmp_directory.hpp>
+#include <bio/test/tmp_filename.hpp>
 
 #include <bio/io/var_io/reader.hpp>
 
@@ -30,8 +30,8 @@ void var_io_reader_filename_constructor(bool ext_check, auto &&... args)
 {
     /* just the filename */
     {
-        seqan3::test::tmp_filename filename{"var_io_reader_constructor.vcf"};
-        std::ofstream              filecreator{filename.get_path(), std::ios::out | std::ios::binary};
+        bio::test::tmp_filename filename{"var_io_reader_constructor.vcf"};
+        std::ofstream           filecreator{filename.get_path(), std::ios::out | std::ios::binary};
 
         EXPECT_NO_THROW((bio::io::var_io::reader{filename.get_path(), std::forward<decltype(args)>(args)...}));
     }
@@ -47,8 +47,8 @@ void var_io_reader_filename_constructor(bool ext_check, auto &&... args)
     /* wrong extension */
     if (ext_check)
     {
-        seqan3::test::tmp_filename filename{"var_io_reader_constructor.xyz"};
-        std::ofstream              filecreator{filename.get_path(), std::ios::out | std::ios::binary};
+        bio::test::tmp_filename filename{"var_io_reader_constructor.xyz"};
+        std::ofstream           filecreator{filename.get_path(), std::ios::out | std::ios::binary};
         EXPECT_THROW((bio::io::var_io::reader{filename.get_path(), std::forward<decltype(args)>(args)...}),
                      bio::io::unhandled_extension_error);
     }
@@ -174,15 +174,15 @@ TEST(var_io_reader, iteration)
             EXPECT_EQ(rec.chrom(), "20");
             // only very basic check here, rest in format test
         }
-        EXPECT_EQ(count, 5);
+        EXPECT_EQ(count, 5ull);
     }
 }
 
 TEST(var_io_reader, empty_file)
 {
     {
-        seqan3::test::tmp_filename filename{"var_io_reader_constructor.vcf"};
-        std::ofstream              filecreator{filename.get_path(), std::ios::out | std::ios::binary};
+        bio::test::tmp_filename filename{"var_io_reader_constructor.vcf"};
+        std::ofstream           filecreator{filename.get_path(), std::ios::out | std::ios::binary};
 
         bio::io::var_io::reader reader{filename.get_path()};
 
@@ -255,7 +255,7 @@ TEST(var_io_reader, custom_field_ids_structured_bindings)
 
 TEST(var_io_reader, decompression_filename)
 {
-    seqan3::test::tmp_filename filename{"var_io_reader.vcf.gz"};
+    bio::test::tmp_filename filename{"var_io_reader.vcf.gz"};
 
     {
         std::ofstream                             filecreator{filename.get_path(), std::ios::out | std::ios::binary};
@@ -272,7 +272,7 @@ TEST(var_io_reader, decompression_filename)
         EXPECT_EQ(rec.chrom(), "20");
         // only very basic check here, rest in format test
     }
-    EXPECT_EQ(count, 5);
+    EXPECT_EQ(count, 5ull);
 }
 
 TEST(var_io_reader, decompression_stream)
@@ -288,7 +288,7 @@ TEST(var_io_reader, decompression_stream)
         EXPECT_EQ(rec.chrom(), "20");
         // only very basic check here, rest in format test
     }
-    EXPECT_EQ(count, 5);
+    EXPECT_EQ(count, 5ull);
 }
 
 TEST(var_io_reader, region_filter)
@@ -296,7 +296,7 @@ TEST(var_io_reader, region_filter)
     bio::io::genomic_region<>       region{.chrom = "20", .beg = 17000, .end = 1230300};
     bio::io::var_io::reader_options options{.region = region};
 
-    seqan3::test::tmp_directory dir{};
+    bio::test::tmp_directory dir{};
 
     {
         std::ofstream os{dir.path() / "example.vcf.gz", std::ios::binary};
@@ -319,7 +319,7 @@ TEST(var_io_reader, region_filter)
             EXPECT_GE(rec.pos(), region.beg);
             EXPECT_LT(rec.pos(), region.end);
         }
-        EXPECT_EQ(count, 3);
+        EXPECT_EQ(count, 3ull);
     }
 
     std::filesystem::remove(dir.path() / "example.vcf.gz");
@@ -352,13 +352,13 @@ TEST(var_io_reader, region_filter_linear)
             EXPECT_GE(rec.pos(), region.beg);
             EXPECT_LT(rec.pos(), region.end);
         }
-        EXPECT_EQ(count, 3);
+        EXPECT_EQ(count, 3ull);
     }
 }
 
 TEST(var_io_reader, reopen)
 {
-    seqan3::test::tmp_directory dir{};
+    bio::test::tmp_directory dir{};
 
     {
         std::ofstream os{dir.path() / "example.vcf.gz", std::ios::binary};
@@ -374,7 +374,7 @@ TEST(var_io_reader, reopen)
             ++count;
             EXPECT_EQ(rec.chrom(), "20");
         }
-        EXPECT_EQ(count, 5);
+        EXPECT_EQ(count, 5ull);
 
         reader.reopen();
 
@@ -384,7 +384,7 @@ TEST(var_io_reader, reopen)
             ++count;
             EXPECT_EQ(rec.chrom(), "20");
         }
-        EXPECT_EQ(count, 5);
+        EXPECT_EQ(count, 5ull);
     }
 
     std::filesystem::remove(dir.path() / "example.vcf.gz");

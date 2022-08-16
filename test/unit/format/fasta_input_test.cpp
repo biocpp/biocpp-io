@@ -10,12 +10,12 @@
 
 #include <gtest/gtest.h>
 
+#include <bio/test/expect_range_eq.hpp>
+#include <bio/test/expect_same_type.hpp>
 #include <seqan3/alphabet/nucleotide/dna4.hpp>
 #include <seqan3/alphabet/nucleotide/dna5.hpp>
 #include <seqan3/alphabet/quality/phred42.hpp>
 #include <seqan3/core/debug_stream.hpp>
-#include <seqan3/test/expect_range_eq.hpp>
-#include <seqan3/test/expect_same_type.hpp>
 
 #include <bio/io/format/fasta_input_handler.hpp>
 

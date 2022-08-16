@@ -10,7 +10,7 @@
 
 #include <gtest/gtest.h>
 
-#include <seqan3/test/tmp_filename.hpp>
+#include <bio/test/tmp_filename.hpp>
 
 #include <bio/io/plain_io/writer.hpp>
 
@@ -50,7 +50,7 @@ TEST(writer, line_wise_emplace_back_stream)
 
 TEST(writer, line_wise_push_back_file)
 {
-    seqan3::test::tmp_filename filename{"plain_io_test"};
+    bio::test::tmp_filename filename{"plain_io_test"};
 
     {
         bio::io::plain_io::writer writer{filename.get_path()};
@@ -69,7 +69,7 @@ TEST(writer, line_wise_push_back_file)
 
 TEST(writer, line_wise_emplace_back_file)
 {
-    seqan3::test::tmp_filename filename{"plain_io_test"};
+    bio::test::tmp_filename filename{"plain_io_test"};
 
     {
         bio::io::plain_io::writer writer{filename.get_path()};
@@ -120,7 +120,7 @@ TEST(writer, field_wise_emplace_back_stream)
 
 TEST(writer, field_wise_push_back_file)
 {
-    seqan3::test::tmp_filename filename{"plain_io_test"};
+    bio::test::tmp_filename filename{"plain_io_test"};
 
     {
         bio::io::plain_io::writer writer{filename.get_path(), ' '};
@@ -139,7 +139,7 @@ TEST(writer, field_wise_push_back_file)
 
 TEST(writer, field_wise_emplace_back_file)
 {
-    seqan3::test::tmp_filename filename{"plain_io_test"};
+    bio::test::tmp_filename filename{"plain_io_test"};
 
     {
         bio::io::plain_io::writer writer{filename.get_path(), ' '};

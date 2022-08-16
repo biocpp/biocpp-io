@@ -11,10 +11,10 @@
 
 #include <gtest/gtest.h>
 
+#include <bio/test/expect_range_eq.hpp>
+#include <bio/test/expect_same_type.hpp>
+#include <bio/test/tmp_filename.hpp>
 #include <seqan3/alphabet/nucleotide/dna5.hpp>
-#include <seqan3/test/expect_range_eq.hpp>
-#include <seqan3/test/expect_same_type.hpp>
-#include <seqan3/test/tmp_filename.hpp>
 
 #include <bio/io/seq_io/reader.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
@@ -35,8 +35,8 @@ void seq_io_reader_filename_constructor(bool ext_check, auto &&... args)
 {
     /* just the filename */
     {
-        seqan3::test::tmp_filename filename{"seq_io_reader_constructor.fasta"};
-        std::ofstream              filecreator{filename.get_path(), std::ios::out | std::ios::binary};
+        bio::test::tmp_filename filename{"seq_io_reader_constructor.fasta"};
+        std::ofstream           filecreator{filename.get_path(), std::ios::out | std::ios::binary};
 
         EXPECT_NO_THROW((bio::io::seq_io::reader{filename.get_path(), std::forward<decltype(args)>(args)...}));
     }
@@ -52,8 +52,8 @@ void seq_io_reader_filename_constructor(bool ext_check, auto &&... args)
     /* wrong extension */
     if (ext_check)
     {
-        seqan3::test::tmp_filename filename{"seq_io_reader_constructor.xyz"};
-        std::ofstream              filecreator{filename.get_path(), std::ios::out | std::ios::binary};
+        bio::test::tmp_filename filename{"seq_io_reader_constructor.xyz"};
+        std::ofstream           filecreator{filename.get_path(), std::ios::out | std::ios::binary};
         EXPECT_THROW((bio::io::seq_io::reader{filename.get_path(), std::forward<decltype(args)>(args)...}),
                      bio::io::unhandled_extension_error);
     }
@@ -174,15 +174,15 @@ TEST(seq_io_reader, iteration)
             EXPECT_TRUE(rec.id().starts_with("ID"));
             // only very basic check here, rest in format test
         }
-        EXPECT_EQ(count, 5);
+        EXPECT_EQ(count, 5ull);
     }
 }
 
 TEST(seq_io_reader, empty_file)
 {
     {
-        seqan3::test::tmp_filename filename{"seq_io_reader_constructor.fasta"};
-        std::ofstream              filecreator{filename.get_path(), std::ios::out | std::ios::binary};
+        bio::test::tmp_filename filename{"seq_io_reader_constructor.fasta"};
+        std::ofstream           filecreator{filename.get_path(), std::ios::out | std::ios::binary};
 
         bio::io::seq_io::reader reader{filename.get_path()};
 
@@ -225,7 +225,7 @@ TEST(seq_io_reader, custom_field_ids_structured_bindings)
 
 TEST(seq_io_reader, decompression_filename)
 {
-    seqan3::test::tmp_filename filename{"seq_io_reader.fasta.gz"};
+    bio::test::tmp_filename filename{"seq_io_reader.fasta.gz"};
 
     {
         std::ofstream                             filecreator{filename.get_path(), std::ios::out | std::ios::binary};
@@ -242,7 +242,7 @@ TEST(seq_io_reader, decompression_filename)
         EXPECT_TRUE(rec.id().starts_with("ID"));
         // only very basic check here, rest in format test
     }
-    EXPECT_EQ(count, 5);
+    EXPECT_EQ(count, 5ull);
 }
 
 TEST(seq_io_reader, decompression_stream)
@@ -258,7 +258,7 @@ TEST(seq_io_reader, decompression_stream)
         EXPECT_TRUE(rec.id().starts_with("ID"));
         // only very basic check here, rest in format test
     }
-    EXPECT_EQ(count, 5);
+    EXPECT_EQ(count, 5ull);
 }
 
 // The following neads to cause a static assertion

@@ -10,8 +10,8 @@
 
 #include <bio/io/format/vcf_input_handler.hpp>
 #include <bio/io/var_io/reader.hpp>
+#include <bio/test/expect_range_eq.hpp>
 #include <seqan3/core/debug_stream.hpp>
-#include <seqan3/test/expect_range_eq.hpp>
 
 #include "vcf_data.hpp"
 
@@ -114,16 +114,16 @@ TEST(vcf, incomplete_header)
     record_t                          rec;
 
     /* FIRST RECORD */
-    ASSERT_EQ(hdr.contigs.size(), 0);
-    ASSERT_EQ(hdr.infos.size(), 1);
-    ASSERT_EQ(hdr.formats.size(), 1);
+    ASSERT_EQ(hdr.contigs.size(), 0ull);
+    ASSERT_EQ(hdr.infos.size(), 1ull);
+    ASSERT_EQ(hdr.formats.size(), 1ull);
 
     handler.parse_next_record_into(rec); // add contigs, infos and formats to header
     EXPECT_EQ(rec, recs[0]);
 
-    ASSERT_EQ(hdr.contigs.size(), 1);
-    ASSERT_EQ(hdr.infos.size(), 5);
-    ASSERT_EQ(hdr.formats.size(), 4);
+    ASSERT_EQ(hdr.contigs.size(), 1ull);
+    ASSERT_EQ(hdr.infos.size(), 5ull);
+    ASSERT_EQ(hdr.formats.size(), 4ull);
 
     EXPECT_EQ(hdr.contigs[0].id, "20");
     EXPECT_EQ(hdr.contigs[0].idx, 0);
@@ -157,23 +157,23 @@ TEST(vcf, incomplete_header)
     EXPECT_TRUE(hdr.formats[3] == format_compare);
 
     /* SECOND RECORD */
-    ASSERT_EQ(hdr.filters.size(), 1);
+    ASSERT_EQ(hdr.filters.size(), 1ull);
 
     handler.parse_next_record_into(rec); // add filter to header
     EXPECT_EQ(rec, recs[1]);
 
-    ASSERT_EQ(hdr.filters.size(), 2);
+    ASSERT_EQ(hdr.filters.size(), 2ull);
     EXPECT_EQ(hdr.filters[1].id, "q10");
     EXPECT_EQ(hdr.filters[1].description, "\"Automatically added by SeqAn3.\"");
     EXPECT_EQ(hdr.filters[1].idx, 9);
 
     /* THIRD RECORD */
-    ASSERT_EQ(hdr.infos.size(), 5);
+    ASSERT_EQ(hdr.infos.size(), 5ull);
 
     handler.parse_next_record_into(rec); // one new info added here
     EXPECT_EQ(rec, recs[2]);
 
-    ASSERT_EQ(hdr.infos.size(), 6);
+    ASSERT_EQ(hdr.infos.size(), 6ull);
 
     info_compare     = bio::io::var_io::reserved_infos.at("AA");
     info_compare.idx = 10;

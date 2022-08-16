@@ -8,9 +8,9 @@
 
 #include <gtest/gtest.h>
 
+#include <bio/test/expect_range_eq.hpp>
+#include <bio/test/tmp_filename.hpp>
 #include <seqan3/core/debug_stream.hpp>
-#include <seqan3/test/expect_range_eq.hpp>
-#include <seqan3/test/tmp_filename.hpp>
 
 #include <bio/io/format/fasta.hpp>
 #include <bio/io/stream/transparent_istream.hpp>
@@ -41,7 +41,7 @@ void var_io_writer_filename_constructor(bool ext_check, auto &&... args)
 
     /* just the filename */
     {
-        seqan3::test::tmp_filename filename{"var_io_writer_constructor.vcf"};
+        bio::test::tmp_filename filename{"var_io_writer_constructor.vcf"};
 
         // constructor
         EXPECT_NO_THROW(
@@ -55,7 +55,7 @@ void var_io_writer_filename_constructor(bool ext_check, auto &&... args)
     /* wrong extension */
     if (ext_check)
     {
-        seqan3::test::tmp_filename filename{"var_io_writer_constructor.xyz"};
+        bio::test::tmp_filename filename{"var_io_writer_constructor.xyz"};
         EXPECT_THROW((ptr = new bio::io::var_io::writer{filename.get_path(), std::forward<decltype(args)>(args)...}),
                      bio::io::unhandled_extension_error);
 

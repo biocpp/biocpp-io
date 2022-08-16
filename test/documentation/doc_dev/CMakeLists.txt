@@ -38,6 +38,6 @@ add_test(NAME doc_dev_no_warnings_test
          COMMAND bash -c "${BIOCPP_IO_TEST_DOXYGEN_FAIL_ON_WARNINGS}"
          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
-add_test(NAME doc_dev_no_uncond_requires_test
-         COMMAND bash -c "${BIOCPP_IO_TEST_DOXYGEN_FAIL_ON_UNCOND_REQUIRES}"
-         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+#add_test(NAME doc_dev_no_uncond_requires_test
+         #COMMAND bash -c "${BIOCPP_IO_TEST_DOXYGEN_FAIL_ON_UNCOND_REQUIRES}"
+         #WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
