@@ -6,36 +6,34 @@
 # -----------------------------------------------------------------------------------------------------
 
 cmake_minimum_required (VERSION 3.10)
-project (bio_test_snippet CXX)
+project (biocpp_io_test_snippet CXX)
 
-find_package (biocpp_io REQUIRED HINTS ${CMAKE_SOURCE_DIR}/../../build_system)
+include(../biocpp_require_core_infrastructure.cmake)
+biocpp_require_core_infrastructure()
 
-include (${CMAKE_SOURCE_DIR}/../../submodules/seqan3/test/seqan3-test.cmake)
-include (${CMAKE_SOURCE_DIR}/../../submodules/seqan3/test/cmake/diagnostics/list_unused_snippets.cmake)
+find_package (biocpp_io REQUIRED HINTS ${CMAKE_CURRENT_LIST_DIR}/../../build_system)
+
+include (${BIOCPP_CORE_CLONE_DIR}/test/biocpp-test.cmake)
 
 add_library (snippet_main snippet_main.cpp)
-target_link_libraries (snippet_main PUBLIC seqan3::test gtest)
+target_link_libraries (snippet_main PUBLIC biocpp::test gtest)
 
-macro (bio_snippet test_name_prefix snippet snippet_base_path)
-    seqan3_test_component (snippet_target_name "${snippet}" TARGET_NAME)
-    seqan3_test_component (snippet_test_name "${snippet}" TEST_NAME)
-    seqan3_test_component (snippet_target_path "${snippet}" TARGET_PATH)
+macro (biocpp_snippet test_name_prefix snippet snippet_base_path)
+    biocpp_test_component (snippet_target_name "${snippet}" TARGET_NAME)
+    biocpp_test_component (snippet_test_name "${snippet}" TEST_NAME)
+    biocpp_test_component (snippet_target_path "${snippet}" TARGET_PATH)
     set (target "${snippet_target_name}_snippet")
 
     add_executable (${target} "${snippet_base_path}/${snippet}")
-    target_link_libraries (${target} PUBLIC snippet_main biocpp::io)
-    target_compile_options (${target} PUBLIC "-Wno-unused")
+    target_link_libraries (${target} PUBLIC snippet_main biocpp::io seqan3::seqan3)
+    target_compile_options (${target} PUBLIC -Wno-unused -Wno-interference-size) # TODO: remove the latter
     set_target_properties(${target}
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${snippet_target_path}"
     )
-    collect_used_snippet (${target})
 
     set (snippet_test_target "${test_name_prefix}/${snippet_test_name}_snippet")
     add_test (NAME "${snippet_test_target}" COMMAND ${target})
-
-    # disable version checker, as it interferes with comparing the snippet output
-    set_tests_properties ("${snippet_test_target}" PROPERTIES ENVIRONMENT SEQAN3_NO_VERSION_CHECK=0)
 
     set (snippet_compare_test_target "${test_name_prefix}/${snippet_test_name}_snippet_cmp_output")
 
@@ -43,10 +41,7 @@ macro (bio_snippet test_name_prefix snippet snippet_base_path)
               COMMAND ${CMAKE_COMMAND}
                       -DTARGET_FILE=$<TARGET_FILE:${target}>
                       -DSOURCE_FILE=${snippet_base_path}/${snippet}
-                      -P "${CMAKE_SOURCE_DIR}/../../submodules/seqan3/test/snippet/compare_snippet_output.cmake")
-
-    # disable version checker, as it interferes with comparing the snippet output
-    set_tests_properties ("${snippet_compare_test_target}" PROPERTIES ENVIRONMENT SEQAN3_NO_VERSION_CHECK=0)
+                      -P "${BIOCPP_CORE_CLONE_DIR}/test/snippet/compare_snippet_output.cmake")
 
     unset (snippet_target_name)
     unset (snippet_test_name)
@@ -54,22 +49,16 @@ macro (bio_snippet test_name_prefix snippet snippet_base_path)
     unset (target)
 endmacro ()
 
-macro (bio_snippets test_name_prefix snippet_base_path)
-    seqan3_test_files (snippet_files "${snippet_base_path}" "*.cpp")
+macro (biocpp_snippets test_name_prefix snippet_base_path)
+    biocpp_test_files (snippet_files "${snippet_base_path}" "*.cpp")
     foreach (snippet ${snippet_files})
-        bio_snippet("${test_name_prefix}" "${snippet}" "${snippet_base_path}")
+        biocpp_snippet("${test_name_prefix}" "${snippet}" "${snippet_base_path}")
     endforeach ()
 endmacro ()
 
-seqan3_require_ccache ()
-seqan3_require_test ()
+biocpp_require_ccache ()
+biocpp_require_test ()
 
-bio_snippets ("snippet" "${CMAKE_CURRENT_SOURCE_DIR}")
+biocpp_snippets ("snippet" "${CMAKE_CURRENT_SOURCE_DIR}")
 #bio_snippets ("doc/snippet" "${CMAKE_CURRENT_SOURCE_DIR}/../../doc")
-
-# Skip tests, e.g. because of non-deterministic output
-# set_tests_properties ("example/test" PROPERTIES SKIP_RETURN_CODE 1)
-
-list_unused_snippets ("${CMAKE_CURRENT_SOURCE_DIR}")
-#list_unused_snippets ("${CMAKE_CURRENT_SOURCE_DIR}/../../doc")
 

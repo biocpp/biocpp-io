@@ -1,5 +1,6 @@
 cmake_minimum_required (VERSION 3.10)
-project (bio_format_test CXX)
+
+project (biocpp_io_format_test NONE)
 
 find_program(CLANG_FORMAT "clang-format-14")
 
