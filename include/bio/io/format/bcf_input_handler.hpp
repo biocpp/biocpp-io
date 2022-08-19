@@ -21,13 +21,12 @@
 #include <string_view>
 #include <vector>
 
-#include <seqan3/alphabet/views/char_strictly_to.hpp>
+#include <bio/ranges/views/char_strictly_to.hpp>
 #include <seqan3/core/debug_stream.hpp> //TODO evaluate if there is a better solution
 #include <seqan3/core/debug_stream/detail/to_string.hpp>
 #include <seqan3/core/range/type_traits.hpp>
 #include <seqan3/utility/detail/to_little_endian.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
-#include <seqan3/utility/views/to.hpp>
 
 #include <bio/io/detail/misc.hpp>
 #include <bio/io/detail/range.hpp>
@@ -927,7 +926,7 @@ private:
                 std::visit(
                   [&]<typename rng_t>(rng_t && int_range)
                   {
-                      using innermost_val_t = seqan3::range_innermost_value_t<rng_t>;
+                      using innermost_val_t = bio::ranges::range_innermost_value_t<rng_t>;
                       if constexpr (std::ranges::range<std::ranges::range_value_t<rng_t>> &&
                                     std::integral<innermost_val_t> && !std::same_as<innermost_val_t, char>)
                       {

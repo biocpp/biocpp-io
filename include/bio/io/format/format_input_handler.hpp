@@ -17,7 +17,7 @@
 #include <string_view>
 #include <vector>
 
-#include <seqan3/alphabet/views/char_strictly_to.hpp>
+#include <bio/ranges/views/char_strictly_to.hpp>
 
 #include <bio/io/detail/charconv.hpp>
 #include <bio/io/detail/concept.hpp>
@@ -130,8 +130,8 @@ private:
     static void parse_field_aux(std::string_view const in, parsed_field_t & parsed_field)
     {
         using target_alph_type = std::ranges::range_value_t<parsed_field_t>;
-        //         detail::sized_range_copy(in | seqan3::views::char_strictly_to<target_alph_type>,
-        detail::sized_range_copy(in | seqan3::views::char_strictly_to<target_alph_type>, parsed_field);
+        //         detail::sized_range_copy(in | bio::views::char_strictly_to<target_alph_type>,
+        detail::sized_range_copy(in | bio::views::char_strictly_to<target_alph_type>, parsed_field);
     }
 
     //!\brief Parse into a numerical type.

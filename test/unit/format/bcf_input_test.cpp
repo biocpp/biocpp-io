@@ -120,7 +120,7 @@ void field_types()
     using record_t = bio::io::record<decltype(bio::io::var_io::default_field_ids), fields_t>;
 
     using int_t       = int8_t;
-    using vec_t       = seqan3::concatenated_sequences<std::vector<int_t>>;
+    using vec_t       = bio::ranges::concatenated_sequences<std::vector<int_t>>;
     constexpr auto mv = bio::io::var_io::missing_value<int_t>;
 
     std::vector<record_t> recs;

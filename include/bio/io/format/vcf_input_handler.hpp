@@ -21,12 +21,11 @@
 #include <string_view>
 #include <vector>
 
-#include <seqan3/alphabet/views/char_strictly_to.hpp>
+#include <bio/ranges/views/char_strictly_to.hpp>
 #include <seqan3/core/debug_stream.hpp> //TODO evaluate if there is a better solution
 #include <seqan3/core/debug_stream/detail/to_string.hpp>
 #include <seqan3/core/range/type_traits.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
-#include <seqan3/utility/views/to.hpp>
 
 #include <bio/io/detail/magic_get.hpp>
 #include <bio/io/format/format_input_handler.hpp>
@@ -747,7 +746,7 @@ inline void format_input_handler<vcf>::parse_field(vtag_t<field::genotypes> cons
 
         init_element_value_type(format.type_id, current_value);
         auto reserve = detail::overloaded(
-          [&]<typename t>(seqan3::concatenated_sequences<t> & seqs)
+          [&]<typename t>(ranges::concatenated_sequences<t> & seqs)
           {
               size_t n_samples       = column_number - 8;
               size_t concat_capacity = 0;
@@ -803,7 +802,7 @@ inline void format_input_handler<vcf>::parse_field(vtag_t<field::genotypes> cons
                 ++fields_it;
 
                 auto parse_and_append = detail::overloaded(
-                  [field]<typename t>(seqan3::concatenated_sequences<t> & seqs)
+                  [field]<typename t>(ranges::concatenated_sequences<t> & seqs)
                   {
                       seqs.push_back();
                       if (field != ".")
@@ -812,7 +811,7 @@ inline void format_input_handler<vcf>::parse_field(vtag_t<field::genotypes> cons
                           {
                               std::ranges::range_value_t<t> back_back;
                               parse_element_value_type_fn{s}(back_back);
-                              seqs.last_push_back(back_back);
+                              seqs.push_back_inner(back_back);
                           }
                       }
                   },

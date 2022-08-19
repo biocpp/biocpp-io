@@ -22,10 +22,8 @@
 #include <bio/alphabet/nucleotide/dna5.hpp>
 #include <bio/alphabet/quality/phred63.hpp>
 #include <bio/io/misc.hpp>
-#include <seqan3/alphabet/adaptation/char.hpp>
-#include <seqan3/alphabet/views/char_strictly_to.hpp>
+#include <bio/ranges/views/char_strictly_to.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
-#include <seqan3/utility/views/to.hpp>
 
 #include <bio/io/detail/concept.hpp>
 #include <bio/io/detail/misc.hpp>
@@ -78,10 +76,10 @@ inline constinit auto field_types = []()
         return ttag<std::string_view,
                     std::conditional_t<std::same_as<seq_alph_t, char>,
                                        std::string_view,
-                                       decltype(std::string_view{} | seqan3::views::char_strictly_to<seq_alph_t>)>,
+                                       decltype(std::string_view{} | bio::views::char_strictly_to<seq_alph_t>)>,
                     std::conditional_t<std::same_as<qual_alph_t, char>,
                                        std::string_view,
-                                       decltype(std::string_view{} | seqan3::views::char_strictly_to<qual_alph_t>)>>;
+                                       decltype(std::string_view{} | bio::views::char_strictly_to<qual_alph_t>)>>;
     }
 }();
 
@@ -164,13 +162,13 @@ inline constinit auto field_types_char = field_types<ownership::shallow, char, c
  * 2. bio::io::field::seq
  *   * any back-insertable range over the `char` alphabet (copy of elements returned)
  *   * any back-insertable range over a bio::alphabet::alphabet (elements are transformed via
- * seqan3::views::char_strictly_to)
+ * bio::views::char_strictly_to)
  *   * std::string_view (view into a buffer is returned)
  *   * a std::ranges::transform_view defined on a std::string_view (transformation view is returned)
  * 3. bio::io::field::qual
  *   * any back-insertable range over the `char` alphabet (copy of elements returned)
  *   * any back-insertable range over a bio::alphabet::alphabet (elements are transformed via
- * seqan3::views::char_strictly_to)
+ * bio::views::char_strictly_to)
  *   * std::string_view (view into a buffer is returned)
  *   * a std::ranges::transform_view defined on a std::string_view (transformation view is returned)
  */

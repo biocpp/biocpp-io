@@ -19,8 +19,8 @@
 #include <vector>
 
 #include <bio/alphabet/nucleotide/dna5.hpp>
-#include <seqan3/alphabet/container/concatenated_sequences.hpp>
-#include <seqan3/alphabet/views/char_strictly_to.hpp>
+#include <bio/ranges/container/concatenated_sequences.hpp>
+#include <bio/ranges/views/char_strictly_to.hpp>
 #include <seqan3/core/debug_stream/debug_stream_type.hpp>
 
 #include <bio/io/detail/magic_get.hpp>
@@ -315,10 +315,10 @@ using genotype_element_value_type =
                std::vector<int32_t>,
                std::vector<float>,
                std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>,
-               seqan3::concatenated_sequences<std::vector<int8_t>>,
-               seqan3::concatenated_sequences<std::vector<int16_t>>,
-               seqan3::concatenated_sequences<std::vector<int32_t>>,
-               seqan3::concatenated_sequences<std::vector<float>>,
+               ranges::concatenated_sequences<std::vector<int8_t>>,
+               ranges::concatenated_sequences<std::vector<int16_t>>,
+               ranges::concatenated_sequences<std::vector<int32_t>>,
+               ranges::concatenated_sequences<std::vector<float>>,
                std::vector<std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>>
                /* no flag here */>;
 
@@ -464,16 +464,16 @@ struct record_private_data
  */
 template <ownership own = ownership::shallow>
 inline constinit auto field_types =
-  ttag<std::string_view,                                                               // field::chrom,
-       int32_t,                                                                        // field::pos,
-       std::string_view,                                                               // field::id,
-       decltype(std::string_view{} | seqan3::views::char_strictly_to<alphabet::dna5>), // field::ref,
-       std::vector<std::string_view>,                                                  // field::alt,
-       float,                                                                          // field::qual,
-       std::vector<std::string_view>,                                                  // field::filter,
-       std::vector<info_element<ownership::shallow>>,                                  // field::info,
-       std::vector<genotype_element<ownership::shallow>>,                              // field::genotypes,
-       record_private_data>;                                                           // field::_private
+  ttag<std::string_view,                                                            // field::chrom,
+       int32_t,                                                                     // field::pos,
+       std::string_view,                                                            // field::id,
+       decltype(std::string_view{} | bio::views::char_strictly_to<alphabet::dna5>), // field::ref,
+       std::vector<std::string_view>,                                               // field::alt,
+       float,                                                                       // field::qual,
+       std::vector<std::string_view>,                                               // field::filter,
+       std::vector<info_element<ownership::shallow>>,                               // field::info,
+       std::vector<genotype_element<ownership::shallow>>,                           // field::genotypes,
+       record_private_data>;                                                        // field::_private
 
 //!\brief Deep version of bio::io::var_io::field_types.
 //!\ingroup var_io
@@ -499,16 +499,16 @@ inline constinit auto field_types<ownership::deep> =
  */
 template <ownership own = ownership::shallow>
 inline constinit auto field_types_bcf_style =
-  ttag<int32_t,                                                                        // field::chrom,
-       int32_t,                                                                        // field::pos,
-       std::string_view,                                                               // field::id,
-       decltype(std::string_view{} | seqan3::views::char_strictly_to<alphabet::dna5>), // field::ref,
-       std::vector<std::string_view>,                                                  // field::alt,
-       float,                                                                          // field::qual,
-       std::vector<int32_t>,                                                           // field::filter,
-       std::vector<info_element_bcf<ownership::shallow>>,                              // field::info,
-       std::vector<genotype_element_bcf<ownership::shallow>>,                          // field::genotypes,
-       record_private_data>;                                                           // field::_private
+  ttag<int32_t,                                                                     // field::chrom,
+       int32_t,                                                                     // field::pos,
+       std::string_view,                                                            // field::id,
+       decltype(std::string_view{} | bio::views::char_strictly_to<alphabet::dna5>), // field::ref,
+       std::vector<std::string_view>,                                               // field::alt,
+       float,                                                                       // field::qual,
+       std::vector<int32_t>,                                                        // field::filter,
+       std::vector<info_element_bcf<ownership::shallow>>,                           // field::info,
+       std::vector<genotype_element_bcf<ownership::shallow>>,                       // field::genotypes,
+       record_private_data>;                                                        // field::_private
 
 /*!\brief Alternative set of field types (BCF-style, deep).
  *!\ingroup var_io
@@ -630,7 +630,7 @@ detail::bcf_type_descriptor smallest_int_desc(std::signed_integral auto const nu
 //!\overload
 detail::bcf_type_descriptor smallest_int_desc(std::ranges::input_range auto && range)
 {
-    using val_t = seqan3::range_innermost_value_t<decltype(range)>;
+    using val_t = bio::ranges::range_innermost_value_t<decltype(range)>;
     int64_t max = 0;
 
     // get max:
@@ -759,7 +759,7 @@ inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_de
 //!\brief Specialisation for range.
 template <std::ranges::input_range t>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> =
-  type_2_bcf_type_descriptor<seqan3::range_innermost_value_t<t>>;
+  type_2_bcf_type_descriptor<bio::ranges::range_innermost_value_t<t>>;
 
 //!\}
 

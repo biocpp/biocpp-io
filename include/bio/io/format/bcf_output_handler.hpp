@@ -235,7 +235,7 @@ private:
             }
             else if constexpr (detail::deliberate_alphabet<elem_t>)
             {
-                it->write_range(range | seqan3::views::to_char);
+                it->write_range(range | bio::views::to_char);
             }
             else
             {
@@ -292,7 +292,7 @@ private:
             if constexpr (std::same_as<alph_t, char>)
                 it->write_range(r);
             else if constexpr (detail::deliberate_alphabet<alph_t>)
-                it->write_range(r | seqan3::views::to_char);
+                it->write_range(r | bio::views::to_char);
             else
                 static_assert(std::same_as<alph_t, char>, "Can't handle this alphabet type here.");
         }
@@ -901,7 +901,7 @@ private:
             }
             else // this is the case of multiple strings per sample
             {
-                if constexpr (std::same_as<char, seqan3::range_innermost_value_t<value_t>>)
+                if constexpr (std::same_as<char, bio::ranges::range_innermost_value_t<value_t>>)
                 {
                     assert(desc == detail::bcf_type_descriptor::char8);
 
@@ -942,7 +942,7 @@ private:
                 else
                 {
                     // this case is never reached. The constexpr prevents needless instantiations though.
-                    static_assert(std::same_as<char, seqan3::range_innermost_value_t<value_t>>,
+                    static_assert(std::same_as<char, bio::ranges::range_innermost_value_t<value_t>>,
                                   "Cannot handle range-of-range-of-range unless the alphabet is char.");
                 }
             }

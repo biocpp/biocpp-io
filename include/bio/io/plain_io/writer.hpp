@@ -17,7 +17,7 @@
 #include <string_view>
 
 #include <bio/alphabet/concept.hpp>
-#include <seqan3/alphabet/views/to_char.hpp>
+#include <bio/ranges/views/to_char.hpp>
 
 #include <bio/io/plain_io/misc.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
@@ -92,7 +92,7 @@ private:
         }
         else // if constexpr (std::ranges::input_range<arg_t> && alphabet<std::ranges::range_reference_t<arg_t>>)
         {
-            stream_it->write_range(arg | seqan3::views::to_char);
+            stream_it->write_range(arg | bio::views::to_char);
         }
     }
 

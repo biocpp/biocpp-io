@@ -30,8 +30,8 @@ struct read : public ::testing::Test
     using default_rec_t = bio::io::record<
       bio::io::vtag_t<bio::io::field::id, bio::io::field::seq, bio::io::field::qual>,
       seqan3::type_list<std::string_view,
-                        decltype(std::string_view{} | seqan3::views::char_strictly_to<bio::alphabet::dna5>),
-                        decltype(std::string_view{} | seqan3::views::char_strictly_to<bio::alphabet::phred42>)>>;
+                        decltype(std::string_view{} | bio::views::char_strictly_to<bio::alphabet::dna5>),
+                        decltype(std::string_view{} | bio::views::char_strictly_to<bio::alphabet::phred42>)>>;
 
     std::string default_input =
       R"raw(@ID1
@@ -83,7 +83,7 @@ ACGTTTA
             EXPECT_RANGE_EQ(rec.id(), ids[i]);
             if constexpr (std::same_as<std::ranges::range_value_t<seq_t>, char>)
             {
-                EXPECT_RANGE_EQ(rec.seq() | seqan3::views::char_strictly_to<bio::alphabet::dna5>, seqs[i]);
+                EXPECT_RANGE_EQ(rec.seq() | bio::views::char_strictly_to<bio::alphabet::dna5>, seqs[i]);
             }
             else
             {
@@ -91,7 +91,7 @@ ACGTTTA
             }
             if constexpr (std::same_as<std::ranges::range_value_t<qual_t>, char>)
             {
-                EXPECT_RANGE_EQ(rec.qual() | seqan3::views::char_strictly_to<bio::alphabet::phred42>, quals[i]);
+                EXPECT_RANGE_EQ(rec.qual() | bio::views::char_strictly_to<bio::alphabet::phred42>, quals[i]);
             }
             else
             {
@@ -109,9 +109,8 @@ ACGTTTA
         /* views */
         do_read_test_impl<std::string_view, std::string_view, std::string_view>(input);
         do_read_test_impl<std::string_view,
-                          decltype(std::string_view{} | seqan3::views::char_strictly_to<bio::alphabet::dna5>),
-                          decltype(std::string_view{} | seqan3::views::char_strictly_to<bio::alphabet::phred42>)>(
-          input);
+                          decltype(std::string_view{} | bio::views::char_strictly_to<bio::alphabet::dna5>),
+                          decltype(std::string_view{} | bio::views::char_strictly_to<bio::alphabet::phred42>)>(input);
     }
 };
 
@@ -313,5 +312,5 @@ TEST_F(read, fail_illegal_alphabet)
 
     rec_t rec;
 
-    EXPECT_THROW(input_handler.parse_next_record_into(rec), seqan3::invalid_char_assignment);
+    EXPECT_THROW(input_handler.parse_next_record_into(rec), bio::alphabet::invalid_char_assignment);
 }

@@ -124,7 +124,7 @@ namespace bio::io::var_io
  * 4. bio::io::field::ref
  *   * string or string_view: plaintext.
  *   * back-insertable range over bio::alphabet::alphabet (a container with converted elements).
- *   * `decltype(std::string_view{} | seqan3::views::char_strictly_to<alphabet::dna5>)`: A view
+ *   * `decltype(std::string_view{} | bio::views::char_strictly_to<alphabet::dna5>)`: A view
  * over a SeqAn3 alphabet. Other alphabets and/or transform views are also possible.
  * 5. bio::io::field::alt
  *   * back-insertable range of string or string_view: The ALTs as plaintext.
