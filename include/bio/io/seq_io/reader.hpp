@@ -16,11 +16,11 @@
 #include <string>
 #include <vector>
 
+#include <bio/alphabet/aminoacid/aa27.hpp>
+#include <bio/alphabet/concept.hpp>
+#include <bio/alphabet/nucleotide/dna5.hpp>
+#include <bio/alphabet/quality/phred63.hpp>
 #include <bio/io/misc.hpp>
-#include <seqan3/alphabet/aminoacid/aa27.hpp>
-#include <seqan3/alphabet/concept.hpp>
-#include <seqan3/alphabet/nucleotide/dna5.hpp>
-#include <seqan3/alphabet/quality/phred63.hpp>
 #include <seqan3/alphabet/views/char_strictly_to.hpp>
 #include <seqan3/utility/views/to.hpp>
 

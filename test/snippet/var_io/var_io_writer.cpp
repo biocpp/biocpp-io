@@ -13,7 +13,7 @@ int main()
 {
 //![creation]
 using namespace std::string_literals;
-using namespace seqan3::literals;
+using namespace bio::alphabet::literals;
 
 // a plaintext header
 std::string_view const text_header =

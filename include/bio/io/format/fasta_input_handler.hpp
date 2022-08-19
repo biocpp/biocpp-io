@@ -60,7 +60,7 @@ namespace bio::io
  * (e.g. linebreaks) as-is.
  *
  * If sequence and/or ID are requested as std::string, the record's element is swapped with the internal buffer to
- * prevent a second copy, but if output is requested as e.g. std::vector<seqan3::dna4>, a second copy needs to happen.
+ * prevent a second copy, but if output is requested as e.g. std::vector<alphabet::dna4>, a second copy needs to happen.
  * Requesting views never implies a second copy.
  */
 template <>

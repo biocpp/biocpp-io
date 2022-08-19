@@ -10,12 +10,12 @@
 
 #include <ranges>
 
+#include <bio/alphabet/nucleotide/dna4.hpp>
 #include <bio/test/expect_range_eq.hpp>
-#include <seqan3/alphabet/nucleotide/dna4.hpp>
 
 #include <bio/io/detail/views_eager_split.hpp>
 
-using seqan3::operator""_dna4;
+using namespace bio::alphabet::literals;
 
 TEST(view_eager_split, basic)
 {

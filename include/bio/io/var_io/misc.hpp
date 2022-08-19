@@ -18,8 +18,8 @@
 #include <variant>
 #include <vector>
 
+#include <bio/alphabet/nucleotide/dna5.hpp>
 #include <seqan3/alphabet/container/concatenated_sequences.hpp>
-#include <seqan3/alphabet/nucleotide/dna5.hpp>
 #include <seqan3/alphabet/views/char_strictly_to.hpp>
 #include <seqan3/core/debug_stream/debug_stream_type.hpp>
 
@@ -464,16 +464,16 @@ struct record_private_data
  */
 template <ownership own = ownership::shallow>
 inline constinit auto field_types =
-  ttag<std::string_view,                                                             // field::chrom,
-       int32_t,                                                                      // field::pos,
-       std::string_view,                                                             // field::id,
-       decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>), // field::ref,
-       std::vector<std::string_view>,                                                // field::alt,
-       float,                                                                        // field::qual,
-       std::vector<std::string_view>,                                                // field::filter,
-       std::vector<info_element<ownership::shallow>>,                                // field::info,
-       std::vector<genotype_element<ownership::shallow>>,                            // field::genotypes,
-       record_private_data>;                                                         // field::_private
+  ttag<std::string_view,                                                               // field::chrom,
+       int32_t,                                                                        // field::pos,
+       std::string_view,                                                               // field::id,
+       decltype(std::string_view{} | seqan3::views::char_strictly_to<alphabet::dna5>), // field::ref,
+       std::vector<std::string_view>,                                                  // field::alt,
+       float,                                                                          // field::qual,
+       std::vector<std::string_view>,                                                  // field::filter,
+       std::vector<info_element<ownership::shallow>>,                                  // field::info,
+       std::vector<genotype_element<ownership::shallow>>,                              // field::genotypes,
+       record_private_data>;                                                           // field::_private
 
 //!\brief Deep version of bio::io::var_io::field_types.
 //!\ingroup var_io
@@ -482,7 +482,7 @@ inline constinit auto field_types<ownership::deep> =
   ttag<std::string,                                    // field::chrom,
        int32_t,                                        // field::pos,
        std::string,                                    // field::id,
-       std::vector<seqan3::dna5>,                      // field::ref,
+       std::vector<alphabet::dna5>,                    // field::ref,
        std::vector<std::string>,                       // field::alt,
        float,                                          // field::qual,
        std::vector<std::string>,                       // field::filter,
@@ -499,16 +499,16 @@ inline constinit auto field_types<ownership::deep> =
  */
 template <ownership own = ownership::shallow>
 inline constinit auto field_types_bcf_style =
-  ttag<int32_t,                                                                      // field::chrom,
-       int32_t,                                                                      // field::pos,
-       std::string_view,                                                             // field::id,
-       decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>), // field::ref,
-       std::vector<std::string_view>,                                                // field::alt,
-       float,                                                                        // field::qual,
-       std::vector<int32_t>,                                                         // field::filter,
-       std::vector<info_element_bcf<ownership::shallow>>,                            // field::info,
-       std::vector<genotype_element_bcf<ownership::shallow>>,                        // field::genotypes,
-       record_private_data>;                                                         // field::_private
+  ttag<int32_t,                                                                        // field::chrom,
+       int32_t,                                                                        // field::pos,
+       std::string_view,                                                               // field::id,
+       decltype(std::string_view{} | seqan3::views::char_strictly_to<alphabet::dna5>), // field::ref,
+       std::vector<std::string_view>,                                                  // field::alt,
+       float,                                                                          // field::qual,
+       std::vector<int32_t>,                                                           // field::filter,
+       std::vector<info_element_bcf<ownership::shallow>>,                              // field::info,
+       std::vector<genotype_element_bcf<ownership::shallow>>,                          // field::genotypes,
+       record_private_data>;                                                           // field::_private
 
 /*!\brief Alternative set of field types (BCF-style, deep).
  *!\ingroup var_io
@@ -522,7 +522,7 @@ inline constinit auto field_types_bcf_style<ownership::deep> =
   ttag<int32_t,                                            // field::chrom,
        int32_t,                                            // field::pos,
        std::string,                                        // field::id,
-       std::vector<seqan3::dna5>,                          // field::ref,
+       std::vector<alphabet::dna5>,                        // field::ref,
        std::vector<std::string>,                           // field::alt,
        float,                                              // field::qual,
        std::vector<int32_t>,                               // field::filter,

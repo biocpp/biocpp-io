@@ -11,10 +11,10 @@
 
 #include <gtest/gtest.h>
 
+#include <bio/alphabet/nucleotide/dna5.hpp>
 #include <bio/test/expect_range_eq.hpp>
 #include <bio/test/expect_same_type.hpp>
 #include <bio/test/tmp_filename.hpp>
-#include <seqan3/alphabet/nucleotide/dna5.hpp>
 
 #include <bio/io/seq_io/reader.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
@@ -207,7 +207,7 @@ TEST(seq_io_reader, custom_field_types)
     std::istringstream      str{static_cast<std::string>(input)};
     bio::io::seq_io::reader reader{str, bio::io::fasta{}, opt};
 
-    EXPECT_TRUE((std::same_as<decltype(reader.front().seq()), std::vector<seqan3::dna5> &>));
+    EXPECT_TRUE((std::same_as<decltype(reader.front().seq()), std::vector<bio::alphabet::dna5> &>));
     EXPECT_TRUE((std::same_as<decltype(reader.front().id()), std::string &>));
 }
 

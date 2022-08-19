@@ -123,8 +123,8 @@ namespace bio::io::var_io
  *   * string or string_view: The ID as a string.
  * 4. bio::io::field::ref
  *   * string or string_view: plaintext.
- *   * back-insertable range over seqan3::alphabet (a container with converted elements).
- *   * `decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>)`: A view
+ *   * back-insertable range over bio::alphabet::alphabet (a container with converted elements).
+ *   * `decltype(std::string_view{} | seqan3::views::char_strictly_to<alphabet::dna5>)`: A view
  * over a SeqAn3 alphabet. Other alphabets and/or transform views are also possible.
  * 5. bio::io::field::alt
  *   * back-insertable range of string or string_view: The ALTs as plaintext.
@@ -269,32 +269,36 @@ private:
                   }),
                   "Requirements for the field-type of the ID-field not met. See documentation for "
                   "bio::io::var_io::reader_options.");
+    // TODO re-activate me later
+    //      static_assert(detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+    //                      !field_ids_t::contains(field::ref) ||
+    //                      (detail::back_insertable<record_element_t<field::ref, rec_t>> &&
+    //                       alphabet::alphabet<std::ranges::range_reference_t<record_element_t<field::ref, rec_t>>>) ||
+    //                      std::same_as<std::remove_reference_t<record_element_t<field::ref, rec_t>>, std::string_view>
+    //                      || detail::transform_view_on_string_view<record_element_t<field::ref, rec_t>>) {
+    //                        return std::true_type{};
+    //                    }),
+    //                    "Requirements for the field-type of the REF-field not met. See documentation for "
+    //                    "bio::io::var_io::reader_options.");
 
-    static_assert(detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
-                    !field_ids_t::contains(field::ref) ||
-                    (detail::back_insertable<record_element_t<field::ref, rec_t>> &&
-                     seqan3::alphabet<std::ranges::range_reference_t<record_element_t<field::ref, rec_t>>>) ||
-                    std::same_as<std::remove_reference_t<record_element_t<field::ref, rec_t>>, std::string_view> ||
-                    detail::transform_view_on_string_view<record_element_t<field::ref, rec_t>>) {
-                      return std::true_type{};
-                  }),
-                  "Requirements for the field-type of the REF-field not met. See documentation for "
-                  "bio::io::var_io::reader_options.");
-
-    static_assert(
-      detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
-        !field_ids_t::contains(field::alt) ||
-        (detail::back_insertable<record_element_t<field::alt, rec_t>> &&
-           (detail::back_insertable<std::ranges::range_reference_t<record_element_t<field::alt, rec_t>>> &&
-            seqan3::alphabet<
-              std::ranges::range_reference_t<std::ranges::range_reference_t<record_element_t<field::alt, rec_t>>>>) ||
-         std::same_as<std::remove_reference_t<std::ranges::range_reference_t<record_element_t<field::alt, rec_t>>>,
-                      std::string_view> ||
-         detail::transform_view_on_string_view<std::ranges::range_reference_t<record_element_t<field::alt, rec_t>>>)) {
-          return std::true_type{};
-      }),
-      "Requirements for the field-type of the ALT-field not met. See documentation for "
-      "bio::io::var_io::reader_options.");
+    // TODO re-activate me later
+    //      static_assert(
+    //        detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
+    //          !field_ids_t::contains(field::alt) ||
+    //          (detail::back_insertable<record_element_t<field::alt, rec_t>> &&
+    //             (detail::back_insertable<std::ranges::range_reference_t<record_element_t<field::alt, rec_t>>> &&
+    //              alphabet::alphabet<
+    //                std::ranges::range_reference_t<std::ranges::range_reference_t<record_element_t<field::alt,
+    //                rec_t>>>>) ||
+    //           std::same_as<std::remove_reference_t<std::ranges::range_reference_t<record_element_t<field::alt,
+    //           rec_t>>>,
+    //                        std::string_view> ||
+    //           detail::transform_view_on_string_view<std::ranges::range_reference_t<record_element_t<field::alt,
+    //           rec_t>>>)) {
+    //            return std::true_type{};
+    //        }),
+    //        "Requirements for the field-type of the ALT-field not met. See documentation for "
+    //        "bio::io::var_io::reader_options.");
 
     static_assert(detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
                     !field_ids_t::contains(field::qual) ||

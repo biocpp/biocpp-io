@@ -102,7 +102,7 @@ for (auto & rec : reader)
 
 {
 //![options2]
-using namespace seqan3::literals;
+using namespace bio::alphabet::literals;
 
 bio::io::seq_io::reader reader{"example.fasta",
                            bio::io::seq_io::reader_options{.field_types = bio::io::seq_io::field_types<bio::io::ownership::deep>}};
@@ -121,8 +121,8 @@ static_assert(std::same_as<decltype(reader)::record_type,
 //![options2_type]
 bio::io::record<bio::io::vtag_t<bio::io::field::id, bio::io::field::seq, bio::io::field::qual>,         // identifiers of the fields
             seqan3::type_list<std::string,                                          // type of the ID field
-                              std::vector<seqan3::dna5>,                            // type of the SEQ field
-                              std::vector<seqan3::phred63>>>                        // type of the QUAL field
+                              std::vector<bio::alphabet::dna5>,                            // type of the SEQ field
+                              std::vector<bio::alphabet::phred63>>>                        // type of the QUAL field
 //![options2_type]
               >);
 }

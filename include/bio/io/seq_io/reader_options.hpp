@@ -16,12 +16,13 @@
 #include <string>
 #include <vector>
 
+#include <bio/alphabet/adaptation/char.hpp>
+#include <bio/alphabet/aminoacid/aa27.hpp>
+#include <bio/alphabet/concept.hpp>
+#include <bio/alphabet/nucleotide/dna5.hpp>
+#include <bio/alphabet/quality/phred63.hpp>
 #include <bio/io/misc.hpp>
 #include <seqan3/alphabet/adaptation/char.hpp>
-#include <seqan3/alphabet/aminoacid/aa27.hpp>
-#include <seqan3/alphabet/concept.hpp>
-#include <seqan3/alphabet/nucleotide/dna5.hpp>
-#include <seqan3/alphabet/quality/phred63.hpp>
 #include <seqan3/alphabet/views/char_strictly_to.hpp>
 #include <seqan3/utility/type_list/traits.hpp>
 #include <seqan3/utility/views/to.hpp>
@@ -58,12 +59,12 @@ namespace bio::io::seq_io
  *
  * \snippet test/snippet/seq_io/seq_io_reader_options.cpp example_simple
  *
- * Type of the ID will be std::string, type of the sequence will be std::vector<seqan3::dna4> and
- * type of the qualities will be std::vector<seqan3::phred42>.
+ * Type of the ID will be std::string, type of the sequence will be std::vector<alphabet::dna4> and
+ * type of the qualities will be std::vector<bio::alphabet::phred42>.
  */
 template <bio::io::ownership ownership   = bio::io::ownership::shallow,
-          seqan3::alphabet   seq_alph_t  = seqan3::dna5,
-          seqan3::alphabet   qual_alph_t = seqan3::phred63>
+          alphabet::alphabet seq_alph_t  = alphabet::dna5,
+          alphabet::alphabet qual_alph_t = alphabet::phred63>
 inline constinit auto field_types = []()
 {
     if constexpr (ownership == bio::io::ownership::deep)
@@ -89,7 +90,7 @@ inline constinit auto field_types = []()
  *
  * This is the default.
  *
- * Configures a shallow record where sequence data is seqan3::dna5 and quality data is seqan3::phred63.
+ * Configures a shallow record where sequence data is alphabet::dna5 and quality data is bio::alphabet::phred63.
  */
 inline constinit auto field_types_dna = field_types<>;
 
@@ -97,9 +98,9 @@ inline constinit auto field_types_dna = field_types<>;
  * \tparam ownership Return shallow or deep types.
  * \details
  *
- * Configures a shallow record where sequence data is seqan3::aa27 and quality data is seqan3::phred63.
+ * Configures a shallow record where sequence data is bio::alphabet::aa27 and quality data is bio::alphabet::phred63.
  */
-inline constinit auto field_types_protein = field_types<ownership::shallow, seqan3::aa27>;
+inline constinit auto field_types_protein = field_types<ownership::shallow, bio::alphabet::aa27>;
 
 /*!\brief The field types for reading any data.
  * \details
@@ -142,8 +143,8 @@ inline constinit auto field_types_char = field_types<ownership::shallow, char, c
  *
  * ### Example (advanced)
  *
- * This code switches from seqan3::dna5 to seqan3::dna4 alphabet, from seqan3::phred63 to
- * seqan3::phred42, and reduces the amount of threads used:
+ * This code switches from alphabet::dna5 to alphabet::dna4 alphabet, from bio::alphabet::phred63 to
+ * bio::alphabet::phred42, and reduces the amount of threads used:
  *
  * \snippet test/snippet/seq_io/seq_io_reader_options.cpp example_advanced1
  *
@@ -162,12 +163,14 @@ inline constinit auto field_types_char = field_types<ownership::shallow, char, c
  *   * std::string_view (view into a buffer is returned)
  * 2. bio::io::field::seq
  *   * any back-insertable range over the `char` alphabet (copy of elements returned)
- *   * any back-insertable range over a seqan3::alphabet (elements are transformed via seqan3::views::char_strictly_to)
+ *   * any back-insertable range over a bio::alphabet::alphabet (elements are transformed via
+ * seqan3::views::char_strictly_to)
  *   * std::string_view (view into a buffer is returned)
  *   * a std::ranges::transform_view defined on a std::string_view (transformation view is returned)
  * 3. bio::io::field::qual
  *   * any back-insertable range over the `char` alphabet (copy of elements returned)
- *   * any back-insertable range over a seqan3::alphabet (elements are transformed via seqan3::views::char_strictly_to)
+ *   * any back-insertable range over a bio::alphabet::alphabet (elements are transformed via
+ * seqan3::views::char_strictly_to)
  *   * std::string_view (view into a buffer is returned)
  *   * a std::ranges::transform_view defined on a std::string_view (transformation view is returned)
  */
@@ -228,7 +231,7 @@ private:
     static_assert(detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
                     !field_ids_t::contains(field::seq) ||
                     (detail::back_insertable<record_element_t<field::seq, rec_t>> &&
-                     seqan3::alphabet<std::ranges::range_reference_t<record_element_t<field::seq, rec_t>>>) ||
+                     alphabet::alphabet<std::ranges::range_reference_t<record_element_t<field::seq, rec_t>>>) ||
                     std::same_as<std::string_view, record_element_t<field::seq, rec_t>> ||
                     detail::transform_view_on_string_view<record_element_t<field::seq, rec_t>>) {
                       return std::true_type{};
@@ -239,7 +242,7 @@ private:
     static_assert(detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
                     !field_ids_t::contains(field::qual) ||
                     (detail::back_insertable<record_element_t<field::qual, rec_t>> &&
-                     seqan3::alphabet<std::ranges::range_reference_t<record_element_t<field::qual, rec_t>>>) ||
+                     alphabet::alphabet<std::ranges::range_reference_t<record_element_t<field::qual, rec_t>>>) ||
                     std::same_as<std::string_view, record_element_t<field::qual, rec_t>> ||
                     detail::transform_view_on_string_view<record_element_t<field::qual, rec_t>>) {
                       return std::true_type{};

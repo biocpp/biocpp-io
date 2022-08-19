@@ -10,17 +10,16 @@
 
 #include <gtest/gtest.h>
 
+#include <bio/alphabet/nucleotide/dna4.hpp>
+#include <bio/alphabet/nucleotide/dna5.hpp>
+#include <bio/alphabet/quality/phred42.hpp>
 #include <bio/test/expect_range_eq.hpp>
 #include <bio/test/expect_same_type.hpp>
-#include <seqan3/alphabet/nucleotide/dna4.hpp>
-#include <seqan3/alphabet/nucleotide/dna5.hpp>
-#include <seqan3/alphabet/quality/phred42.hpp>
 #include <seqan3/core/debug_stream.hpp>
 
 #include <bio/io/format/fasta_input_handler.hpp>
 
-using seqan3::                             operator""_dna5;
-using seqan3::                             operator""_phred42;
+using namespace bio::alphabet::literals;
 using std::literals::string_view_literals::operator""sv;
 
 // ----------------------------------------------------------------------------
@@ -29,10 +28,10 @@ using std::literals::string_view_literals::operator""sv;
 
 struct read : public ::testing::Test
 {
-    using default_rec_t =
-      bio::io::record<bio::io::vtag_t<bio::io::field::id, bio::io::field::seq>,
-                      seqan3::type_list<std::string_view,
-                                        decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>)>>;
+    using default_rec_t = bio::io::record<
+      bio::io::vtag_t<bio::io::field::id, bio::io::field::seq>,
+      seqan3::type_list<std::string_view,
+                        decltype(std::string_view{} | seqan3::views::char_strictly_to<bio::alphabet::dna5>)>>;
 
     std::vector<std::string> ids{
       {"ID1"},
@@ -40,13 +39,13 @@ struct read : public ::testing::Test
       {"ID3 lala"},
     };
 
-    std::vector<std::vector<seqan3::dna5>> seqs{
+    std::vector<std::vector<bio::alphabet::dna5>> seqs{
       {"ACGTTTTTTTTTTTTTTT"_dna5},
       {"ACGTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"_dna5},
       {"ACGTTTA"_dna5},
     };
 
-    std::vector<std::vector<seqan3::phred42>> quals{
+    std::vector<std::vector<bio::alphabet::phred42>> quals{
       {"!##$%&'()*+,-./++-"_phred42},
       {"!##$&'()*+,-./+)*+,-)*+,-)*+,-)*+,BDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDE"_phred42},
       {"!!!!!!!"_phred42},
@@ -66,7 +65,7 @@ struct read : public ::testing::Test
             input_handler.parse_next_record_into(rec);
             if constexpr (std::same_as<std::ranges::range_value_t<seq_t>, char>)
             {
-                EXPECT_RANGE_EQ(rec.seq() | seqan3::views::char_strictly_to<seqan3::dna5>, seqs[i]);
+                EXPECT_RANGE_EQ(rec.seq() | seqan3::views::char_strictly_to<bio::alphabet::dna5>, seqs[i]);
             }
             else
             {
@@ -80,12 +79,12 @@ struct read : public ::testing::Test
     {
         /* containers */
         do_read_test_impl<std::string, std::string>(input);
-        do_read_test_impl<std::string, std::vector<seqan3::dna5>>(input);
+        do_read_test_impl<std::string, std::vector<bio::alphabet::dna5>>(input);
 
         /* views */
         do_read_test_impl<std::string_view, std::string_view>(input);
         do_read_test_impl<std::string_view,
-                          decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>)>(input);
+                          decltype(std::string_view{} | seqan3::views::char_strictly_to<bio::alphabet::dna5>)>(input);
     }
 };
 
@@ -296,7 +295,7 @@ TEST_F(read, fail_illegal_alphabet)
     std::istringstream                            istream{input};
     bio::io::format_input_handler<bio::io::fasta> input_handler{istream};
     using rec_t = bio::io::record<bio::io::vtag_t<bio::io::field::id, bio::io::field::seq>,
-                                  seqan3::type_list<std::string_view, std::vector<seqan3::dna5>>>;
+                                  seqan3::type_list<std::string_view, std::vector<bio::alphabet::dna5>>>;
 
     rec_t rec;
 

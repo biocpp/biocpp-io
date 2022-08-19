@@ -13,10 +13,10 @@
 
 #pragma once
 
+#include <bio/alphabet/concept.hpp>
 #include <bio/io/detail/concept.hpp>
 #include <bio/io/record.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
-#include <seqan3/alphabet/concept.hpp>
 #include <seqan3/alphabet/views/to_char.hpp>
 
 namespace bio::io

@@ -213,7 +213,7 @@ inline std::string const incomplete_header_after =
 //=============================================================================
 
 /* auxiliary stuff */
-using tf_view = decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>);
+using tf_view = decltype(std::string_view{} | seqan3::views::char_strictly_to<bio::alphabet::dna5>);
 
 bool operator==(tf_view const & lhs, tf_view const & rhs)
 {
@@ -251,7 +251,7 @@ auto make_ref(std::string_view const str)
           {    }
         };
     else
-        return str | seqan3::views::char_strictly_to<seqan3::dna5> | seqan3::views::to<std::vector>;
+        return str | seqan3::views::char_strictly_to<bio::alphabet::dna5> | seqan3::views::to<std::vector>;
 }
 
 template <bio::io::ownership own, typename int_t = int32_t>

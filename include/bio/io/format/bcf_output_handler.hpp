@@ -404,7 +404,7 @@ private:
     //!\brief Generic writing function that dispatches depending on the type of the argument.
     template <typename elem_t>
         //!\cond REQ
-        requires(seqan3::alphabet<elem_t> || seqan3::arithmetic<elem_t>)
+        requires(alphabet::alphabet<elem_t> || seqan3::arithmetic<elem_t>)
     //!\endcond
     void write_typed_data(elem_t const num, detail::bcf_type_descriptor const desc)
     {

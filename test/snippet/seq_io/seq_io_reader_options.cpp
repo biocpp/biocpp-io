@@ -1,5 +1,5 @@
-#include <seqan3/alphabet/nucleotide/dna4.hpp>
-#include <seqan3/alphabet/quality/phred42.hpp>
+#include <bio/alphabet/nucleotide/dna4.hpp>
+#include <bio/alphabet/quality/phred42.hpp>
 #include <bio/io/seq_io/reader_options.hpp>
 
 int main()
@@ -19,7 +19,7 @@ bio::io::seq_io::reader_options options
 //![example_advanced1]
 bio::io::seq_io::reader_options options
 {
-    .field_types    = bio::io::seq_io::field_types<bio::io::ownership::shallow, seqan3::dna4, seqan3::phred42>,
+    .field_types    = bio::io::seq_io::field_types<bio::io::ownership::shallow, bio::alphabet::dna4, bio::alphabet::phred42>,
     .stream_options = bio::io::transparent_istream_options{ .threads = 1 }
 };
 //![example_advanced1]
