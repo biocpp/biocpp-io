@@ -20,12 +20,12 @@
 #include <string_view>
 #include <vector>
 
+#include <seqan3/core/debug_stream/detail/to_string.hpp>
 #include <seqan3/core/range/type_traits.hpp>
+#include <seqan3/utility/char_operations/predicate.hpp>
 
 #include <bio/meta/tag/vtag.hpp>
 #include <bio/ranges/views/to_char.hpp>
-#include <seqan3/core/debug_stream/detail/to_string.hpp>
-#include <seqan3/utility/char_operations/predicate.hpp>
 
 #include <bio/io/detail/range.hpp>
 #include <bio/io/format/fastq.hpp>

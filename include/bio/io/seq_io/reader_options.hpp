@@ -21,7 +21,6 @@
 #include <bio/alphabet/concept.hpp>
 #include <bio/alphabet/nucleotide/dna5.hpp>
 #include <bio/alphabet/quality/phred63.hpp>
-#include <bio/io/misc.hpp>
 #include <bio/meta/tag/ttag.hpp>
 #include <bio/meta/type_list/traits.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>

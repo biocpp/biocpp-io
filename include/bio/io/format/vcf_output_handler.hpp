@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include <bio/meta/tag/vtag.hpp>
+
 #include <bio/io/detail/magic_get.hpp>
 #include <bio/io/format/format_output_handler.hpp>
 #include <bio/io/format/vcf.hpp>
@@ -21,7 +23,6 @@
 #include <bio/io/var_io/header.hpp>
 #include <bio/io/var_io/misc.hpp>
 #include <bio/io/var_io/writer_options.hpp>
-#include <bio/meta/tag/vtag.hpp>
 
 namespace bio::io
 {

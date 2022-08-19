@@ -10,11 +10,12 @@
 
 #include <gtest/gtest.h>
 
+#include <seqan3/core/debug_stream.hpp>
+#include <seqan3/utility/tuple/concept.hpp>
+
 #include <bio/alphabet/nucleotide/dna4.hpp>
 #include <bio/test/expect_range_eq.hpp>
 #include <bio/test/expect_same_type.hpp>
-#include <seqan3/core/debug_stream.hpp>
-#include <seqan3/utility/tuple/concept.hpp>
 
 #include <bio/io/misc.hpp>
 #include <bio/io/record.hpp>

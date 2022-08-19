@@ -5,15 +5,15 @@
 // shipped with this file and also available at: https://github.com/seqan/seqan3/blob/master/LICENSE.md
 // -----------------------------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include <fstream>
 #include <iostream>
 #include <string>
 
-#include <bio/io/misc.hpp>
+#include <gtest/gtest.h>
+
 #include <bio/test/tmp_filename.hpp>
 
+#include <bio/io/misc.hpp>
 #include <bio/io/stream/compression.hpp>
 #include <bio/io/stream/detail/make_stream.hpp>
 

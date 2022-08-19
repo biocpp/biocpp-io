@@ -9,9 +9,10 @@
 #include <ranges>
 #include <string>
 
+#include <seqan3/core/debug_stream.hpp>
+
 #include <bio/ranges/to.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
-#include <seqan3/core/debug_stream.hpp>
 
 #include <bio/io/detail/magic_get.hpp>
 #include <bio/io/var_io/reader.hpp>

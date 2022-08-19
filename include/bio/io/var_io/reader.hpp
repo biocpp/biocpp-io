@@ -15,13 +15,14 @@
 
 #include <filesystem>
 
+#include <bio/meta/tag/vtag.hpp>
+
 #include <bio/io/detail/index_tabix.hpp>
 #include <bio/io/detail/reader_base.hpp>
 #include <bio/io/format/bcf_input_handler.hpp>
 #include <bio/io/format/vcf_input_handler.hpp>
 #include <bio/io/var_io/header.hpp>
 #include <bio/io/var_io/reader_options.hpp>
-#include <bio/meta/tag/vtag.hpp>
 
 namespace bio::io::var_io
 {

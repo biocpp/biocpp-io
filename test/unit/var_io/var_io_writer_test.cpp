@@ -8,9 +8,10 @@
 
 #include <gtest/gtest.h>
 
+#include <seqan3/core/debug_stream.hpp>
+
 #include <bio/test/expect_range_eq.hpp>
 #include <bio/test/tmp_filename.hpp>
-#include <seqan3/core/debug_stream.hpp>
 
 #include <bio/io/format/fasta.hpp>
 #include <bio/io/stream/transparent_istream.hpp>

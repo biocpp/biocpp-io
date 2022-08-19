@@ -18,16 +18,18 @@
 #include <variant>
 #include <vector>
 
+#include <seqan3/core/debug_stream/debug_stream_type.hpp>
+
 #include <bio/alphabet/nucleotide/dna5.hpp>
-#include <bio/io/detail/magic_get.hpp>
-#include <bio/io/detail/range.hpp>
-#include <bio/io/misc.hpp>
-#include <bio/io/record.hpp>
 #include <bio/meta/tag/ttag.hpp>
 #include <bio/meta/tag/vtag.hpp>
 #include <bio/ranges/container/concatenated_sequences.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
-#include <seqan3/core/debug_stream/debug_stream_type.hpp>
+
+#include <bio/io/detail/magic_get.hpp>
+#include <bio/io/detail/range.hpp>
+#include <bio/io/misc.hpp>
+#include <bio/io/record.hpp>
 
 //-----------------------------------------------------------------------------
 // forwards

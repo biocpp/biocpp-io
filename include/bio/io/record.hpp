@@ -15,10 +15,11 @@
 
 #include <tuple>
 
+#include <seqan3/core/detail/template_inspection.hpp>
+
 #include <bio/meta/tag/vtag.hpp>
 #include <bio/meta/type_list/traits.hpp>
 #include <bio/meta/type_list/type_list.hpp>
-#include <seqan3/core/detail/template_inspection.hpp>
 
 #include <bio/io/detail/concept.hpp>
 #include <bio/io/misc.hpp>

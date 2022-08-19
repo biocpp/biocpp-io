@@ -16,9 +16,10 @@
 #include <bit>
 #include <numeric>
 
-#include <bio/meta/tag/vtag.hpp>
 #include <seqan3/utility/char_operations/predicate.hpp>
 #include <seqan3/utility/views/join_with.hpp>
+
+#include <bio/meta/tag/vtag.hpp>
 
 #include <bio/io/detail/magic_get.hpp>
 #include <bio/io/detail/misc.hpp>

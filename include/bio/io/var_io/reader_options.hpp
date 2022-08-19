@@ -17,6 +17,7 @@
 #include <string_view>
 #include <vector>
 
+#include <bio/meta/tag/ttag.hpp>
 #include <bio/meta/type_list/traits.hpp>
 
 #include <bio/io/detail/misc.hpp>
@@ -27,7 +28,6 @@
 #include <bio/io/stream/transparent_ostream.hpp>
 #include <bio/io/var_io/header.hpp>
 #include <bio/io/var_io/misc.hpp>
-#include <bio/meta/tag/ttag.hpp>
 
 //-----------------------------------------------------------------------------
 // field concepts

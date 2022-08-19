@@ -21,20 +21,20 @@
 #include <string_view>
 #include <vector>
 
-#include <bio/meta/tag/vtag.hpp>
-#include <bio/meta/type_list/traits.hpp>
-#include <bio/ranges/views/char_strictly_to.hpp>
 #include <seqan3/core/debug_stream.hpp> //TODO evaluate if there is a better solution
 #include <seqan3/core/debug_stream/detail/to_string.hpp>
 #include <seqan3/core/range/type_traits.hpp>
 #include <seqan3/utility/detail/to_little_endian.hpp>
+
+#include <bio/meta/tag/vtag.hpp>
+#include <bio/meta/type_list/traits.hpp>
+#include <bio/ranges/views/char_strictly_to.hpp>
 
 #include <bio/io/detail/misc.hpp>
 #include <bio/io/detail/range.hpp>
 #include <bio/io/format/bcf.hpp>
 #include <bio/io/format/format_input_handler.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
-
 #include <bio/io/var_io/header.hpp>
 #include <bio/io/var_io/misc.hpp>
 #include <bio/io/var_io/reader_options.hpp> //TODO for field_types_raw; move somewhere else

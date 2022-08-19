@@ -14,11 +14,12 @@
 #pragma once
 
 #include <bio/alphabet/concept.hpp>
+#include <bio/meta/tag/vtag.hpp>
+#include <bio/ranges/views/to_char.hpp>
+
 #include <bio/io/detail/concept.hpp>
 #include <bio/io/record.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
-#include <bio/meta/tag/vtag.hpp>
-#include <bio/ranges/views/to_char.hpp>
 
 namespace bio::io
 {

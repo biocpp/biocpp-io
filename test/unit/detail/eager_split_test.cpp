@@ -6,9 +6,9 @@
 // shipped with this file and also available at: https://github.com/seqan/seqan3/blob/master/LICENSE.md
 // -----------------------------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-
 #include <ranges>
+
+#include <gtest/gtest.h>
 
 #include <bio/alphabet/nucleotide/dna4.hpp>
 #include <bio/test/expect_range_eq.hpp>

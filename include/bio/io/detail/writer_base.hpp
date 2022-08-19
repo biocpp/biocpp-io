@@ -20,6 +20,9 @@
 #include <variant>
 #include <vector>
 
+#include <bio/meta/tag/vtag.hpp>
+#include <bio/meta/type_list/traits.hpp>
+
 #include <bio/io/detail/misc.hpp>
 #include <bio/io/detail/out_file_iterator.hpp>
 #include <bio/io/exception.hpp>
@@ -27,8 +30,6 @@
 #include <bio/io/record.hpp>
 #include <bio/io/stream/concept.hpp>
 #include <bio/io/stream/transparent_ostream.hpp>
-#include <bio/meta/tag/vtag.hpp>
-#include <bio/meta/type_list/traits.hpp>
 
 namespace bio::io
 {

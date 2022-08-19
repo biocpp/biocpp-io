@@ -13,11 +13,12 @@
 
 #pragma once
 
+#include <bio/meta/tag/ttag.hpp>
+
 #include <bio/io/format/bcf.hpp>
 #include <bio/io/format/vcf.hpp>
 #include <bio/io/stream/transparent_ostream.hpp>
 #include <bio/io/var_io/misc.hpp>
-#include <bio/meta/tag/ttag.hpp>
 
 namespace bio::io::detail
 {
