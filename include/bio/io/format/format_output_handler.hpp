@@ -17,6 +17,7 @@
 #include <bio/io/detail/concept.hpp>
 #include <bio/io/record.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
+#include <bio/meta/tag/vtag.hpp>
 #include <bio/ranges/views/to_char.hpp>
 
 namespace bio::io
@@ -110,7 +111,7 @@ private:
      */
     //!\brief Various types have sane default implementations.
     template <field field_id>
-    void write_field(vtag_t<field_id> /**/, auto & field)
+    void write_field(meta::vtag_t<field_id> /**/, auto & field)
     {
         if constexpr (requires(derived_t & d) { d.write_field_aux(field); })
         {

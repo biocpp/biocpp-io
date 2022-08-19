@@ -19,9 +19,9 @@
 #include <ranges>
 #include <string>
 
+#include <bio/meta/type_list/function.hpp>
+#include <bio/meta/type_list/type_list.hpp>
 #include <seqan3/core/detail/template_inspection.hpp>
-#include <seqan3/utility/type_list/detail/type_list_algorithm.hpp>
-#include <seqan3/utility/type_list/type_list.hpp>
 
 #include <bio/io/exception.hpp>
 
@@ -43,14 +43,14 @@ namespace bio::io::detail
 void set_format(auto & format, std::filesystem::path const & file_name)
 {
     using format_variant_type = std::remove_cvref_t<decltype(format)>;
-    using valid_formats       = seqan3::detail::transfer_template_args_onto_t<format_variant_type, seqan3::type_list>;
+    using valid_formats = seqan3::detail::transfer_template_args_onto_t<format_variant_type, bio::meta::type_list>;
 
     bool        format_found = false;
     std::string extension    = file_name.extension().string();
     if (extension.size() > 1)
     {
         extension = extension.substr(1); // drop leading "."
-        seqan3::detail::for_each<valid_formats>(
+        bio::meta::detail::for_each<valid_formats>(
           [&](auto fmt)
           {
               using fm_type = typename decltype(fmt)::type; // remove type_identity wrapper

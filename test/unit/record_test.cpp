@@ -21,7 +21,7 @@
 
 using namespace bio::alphabet::literals;
 
-using default_fields = bio::io::vtag_t<bio::io::field::seq, bio::io::field::id, bio::io::field::qual>;
+using default_fields = bio::meta::vtag_t<bio::io::field::seq, bio::io::field::id, bio::io::field::qual>;
 
 // This is needed for EXPECT_RANGE_EQ:
 namespace seqan3
@@ -54,8 +54,8 @@ TEST(fields, usage)
 
 struct record : public ::testing::Test
 {
-    using ids         = bio::io::vtag_t<bio::io::field::id, bio::io::field::seq>;
-    using record_type = bio::io::record<ids, seqan3::type_list<std::string, bio::alphabet::dna4_vector>>;
+    using ids         = bio::meta::vtag_t<bio::io::field::id, bio::io::field::seq>;
+    using record_type = bio::io::record<ids, bio::meta::type_list<std::string, bio::alphabet::dna4_vector>>;
 };
 
 TEST_F(record, definition_tuple_traits)
@@ -118,7 +118,7 @@ TEST_F(record, make_record)
     std::string s   = "MY ID";
     auto        vec = "ACGT"_dna4;
 
-    auto r = bio::io::make_record(bio::io::vtag<bio::io::field::id, bio::io::field::seq>, s, vec);
+    auto r = bio::io::make_record(bio::meta::vtag<bio::io::field::id, bio::io::field::seq>, s, vec);
     EXPECT_TRUE((std::same_as<decltype(r), record::record_type>));
 }
 
@@ -127,8 +127,9 @@ TEST_F(record, tie_record)
     std::string s   = "MY ID";
     auto        vec = "ACGT"_dna4;
 
-    auto r = bio::io::tie_record(bio::io::vtag<bio::io::field::id, bio::io::field::seq>, s, vec);
-    EXPECT_TRUE((std::same_as<
-                 decltype(r),
-                 bio::io::record<record::ids, seqan3::type_list<std::string &, std::vector<bio::alphabet::dna4> &>>>));
+    auto r = bio::io::tie_record(bio::meta::vtag<bio::io::field::id, bio::io::field::seq>, s, vec);
+    EXPECT_TRUE(
+      (std::same_as<
+        decltype(r),
+        bio::io::record<record::ids, bio::meta::type_list<std::string &, std::vector<bio::alphabet::dna4> &>>>));
 }

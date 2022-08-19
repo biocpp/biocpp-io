@@ -29,9 +29,9 @@ using std::literals::string_view_literals::operator""sv;
 struct read : public ::testing::Test
 {
     using default_rec_t = bio::io::record<
-      bio::io::vtag_t<bio::io::field::id, bio::io::field::seq>,
-      seqan3::type_list<std::string_view,
-                        decltype(std::string_view{} | bio::views::char_strictly_to<bio::alphabet::dna5>)>>;
+      bio::meta::vtag_t<bio::io::field::id, bio::io::field::seq>,
+      bio::meta::type_list<std::string_view,
+                           decltype(std::string_view{} | bio::views::char_strictly_to<bio::alphabet::dna5>)>>;
 
     std::vector<std::string> ids{
       {"ID1"},
@@ -58,7 +58,8 @@ struct read : public ::testing::Test
 
         bio::io::format_input_handler<bio::io::fasta> input_handler{istream};
 
-        bio::io::record<bio::io::vtag_t<bio::io::field::id, bio::io::field::seq>, seqan3::type_list<id_t, seq_t>> rec;
+        bio::io::record<bio::meta::vtag_t<bio::io::field::id, bio::io::field::seq>, bio::meta::type_list<id_t, seq_t>>
+          rec;
 
         for (unsigned i = 0; i < 3; ++i)
         {
@@ -294,8 +295,8 @@ TEST_F(read, fail_illegal_alphabet)
 
     std::istringstream                            istream{input};
     bio::io::format_input_handler<bio::io::fasta> input_handler{istream};
-    using rec_t = bio::io::record<bio::io::vtag_t<bio::io::field::id, bio::io::field::seq>,
-                                  seqan3::type_list<std::string_view, std::vector<bio::alphabet::dna5>>>;
+    using rec_t = bio::io::record<bio::meta::vtag_t<bio::io::field::id, bio::io::field::seq>,
+                                  bio::meta::type_list<std::string_view, std::vector<bio::alphabet::dna5>>>;
 
     rec_t rec;
 

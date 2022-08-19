@@ -43,8 +43,8 @@ for (auto & rec : records)
 {
 //![field_types_expert]
 bio::io::var_io::reader_options options{
-    .field_ids   = bio::io::vtag<bio::io::field::chrom, bio::io::field::pos>,
-    .field_types = bio::io::ttag<std::string_view, int32_t> };
+    .field_ids   = bio::meta::vtag<bio::io::field::chrom, bio::io::field::pos>,
+    .field_types = bio::meta::ttag<std::string_view, int32_t> };
 
 bio::io::var_io::reader reader{"example.vcf", options};
 

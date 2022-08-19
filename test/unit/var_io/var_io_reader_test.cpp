@@ -66,7 +66,7 @@ TEST(var_io_reader, constructor1_with_opts)
     using control_t =
       bio::io::var_io::reader<decltype(bio::io::var_io::default_field_ids),
                               decltype(bio::io::var_io::field_types_bcf_style<bio::io::ownership::shallow>),
-                              seqan3::type_list<bio::io::vcf, bio::io::bcf>>;
+                              bio::meta::type_list<bio::io::vcf, bio::io::bcf>>;
 
     var_io_reader_filename_constructor(true, std::move(opt));
     EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::reader{"", opt}), control_t>));
@@ -84,7 +84,7 @@ TEST(var_io_reader, constructor2_with_opts_direct_format)
     using control_t =
       bio::io::var_io::reader<decltype(bio::io::var_io::default_field_ids),
                               decltype(bio::io::var_io::field_types_bcf_style<bio::io::ownership::shallow>),
-                              seqan3::type_list<bio::io::vcf, bio::io::bcf>>;
+                              bio::meta::type_list<bio::io::vcf, bio::io::bcf>>;
 
     var_io_reader_filename_constructor(false, bio::io::vcf{}, std::move(opt));
     EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::reader{"", bio::io::vcf{}, opt}), control_t>));
@@ -105,7 +105,7 @@ TEST(var_io_reader, constructor2_with_opts_format_variant)
     using control_t =
       bio::io::var_io::reader<decltype(bio::io::var_io::default_field_ids),
                               decltype(bio::io::var_io::field_types_bcf_style<bio::io::ownership::shallow>),
-                              seqan3::type_list<bio::io::vcf, bio::io::bcf>>;
+                              bio::meta::type_list<bio::io::vcf, bio::io::bcf>>;
 
     var_io_reader_filename_constructor(false, var, std::move(opt));
     EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::reader{"", var, std::move(opt)}), control_t>));
@@ -126,7 +126,7 @@ TEST(var_io_reader, constructor3_with_opts)
     using control_t =
       bio::io::var_io::reader<decltype(bio::io::var_io::default_field_ids),
                               decltype(bio::io::var_io::field_types_bcf_style<bio::io::ownership::shallow>),
-                              seqan3::type_list<bio::io::vcf, bio::io::bcf>>;
+                              bio::meta::type_list<bio::io::vcf, bio::io::bcf>>;
 
     EXPECT_NO_THROW((bio::io::var_io::reader{str, bio::io::vcf{}, opt}));
     EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::reader{str, bio::io::vcf{}, opt}), control_t>));
@@ -148,7 +148,7 @@ TEST(var_io_reader, constructor4_with_opts)
     using control_t =
       bio::io::var_io::reader<decltype(bio::io::var_io::default_field_ids),
                               decltype(bio::io::var_io::field_types_bcf_style<bio::io::ownership::shallow>),
-                              seqan3::type_list<bio::io::vcf, bio::io::bcf>>;
+                              bio::meta::type_list<bio::io::vcf, bio::io::bcf>>;
 
     EXPECT_NO_THROW((bio::io::var_io::reader{std::move(str), bio::io::vcf{}, opt}));
     EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::reader{std::move(str), bio::io::vcf{}, opt}), control_t>));
@@ -243,8 +243,8 @@ TEST(var_io_reader, custom_field_types)
 TEST(var_io_reader, custom_field_ids_structured_bindings)
 {
     bio::io::var_io::reader_options opt{
-      .field_ids   = bio::io::vtag<bio::io::field::chrom, bio::io::field::pos, bio::io::field::ref>,
-      .field_types = bio::io::ttag<std::string, uint32_t, std::string>};
+      .field_ids   = bio::meta::vtag<bio::io::field::chrom, bio::io::field::pos, bio::io::field::ref>,
+      .field_types = bio::meta::ttag<std::string, uint32_t, std::string>};
 
     std::istringstream      str{static_cast<std::string>(example_from_spec)};
     bio::io::var_io::reader reader{str, bio::io::vcf{}, opt};

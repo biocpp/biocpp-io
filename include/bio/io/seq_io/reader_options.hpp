@@ -22,8 +22,9 @@
 #include <bio/alphabet/nucleotide/dna5.hpp>
 #include <bio/alphabet/quality/phred63.hpp>
 #include <bio/io/misc.hpp>
+#include <bio/meta/tag/ttag.hpp>
+#include <bio/meta/type_list/traits.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
-#include <seqan3/utility/type_list/traits.hpp>
 
 #include <bio/io/detail/concept.hpp>
 #include <bio/io/detail/misc.hpp>
@@ -67,19 +68,19 @@ inline constinit auto field_types = []()
 {
     if constexpr (ownership == bio::io::ownership::deep)
     {
-        return ttag<std::string,
-                    std::conditional_t<std::same_as<seq_alph_t, char>, std::string, std::vector<seq_alph_t>>,
-                    std::conditional_t<std::same_as<qual_alph_t, char>, std::string, std::vector<qual_alph_t>>>;
+        return meta::ttag<std::string,
+                          std::conditional_t<std::same_as<seq_alph_t, char>, std::string, std::vector<seq_alph_t>>,
+                          std::conditional_t<std::same_as<qual_alph_t, char>, std::string, std::vector<qual_alph_t>>>;
     }
     else
     {
-        return ttag<std::string_view,
-                    std::conditional_t<std::same_as<seq_alph_t, char>,
-                                       std::string_view,
-                                       decltype(std::string_view{} | bio::views::char_strictly_to<seq_alph_t>)>,
-                    std::conditional_t<std::same_as<qual_alph_t, char>,
-                                       std::string_view,
-                                       decltype(std::string_view{} | bio::views::char_strictly_to<qual_alph_t>)>>;
+        return meta::ttag<std::string_view,
+                          std::conditional_t<std::same_as<seq_alph_t, char>,
+                                             std::string_view,
+                                             decltype(std::string_view{} | bio::views::char_strictly_to<seq_alph_t>)>,
+                          std::conditional_t<std::same_as<qual_alph_t, char>,
+                                             std::string_view,
+                                             decltype(std::string_view{} | bio::views::char_strictly_to<qual_alph_t>)>>;
     }
 }();
 
@@ -174,10 +175,10 @@ inline constinit auto field_types_char = field_types<ownership::shallow, char, c
  */
 template <typename field_ids_t   = decltype(default_field_ids),
           typename field_types_t = decltype(field_types_dna),
-          typename formats_t     = seqan3::type_list<fasta, fastq>>
+          typename formats_t     = meta::type_list<fasta, fastq>>
 struct reader_options
 {
-    /*!\brief The fields that shall be contained in each record; a bio::io::vtag over bio::io::field.
+    /*!\brief The fields that shall be contained in each record; a bio::meta::vtag over bio::io::field.
      * \details
      *
      * It is usually not necessary to change this.
@@ -185,7 +186,7 @@ struct reader_options
      */
     field_ids_t field_ids = default_field_ids;
 
-    /*!\brief The types corresponding to each field; a bio::io::ttag over the types.
+    /*!\brief The types corresponding to each field; a bio::meta::ttag over the types.
      *
      * \details
      *
@@ -193,13 +194,13 @@ struct reader_options
      */
     field_types_t field_types = field_types_dna;
 
-    /*!\brief The formats that input files can take; a bio::io::ttag over the types.
+    /*!\brief The formats that input files can take; a bio::meta::ttag over the types.
      *
      * \details
      *
      * See seqan3::seq_io::reader for an overview of the the supported formats.
      */
-    formats_t formats = ttag<fasta, fastq>;
+    formats_t formats = meta::ttag<fasta, fastq>;
 
     //!\brief Options that are passed on to the internal stream oject.
     transparent_istream_options stream_options{};
@@ -208,11 +209,12 @@ struct reader_options
     bool truncate_ids = false;
 
 private:
-    static_assert(detail::is_fields_tag<field_ids_t>, "field_ids must be a bio::io::vtag over bio::io::field.");
+    static_assert(detail::is_fields_tag<field_ids_t>, "field_ids must be a bio::meta::vtag over bio::io::field.");
 
-    static_assert(detail::is_type_list<field_types_t>, "field_types must be a bio::io::ttag / seqan3::type_list.");
+    static_assert(meta::detail::is_type_list<field_types_t>,
+                  "field_types must be a bio::meta::ttag / bio::meta::type_list.");
 
-    static_assert(detail::is_type_list<formats_t>, "formats must be a bio::io::ttag / seqan3::type_list.");
+    static_assert(meta::detail::is_type_list<formats_t>, "formats must be a bio::meta::ttag / bio::meta::type_list.");
 
     static_assert(field_ids_t::size == field_types_t::size(), "field_ids and field_types must have the same size.");
 

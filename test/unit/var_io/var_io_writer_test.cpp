@@ -18,7 +18,7 @@
 
 #include "../format/vcf_data.hpp"
 
-using custom_field_ids_t = bio::io::vtag_t<bio::io::field::chrom, bio::io::field::pos, bio::io::field::ref>;
+using custom_field_ids_t = bio::meta::vtag_t<bio::io::field::chrom, bio::io::field::pos, bio::io::field::ref>;
 
 TEST(var_io_writer, concepts)
 {
@@ -72,8 +72,8 @@ TEST(var_io_writer, constructor1_just_filename)
 
 TEST(var_io_writer, constructor1_with_opts)
 {
-    bio::io::var_io::writer_options opt{.formats = bio::io::ttag<bio::io::vcf>};
-    using control_t = bio::io::var_io::writer<seqan3::type_list<bio::io::vcf>>;
+    bio::io::var_io::writer_options opt{.formats = bio::meta::ttag<bio::io::vcf>};
+    using control_t = bio::io::var_io::writer<bio::meta::type_list<bio::io::vcf>>;
 
     var_io_writer_filename_constructor(true, std::move(opt));
     EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::writer{"", opt}), control_t>));
@@ -87,8 +87,8 @@ TEST(var_io_writer, constructor2_just_filename_direct_format)
 
 TEST(var_io_writer, constructor2_with_opts_direct_format)
 {
-    bio::io::var_io::writer_options opt{.formats = bio::io::ttag<bio::io::vcf>};
-    using control_t = bio::io::var_io::writer<seqan3::type_list<bio::io::vcf>>;
+    bio::io::var_io::writer_options opt{.formats = bio::meta::ttag<bio::io::vcf>};
+    using control_t = bio::io::var_io::writer<bio::meta::type_list<bio::io::vcf>>;
 
     var_io_writer_filename_constructor(false, bio::io::vcf{}, std::move(opt));
     EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::writer{"", bio::io::vcf{}, opt}), control_t>));
@@ -105,8 +105,8 @@ TEST(var_io_writer, constructor2_just_filename_format_variant)
 TEST(var_io_writer, constructor2_with_opts_format_variant)
 {
     std::variant<bio::io::vcf>      var{};
-    bio::io::var_io::writer_options opt{.formats = bio::io::ttag<bio::io::vcf>};
-    using control_t = bio::io::var_io::writer<seqan3::type_list<bio::io::vcf>>;
+    bio::io::var_io::writer_options opt{.formats = bio::meta::ttag<bio::io::vcf>};
+    using control_t = bio::io::var_io::writer<bio::meta::type_list<bio::io::vcf>>;
 
     var_io_writer_filename_constructor(false, var, std::move(opt));
     EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::writer{"", var, std::move(opt)}), control_t>));
@@ -140,10 +140,10 @@ TEST(var_io_writer, constructor3)
 TEST(var_io_writer, constructor3_with_opts)
 {
     std::ostringstream              str;
-    bio::io::var_io::writer_options opt{.formats = bio::io::ttag<bio::io::vcf>};
+    bio::io::var_io::writer_options opt{.formats = bio::meta::ttag<bio::io::vcf>};
     var_io_writer_stream_constructor(str, bio::io::vcf{}, opt);
 
-    using control_t = bio::io::var_io::writer<seqan3::type_list<bio::io::vcf>>;
+    using control_t = bio::io::var_io::writer<bio::meta::type_list<bio::io::vcf>>;
     EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::writer{str, bio::io::vcf{}, opt}), control_t>));
 }
 
@@ -159,10 +159,10 @@ TEST(var_io_writer, constructor4)
 TEST(var_io_writer, constructor4_with_opts)
 {
     std::ostringstream              str;
-    bio::io::var_io::writer_options opt{.formats = bio::io::ttag<bio::io::vcf>};
+    bio::io::var_io::writer_options opt{.formats = bio::meta::ttag<bio::io::vcf>};
     var_io_writer_stream_constructor(std::move(str), bio::io::vcf{}, opt);
 
-    using control_t = bio::io::var_io::writer<seqan3::type_list<bio::io::vcf>>;
+    using control_t = bio::io::var_io::writer<bio::meta::type_list<bio::io::vcf>>;
     EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::writer{std::move(str), bio::io::vcf{}, opt}), control_t>));
 }
 

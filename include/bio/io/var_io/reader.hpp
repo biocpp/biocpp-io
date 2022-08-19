@@ -21,6 +21,7 @@
 #include <bio/io/format/vcf_input_handler.hpp>
 #include <bio/io/var_io/header.hpp>
 #include <bio/io/var_io/reader_options.hpp>
+#include <bio/meta/tag/vtag.hpp>
 
 namespace bio::io::var_io
 {
@@ -218,8 +219,8 @@ private:
         else /* only read sub-region */
         {
             // this record holds the bare minimum to check if regions overlap; always shallow
-            using record_t = record<vtag_t<field::chrom, field::pos, field::ref>,
-                                    seqan3::type_list<std::string_view, int64_t, std::string_view>>;
+            using record_t = record<meta::vtag_t<field::chrom, field::pos, field::ref>,
+                                    meta::type_list<std::string_view, int64_t, std::string_view>>;
             record_t temp_record;
 
             while (true)

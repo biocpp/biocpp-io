@@ -32,9 +32,9 @@ bio::io::seq_io::reader_options options
 //![example_advanced2]
 bio::io::seq_io::reader_options options
 {
-    .field_ids   = bio::io::vtag<bio::io::field::seq>,
-    .field_types = bio::io::ttag<std::string>,
-    .formats     = bio::io::ttag<bio::io::fasta>
+    .field_ids   = bio::meta::vtag<bio::io::field::seq>,
+    .field_types = bio::meta::ttag<std::string>,
+    .formats     = bio::meta::ttag<bio::io::fasta>
 };
 //![example_advanced2]
 }

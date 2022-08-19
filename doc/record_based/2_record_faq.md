@@ -153,4 +153,4 @@ The type of rec2 is:
 \snippet test/snippet/record.cpp make_and_tie_record_type_rec2
 
 When creating a record from existing variables, you can use bio::io::tie_record to avoid needless copies.
-Instead of manually entering the identifiers as a bio::io::vtag, you can use bio::io::seq_io::default_field_ids (or the respective defaults of another reader/writer).
+Instead of manually entering the identifiers as a bio::meta::vtag, you can use bio::io::seq_io::default_field_ids (or the respective defaults of another reader/writer).

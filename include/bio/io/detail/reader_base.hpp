@@ -20,7 +20,7 @@
 #include <variant>
 #include <vector>
 
-#include <seqan3/utility/type_list/traits.hpp>
+#include <bio/meta/type_list/traits.hpp>
 
 #include <bio/io/detail/in_file_iterator.hpp>
 #include <bio/io/detail/misc.hpp>
@@ -68,11 +68,11 @@ private:
     /*!\name Format handling
      * \{
      */
-    //!\brief A seqan3::type_list with the possible formats.
+    //!\brief A bio::meta::type_list with the possible formats.
     using valid_formats = decltype(options_t::formats);
     //!\brief The seqan3::format_input_handler corresponding to the format.
     using format_handler_type =
-      seqan3::detail::transfer_template_args_onto_t<seqan3::list_traits::transform<format_input_handler, valid_formats>,
+      seqan3::detail::transfer_template_args_onto_t<meta::list_traits::transform<format_input_handler, valid_formats>,
                                                     std::variant>;
     //!\}
 

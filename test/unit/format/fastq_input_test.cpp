@@ -28,10 +28,10 @@ using std::literals::string_view_literals::operator""sv;
 struct read : public ::testing::Test
 {
     using default_rec_t = bio::io::record<
-      bio::io::vtag_t<bio::io::field::id, bio::io::field::seq, bio::io::field::qual>,
-      seqan3::type_list<std::string_view,
-                        decltype(std::string_view{} | bio::views::char_strictly_to<bio::alphabet::dna5>),
-                        decltype(std::string_view{} | bio::views::char_strictly_to<bio::alphabet::phred42>)>>;
+      bio::meta::vtag_t<bio::io::field::id, bio::io::field::seq, bio::io::field::qual>,
+      bio::meta::type_list<std::string_view,
+                           decltype(std::string_view{} | bio::views::char_strictly_to<bio::alphabet::dna5>),
+                           decltype(std::string_view{} | bio::views::char_strictly_to<bio::alphabet::phred42>)>>;
 
     std::string default_input =
       R"raw(@ID1
@@ -73,8 +73,8 @@ ACGTTTA
 
         bio::io::format_input_handler<bio::io::fastq> input_handler{istream};
 
-        bio::io::record<bio::io::vtag_t<bio::io::field::id, bio::io::field::seq, bio::io::field::qual>,
-                        seqan3::type_list<id_t, seq_t, qual_t>>
+        bio::io::record<bio::meta::vtag_t<bio::io::field::id, bio::io::field::seq, bio::io::field::qual>,
+                        bio::meta::type_list<id_t, seq_t, qual_t>>
           rec;
 
         for (unsigned i = 0; i < 3; ++i)
@@ -307,8 +307,8 @@ TEST_F(read, fail_illegal_alphabet)
 
     std::istringstream                            istream{input};
     bio::io::format_input_handler<bio::io::fastq> input_handler{istream};
-    using rec_t = bio::io::record<bio::io::vtag_t<bio::io::field::id, bio::io::field::seq>,
-                                  seqan3::type_list<std::string_view, std::vector<bio::alphabet::dna5>>>;
+    using rec_t = bio::io::record<bio::meta::vtag_t<bio::io::field::id, bio::io::field::seq>,
+                                  bio::meta::type_list<std::string_view, std::vector<bio::alphabet::dna5>>>;
 
     rec_t rec;
 

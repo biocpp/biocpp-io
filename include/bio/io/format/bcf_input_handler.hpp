@@ -21,12 +21,13 @@
 #include <string_view>
 #include <vector>
 
+#include <bio/meta/tag/vtag.hpp>
+#include <bio/meta/type_list/traits.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
 #include <seqan3/core/debug_stream.hpp> //TODO evaluate if there is a better solution
 #include <seqan3/core/debug_stream/detail/to_string.hpp>
 #include <seqan3/core/range/type_traits.hpp>
 #include <seqan3/utility/detail/to_little_endian.hpp>
-#include <seqan3/utility/type_list/traits.hpp>
 
 #include <bio/io/detail/misc.hpp>
 #include <bio/io/detail/range.hpp>
@@ -723,25 +724,25 @@ private:
      * \{
      */
     //!\brief Reading of CHROM field.
-    void parse_field(vtag_t<field::chrom> const & /**/, std::integral auto & parsed_field)
+    void parse_field(meta::vtag_t<field::chrom> const & /**/, std::integral auto & parsed_field)
     {
         parsed_field = record_core->chrom;
     }
 
     //!\overload
-    void parse_field(vtag_t<field::chrom> const & /**/, auto & parsed_field)
+    void parse_field(meta::vtag_t<field::chrom> const & /**/, auto & parsed_field)
     {
         parse_field_aux(header.contigs[header.idx_to_contig_pos().at(record_core->chrom)].id, parsed_field);
     }
 
     //!\brief Reading of POS field.
-    void parse_field(vtag_t<field::pos> const & /**/, std::integral auto & parsed_field)
+    void parse_field(meta::vtag_t<field::pos> const & /**/, std::integral auto & parsed_field)
     {
         parsed_field = record_core->pos + 1; // one-based positions
     }
 
     //!\brief Reading of ID field.
-    void parse_field(vtag_t<field::id> const & /**/, auto & parsed_field)
+    void parse_field(meta::vtag_t<field::id> const & /**/, auto & parsed_field)
     {
         if (std::ranges::empty(id_cache))
             parse_field_aux(std::string_view{"."}, parsed_field);
@@ -750,10 +751,13 @@ private:
     }
 
     //!\brief Reading of REF field.
-    void parse_field(vtag_t<field::ref> const & /**/, auto & parsed_field) { parse_field_aux(ref_cache, parsed_field); }
+    void parse_field(meta::vtag_t<field::ref> const & /**/, auto & parsed_field)
+    {
+        parse_field_aux(ref_cache, parsed_field);
+    }
 
     //!\brief Reading of ALT field.
-    void parse_field(vtag_t<field::alt> const & /**/, std::vector<std::string_view> & parsed_field)
+    void parse_field(meta::vtag_t<field::alt> const & /**/, std::vector<std::string_view> & parsed_field)
     {
         parsed_field = alts_cache;
     }
@@ -761,7 +765,7 @@ private:
     //!\overload
     template <detail::back_insertable parsed_field_t>
         requires(std::ranges::range<std::ranges::range_reference_t<parsed_field_t>>)
-    void parse_field(vtag_t<field::alt> const & /**/, parsed_field_t & parsed_field)
+    void parse_field(meta::vtag_t<field::alt> const & /**/, parsed_field_t & parsed_field)
     {
         for (std::string_view const alt : alts_cache)
         {
@@ -774,7 +778,7 @@ private:
     }
 
     //!\brief Reading of QUAL field.
-    void parse_field(vtag_t<field::qual> const & /**/, seqan3::arithmetic auto & parsed_field)
+    void parse_field(meta::vtag_t<field::qual> const & /**/, seqan3::arithmetic auto & parsed_field)
     {
         parsed_field = record_core->qual;
     }
@@ -782,7 +786,7 @@ private:
     //!\brief Reading of FILTER field.
     template <detail::back_insertable parsed_field_t>
         requires detail::int_range<parsed_field_t>
-    void parse_field(vtag_t<field::filter> const & /**/, parsed_field_t & parsed_field)
+    void parse_field(meta::vtag_t<field::filter> const & /**/, parsed_field_t & parsed_field)
     {
         decode_numbers_into(get<field::filter>(raw_record), parsed_field);
     }
@@ -790,7 +794,7 @@ private:
     //!\overload
     template <detail::back_insertable parsed_field_t>
         requires detail::out_string<std::ranges::range_reference_t<parsed_field_t>>
-    void parse_field(vtag_t<field::filter> const & /**/, parsed_field_t & parsed_field)
+    void parse_field(meta::vtag_t<field::filter> const & /**/, parsed_field_t & parsed_field)
     {
         std::vector<int32_t> tmp; // ATTENTION this allocates, TODO change
 
@@ -807,7 +811,7 @@ private:
     //!\brief Reading of the INFO field.
     template <detail::back_insertable parsed_field_t>
         requires detail::info_element_reader_concept<std::ranges::range_reference_t<parsed_field_t>>
-    void parse_field(vtag_t<field::info> const & /**/, parsed_field_t & parsed_field)
+    void parse_field(meta::vtag_t<field::info> const & /**/, parsed_field_t & parsed_field)
     {
         std::span<std::byte const> raw_field = get<field::info>(raw_record);
         std::byte const *          cache_ptr = raw_field.data();
@@ -978,13 +982,13 @@ private:
     //!\brief Reading of the GENOTYPES field.
     template <detail::back_insertable field_t>
         requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
-    void parse_field(vtag_t<field::genotypes> const & /**/, field_t & parsed_field)
+    void parse_field(meta::vtag_t<field::genotypes> const & /**/, field_t & parsed_field)
     {
         parse_genotypes_impl(parsed_field);
     }
 
     //!\brief Overload for parsing the private data.
-    void parse_field(vtag_t<field::_private> const & /**/, var_io::record_private_data & parsed_field)
+    void parse_field(meta::vtag_t<field::_private> const & /**/, var_io::record_private_data & parsed_field)
     {
         parsed_field.header_ptr  = &header;
         parsed_field.raw_record  = &raw_record;

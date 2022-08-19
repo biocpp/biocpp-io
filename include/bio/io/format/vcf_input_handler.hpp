@@ -21,11 +21,12 @@
 #include <string_view>
 #include <vector>
 
+#include <bio/meta/tag/vtag.hpp>
+#include <bio/meta/type_list/traits.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
 #include <seqan3/core/debug_stream.hpp> //TODO evaluate if there is a better solution
 #include <seqan3/core/debug_stream/detail/to_string.hpp>
 #include <seqan3/core/range/type_traits.hpp>
-#include <seqan3/utility/type_list/traits.hpp>
 
 #include <bio/io/detail/magic_get.hpp>
 #include <bio/io/format/format_input_handler.hpp>
@@ -100,8 +101,8 @@ private:
     //!\brief Type of the raw record.
     using raw_record_type =
       record<format_fields,
-             seqan3::list_traits::concat<seqan3::list_traits::repeat<format_fields::size - 1, std::string_view>,
-                                         seqan3::type_list<var_io::record_private_data>>>;
+             meta::list_traits::concat<meta::list_traits::repeat<format_fields::size - 1, std::string_view>,
+                                       meta::type_list<var_io::record_private_data>>>;
 
     //!\brief Type of the low-level iterator.
     using lowlevel_iterator = detail::plaintext_input_iterator<plain_io::record_kind::line_and_fields>;
@@ -171,7 +172,7 @@ private:
                                            detail::is_info_element_value_type auto & output);
 
     //!\brief Parse the CHROM field. Reading chrom as number means getting the index (not converting string to number).
-    void parse_field(vtag_t<field::chrom> const & /**/, auto & parsed_field)
+    void parse_field(meta::vtag_t<field::chrom> const & /**/, auto & parsed_field)
     {
         using parsed_field_t       = std::remove_cvref_t<decltype(parsed_field)>;
         std::string_view raw_field = get<field::chrom>(raw_record);
@@ -211,7 +212,7 @@ private:
     //!\brief Overload for parsing ALT.
     template <detail::back_insertable parsed_field_t>
         requires std::ranges::range<std::ranges::range_reference_t<parsed_field_t>>
-    void parse_field(vtag_t<field::alt> const & /**/, parsed_field_t & parsed_field)
+    void parse_field(meta::vtag_t<field::alt> const & /**/, parsed_field_t & parsed_field)
     {
         std::string_view raw_field = get<field::alt>(raw_record);
 
@@ -231,7 +232,7 @@ private:
     }
 
     //!\brief Overload for parsing QUAL.
-    void parse_field(vtag_t<field::qual> const & /**/, seqan3::arithmetic auto & parsed_field)
+    void parse_field(meta::vtag_t<field::qual> const & /**/, seqan3::arithmetic auto & parsed_field)
     {
         std::string_view raw_field = get<field::qual>(raw_record);
 
@@ -247,7 +248,7 @@ private:
 
     //!\brief Overload for parsing FILTER.
     template <detail::back_insertable parsed_field_t>
-    void parse_field(vtag_t<field::filter> const & /**/, parsed_field_t & parsed_field)
+    void parse_field(meta::vtag_t<field::filter> const & /**/, parsed_field_t & parsed_field)
     {
         using elem_t               = std::ranges::range_value_t<parsed_field_t>;
         std::string_view raw_field = get<field::filter>(raw_record);
@@ -334,7 +335,7 @@ private:
     //!\brief Overload for parsing INFO.
     template <detail::back_insertable parsed_field_t>
         requires detail::info_element_reader_concept<std::ranges::range_reference_t<parsed_field_t>>
-    void parse_field(vtag_t<field::info> const & /**/, parsed_field_t & parsed_field)
+    void parse_field(meta::vtag_t<field::info> const & /**/, parsed_field_t & parsed_field)
     {
         using key_t   = detail::first_elem_t<std::ranges::range_reference_t<parsed_field_t>>;
         using value_t = detail::second_elem_t<std::ranges::range_reference_t<parsed_field_t>>;
@@ -452,10 +453,10 @@ private:
         //!\cond REQ
         requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
     //!\endcond
-    void parse_field(vtag_t<field::genotypes> const & /**/, field_t & parsed_field);
+    void parse_field(meta::vtag_t<field::genotypes> const & /**/, field_t & parsed_field);
 
     //!\brief Overload for parsing the private data.
-    void parse_field(vtag_t<field::_private> const & /**/, var_io::record_private_data & parsed_field)
+    void parse_field(meta::vtag_t<field::_private> const & /**/, var_io::record_private_data & parsed_field)
     {
         parsed_field.header_ptr  = &header;
         parsed_field.raw_record  = nullptr;
@@ -703,7 +704,7 @@ inline size_t format_input_handler<vcf>::parse_element_value_type(var_io::value_
 //!\brief Overload for reading the GENOTYPE field.
 template <detail::back_insertable field_t>
     requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
-inline void format_input_handler<vcf>::parse_field(vtag_t<field::genotypes> const & /**/, field_t & parsed_field)
+inline void format_input_handler<vcf>::parse_field(meta::vtag_t<field::genotypes> const & /**/, field_t & parsed_field)
 {
     using genotype_field_t = std::ranges::range_reference_t<field_t>;
 
