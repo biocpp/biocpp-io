@@ -39,8 +39,8 @@ using Y2 = decltype(get_arg_t(reader.begin()->qual()).second);
 
 static_assert(std::same_as<decltype(reader)::record_type,
 //![simple_usage_file_type]
-bio::io::record<bio::io::vtag_t<bio::io::field::id, bio::io::field::seq, bio::io::field::qual>,     // identifiers of the fields
-            seqan3::type_list<std::string_view,                                 // type of the ID field
+bio::io::record<bio::meta::vtag_t<bio::io::field::id, bio::io::field::seq, bio::io::field::qual>,     // identifiers of the fields
+            bio::meta::type_list<std::string_view,                                 // type of the ID field
                               std::ranges::transform_view<X1, X2>,              // type of the SEQ field
                               std::ranges::transform_view<Y1, Y2>>>             // type of the QUAL field
 //![simple_usage_file_type]
@@ -102,7 +102,7 @@ for (auto & rec : reader)
 
 {
 //![options2]
-using namespace seqan3::literals;
+using namespace bio::alphabet::literals;
 
 bio::io::seq_io::reader reader{"example.fasta",
                            bio::io::seq_io::reader_options{.field_types = bio::io::seq_io::field_types<bio::io::ownership::deep>}};
@@ -119,10 +119,10 @@ for (auto & rec : reader)
 
 static_assert(std::same_as<decltype(reader)::record_type,
 //![options2_type]
-bio::io::record<bio::io::vtag_t<bio::io::field::id, bio::io::field::seq, bio::io::field::qual>,         // identifiers of the fields
-            seqan3::type_list<std::string,                                          // type of the ID field
-                              std::vector<seqan3::dna5>,                            // type of the SEQ field
-                              std::vector<seqan3::phred63>>>                        // type of the QUAL field
+bio::io::record<bio::meta::vtag_t<bio::io::field::id, bio::io::field::seq, bio::io::field::qual>,         // identifiers of the fields
+            bio::meta::type_list<std::string,                                          // type of the ID field
+                              std::vector<bio::alphabet::dna5>,                            // type of the SEQ field
+                              std::vector<bio::alphabet::phred63>>>                        // type of the QUAL field
 //![options2_type]
               >);
 }

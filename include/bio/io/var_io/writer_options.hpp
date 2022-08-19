@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include <bio/meta/tag/ttag.hpp>
+
 #include <bio/io/format/bcf.hpp>
 #include <bio/io/format/vcf.hpp>
 #include <bio/io/stream/transparent_ostream.hpp>
@@ -103,7 +105,7 @@ namespace bio::io::var_io
  *
  * TODO describe how to easily initialise this
  */
-template <typename formats_t = seqan3::type_list<bcf, vcf>>
+template <typename formats_t = meta::type_list<bcf, vcf>>
 struct writer_options
 {
     /*!\brief Try to use types smaller than 32bit to represent integers.
@@ -117,13 +119,13 @@ struct writer_options
      */
     bool compress_integers = true;
 
-    /*!\brief The formats that output files can take; a bio::io::ttag over the types.
+    /*!\brief The formats that output files can take; a bio::meta::ttag over the types.
      *
      * \details
      *
      * See bio::io::var_io::writer for an overview of the the supported formats.
      */
-    formats_t formats = ttag<bcf, vcf>;
+    formats_t formats = meta::ttag<bcf, vcf>;
 
     //!\brief Options that are passed on to the internal stream oject.
     transparent_ostream_options stream_options{};
@@ -171,7 +173,7 @@ struct writer_options
     bool verify_header_types = false;
 
 private:
-    static_assert(detail::is_type_list<formats_t>, "formats must be a bio::io::ttag / seqan3::type_list.");
+    static_assert(meta::detail::is_type_list<formats_t>, "formats must be a bio::meta::ttag / bio::meta::type_list.");
 };
 
 } // namespace bio::io::var_io

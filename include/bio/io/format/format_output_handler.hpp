@@ -13,11 +13,13 @@
 
 #pragma once
 
+#include <bio/alphabet/concept.hpp>
+#include <bio/meta/tag/vtag.hpp>
+#include <bio/ranges/views/to_char.hpp>
+
 #include <bio/io/detail/concept.hpp>
 #include <bio/io/record.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
-#include <seqan3/alphabet/concept.hpp>
-#include <seqan3/alphabet/views/to_char.hpp>
 
 namespace bio::io
 {
@@ -83,7 +85,7 @@ private:
     //!\brief Write alphabet ranges.
     template <std::ranges::input_range rng_t>
         requires(detail::deliberate_alphabet<std::ranges::range_reference_t<rng_t>>)
-    void write_field_aux(rng_t && range) { to_derived()->write_field_aux(range | seqan3::views::to_char); }
+    void write_field_aux(rng_t && range) { to_derived()->write_field_aux(range | bio::views::to_char); }
 
     //!\brief Write CStrings.
     void write_field_aux(char const * const cstr) { write_field_aux(std::string_view{cstr}); }
@@ -110,7 +112,7 @@ private:
      */
     //!\brief Various types have sane default implementations.
     template <field field_id>
-    void write_field(vtag_t<field_id> /**/, auto & field)
+    void write_field(meta::vtag_t<field_id> /**/, auto & field)
     {
         if constexpr (requires(derived_t & d) { d.write_field_aux(field); })
         {

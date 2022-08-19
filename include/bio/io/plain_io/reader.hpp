@@ -16,8 +16,8 @@
 #include <ranges>
 #include <string_view>
 
-#include <seqan3/alphabet/concept.hpp>
-#include <seqan3/alphabet/views/to_char.hpp>
+#include <bio/alphabet/concept.hpp>
+#include <bio/ranges/views/to_char.hpp>
 
 #include <bio/io/plain_io/misc.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>

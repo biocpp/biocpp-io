@@ -17,7 +17,9 @@
 #include <string_view>
 #include <vector>
 
-#include <seqan3/utility/type_list/traits.hpp>
+#include <bio/alphabet/adaptation/char.hpp> // make sure that some concept checks don't fail when using strings
+#include <bio/meta/tag/ttag.hpp>
+#include <bio/meta/type_list/traits.hpp>
 
 #include <bio/io/detail/misc.hpp>
 #include <bio/io/format/bcf.hpp>
@@ -109,7 +111,7 @@ namespace bio::io::var_io
  * ### Manual configuration
  *
  * This section is only relevant if you specify the #field_types member manually via
- * a bio::io::ttag, i.e. if you change the field_types but do not use one of the predefined tags
+ * a bio::meta::ttag, i.e. if you change the field_types but do not use one of the predefined tags
  * (see above).
  *
  * The following types are valid for the respective fields and you can mix-and-match shallow/deep and integral/text IDs:
@@ -123,8 +125,8 @@ namespace bio::io::var_io
  *   * string or string_view: The ID as a string.
  * 4. bio::io::field::ref
  *   * string or string_view: plaintext.
- *   * back-insertable range over seqan3::alphabet (a container with converted elements).
- *   * `decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>)`: A view
+ *   * back-insertable range over bio::alphabet::alphabet (a container with converted elements).
+ *   * `decltype(std::string_view{} | bio::views::char_strictly_to<alphabet::dna5>)`: A view
  * over a SeqAn3 alphabet. Other alphabets and/or transform views are also possible.
  * 5. bio::io::field::alt
  *   * back-insertable range of string or string_view: The ALTs as plaintext.
@@ -155,17 +157,17 @@ namespace bio::io::var_io
  */
 template <typename field_ids_t   = decltype(default_field_ids),
           typename field_types_t = decltype(field_types<ownership::shallow>),
-          typename formats_t     = seqan3::type_list<vcf, bcf>>
+          typename formats_t     = meta::type_list<vcf, bcf>>
 struct reader_options
 {
     /*!\name Field configuration
      * \brief These options allow configuring the record's field order and types.
      * \{
      */
-    //!\brief The fields that shall be contained in each record; a bio::io::vtag over bio::io::field.
+    //!\brief The fields that shall be contained in each record; a bio::meta::vtag over bio::io::field.
     field_ids_t field_ids = default_field_ids;
 
-    /*!\brief The types corresponding to each field; a bio::io::ttag over the types.
+    /*!\brief The types corresponding to each field; a bio::meta::ttag over the types.
      *
      * \details
      *
@@ -174,13 +176,13 @@ struct reader_options
     field_types_t field_types = bio::io::var_io::field_types<ownership::shallow>;
     //!\}
 
-    /*!\brief The formats that input files can take; a bio::io::ttag over the types.
+    /*!\brief The formats that input files can take; a bio::meta::ttag over the types.
      *
      * \details
      *
      * See bio::io::var_io::reader for an overview of the the supported formats.
      */
-    formats_t formats = ttag<vcf, bcf>;
+    formats_t formats = meta::ttag<vcf, bcf>;
 
     //!\brief Whether to print non-critical file format warnings.
     bool print_warnings = true;
@@ -233,11 +235,12 @@ struct reader_options
     transparent_istream_options stream_options{};
 
 private:
-    static_assert(detail::is_fields_tag<field_ids_t>, "field_ids must be a bio::io::vtag over bio::io::field.");
+    static_assert(detail::is_fields_tag<field_ids_t>, "field_ids must be a bio::meta::vtag over bio::io::field.");
 
-    static_assert(detail::is_type_list<field_types_t>, "field_types must be a bio::io::ttag / seqan3::type_list.");
+    static_assert(meta::detail::is_type_list<field_types_t>,
+                  "field_types must be a bio::meta::ttag / bio::meta::type_list.");
 
-    static_assert(detail::is_type_list<formats_t>, "formats must be a bio::io::ttag / seqan3::type_list.");
+    static_assert(meta::detail::is_type_list<formats_t>, "formats must be a bio::meta::ttag / bio::meta::type_list.");
 
     static_assert(field_ids_t::size == field_types_t::size(), "field_ids and field_types must have the same size.");
 
@@ -273,7 +276,7 @@ private:
     static_assert(detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
                     !field_ids_t::contains(field::ref) ||
                     (detail::back_insertable<record_element_t<field::ref, rec_t>> &&
-                     seqan3::alphabet<std::ranges::range_reference_t<record_element_t<field::ref, rec_t>>>) ||
+                     alphabet::alphabet<std::ranges::range_reference_t<record_element_t<field::ref, rec_t>>>) ||
                     std::same_as<std::remove_reference_t<record_element_t<field::ref, rec_t>>, std::string_view> ||
                     detail::transform_view_on_string_view<record_element_t<field::ref, rec_t>>) {
                       return std::true_type{};
@@ -286,7 +289,7 @@ private:
         !field_ids_t::contains(field::alt) ||
         (detail::back_insertable<record_element_t<field::alt, rec_t>> &&
            (detail::back_insertable<std::ranges::range_reference_t<record_element_t<field::alt, rec_t>>> &&
-            seqan3::alphabet<
+            alphabet::alphabet<
               std::ranges::range_reference_t<std::ranges::range_reference_t<record_element_t<field::alt, rec_t>>>>) ||
          std::same_as<std::remove_reference_t<std::ranges::range_reference_t<record_element_t<field::alt, rec_t>>>,
                       std::string_view> ||

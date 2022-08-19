@@ -16,8 +16,8 @@
 #include <ranges>
 #include <string_view>
 
-#include <seqan3/alphabet/concept.hpp>
-#include <seqan3/alphabet/views/to_char.hpp>
+#include <bio/alphabet/concept.hpp>
+#include <bio/ranges/views/to_char.hpp>
 
 #include <bio/io/plain_io/misc.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
@@ -38,14 +38,15 @@ namespace bio::io::plain_io
  * numbers.
  *  * String literals ("foobar").
  *  * Any std::ranges::input_range whose element type is convertible to `char`.
- *  * Any std::ranges::input_range whose element type is a seqan3::alphabet; seqan3::to_char is called per element.
+ *  * Any std::ranges::input_range whose element type is a bio::alphabet::alphabet; seqan3::to_char is called per
+ * element.
  */
 template <typename arg_t>
 concept writable_to_output =
   (std::same_as<std::remove_cvref_t<arg_t>, char> || seqan3::arithmetic<std::remove_cvref_t<arg_t>> ||
    std::same_as<std::decay_t<arg_t>, char const *> ||
    (std::ranges::input_range<arg_t> && std::convertible_to<std::ranges::range_reference_t<arg_t>, char>) ||
-   (std::ranges::input_range<arg_t> && seqan3::alphabet<std::ranges::range_reference_t<arg_t>>));
+   (std::ranges::input_range<arg_t> && alphabet::alphabet<std::ranges::range_reference_t<arg_t>>));
 
 } // namespace bio::io::plain_io
 
@@ -91,7 +92,7 @@ private:
         }
         else // if constexpr (std::ranges::input_range<arg_t> && alphabet<std::ranges::range_reference_t<arg_t>>)
         {
-            stream_it->write_range(arg | seqan3::views::to_char);
+            stream_it->write_range(arg | bio::views::to_char);
         }
     }
 

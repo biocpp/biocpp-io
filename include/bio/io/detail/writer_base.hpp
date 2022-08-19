@@ -20,6 +20,9 @@
 #include <variant>
 #include <vector>
 
+#include <bio/meta/tag/vtag.hpp>
+#include <bio/meta/type_list/traits.hpp>
+
 #include <bio/io/detail/misc.hpp>
 #include <bio/io/detail/out_file_iterator.hpp>
 #include <bio/io/exception.hpp>
@@ -27,7 +30,6 @@
 #include <bio/io/record.hpp>
 #include <bio/io/stream/concept.hpp>
 #include <bio/io/stream/transparent_ostream.hpp>
-#include <seqan3/utility/type_list/traits.hpp>
 
 namespace bio::io
 {
@@ -51,7 +53,7 @@ protected:
     /*!\name Format handling
      * \{
      */
-    //!\brief A seqan3::type_list with the possible formats.
+    //!\brief A bio::meta::type_list with the possible formats.
     using valid_formats            = decltype(options_t::formats);
     /*!\brief The seqan3::format_output_handler corresponding to the format(s).
      * \details
@@ -62,8 +64,8 @@ protected:
      * set later than construction.
      */
     using format_handler_variant_t = seqan3::detail::transfer_template_args_onto_t<
-      seqan3::list_traits::concat<seqan3::type_list<std::monostate>,
-                                  seqan3::list_traits::transform<format_output_handler, valid_formats>>,
+      meta::list_traits::concat<meta::type_list<std::monostate>,
+                                meta::list_traits::transform<format_output_handler, valid_formats>>,
       std::variant>;
 
     //!\}
@@ -262,7 +264,7 @@ public:
     }
 
     /*!\brief Write a record to the file by passing individual fields.
-     * \param[in] ids    The composition of fields; a bio::io::vtag over bio::io::field.
+     * \param[in] ids    The composition of fields; a bio::meta::vtag over bio::io::field.
      * \param[in] args   The fields to be written.
      *
      * \details
@@ -279,7 +281,7 @@ public:
      * Basic exception safety.
      */
     template <auto... field_ids>
-    void emplace_back(vtag_t<field_ids...> ids, auto &&... args)
+    void emplace_back(meta::vtag_t<field_ids...> ids, auto &&... args)
     {
         push_back(tie_record(ids, args...));
     }

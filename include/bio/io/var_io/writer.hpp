@@ -90,7 +90,7 @@ namespace bio::io::var_io
  *
  * This is especially helpful if your fields exist in other separate data structures already.
  * Be aware that it is easier to mess up the order of the arguments this way.
- * The order/composition can specified by bio::io::vtag as first argument (see next example).
+ * The order/composition can specified by bio::meta::vtag as first argument (see next example).
  * If it is omitted, it is equal to bio::io::var_io::default_field_ids.
  *
  * The #emplace_back() function can be used to write fewer fields:
@@ -205,15 +205,15 @@ public:
         if constexpr (sizeof...(args) == default_field_ids.size - 1)
         {
             // TODO replace this with some metaprogramming?
-            base_t::emplace_back(vtag<field::chrom,
-                                      field::pos,
-                                      field::id,
-                                      field::ref,
-                                      field::alt,
-                                      field::qual,
-                                      field::filter,
-                                      field::info,
-                                      field::genotypes>,
+            base_t::emplace_back(meta::vtag<field::chrom,
+                                            field::pos,
+                                            field::id,
+                                            field::ref,
+                                            field::alt,
+                                            field::qual,
+                                            field::filter,
+                                            field::info,
+                                            field::genotypes>,
                                  args...);
         }
         else

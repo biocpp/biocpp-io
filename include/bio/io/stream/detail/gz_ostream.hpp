@@ -33,7 +33,6 @@
 #include <cstring>
 #include <iostream>
 #include <vector>
-
 #include <zlib.h>
 
 namespace bio::io::contrib

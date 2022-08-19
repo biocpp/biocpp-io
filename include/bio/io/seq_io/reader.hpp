@@ -16,17 +16,16 @@
 #include <string>
 #include <vector>
 
-#include <bio/io/misc.hpp>
-#include <seqan3/alphabet/aminoacid/aa27.hpp>
-#include <seqan3/alphabet/concept.hpp>
-#include <seqan3/alphabet/nucleotide/dna5.hpp>
-#include <seqan3/alphabet/quality/phred63.hpp>
-#include <seqan3/alphabet/views/char_strictly_to.hpp>
-#include <seqan3/utility/views/to.hpp>
+#include <bio/alphabet/aminoacid/aa27.hpp>
+#include <bio/alphabet/concept.hpp>
+#include <bio/alphabet/nucleotide/dna5.hpp>
+#include <bio/alphabet/quality/phred63.hpp>
+#include <bio/ranges/views/char_strictly_to.hpp>
 
 #include <bio/io/detail/reader_base.hpp>
 #include <bio/io/format/fasta_input_handler.hpp>
 #include <bio/io/format/fastq_input_handler.hpp>
+#include <bio/io/misc.hpp>
 #include <bio/io/seq_io/reader_options.hpp>
 
 namespace bio::io::seq_io

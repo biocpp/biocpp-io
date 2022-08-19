@@ -15,7 +15,7 @@
 
 #include <concepts>
 
-#include <seqan3/alphabet/concept.hpp>
+#include <bio/alphabet/concept.hpp>
 
 #include <bio/io/detail/utility.hpp>
 
@@ -38,11 +38,11 @@ concept one_of = (std::same_as<t, ts> || ...);
 
 /*!\interface   bio::io::detail::deliberate_alphabet <>
  * \tparam t    The query type to compare.
- * \brief       A seqan3::alphabet that is **not** a character or a number (any std::integral).
+ * \brief       A bio::alphabet::alphabet that is **not** a character or a number (any std::integral).
  */
 //!\cond
 template <typename t>
-concept deliberate_alphabet = seqan3::alphabet<t> && !std::integral<std::remove_cvref_t<t>>;
+concept deliberate_alphabet = alphabet::alphabet<t> && !std::integral<std::remove_cvref_t<t>>;
 //!\endcond
 
 /*!\interface   bio::io::detail::decays_to <>

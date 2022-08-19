@@ -20,11 +20,12 @@
 #include <string_view>
 #include <vector>
 
-#include <seqan3/core/range/type_traits.hpp>
-
-#include <seqan3/alphabet/views/to_char.hpp>
 #include <seqan3/core/debug_stream/detail/to_string.hpp>
+#include <seqan3/core/range/type_traits.hpp>
 #include <seqan3/utility/char_operations/predicate.hpp>
+
+#include <bio/meta/tag/vtag.hpp>
+#include <bio/ranges/views/to_char.hpp>
 
 #include <bio/io/detail/range.hpp>
 #include <bio/io/format/fasta.hpp>
@@ -60,7 +61,7 @@ namespace bio::io
  * (e.g. linebreaks) as-is.
  *
  * If sequence and/or ID are requested as std::string, the record's element is swapped with the internal buffer to
- * prevent a second copy, but if output is requested as e.g. std::vector<seqan3::dna4>, a second copy needs to happen.
+ * prevent a second copy, but if output is requested as e.g. std::vector<alphabet::dna4>, a second copy needs to happen.
  * Requesting views never implies a second copy.
  */
 template <>
@@ -97,9 +98,9 @@ private:
      * \{
      */
     //!\brief The fields that this format supports [the base class accesses this type].
-    using format_fields     = vtag_t<field::id, field::seq>;
+    using format_fields     = meta::vtag_t<field::id, field::seq>;
     //!\brief Type of the raw record.
-    using raw_record_type   = record<format_fields, seqan3::type_list<std::string_view, std::string_view>>;
+    using raw_record_type   = record<format_fields, meta::type_list<std::string_view, std::string_view>>;
     //!\brief Type of the low-level iterator.
     using lowlevel_iterator = detail::plaintext_input_iterator<plain_io::record_kind::line>;
 
@@ -177,10 +178,13 @@ private:
      * \{
      */
     //!\brief We can prevent another copy if the user wants a string.
-    void parse_field(vtag_t<field::id> const & /**/, std::string & parsed_field) { std::swap(id_buffer, parsed_field); }
+    void parse_field(meta::vtag_t<field::id> const & /**/, std::string & parsed_field)
+    {
+        std::swap(id_buffer, parsed_field);
+    }
 
     //!\brief We can prevent another copy if the user wants a string.
-    void parse_field(vtag_t<field::seq> const & /**/, std::string & parsed_field)
+    void parse_field(meta::vtag_t<field::seq> const & /**/, std::string & parsed_field)
     {
         std::swap(seq_buffer, parsed_field);
     }

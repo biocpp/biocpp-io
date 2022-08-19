@@ -16,8 +16,10 @@
 #include <tuple>
 
 #include <seqan3/core/detail/template_inspection.hpp>
-#include <seqan3/utility/type_list/traits.hpp>
-#include <seqan3/utility/type_list/type_list.hpp>
+
+#include <bio/meta/tag/vtag.hpp>
+#include <bio/meta/type_list/traits.hpp>
+#include <bio/meta/type_list/type_list.hpp>
 
 #include <bio/io/detail/concept.hpp>
 #include <bio/io/misc.hpp>
@@ -87,13 +89,13 @@ enum class field : uint64_t
 namespace bio::io::detail
 {
 
-//!\brief Checks whether a type is a bio::io::vtag_t over bio::io::field.
+//!\brief Checks whether a type is a bio::meta::vtag_t over bio::io::field.
 template <typename t>
 inline constexpr bool is_fields_tag = false;
 
-//!\brief Checks whether a type is a bio::io::vtag_t over bio::io::field.
+//!\brief Checks whether a type is a bio::meta::vtag_t over bio::io::field.
 template <field... vs>
-inline constexpr bool is_fields_tag<vtag_t<vs...>> = true;
+inline constexpr bool is_fields_tag<meta::vtag_t<vs...>> = true;
 
 } // namespace bio::io::detail
 
@@ -107,8 +109,8 @@ namespace bio::io
 /*!\brief The class template that file records are based on; behaves like an std::tuple.
  * \implements seqan3::tuple_like
  * \ingroup io
- * \tparam field_ids   A vtag_t type with bio::io::field IDs corresponding to field_types.
- * \tparam field_types The types of the fields in this record as a seqan3::type_list.
+ * \tparam field_ids   A meta::vtag_t type with bio::io::field IDs corresponding to field_types.
+ * \tparam field_types The types of the fields in this record as a meta::type_list.
  * \details
  *
  * This class template behaves like a std::tuple, with the exception that it provides an additional
@@ -173,7 +175,7 @@ public:
     using base_type::base_type;
     //!\}
 
-    static_assert(seqan3::list_traits::size<field_types> == field_ids::size,
+    static_assert(meta::list_traits::size<field_types> == field_ids::size,
                   "You must give as many IDs as types to bio::io::record.");
 
     //!\brief Clears containers that provide `.clear()` and (re-)initialises all other elements with `= {}`.
@@ -390,8 +392,8 @@ auto const && get(record<field_ids, field_types> const && r)
  * \snippet test/snippet/record.cpp make_and_tie_record
  */
 template <auto... field_ids, typename... field_type_ts>
-constexpr auto make_record(vtag_t<field_ids...> BIOCPP_IO_DOXYGEN_ONLY(tag), field_type_ts &&... fields)
-  -> record<vtag_t<field_ids...>, seqan3::type_list<std::decay_t<field_type_ts>...>>
+constexpr auto make_record(meta::vtag_t<field_ids...> BIOCPP_IO_DOXYGEN_ONLY(tag), field_type_ts &&... fields)
+  -> record<meta::vtag_t<field_ids...>, bio::meta::type_list<std::decay_t<field_type_ts>...>>
 {
     return {std::forward<field_type_ts>(fields)...};
 }
@@ -415,8 +417,8 @@ constexpr auto make_record(vtag_t<field_ids...> BIOCPP_IO_DOXYGEN_ONLY(tag), fie
  * \snippet test/snippet/record.cpp make_and_tie_record
  */
 template <auto... field_ids, typename... field_type_ts>
-constexpr auto tie_record(vtag_t<field_ids...> BIOCPP_IO_DOXYGEN_ONLY(tag), field_type_ts &... fields)
-  -> record<vtag_t<field_ids...>, seqan3::type_list<field_type_ts &...>>
+constexpr auto tie_record(meta::vtag_t<field_ids...> BIOCPP_IO_DOXYGEN_ONLY(tag), field_type_ts &... fields)
+  -> record<meta::vtag_t<field_ids...>, bio::meta::type_list<field_type_ts &...>>
 {
     return {fields...};
 }

@@ -17,7 +17,8 @@
 #include <string_view>
 #include <vector>
 
-#include <seqan3/alphabet/views/char_strictly_to.hpp>
+#include <bio/meta/tag/vtag.hpp>
+#include <bio/ranges/views/char_strictly_to.hpp>
 
 #include <bio/io/detail/charconv.hpp>
 #include <bio/io/detail/concept.hpp>
@@ -130,8 +131,8 @@ private:
     static void parse_field_aux(std::string_view const in, parsed_field_t & parsed_field)
     {
         using target_alph_type = std::ranges::range_value_t<parsed_field_t>;
-        //         detail::sized_range_copy(in | seqan3::views::char_strictly_to<target_alph_type>,
-        detail::sized_range_copy(in | seqan3::views::char_strictly_to<target_alph_type>, parsed_field);
+        //         detail::sized_range_copy(in | bio::views::char_strictly_to<target_alph_type>,
+        detail::sized_range_copy(in | bio::views::char_strictly_to<target_alph_type>, parsed_field);
     }
 
     //!\brief Parse into a numerical type.
@@ -147,7 +148,7 @@ private:
      */
     //!\brief Various target types have sane default implementations.
     template <field field_id>
-    void parse_field(vtag_t<field_id> const & /**/, auto & parsed_field)
+    void parse_field(meta::vtag_t<field_id> const & /**/, auto & parsed_field)
     {
         if constexpr (requires { derived_t::parse_field_aux(get<field_id>(to_derived()->raw_record), parsed_field); })
         {
@@ -168,21 +169,21 @@ private:
      */
     //!\brief Only act on those fields that are present in the record and also provided by the format.
     template <field field_id, typename parsed_record_t>
-    void parse_record_impl(vtag_t<field_id> const & /**/, parsed_record_t & parsed_record)
+    void parse_record_impl(meta::vtag_t<field_id> const & /**/, parsed_record_t & parsed_record)
     {
         if constexpr (parsed_record_t::field_ids::contains(field_id))
         {
             auto & parsed_field = get<field_id>(parsed_record);
-            to_derived()->parse_field(vtag<field_id>, parsed_field);
+            to_derived()->parse_field(meta::vtag<field_id>, parsed_field);
         }
         // fields that are not in format or not in target record are simply ignored
     }
 
     //!\brief Splits the record into individual fields.
     template <field... field_ids, typename parsed_record_t>
-    void parse_record(vtag_t<field_ids...> const & /**/, parsed_record_t & parsed_record)
+    void parse_record(meta::vtag_t<field_ids...> const & /**/, parsed_record_t & parsed_record)
     {
-        (to_derived()->parse_record_impl(vtag<field_ids>, parsed_record), ...);
+        (to_derived()->parse_record_impl(meta::vtag<field_ids>, parsed_record), ...);
     }
     //!\}
 

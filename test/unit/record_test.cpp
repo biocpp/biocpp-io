@@ -5,23 +5,24 @@
 // shipped with this file and also available at: https://github.com/seqan/seqan3/blob/master/LICENSE.md
 // -----------------------------------------------------------------------------------------------------
 
-#include <seqan3/std/algorithm>
+#include <algorithm>
 #include <sstream>
 
 #include <gtest/gtest.h>
 
-#include <bio/test/expect_range_eq.hpp>
-#include <bio/test/expect_same_type.hpp>
-#include <seqan3/alphabet/nucleotide/dna4.hpp>
 #include <seqan3/core/debug_stream.hpp>
 #include <seqan3/utility/tuple/concept.hpp>
+
+#include <bio/alphabet/nucleotide/dna4.hpp>
+#include <bio/test/expect_range_eq.hpp>
+#include <bio/test/expect_same_type.hpp>
 
 #include <bio/io/misc.hpp>
 #include <bio/io/record.hpp>
 
-using seqan3::operator""_dna4;
+using namespace bio::alphabet::literals;
 
-using default_fields = bio::io::vtag_t<bio::io::field::seq, bio::io::field::id, bio::io::field::qual>;
+using default_fields = bio::meta::vtag_t<bio::io::field::seq, bio::io::field::id, bio::io::field::qual>;
 
 // This is needed for EXPECT_RANGE_EQ:
 namespace seqan3
@@ -54,16 +55,16 @@ TEST(fields, usage)
 
 struct record : public ::testing::Test
 {
-    using ids         = bio::io::vtag_t<bio::io::field::id, bio::io::field::seq>;
-    using record_type = bio::io::record<ids, seqan3::type_list<std::string, seqan3::dna4_vector>>;
+    using ids         = bio::meta::vtag_t<bio::io::field::id, bio::io::field::seq>;
+    using record_type = bio::io::record<ids, bio::meta::type_list<std::string, bio::alphabet::dna4_vector>>;
 };
 
 TEST_F(record, definition_tuple_traits)
 {
-    EXPECT_TRUE((std::is_same_v<typename record_type::base_type, std::tuple<std::string, seqan3::dna4_vector>>));
+    EXPECT_TRUE((std::is_same_v<typename record_type::base_type, std::tuple<std::string, bio::alphabet::dna4_vector>>));
 
     EXPECT_TRUE((std::is_same_v<std::tuple_element_t<0, record_type>, std::string>));
-    EXPECT_TRUE((std::is_same_v<std::tuple_element_t<1, record_type>, seqan3::dna4_vector>));
+    EXPECT_TRUE((std::is_same_v<std::tuple_element_t<1, record_type>, bio::alphabet::dna4_vector>));
     EXPECT_EQ(std::tuple_size_v<record_type>, 2ul);
 
     EXPECT_TRUE(seqan3::tuple_like<record_type>);
@@ -72,7 +73,8 @@ TEST_F(record, definition_tuple_traits)
 TEST_F(record, record_element)
 {
     EXPECT_TRUE((std::is_same_v<bio::io::record_element_t<bio::io::field::id, record_type>, std::string>));
-    EXPECT_TRUE((std::is_same_v<bio::io::record_element_t<bio::io::field::seq, record_type>, seqan3::dna4_vector>));
+    EXPECT_TRUE(
+      (std::is_same_v<bio::io::record_element_t<bio::io::field::seq, record_type>, bio::alphabet::dna4_vector>));
 }
 
 TEST_F(record, construction)
@@ -93,7 +95,7 @@ TEST_F(record, get_by_type)
     record_type r{"MY ID", "ACGT"_dna4};
 
     EXPECT_EQ(std::get<std::string>(r), "MY ID");
-    EXPECT_RANGE_EQ(std::get<seqan3::dna4_vector>(r), "ACGT"_dna4);
+    EXPECT_RANGE_EQ(std::get<bio::alphabet::dna4_vector>(r), "ACGT"_dna4);
 }
 
 TEST_F(record, get_by_field)
@@ -117,7 +119,7 @@ TEST_F(record, make_record)
     std::string s   = "MY ID";
     auto        vec = "ACGT"_dna4;
 
-    auto r = bio::io::make_record(bio::io::vtag<bio::io::field::id, bio::io::field::seq>, s, vec);
+    auto r = bio::io::make_record(bio::meta::vtag<bio::io::field::id, bio::io::field::seq>, s, vec);
     EXPECT_TRUE((std::same_as<decltype(r), record::record_type>));
 }
 
@@ -126,8 +128,9 @@ TEST_F(record, tie_record)
     std::string s   = "MY ID";
     auto        vec = "ACGT"_dna4;
 
-    auto r = bio::io::tie_record(bio::io::vtag<bio::io::field::id, bio::io::field::seq>, s, vec);
+    auto r = bio::io::tie_record(bio::meta::vtag<bio::io::field::id, bio::io::field::seq>, s, vec);
     EXPECT_TRUE(
-      (std::same_as<decltype(r),
-                    bio::io::record<record::ids, seqan3::type_list<std::string &, std::vector<seqan3::dna4> &>>>));
+      (std::same_as<
+        decltype(r),
+        bio::io::record<record::ids, bio::meta::type_list<std::string &, std::vector<bio::alphabet::dna4> &>>>));
 }

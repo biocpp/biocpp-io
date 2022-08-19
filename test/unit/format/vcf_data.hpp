@@ -9,9 +9,10 @@
 #include <ranges>
 #include <string>
 
-#include <seqan3/alphabet/views/char_strictly_to.hpp>
 #include <seqan3/core/debug_stream.hpp>
-#include <seqan3/utility/views/to.hpp>
+
+#include <bio/ranges/to.hpp>
+#include <bio/ranges/views/char_strictly_to.hpp>
 
 #include <bio/io/detail/magic_get.hpp>
 #include <bio/io/var_io/reader.hpp>
@@ -213,7 +214,7 @@ inline std::string const incomplete_header_after =
 //=============================================================================
 
 /* auxiliary stuff */
-using tf_view = decltype(std::string_view{} | seqan3::views::char_strictly_to<seqan3::dna5>);
+using tf_view = decltype(std::string_view{} | bio::views::char_strictly_to<bio::alphabet::dna5>);
 
 bool operator==(tf_view const & lhs, tf_view const & rhs)
 {
@@ -251,7 +252,7 @@ auto make_ref(std::string_view const str)
           {    }
         };
     else
-        return str | seqan3::views::char_strictly_to<seqan3::dna5> | seqan3::views::to<std::vector>;
+        return str | bio::views::char_strictly_to<bio::alphabet::dna5> | bio::ranges::to<std::vector>();
 }
 
 template <bio::io::ownership own, typename int_t = int32_t>
@@ -263,7 +264,7 @@ auto example_records_default_style()
     bio::io::var_io::record_private_data priv{};
     constexpr int_t                      mv = bio::io::var_io::missing_value<int_t>;
     using ivec                              = std::vector<int_t>;
-    using ivecvec                           = seqan3::concatenated_sequences<std::vector<int_t>>;
+    using ivecvec                           = bio::ranges::concatenated_sequences<std::vector<int_t>>;
     using fvec                              = std::vector<float>;
     using svec =
       std::conditional_t<own == bio::io::ownership::shallow, std::vector<std::string_view>, std::vector<std::string>>;
@@ -290,7 +291,7 @@ auto example_records_bcf_style()
     bio::io::var_io::record_private_data priv{};
     constexpr int_t                      mv = bio::io::var_io::missing_value<int_t>;
     using ivec                              = std::vector<int_t>;
-    using ivecvec                           = seqan3::concatenated_sequences<std::vector<int_t>>;
+    using ivecvec                           = bio::ranges::concatenated_sequences<std::vector<int_t>>;
     using fvec                              = std::vector<float>;
     using svec =
       std::conditional_t<own == bio::io::ownership::shallow, std::vector<std::string_view>, std::vector<std::string>>;
@@ -315,7 +316,7 @@ auto example_records_novariant()
     bio::io::var_io::record_private_data priv{};
     constexpr int32_t                    mv = bio::io::var_io::missing_value<int32_t>;
     using ivec                              = std::vector<int32_t>;
-    using ivecvec                           = seqan3::concatenated_sequences<std::vector<int32_t>>;
+    using ivecvec                           = bio::ranges::concatenated_sequences<std::vector<int32_t>>;
     using fvec                              = std::vector<float>;
     using svec                              = std::vector<std::string_view>;
 

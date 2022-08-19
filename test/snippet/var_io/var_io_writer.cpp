@@ -13,7 +13,7 @@ int main()
 {
 //![creation]
 using namespace std::string_literals;
-using namespace seqan3::literals;
+using namespace bio::alphabet::literals;
 
 // a plaintext header
 std::string_view const text_header =
@@ -78,7 +78,7 @@ writer.emplace_back(
 
 //![emplace_back2]
 /* construction of writer as defined above */
-writer.emplace_back(bio::io::vtag<bio::io::field::chrom, bio::io::field::pos, bio::io::field::ref>,
+writer.emplace_back(bio::meta::vtag<bio::io::field::chrom, bio::io::field::pos, bio::io::field::ref>,
                     "20", 14370, "ACT"_dna5);
 //![emplace_back2]
 }
