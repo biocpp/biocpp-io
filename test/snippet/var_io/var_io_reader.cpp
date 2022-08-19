@@ -2,12 +2,17 @@
 
 #include <seqan3/core/debug_stream.hpp>
 #include <bio/io/var_io/reader.hpp>
+#include <bio/test/tmp_directory.hpp>
 
 #include "../../unit/format/vcf_data.hpp"
 
 int main()
 {
 //================= PRE ==========================
+
+    bio::test::tmp_directory dir{};
+    std::filesystem::current_path(dir.path());
+
     {
         std::ofstream os{"example.vcf", std::ios::binary};
         os << example_from_spec_header;
@@ -24,7 +29,7 @@ int main()
         os << example_from_spec_bgzipped_tbi;
     }
 
-    std::ifstream in{"example.vcf"};
+    std::ifstream in{"example.vcf", std::ios::binary};
     std::cin.rdbuf(in.rdbuf()); // rewire stdin
 
 //================= SNIPPETS ======================
