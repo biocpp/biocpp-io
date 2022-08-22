@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides the seqan3::format_input_handler<bio::io::vcf>.
+ * \brief Provides the bio::io::format_input_handler<bio::io::vcf>.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -232,7 +232,7 @@ private:
     }
 
     //!\brief Overload for parsing QUAL.
-    void parse_field(meta::vtag_t<field::qual> const & /**/, seqan3::arithmetic auto & parsed_field)
+    void parse_field(meta::vtag_t<field::qual> const & /**/, meta::arithmetic auto & parsed_field)
     {
         std::string_view raw_field = get<field::qual>(raw_record);
 
@@ -645,7 +645,7 @@ struct format_input_handler<vcf>::parse_element_value_type_fn
     }
 
     //!\brief Parse into number.
-    template <seqan3::arithmetic arith_t>
+    template <meta::arithmetic arith_t>
     inline size_t operator()(arith_t & output) const
     {
         if (input == missing)

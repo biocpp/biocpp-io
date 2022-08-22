@@ -38,12 +38,12 @@ namespace bio::io::plain_io
  * numbers.
  *  * String literals ("foobar").
  *  * Any std::ranges::input_range whose element type is convertible to `char`.
- *  * Any std::ranges::input_range whose element type is a bio::alphabet::alphabet; seqan3::to_char is called per
+ *  * Any std::ranges::input_range whose element type is a bio::alphabet::alphabet; bio::alphabet::to_char is called per
  * element.
  */
 template <typename arg_t>
 concept writable_to_output =
-  (std::same_as<std::remove_cvref_t<arg_t>, char> || seqan3::arithmetic<std::remove_cvref_t<arg_t>> ||
+  (std::same_as<std::remove_cvref_t<arg_t>, char> || meta::arithmetic<std::remove_cvref_t<arg_t>> ||
    std::same_as<std::decay_t<arg_t>, char const *> ||
    (std::ranges::input_range<arg_t> && std::convertible_to<std::ranges::range_reference_t<arg_t>, char>) ||
    (std::ranges::input_range<arg_t> && alphabet::alphabet<std::ranges::range_reference_t<arg_t>>));
@@ -77,7 +77,7 @@ private:
         {
             *stream_it = arg;
         }
-        else if constexpr (seqan3::arithmetic<std::remove_cvref_t<arg_t>>)
+        else if constexpr (meta::arithmetic<std::remove_cvref_t<arg_t>>)
         {
             stream_it->write_number(arg);
         }
@@ -435,7 +435,7 @@ public:
      */
     /*!\brief Returns an iterator to current position in the file.
      * \returns An iterator pointing to the current position in the file.
-     * \throws seqan3::format_error
+     * \throws bio::io::format_error
      *
      * Equals end() if the file is at end.
      *
@@ -445,7 +445,7 @@ public:
      *
      * ### Exceptions
      *
-     * Throws seqan3::format_error if the first record could not be read into the buffer.
+     * Throws bio::io::format_error if the first record could not be read into the buffer.
      */
     iterator begin() { return it; }
 

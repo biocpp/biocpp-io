@@ -301,7 +301,7 @@ private:
 
     static_assert(detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
                     !field_ids_t::contains(field::qual) ||
-                    seqan3::arithmetic<std::remove_reference_t<record_element_t<field::qual, rec_t>>>) {
+                    meta::arithmetic<std::remove_reference_t<record_element_t<field::qual, rec_t>>>) {
                       return std::true_type{};
                   }),
                   "Requirements for the field-type of the QUAL-field not met. See documentation for "

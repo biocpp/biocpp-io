@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * brief Provides the seqan3::format_input_handler<seqan3::format_bcf> .
+ * brief Provides the bio::io::format_input_handler<bio::io::bcf> .
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -778,7 +778,7 @@ private:
     }
 
     //!\brief Reading of QUAL field.
-    void parse_field(meta::vtag_t<field::qual> const & /**/, seqan3::arithmetic auto & parsed_field)
+    void parse_field(meta::vtag_t<field::qual> const & /**/, meta::arithmetic auto & parsed_field)
     {
         parsed_field = record_core->qual;
     }
@@ -1051,9 +1051,9 @@ public:
 };
 
 /*!\brief Parse a "dynamically typed" field out of a BCF stream and store the content in a variant.
- * \tparam dyn_t             Type of the variant; specialisation of seqan3::var_io::info_element_value_type.
- * \param[in] id_from_header A value of seqan3::var_io::value_type_id that denotes the expected type.
- * \param[in] desc           A value of seqan3::detail::bcf_type_descriptor that notes the detected type.
+ * \tparam dyn_t             Type of the variant; specialisation of bio::io::var_io::info_element_value_type.
+ * \param[in] id_from_header A value of bio::io::var_io::value_type_id that denotes the expected type.
+ * \param[in] desc           A value of bio::io::detail::bcf_type_descriptor that notes the detected type.
  * \param[in] size           The number of values belonging to this field.
  * \param[in,out] cache_ptr  Pointer into the BCF stream; will be updated to point past the end of read data.
  * \param[out] output        The variant to hold the parsed value.
@@ -1180,9 +1180,9 @@ inline void format_input_handler<bcf>::parse_element_value_type(var_io::value_ty
 }
 
 /*!\brief Parse a "dynamically typed" field out of a BCF stream and store the content in a vector-variant.
- * \tparam dyn_t             Type of the variant; specialisation of seqan3::var_io::info_element_value_type.
- * \param[in] id_from_header A value of seqan3::var_io::value_type_id that denotes the expected type.
- * \param[in] desc           A value of seqan3::detail::bcf_type_descriptor that notes the detected type.
+ * \tparam dyn_t             Type of the variant; specialisation of bio::io::var_io::info_element_value_type.
+ * \param[in] id_from_header A value of bio::io::var_io::value_type_id that denotes the expected type.
+ * \param[in] desc           A value of bio::io::detail::bcf_type_descriptor that notes the detected type.
  * \param[in] outer_size     The number of values belonging to this field.
  * \param[in] inner_size     The number of values per inner vector in case of vector-of-vector.
  * \param[in,out] cache_ptr  Pointer into the BCF stream; will be updated to point past the end of read data.
@@ -1351,7 +1351,7 @@ inline void format_input_handler<bcf>::parse_element_value_type(var_io::value_ty
             }
         case var_io::value_type_id::flag:
             {
-                error("seqan3::var_io::genotype_element_value_type cannot be initialised to flag state.");
+                error("bio::io::var_io::genotype_element_value_type cannot be initialised to flag state.");
                 return;
             }
     }

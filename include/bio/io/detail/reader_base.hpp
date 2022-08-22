@@ -70,10 +70,10 @@ private:
      */
     //!\brief A bio::meta::type_list with the possible formats.
     using valid_formats = decltype(options_t::formats);
-    //!\brief The seqan3::format_input_handler corresponding to the format.
+    //!\brief The format_input_handler corresponding to the format.
     using format_handler_type =
-      seqan3::detail::transfer_template_args_onto_t<meta::list_traits::transform<format_input_handler, valid_formats>,
-                                                    std::variant>;
+      bio::meta::transfer_template_args_onto_t<meta::list_traits::transform<format_input_handler, valid_formats>,
+                                               std::variant>;
     //!\}
 
 public:
@@ -81,8 +81,7 @@ public:
      * \{
      */
     //!\brief Type of the format, a std::variant over the `valid_formats`.
-    using format_type = seqan3::detail::transfer_template_args_onto_t<valid_formats, std::variant>;
-    //!\brief The seqan3::format_input_handler corresponding to the format.
+    using format_type = bio::meta::transfer_template_args_onto_t<valid_formats, std::variant>;
     //!\}
 
     /*!\name Field types and record type
@@ -129,7 +128,8 @@ public:
      * \param[in] filename  Path to the file you wish to open.
      * \param[in] fmt      The file format given as e.g. `fasta{}` [optional]
      * \param[in] opt       Reader options (exact type depends on specialisation). [optional]
-     * \throws seqan3::file_open_error If the file could not be opened, e.g. non-existant, non-readable, unknown format.
+     * \throws bio::io::file_open_error If the file could not be opened, e.g. non-existant, non-readable, unknown
+     * format.
      *
      * \details
      *

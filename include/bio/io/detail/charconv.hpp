@@ -20,7 +20,7 @@
 #include <string>
 #include <string_view>
 
-#include <seqan3/utility/concept/exposition_only/core_language.hpp>
+#include <bio/meta/concept/core_language.hpp>
 
 #include <bio/io/detail/to_string.hpp>
 #include <bio/io/exception.hpp>
@@ -101,7 +101,7 @@ std::from_chars_result from_chars(char const * first, char const * last, auto & 
  *
  * TODO make this public (bio::io::) since it is useful for people doing plain IO
  */
-void string_to_number(std::string_view const input, seqan3::arithmetic auto & number)
+void string_to_number(std::string_view const input, meta::arithmetic auto & number)
 {
     std::from_chars_result res = from_chars(input.data(), input.data() + input.size(), number);
     if (res.ec != std::errc{} || res.ptr != input.data() + input.size())

@@ -136,7 +136,7 @@ private:
     }
 
     //!\brief Parse into a numerical type.
-    static void parse_field_aux(std::string_view const in, seqan3::arithmetic auto & parsed_field)
+    static void parse_field_aux(std::string_view const in, meta::arithmetic auto & parsed_field)
     {
         detail::string_to_number(in, parsed_field);
     }
@@ -156,7 +156,7 @@ private:
         }
         else
         {
-            static_assert(seqan3::arithmetic<decltype(parsed_field)> /*always false*/,
+            static_assert(meta::arithmetic<decltype(parsed_field)> /*always false*/,
                           "Format X does not know how to parse field Y into type Z. Provide different traits or a "
                           "custom format handler.");
         }

@@ -19,10 +19,9 @@
 #include <ranges>
 #include <string>
 
-#include <seqan3/core/detail/template_inspection.hpp>
-
 #include <bio/meta/type_list/function.hpp>
 #include <bio/meta/type_list/type_list.hpp>
+#include <bio/meta/type_traits/template_inspection.hpp>
 
 #include <bio/io/exception.hpp>
 
@@ -37,14 +36,14 @@ namespace bio::io::detail
  * \param[out] format    The format to set.
  * \param[in]  file_name The file name to extract the extension from.
  *
- * \throws seqan3::unhandled_extension_error If the extension in file_name does
+ * \throws bio::io::unhandled_extension_error If the extension in file_name does
  *         not occur in any valid extensions of the formats specified in the
  *         \p format_variant_type template argument list.
  */
 void set_format(auto & format, std::filesystem::path const & file_name)
 {
     using format_variant_type = std::remove_cvref_t<decltype(format)>;
-    using valid_formats = seqan3::detail::transfer_template_args_onto_t<format_variant_type, bio::meta::type_list>;
+    using valid_formats       = bio::meta::transfer_template_args_onto_t<format_variant_type, bio::meta::type_list>;
 
     bool        format_found = false;
     std::string extension    = file_name.extension().string();

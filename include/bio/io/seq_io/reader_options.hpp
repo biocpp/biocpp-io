@@ -111,7 +111,7 @@ inline constinit auto field_types_char = field_types<ownership::shallow, char, c
 //!\}
 //!\}
 
-/*!\brief Options that can be used to configure the behaviour of seqan3::seq_io::reader.
+/*!\brief Options that can be used to configure the behaviour of bio::io::seq_io::reader.
  * \tparam field_ids_t   Type of the field_ids member (usually deduced).
  * \tparam field_types_t Type of the field_types member (usually deduced).
  * \tparam formats_t     Type of the formats member (usually deduced).
@@ -189,7 +189,7 @@ struct reader_options
      *
      * \details
      *
-     * See seqan3::seq_io::reader for an overview of the supported field/type combinations.
+     * See bio::io::seq_io::reader for an overview of the supported field/type combinations.
      */
     field_types_t field_types = field_types_dna;
 
@@ -197,7 +197,7 @@ struct reader_options
      *
      * \details
      *
-     * See seqan3::seq_io::reader for an overview of the the supported formats.
+     * See bio::io::seq_io::reader for an overview of the the supported formats.
      */
     formats_t formats = meta::ttag<fasta, fastq>;
 

@@ -20,7 +20,7 @@
 namespace bio::io::seq_io
 {
 
-//!\brief Default fields for seqan3::seq_io::reader_options.
+//!\brief Default fields for bio::io::seq_io::reader_options.
 //!\ingroup seq_io
 inline constinit auto default_field_ids = meta::vtag<field::id, field::seq, field::qual>;
 

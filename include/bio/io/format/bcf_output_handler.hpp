@@ -156,7 +156,7 @@ private:
     }
 
     //!\brief Write a single value.
-    void write_single_impl(seqan3::arithmetic auto num, detail::bcf_type_descriptor const desc)
+    void write_single_impl(meta::arithmetic auto num, detail::bcf_type_descriptor const desc)
     {
         switch (desc)
         {
@@ -406,7 +406,7 @@ private:
     //!\brief Generic writing function that dispatches depending on the type of the argument.
     template <typename elem_t>
         //!\cond REQ
-        requires(alphabet::alphabet<elem_t> || seqan3::arithmetic<elem_t>)
+        requires(alphabet::alphabet<elem_t> || meta::arithmetic<elem_t>)
     //!\endcond
     void write_typed_data(elem_t const num, detail::bcf_type_descriptor const desc)
     {
@@ -528,7 +528,7 @@ private:
     void set_core_rlen(char const * const field) { set_core_rlen(std::string_view{field}); }
 
     //!\brief Overload for QUAL.
-    void set_core_qual(seqan3::arithmetic auto & field) { record_core.qual = static_cast<float>(field); }
+    void set_core_qual(meta::arithmetic auto & field) { record_core.qual = static_cast<float>(field); }
 
     //!\brief Overload for n_info.
     void set_core_n_info(auto & field)

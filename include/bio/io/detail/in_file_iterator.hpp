@@ -6,8 +6,8 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides the seqan3::detail::in_file_iterator class template.
- * \author Hannes Hauswedell <hannes.hauswedell AT fu-berlin.de>
+ * \brief Provides the bio::io::detail::in_file_iterator class template.
+ * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
 #pragma once

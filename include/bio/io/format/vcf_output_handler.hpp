@@ -320,7 +320,7 @@ private:
     }
 
     //!\brief This overrides default behaviour.
-    void write_field_aux(seqan3::arithmetic auto const number)
+    void write_field_aux(meta::arithmetic auto const number)
     {
         using field_t = std::remove_cvref_t<decltype(number)>;
         if (number == var_io::missing_value<field_t>)
