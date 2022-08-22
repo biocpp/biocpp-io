@@ -22,7 +22,6 @@
 #include <vector>
 
 #include <seqan3/core/range/type_traits.hpp>
-#include <seqan3/utility/detail/to_little_endian.hpp>
 
 #include <bio/meta/tag/vtag.hpp>
 #include <bio/meta/type_list/traits.hpp>
@@ -30,6 +29,7 @@
 
 #include <bio/io/detail/misc.hpp>
 #include <bio/io/detail/range.hpp>
+#include <bio/io/detail/to_little_endian.hpp>
 #include <bio/io/format/bcf.hpp>
 #include <bio/io/format/format_input_handler.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
@@ -98,7 +98,7 @@ public:
         header.magic[2]      = *(stream_buf->gptr() + 2);
         header.major_version = *(stream_buf->gptr() + 3);
         header.minor_version = *(stream_buf->gptr() + 4);
-        header.l_text = seqan3::detail::to_little_endian(*(reinterpret_cast<uint32_t *>(stream_buf->gptr() + 5)));
+        header.l_text        = detail::to_little_endian(*(reinterpret_cast<uint32_t *>(stream_buf->gptr() + 5)));
         stream_buf->gbump(9);
 
         if (header.magic[0] != 'B' || header.magic[1] != 'C' || header.magic[2] != 'F')
@@ -203,14 +203,14 @@ public:
                               overflow_buffer.begin() + remaining_buffer_size);
             stream_buf->gbump(remaining_data_size);
 
-            l_shared = seqan3::detail::to_little_endian(*(reinterpret_cast<uint32_t *>(overflow_buffer.data())));
-            l_indiv  = seqan3::detail::to_little_endian(*(reinterpret_cast<uint32_t *>(overflow_buffer.data() + 4)));
+            l_shared = detail::to_little_endian(*(reinterpret_cast<uint32_t *>(overflow_buffer.data())));
+            l_indiv  = detail::to_little_endian(*(reinterpret_cast<uint32_t *>(overflow_buffer.data() + 4)));
             overflow_buffer.clear();
         }
         else // read l_shared and l_indiv directly
         {
-            l_shared = seqan3::detail::to_little_endian(*(reinterpret_cast<uint32_t *>(stream_buf->gptr())));
-            l_indiv  = seqan3::detail::to_little_endian(*(reinterpret_cast<uint32_t *>(stream_buf->gptr() + 4)));
+            l_shared = detail::to_little_endian(*(reinterpret_cast<uint32_t *>(stream_buf->gptr())));
+            l_indiv  = detail::to_little_endian(*(reinterpret_cast<uint32_t *>(stream_buf->gptr() + 4)));
             stream_buf->gbump(8); // skip l_shared and l_indiv
         }
 

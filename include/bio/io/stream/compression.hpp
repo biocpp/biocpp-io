@@ -18,8 +18,7 @@
 #include <string_view>
 #include <vector>
 
-#include <seqan3/utility/detail/to_little_endian.hpp>
-
+#include <bio/io/detail/to_little_endian.hpp>
 #include <bio/io/platform.hpp>
 
 namespace bio::io
@@ -197,16 +196,15 @@ constexpr bool header_matches<compression_format::bgzf>(std::string_view const t
 {
     std::string_view const magic_header = compression_traits<compression_format::bgzf>::magic_header;
 
-    return (to_compare[0] == magic_header[0] &&       // GZ_ID1
-            to_compare[1] == magic_header[1] &&       // GZ_ID2
-            to_compare[2] == magic_header[2] &&       // GZ_CM
-            (to_compare[3] & magic_header[3]) != 0 && // FLG_FEXTRA
-            seqan3::detail::to_little_endian(*reinterpret_cast<uint16_t const *>(&to_compare[10])) ==
-              magic_header[10] &&                 // BGZF_ID1
-            to_compare[12] == magic_header[12] && // BGZF_ID2
-            to_compare[13] == magic_header[13] && // BGZF_SLEN
-            seqan3::detail::to_little_endian(*reinterpret_cast<uint16_t const *>(&to_compare[14])) ==
-              magic_header[14]); // BGZF_XLEN
+    return (
+      to_compare[0] == magic_header[0] &&       // GZ_ID1
+      to_compare[1] == magic_header[1] &&       // GZ_ID2
+      to_compare[2] == magic_header[2] &&       // GZ_CM
+      (to_compare[3] & magic_header[3]) != 0 && // FLG_FEXTRA
+      detail::to_little_endian(*reinterpret_cast<uint16_t const *>(&to_compare[10])) == magic_header[10] && // BGZF_ID1
+      to_compare[12] == magic_header[12] &&                                                                 // BGZF_ID2
+      to_compare[13] == magic_header[13] &&                                                                 // BGZF_SLEN
+      detail::to_little_endian(*reinterpret_cast<uint16_t const *>(&to_compare[14])) == magic_header[14]);  // BGZF_XLEN
 }
 
 //!\brief Header matches "none" if it doesn't match any known compression.
