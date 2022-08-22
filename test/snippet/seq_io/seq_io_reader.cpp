@@ -1,7 +1,7 @@
 #include <filesystem>
 
-#include <seqan3/core/debug_stream.hpp>
 #include <bio/io/seq_io/reader.hpp>
+#include <bio/alphabet/fmt.hpp>
 
 #include "../../unit/seq_io/data.hpp"
 
@@ -27,8 +27,8 @@ bio::io::seq_io::reader reader{"example.fasta"};
 
 for (auto & rec : reader)
 {
-    seqan3::debug_stream << "ID:  " << rec.id() << '\n';
-    seqan3::debug_stream << "Seq: " << rec.seq() << '\n';
+    fmt::print("ID:  {}\n", rec.id());
+    fmt::print("Seq: {}\n", rec.seq());
 }
 //![simple_usage_file]
 
@@ -54,8 +54,8 @@ bio::io::seq_io::reader reader{std::cin, bio::io::fasta{}};
 
 for (auto & rec : reader)
 {
-    seqan3::debug_stream << "ID:  " << rec.id() << '\n';
-    seqan3::debug_stream << "Seq: " << rec.seq() << '\n';
+    fmt::print("ID:  {}\n", rec.id());
+    fmt::print("Seq: {}\n", rec.seq());
 }
 //![simple_usage_stream]
 }
@@ -66,8 +66,8 @@ bio::io::seq_io::reader reader{"example.fasta"};
 
 for (auto & [ i, s, q ] : reader)
 {
-    seqan3::debug_stream << "ID:  " << i << '\n';
-    seqan3::debug_stream << "Seq: " << s << '\n';
+    fmt::print("ID:  {}\n", i);
+    fmt::print("Seq: {}\n", s);
 }
 //![decomposed]
 }
@@ -80,8 +80,8 @@ auto min_length = [](auto & rec) { return rec.seq().size() > 10; };
 
 for (auto & rec : reader | std::views::filter(min_length) | std::views::take(5))
 {
-    seqan3::debug_stream << "ID:  " << rec.id() << '\n';
-    seqan3::debug_stream << "Seq: " << rec.seq() << '\n';
+    fmt::print("ID:  {}\n", rec.id());
+    fmt::print("Seq: {}\n", rec.seq());
 }
 //![views]
 }
@@ -94,8 +94,8 @@ bio::io::seq_io::reader reader{"example.fasta",
 
 for (auto & rec : reader)
 {
-    seqan3::debug_stream << "ID:  " << rec.id() << '\n';
-    seqan3::debug_stream << "Seq: " << rec.seq() << '\n';
+    fmt::print("ID:  {}\n", rec.id());
+    fmt::print("Seq: {}\n", rec.seq());
 }
 //![options]
 }
@@ -109,11 +109,11 @@ bio::io::seq_io::reader reader{"example.fasta",
 
 for (auto & rec : reader)
 {
-    seqan3::debug_stream << "ID:   " << rec.id() << '\n';
-    seqan3::debug_stream << "Seq:  " << rec.seq() << '\n';
+    fmt::print("ID:   {}\n", rec.id());
+    fmt::print("Seq:  {}\n", rec.seq());
 
     rec.seq().push_back('A'_dna5);                             // ← this is not possible with shallow records (default)
-    seqan3::debug_stream << "SeqM: " << rec.seq() << '\n';
+    fmt::print("SeqM: {}\n", rec.seq());
 }
 //![options2]
 

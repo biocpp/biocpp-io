@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides the seqan3::detail::out_file_iterator class template.
+ * \brief Provides the bio::io::detail::out_file_iterator class template.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 

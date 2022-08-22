@@ -19,10 +19,9 @@
 #include <ranges>
 #include <string>
 
-#include <seqan3/core/detail/template_inspection.hpp>
-
 #include <bio/meta/type_list/function.hpp>
 #include <bio/meta/type_list/type_list.hpp>
+#include <bio/meta/type_traits/template_inspection.hpp>
 
 #include <bio/io/exception.hpp>
 

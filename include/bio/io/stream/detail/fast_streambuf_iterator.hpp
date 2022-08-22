@@ -449,7 +449,7 @@ public:
     /*!\brief Writes a number to the underlying stream buffer using std::to_chars.
      * \param[in] num The number to write.
      */
-    void write_number(seqan3::arithmetic auto num)
+    void write_number(meta::arithmetic auto num)
     {
         if (stream_buf->epptr() - stream_buf->pptr() > 150) // enough space for any number, should be likely
         {

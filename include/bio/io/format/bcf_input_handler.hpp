@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * brief Provides the seqan3::format_input_handler<seqan3::format_bcf> .
+ * brief Provides the bio::io::format_input_handler<bio::io::bcf> .
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -21,17 +21,13 @@
 #include <string_view>
 #include <vector>
 
-#include <seqan3/core/debug_stream.hpp> //TODO evaluate if there is a better solution
-#include <seqan3/core/debug_stream/detail/to_string.hpp>
-#include <seqan3/core/range/type_traits.hpp>
-#include <seqan3/utility/detail/to_little_endian.hpp>
-
 #include <bio/meta/tag/vtag.hpp>
 #include <bio/meta/type_list/traits.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
 
 #include <bio/io/detail/misc.hpp>
 #include <bio/io/detail/range.hpp>
+#include <bio/io/detail/to_little_endian.hpp>
 #include <bio/io/format/bcf.hpp>
 #include <bio/io/format/format_input_handler.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
@@ -100,7 +96,7 @@ public:
         header.magic[2]      = *(stream_buf->gptr() + 2);
         header.major_version = *(stream_buf->gptr() + 3);
         header.minor_version = *(stream_buf->gptr() + 4);
-        header.l_text = seqan3::detail::to_little_endian(*(reinterpret_cast<uint32_t *>(stream_buf->gptr() + 5)));
+        header.l_text        = detail::to_little_endian(*(reinterpret_cast<uint32_t *>(stream_buf->gptr() + 5)));
         stream_buf->gbump(9);
 
         if (header.magic[0] != 'B' || header.magic[1] != 'C' || header.magic[2] != 'F')
@@ -205,14 +201,14 @@ public:
                               overflow_buffer.begin() + remaining_buffer_size);
             stream_buf->gbump(remaining_data_size);
 
-            l_shared = seqan3::detail::to_little_endian(*(reinterpret_cast<uint32_t *>(overflow_buffer.data())));
-            l_indiv  = seqan3::detail::to_little_endian(*(reinterpret_cast<uint32_t *>(overflow_buffer.data() + 4)));
+            l_shared = detail::to_little_endian(*(reinterpret_cast<uint32_t *>(overflow_buffer.data())));
+            l_indiv  = detail::to_little_endian(*(reinterpret_cast<uint32_t *>(overflow_buffer.data() + 4)));
             overflow_buffer.clear();
         }
         else // read l_shared and l_indiv directly
         {
-            l_shared = seqan3::detail::to_little_endian(*(reinterpret_cast<uint32_t *>(stream_buf->gptr())));
-            l_indiv  = seqan3::detail::to_little_endian(*(reinterpret_cast<uint32_t *>(stream_buf->gptr() + 4)));
+            l_shared = detail::to_little_endian(*(reinterpret_cast<uint32_t *>(stream_buf->gptr())));
+            l_indiv  = detail::to_little_endian(*(reinterpret_cast<uint32_t *>(stream_buf->gptr() + 4)));
             stream_buf->gbump(8); // skip l_shared and l_indiv
         }
 
@@ -324,7 +320,7 @@ namespace bio::io
  *
  * | Member          | Type    | Default | Description                                                      |
  * |-----------------|---------|---------|------------------------------------------------------------------|
- * |`print_warnings` |`bool`   | `false` | Whether to print non-critical warngings to seqan3::debug_stream  |
+ * |`print_warnings` |`bool`   | `false` | Whether to print non-critical warngings to std::cerr             |
  *
  * ### Performance
  *
@@ -778,7 +774,7 @@ private:
     }
 
     //!\brief Reading of QUAL field.
-    void parse_field(meta::vtag_t<field::qual> const & /**/, seqan3::arithmetic auto & parsed_field)
+    void parse_field(meta::vtag_t<field::qual> const & /**/, meta::arithmetic auto & parsed_field)
     {
         parsed_field = record_core->qual;
     }
@@ -1051,9 +1047,9 @@ public:
 };
 
 /*!\brief Parse a "dynamically typed" field out of a BCF stream and store the content in a variant.
- * \tparam dyn_t             Type of the variant; specialisation of seqan3::var_io::info_element_value_type.
- * \param[in] id_from_header A value of seqan3::var_io::value_type_id that denotes the expected type.
- * \param[in] desc           A value of seqan3::detail::bcf_type_descriptor that notes the detected type.
+ * \tparam dyn_t             Type of the variant; specialisation of bio::io::var_io::info_element_value_type.
+ * \param[in] id_from_header A value of bio::io::var_io::value_type_id that denotes the expected type.
+ * \param[in] desc           A value of bio::io::detail::bcf_type_descriptor that notes the detected type.
  * \param[in] size           The number of values belonging to this field.
  * \param[in,out] cache_ptr  Pointer into the BCF stream; will be updated to point past the end of read data.
  * \param[out] output        The variant to hold the parsed value.
@@ -1180,9 +1176,9 @@ inline void format_input_handler<bcf>::parse_element_value_type(var_io::value_ty
 }
 
 /*!\brief Parse a "dynamically typed" field out of a BCF stream and store the content in a vector-variant.
- * \tparam dyn_t             Type of the variant; specialisation of seqan3::var_io::info_element_value_type.
- * \param[in] id_from_header A value of seqan3::var_io::value_type_id that denotes the expected type.
- * \param[in] desc           A value of seqan3::detail::bcf_type_descriptor that notes the detected type.
+ * \tparam dyn_t             Type of the variant; specialisation of bio::io::var_io::info_element_value_type.
+ * \param[in] id_from_header A value of bio::io::var_io::value_type_id that denotes the expected type.
+ * \param[in] desc           A value of bio::io::detail::bcf_type_descriptor that notes the detected type.
  * \param[in] outer_size     The number of values belonging to this field.
  * \param[in] inner_size     The number of values per inner vector in case of vector-of-vector.
  * \param[in,out] cache_ptr  Pointer into the BCF stream; will be updated to point past the end of read data.
@@ -1351,7 +1347,7 @@ inline void format_input_handler<bcf>::parse_element_value_type(var_io::value_ty
             }
         case var_io::value_type_id::flag:
             {
-                error("seqan3::var_io::genotype_element_value_type cannot be initialised to flag state.");
+                error("bio::io::var_io::genotype_element_value_type cannot be initialised to flag state.");
                 return;
             }
     }

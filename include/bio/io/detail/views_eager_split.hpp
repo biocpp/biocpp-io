@@ -8,7 +8,7 @@
 
 /*!\file
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
- * \brief Provides seqan3::eager_split_view
+ * \brief Provides bio::io::detail::eager_split_view.
  */
 
 #pragma once
@@ -17,7 +17,7 @@
 #include <iterator>
 #include <ranges>
 
-#include <seqan3/core/range/detail/adaptor_from_functor.hpp>
+#include <bio/ranges/views/detail.hpp>
 
 //-----------------------------------------------------------------------------
 // Implementation of single pass input view.
@@ -255,7 +255,7 @@ struct eager_split_fn
     //!\brief Store the argument and return a range adaptor closure object.
     constexpr auto operator()(char const delimiter, bool skip_quotes = false) const noexcept
     {
-        return seqan3::detail::adaptor_from_functor{*this, delimiter, skip_quotes};
+        return bio::ranges::detail::adaptor_from_functor{*this, delimiter, skip_quotes};
     }
 
     /*!\brief Call the view's constructor with the underlying view as argument.
@@ -299,22 +299,22 @@ namespace bio::io::detail
  * clang-format off
  * \endcond
  *
- * | Concepts and traits              | `urng_t` (underlying range type)      | `rrng_t` (returned range type) |
- * |----------------------------------|:-------------------------------------:|:------------------------------:|
- * | std::ranges::input_range         | == std::string_view                   | *guaranteed*                   |
- * | std::ranges::forward_range       | == std::string_view                   | *guaranteed*                   |
- * | std::ranges::bidirectional_range | == std::string_view                   | *lost*                         |
- * | std::ranges::random_access_range | == std::string_view                   | *lost*                         |
- * | std::ranges::contiguous_range    | == std::string_view                   | *lost*                         |
- * |                                  |                                       |                                |
- * | std::ranges::viewable_range      | == std::string_view                   | *guaranteed*                   |
- * | std::ranges::view                | == std::string_view                   | *guaranteed*                   |
- * | std::ranges::sized_range         | == std::string_view                   | *lost*                         |
- * | std::ranges::common_range        | == std::string_view                   | *lost*                         |
- * | std::ranges::output_range        | == std::string_view                   | *lost*                         |
- * | seqan3::const_iterable_range     | == std::string_view                   | *lost*                         |
- * |                                  |                                       |                                |
- * | std::ranges::range_reference_t   | char const                            | std::string_view               |
+ * | Concepts and traits                   | `urng_t` (underlying range type)      | `rrng_t` (returned range type) |
+ * |---------------------------------------|:-------------------------------------:|:------------------------------:|
+ * | std::ranges::input_range              | == std::string_view                   | *guaranteed*                   |
+ * | std::ranges::forward_range            | == std::string_view                   | *guaranteed*                   |
+ * | std::ranges::bidirectional_range      | == std::string_view                   | *lost*                         |
+ * | std::ranges::random_access_range      | == std::string_view                   | *lost*                         |
+ * | std::ranges::contiguous_range         | == std::string_view                   | *lost*                         |
+ * |                                       |                                       |                                |
+ * | std::ranges::viewable_range           | == std::string_view                   | *guaranteed*                   |
+ * | std::ranges::view                     | == std::string_view                   | *guaranteed*                   |
+ * | std::ranges::sized_range              | == std::string_view                   | *lost*                         |
+ * | std::ranges::common_range             | == std::string_view                   | *lost*                         |
+ * | std::ranges::output_range             | == std::string_view                   | *lost*                         |
+ * | bio::io::ranges::const_iterable_range | == std::string_view                   | *lost*                         |
+ * |                                       |                                       |                                |
+ * | std::ranges::range_reference_t        | char const                            | std::string_view               |
  *
  * \cond
  * clang-format on

@@ -9,8 +9,6 @@
 #include <ranges>
 #include <string>
 
-#include <seqan3/core/debug_stream.hpp>
-
 #include <bio/ranges/to.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
 
@@ -220,28 +218,6 @@ bool operator==(tf_view const & lhs, tf_view const & rhs)
 {
     return std::ranges::equal(lhs, rhs);
 }
-
-namespace seqan3
-{
-
-template <typename char_t, typename byte_type>
-    //!\cond
-    requires std::same_as<std::remove_cvref_t<byte_type>, bio::io::var_io::record_private_data>
-//!\endcond
-inline debug_stream_type<char_t> & operator<<(debug_stream_type<char_t> & s, byte_type &&)
-{
-    return s;
-}
-
-template <typename char_t, typename agg_t>
-    requires bio::io::detail::aggregate_of_two<std::remove_cvref_t<agg_t>>
-inline debug_stream_type<char_t> & operator<<(debug_stream_type<char_t> & s, agg_t && agg)
-{
-    s << '[' << bio::io::detail::get_first(agg) << ", " << bio::io::detail::get_second(agg) << ']';
-    return s;
-}
-
-} // namespace seqan3
 
 template <bio::io::ownership own>
 auto make_ref(std::string_view const str)

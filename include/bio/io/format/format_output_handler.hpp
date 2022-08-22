@@ -7,8 +7,8 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * brief Provides the seqan3::format_output_handler_base.
- * \author Hannes Hauswedell <hannes.hauswedell AT fu-berlin.de>
+ * \brief Provides the bio::io::format_output_handler_base.
+ * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
 #pragma once
@@ -98,7 +98,7 @@ private:
     }
 
     //!\brief Write numbers.
-    void write_field_aux(seqan3::arithmetic auto number) { to_derived()->it->write_number(number); }
+    void write_field_aux(meta::arithmetic auto number) { to_derived()->it->write_number(number); }
 
     //!\brief Write bool.
     void write_field_aux(bool)
@@ -120,7 +120,7 @@ private:
         }
         else // no handler
         {
-            static_assert(seqan3::arithmetic<decltype(field)> /*always false*/,
+            static_assert(meta::arithmetic<decltype(field)> /*always false*/,
                           "Format X does not know how to write field Y of type Z. Provide different traits or a "
                           "custom format handler.");
             // TODO replace X Y and Z with actual strings generated from types.
@@ -132,7 +132,7 @@ private:
      * \{
      */
     //     template <typename field_types, typename field_ids>
-    //     void write_record(seqan3::record<field_types, field_ids> && record)
+    //     void write_record(bio::io::record<field_types, field_ids> && record)
     //     {
     //         // derived classes need to implement this as a public member
     //     }

@@ -55,7 +55,7 @@ protected:
      */
     //!\brief A bio::meta::type_list with the possible formats.
     using valid_formats            = decltype(options_t::formats);
-    /*!\brief The seqan3::format_output_handler corresponding to the format(s).
+    /*!\brief The bio::io::format_output_handler corresponding to the format(s).
      * \details
      * Metaprogramming shortcut to turn `type_list<vcf, bcf>` into
      * `std::variant<std::monostate, format_output_handler<vcf>, format_output_handler<bcf>>`.
@@ -63,7 +63,7 @@ protected:
      * std::monostate is necessary, because the handlers are not default-constructible and the variant is
      * set later than construction.
      */
-    using format_handler_variant_t = seqan3::detail::transfer_template_args_onto_t<
+    using format_handler_variant_t = bio::meta::transfer_template_args_onto_t<
       meta::list_traits::concat<meta::type_list<std::monostate>,
                                 meta::list_traits::transform<format_output_handler, valid_formats>>,
       std::variant>;
@@ -75,8 +75,8 @@ public:
      * \{
      */
     //!\brief Type of the format, a std::variant over the `valid_formats`.
-    using format_type = seqan3::detail::transfer_template_args_onto_t<valid_formats, std::variant>;
-    //!\brief The seqan3::format_input_handler corresponding to the format.
+    using format_type = bio::meta::transfer_template_args_onto_t<valid_formats, std::variant>;
+    //!\brief The bio::io::format_input_handler corresponding to the format.
     //!\}
 
     /*!\name Field types and record type
@@ -303,9 +303,11 @@ public:
      * Basic exception safety.
      */
     template <std::ranges::input_range rng_t>
-    requires seqan3::detail::template_specialisation_of<std::remove_cvref_t<std::ranges::range_reference_t<rng_t>>,
-                                                        bio::io::record>
-      writer_base & operator=(rng_t && range)
+        //!\cond REQ
+        requires(bio::meta::template_specialisation_of<std::remove_cvref_t<std::ranges::range_reference_t<rng_t>>,
+                                                       bio::io::record>)
+    //!\endcond
+    writer_base & operator=(rng_t && range)
     {
         for (auto && record : range)
             push_back(std::forward<decltype(record)>(record));
@@ -331,8 +333,10 @@ public:
      * Basic exception safety.
      */
     template <std::ranges::input_range rng_t>
-        requires seqan3::detail::template_specialisation_of<std::remove_cvref_t<std::ranges::range_reference_t<rng_t>>,
-                                                            bio::io::record>
+        //!\cond REQ
+        requires(bio::meta::template_specialisation_of<std::remove_cvref_t<std::ranges::range_reference_t<rng_t>>,
+                                                       bio::io::record>)
+    //!\endcond
     friend writer_base & operator|(rng_t && range, writer_base & f)
     {
         f = range;
@@ -341,8 +345,10 @@ public:
 
     //!\overload
     template <std::ranges::input_range rng_t>
-        requires seqan3::detail::template_specialisation_of<std::remove_cvref_t<std::ranges::range_reference_t<rng_t>>,
-                                                            bio::io::record>
+        //!\cond REQ
+        requires(bio::meta::template_specialisation_of<std::remove_cvref_t<std::ranges::range_reference_t<rng_t>>,
+                                                       bio::io::record>)
+    //!\endcond
     friend writer_base operator|(rng_t && range, writer_base && f)
     {
         f = range;

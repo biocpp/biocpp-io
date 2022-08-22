@@ -5,11 +5,10 @@
 // shipped with this file and also available at: https://github.com/seqan/seqan3/blob/master/LICENSE.md
 // -----------------------------------------------------------------------------------------------------
 
+#include <algorithm>
 #include <sstream>
 
 #include <gtest/gtest.h>
-
-#include <seqan3/std/algorithm>
 
 #include <bio/io/genomic_region.hpp>
 

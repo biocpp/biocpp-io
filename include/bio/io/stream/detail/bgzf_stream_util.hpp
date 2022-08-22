@@ -27,9 +27,7 @@
 #    error "This file cannot be used when building without GZip-support."
 #endif // BIOCPP_IO_HAS_ZLIB
 
-#include <seqan3/core/range/type_traits.hpp>
-#include <seqan3/utility/detail/to_little_endian.hpp>
-
+#include <bio/io/detail/to_little_endian.hpp>
 #include <bio/io/exception.hpp>
 #include <bio/io/stream/compression.hpp>
 
@@ -149,14 +147,14 @@ inline uint16_t _bgzfUnpack16(char const * buffer)
 {
     uint16_t tmp;
     std::uninitialized_copy(buffer, buffer + sizeof(uint16_t), reinterpret_cast<char *>(&tmp));
-    return seqan3::detail::to_little_endian(tmp);
+    return detail::to_little_endian(tmp);
 }
 
 inline uint32_t _bgzfUnpack32(char const * buffer)
 {
     uint32_t tmp;
     std::uninitialized_copy(buffer, buffer + sizeof(uint32_t), reinterpret_cast<char *>(&tmp));
-    return seqan3::detail::to_little_endian(tmp);
+    return detail::to_little_endian(tmp);
 }
 
 // ----------------------------------------------------------------------------
@@ -165,7 +163,7 @@ inline uint32_t _bgzfUnpack32(char const * buffer)
 
 inline void _bgzfPack16(char * buffer, uint16_t value)
 {
-    value = seqan3::detail::to_little_endian(value);
+    value = detail::to_little_endian(value);
     std::uninitialized_copy(reinterpret_cast<char *>(&value),
                             reinterpret_cast<char *>(&value) + sizeof(uint16_t),
                             buffer);
@@ -173,7 +171,7 @@ inline void _bgzfPack16(char * buffer, uint16_t value)
 
 inline void _bgzfPack32(char * buffer, uint32_t value)
 {
-    value = seqan3::detail::to_little_endian(value);
+    value = detail::to_little_endian(value);
     std::uninitialized_copy(reinterpret_cast<char *>(&value),
                             reinterpret_cast<char *>(&value) + sizeof(uint32_t),
                             buffer);

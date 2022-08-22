@@ -16,7 +16,7 @@
 #include <string>
 #include <string_view>
 
-#include <seqan3/utility/concept/exposition_only/core_language.hpp>
+#include <bio/meta/concept/core_language.hpp>
 
 #include <bio/io/platform.hpp>
 
@@ -33,7 +33,7 @@ namespace bio::io::detail
 std::string to_string(auto && in)
 {
     using in_t = std::remove_cvref_t<decltype(in)>;
-    if constexpr (seqan3::arithmetic<in_t>)
+    if constexpr (meta::arithmetic<in_t>)
         return std::to_string(in);
     else if constexpr (std::same_as<in_t, std::string>)
         return in;

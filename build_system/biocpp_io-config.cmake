@@ -157,7 +157,7 @@ endif ()
 # ----------------------------------------------------------------------------
 
 if (BIOCPP_CORE_FOUND)
-    bio_config_print ("Required dependency:        already loaded (${BIOCPP_CORE_VERSION}).")
+    bio_config_print ("Required dependency:        BioC++ core library already loaded (${BIOCPP_CORE_VERSION}).")
 else ()
     find_package (biocpp_core REQUIRED QUIET
                   HINTS ${BIOCPP_IO_CLONE_DIR}/submodule/biocpp-core/build_system

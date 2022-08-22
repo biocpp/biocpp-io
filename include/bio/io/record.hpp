@@ -8,18 +8,17 @@
 
 /*!\file
  * \brief Provides the bio::io::record template and the bio::io::field enum.
- * \author Hannes Hauswedell <hannes.hauswedell AT fu-berlin.de>
+ * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
 #pragma once
 
 #include <tuple>
 
-#include <seqan3/core/detail/template_inspection.hpp>
-
 #include <bio/meta/tag/vtag.hpp>
 #include <bio/meta/type_list/traits.hpp>
 #include <bio/meta/type_list/type_list.hpp>
+#include <bio/meta/type_traits/template_inspection.hpp>
 
 #include <bio/io/detail/concept.hpp>
 #include <bio/io/misc.hpp>
@@ -59,7 +58,7 @@ enum class field : uint64_t
     /*ref_id*/            //!< The identifier of the (reference) sequence that SEQ was aligned to.
     /*pos*/
     mapq,  //!< The mapping quality of the SEQ alignment, usually a ohred-scaled score.
-    cigar, //!< The cigar vector (std::vector<seqan3::cigar>) representing the alignment in SAM/BAM format.
+    cigar, //!< The cigar vector (std::vector<bio::alphabet::cigar>) representing the alignment in SAM/BAM format.
     next_ref_id,
     next_pos,
     tlen,
@@ -127,14 +126,14 @@ namespace bio::io
  * See the \ref record_faq for more details.
  */
 template <typename field_ids_, typename field_types_>
-struct record : seqan3::detail::transfer_template_args_onto_t<field_types_, std::tuple>
+struct record : bio::meta::transfer_template_args_onto_t<field_types_, std::tuple>
 {
 public:
     using field_types = field_types_; //!< The field types as a type_list.
     using field_ids   = field_ids_;   //!< The field ids corresponding to the field_types.
 
     //!\brief A specialisation of std::tuple.s
-    using base_type = seqan3::detail::transfer_template_args_onto_t<field_types, std::tuple>;
+    using base_type = bio::meta::transfer_template_args_onto_t<field_types, std::tuple>;
 
 private:
     //!\brief Auxiliary functions for clear().
@@ -272,7 +271,7 @@ namespace std
 {
 
 /*!\brief Provides access to the number of elements in a tuple as a compile-time constant expression.
- * \implements seqan3::unary_type_trait
+ * \implements bio::meta::unary_type_trait
  * \relates bio::io::record
  * \see std::tuple_size_v
  */
@@ -284,7 +283,7 @@ struct tuple_size<bio::io::record<field_ids, field_types>>
 };
 
 /*!\brief Obtains the type of the specified element.
- * \implements seqan3::transformation_trait
+ * \implements bio::meta::transformation_trait
  * \relates bio::io::record
  * \see [std::tuple_element](https://en.cppreference.com/w/cpp/utility/tuple/tuple_element)
  */
@@ -305,7 +304,7 @@ namespace bio::io
 //-------------------------------------------------------------------------------
 
 /*!\brief Like std::tuple_element but with bio::io::field on bio::io::record. [declaration]
- * \implements seqan3::transformation_trait
+ * \implements bio::meta::transformation_trait
  * \relates bio::io::record
  */
 template <field f, typename t>

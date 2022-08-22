@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides the seqan3::format_input_handler<bio::io::vcf>.
+ * \brief Provides the bio::io::format_input_handler<bio::io::vcf>.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -20,10 +20,6 @@
 #include <string>
 #include <string_view>
 #include <vector>
-
-#include <seqan3/core/debug_stream.hpp> //TODO evaluate if there is a better solution
-#include <seqan3/core/debug_stream/detail/to_string.hpp>
-#include <seqan3/core/range/type_traits.hpp>
 
 #include <bio/meta/tag/vtag.hpp>
 #include <bio/meta/type_list/traits.hpp>
@@ -57,7 +53,7 @@ namespace bio::io
  *
  * | Member          | Type    | Default | Description                                                      |
  * |-----------------|---------|---------|------------------------------------------------------------------|
- * |`print_warnings` |`bool`   | `false` | Whether to print non-critical warnings to seqan3::debug_stream   |
+ * |`print_warnings` |`bool`   | `false` | Whether to print non-critical warnings to std::cerr              |
  *
  * ### Performance
  *
@@ -189,8 +185,8 @@ private:
 
                 if (print_warnings)
                 {
-                    seqan3::debug_stream << "[bio::io::var_io::warning] The contig name \"" << raw_field
-                                         << "\" found on line " << line << " is not present in the header.\n";
+                    std::cerr << "[bio::io::var_io::warning] The contig name \"" << raw_field << "\" found on line "
+                              << line << " is not present in the header.\n";
                 }
             }
             else
@@ -232,7 +228,7 @@ private:
     }
 
     //!\brief Overload for parsing QUAL.
-    void parse_field(meta::vtag_t<field::qual> const & /**/, seqan3::arithmetic auto & parsed_field)
+    void parse_field(meta::vtag_t<field::qual> const & /**/, meta::arithmetic auto & parsed_field)
     {
         std::string_view raw_field = get<field::qual>(raw_record);
 
@@ -271,8 +267,8 @@ private:
 
                 if (print_warnings)
                 {
-                    seqan3::debug_stream << "[bio::io::var_io::warning] The filter name \"" << subfield
-                                         << "\" found on line " << line << " was not present in the header.\n";
+                    std::cerr << "[bio::io::var_io::warning] The filter name \"" << subfield << "\" found on line "
+                              << line << " was not present in the header.\n";
                 }
             }
             else
@@ -292,8 +288,8 @@ private:
     {
         if (print_warnings)
         {
-            seqan3::debug_stream << "[bio::io::var_io::warning] The INFO name \"" << info_name << "\" found on line "
-                                 << line << " was not present in the header.\n";
+            std::cerr << "[bio::io::var_io::warning] The INFO name \"" << info_name << "\" found on line " << line
+                      << " was not present in the header.\n";
         }
 
         if (var_io::reserved_infos.contains(info_name))
@@ -403,9 +399,8 @@ private:
                     if (int32_t exp_val = header.infos[info_pos].number;
                         print_warnings && num_val != exp_val && exp_val >= 0)
                     {
-                        seqan3::debug_stream << "[bio::io::var_io::warning] Expected to find " << exp_val
-                                             << " values for the INFO field " << key << " but found: " << num_val
-                                             << "\n";
+                        std::cerr << "[bio::io::var_io::warning] Expected to find " << exp_val
+                                  << " values for the INFO field " << key << " but found: " << num_val << "\n";
                     }
                 }
                 else // val_t == std::string or std::string_view
@@ -423,8 +418,8 @@ private:
     {
         if (print_warnings)
         {
-            seqan3::debug_stream << "[bio::io::var_io::warning] The FORMAT name \"" << format_name
-                                 << "\" found on line " << line << " was not present in the header.\n";
+            std::cerr << "[bio::io::var_io::warning] The FORMAT name \"" << format_name << "\" found on line " << line
+                      << " was not present in the header.\n";
         }
 
         if (var_io::reserved_formats.contains(format_name))
@@ -645,7 +640,7 @@ struct format_input_handler<vcf>::parse_element_value_type_fn
     }
 
     //!\brief Parse into number.
-    template <seqan3::arithmetic arith_t>
+    template <meta::arithmetic arith_t>
     inline size_t operator()(arith_t & output) const
     {
         if (input == missing)

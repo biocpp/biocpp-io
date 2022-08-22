@@ -16,15 +16,13 @@
 #include <bit>
 #include <numeric>
 
-#include <seqan3/utility/char_operations/predicate.hpp>
-#include <seqan3/utility/views/join_with.hpp>
-
 #include <bio/meta/tag/vtag.hpp>
 
 #include <bio/io/detail/magic_get.hpp>
 #include <bio/io/detail/misc.hpp>
 #include <bio/io/format/bcf.hpp>
 #include <bio/io/format/format_output_handler.hpp>
+#include <bio/io/misc/char_predicate.hpp>
 #include <bio/io/record.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
 #include <bio/io/var_io/header.hpp>
@@ -156,7 +154,7 @@ private:
     }
 
     //!\brief Write a single value.
-    void write_single_impl(seqan3::arithmetic auto num, detail::bcf_type_descriptor const desc)
+    void write_single_impl(meta::arithmetic auto num, detail::bcf_type_descriptor const desc)
     {
         switch (desc)
         {
@@ -310,7 +308,7 @@ private:
         // TODO use views::eager_split once that can handle predicates
         for (size_t i = 0, j = 0; i <= gt_string.size(); ++i)
         {
-            if (i == gt_string.size() || (seqan3::is_char<'/'> || seqan3::is_char<'|'>)(gt_string[i]))
+            if (i == gt_string.size() || (is_char<'/'> || is_char<'|'>)(gt_string[i]))
             {
                 std::string_view substr = gt_string.substr(j, i - j);
 
@@ -344,7 +342,7 @@ private:
 
                 ++n_alleles;
                 j      = i + 1;
-                phased = seqan3::is_char<'|'>(gt_string[i]);
+                phased = is_char<'|'>(gt_string[i]);
             }
         }
 
@@ -406,7 +404,7 @@ private:
     //!\brief Generic writing function that dispatches depending on the type of the argument.
     template <typename elem_t>
         //!\cond REQ
-        requires(alphabet::alphabet<elem_t> || seqan3::arithmetic<elem_t>)
+        requires(alphabet::alphabet<elem_t> || meta::arithmetic<elem_t>)
     //!\endcond
     void write_typed_data(elem_t const num, detail::bcf_type_descriptor const desc)
     {
@@ -528,7 +526,7 @@ private:
     void set_core_rlen(char const * const field) { set_core_rlen(std::string_view{field}); }
 
     //!\brief Overload for QUAL.
-    void set_core_qual(seqan3::arithmetic auto & field) { record_core.qual = static_cast<float>(field); }
+    void set_core_qual(meta::arithmetic auto & field) { record_core.qual = static_cast<float>(field); }
 
     //!\brief Overload for n_info.
     void set_core_n_info(auto & field)
@@ -757,7 +755,7 @@ private:
             // TODO use views::eager_split once that can handle predicates
             for (size_t i = 0, j = 0; i <= s.size(); ++i)
             {
-                if (i == s.size() || (seqan3::is_char<'/'> || seqan3::is_char<'|'>)(s[i]))
+                if (i == s.size() || (is_char<'/'> || is_char<'|'>)(s[i]))
                 {
                     std::string_view substr = s.substr(j, i - j);
 

@@ -1,6 +1,6 @@
 #include <filesystem>
 
-#include <seqan3/core/debug_stream.hpp>
+#include <bio/alphabet/fmt.hpp>
 #include <bio/io/var_io/reader.hpp>
 #include <bio/test/tmp_directory.hpp>
 
@@ -39,32 +39,23 @@ int main()
 bio::io::var_io::reader reader{"example.vcf"};
 
 for (auto & rec : reader)
-{
-    seqan3::debug_stream << rec.chrom() << ':'
-                         << rec.pos()   << ':'
-                         << rec.ref()   << ':'
-                         << rec.alt()   << '\n';
-}
+    fmt::print("{}:{}:{}:{}\n", rec.chrom(), rec.pos(), rec.ref(), rec.alt());
+
 //![simple_usage_file]
 }
 
-std::cerr << "--\n";
+fmt::print("--\n");
 
 {
 //![simple_usage_stream]
 bio::io::var_io::reader reader{std::cin, bio::io::vcf{}};
 
 for (auto & rec : reader)
-{
-    seqan3::debug_stream << rec.chrom() << ':'
-                         << rec.pos()   << ':'
-                         << rec.ref()   << ':'
-                         << rec.alt()   << '\n';
-}
+    fmt::print("{}:{}:{}:{}\n", rec.chrom(), rec.pos(), rec.ref(), rec.alt());
 //![simple_usage_stream]
 }
 
-std::cerr << "--\n";
+fmt::print("--\n");
 
 {
 //![region]
@@ -73,16 +64,11 @@ bio::io::var_io::reader reader{"example.vcf.gz", bio::io::var_io::reader_options
 
 // this will only print 3 records instead of 5
 for (auto & rec : reader)
-{
-    seqan3::debug_stream << rec.chrom() << ':'
-                         << rec.pos()   << ':'
-                         << rec.ref()   << ':'
-                         << rec.alt()   << '\n';
-}
+    fmt::print("{}:{}:{}:{}\n", rec.chrom(), rec.pos(), rec.ref(), rec.alt());
 //![region]
 }
 
-std::cerr << "--\n";
+fmt::print("--\n");
 
 {
 //![views]
@@ -91,12 +77,7 @@ bio::io::var_io::reader reader{"example.vcf"};
 auto min_qual = [](auto & rec) { return rec.qual() > 23; };
 
 for (auto & rec : reader | std::views::filter(min_qual) | std::views::take(5))
-{
-    seqan3::debug_stream << rec.chrom() << ':'
-                         << rec.pos()   << ':'
-                         << rec.ref()   << ':'
-                         << rec.alt()   << '\n';
-}
+    fmt::print("{}:{}:{}:{}\n", rec.chrom(), rec.pos(), rec.ref(), rec.alt());
 //![views]
 }
 
