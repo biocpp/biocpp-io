@@ -10,8 +10,6 @@
 
 #include <gtest/gtest.h>
 
-#include <seqan3/core/debug_stream.hpp>
-
 #include <bio/alphabet/nucleotide/dna5.hpp>
 #include <bio/alphabet/quality/phred42.hpp>
 #include <bio/test/expect_range_eq.hpp>

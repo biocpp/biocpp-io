@@ -18,8 +18,6 @@
 #include <variant>
 #include <vector>
 
-#include <seqan3/core/debug_stream/debug_stream_type.hpp>
-
 #include <bio/alphabet/nucleotide/dna5.hpp>
 #include <bio/meta/tag/ttag.hpp>
 #include <bio/meta/tag/vtag.hpp>
@@ -159,20 +157,6 @@ enum class value_type_id : size_t
 };
 
 } // namespace bio::io::var_io
-
-namespace seqan3
-{
-
-//!\brief TODO implement me properly
-template <typename char_t>
-inline debug_stream_type<char_t> & operator<<(debug_stream_type<char_t> & s, bio::io::var_io::value_type_id const & id)
-{
-    // TODO print nice string
-    s << (size_t)id;
-    return s;
-}
-
-} // namespace seqan3
 
 namespace bio::io::detail
 {

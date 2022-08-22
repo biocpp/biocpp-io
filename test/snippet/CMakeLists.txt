@@ -18,6 +18,7 @@ include (${BIOCPP_CORE_CLONE_DIR}/test/biocpp-test.cmake)
 add_library (snippet_main snippet_main.cpp)
 target_link_libraries (snippet_main PUBLIC biocpp::test gtest)
 
+#TODO: move this to core library and import
 macro (biocpp_snippet test_name_prefix snippet snippet_base_path)
     biocpp_test_component (snippet_target_name "${snippet}" TARGET_NAME)
     biocpp_test_component (snippet_test_name "${snippet}" TEST_NAME)
@@ -25,7 +26,7 @@ macro (biocpp_snippet test_name_prefix snippet snippet_base_path)
     set (target "${snippet_target_name}_snippet")
 
     add_executable (${target} "${snippet_base_path}/${snippet}")
-    target_link_libraries (${target} PUBLIC snippet_main biocpp::io seqan3::seqan3)
+    target_link_libraries (${target} PUBLIC snippet_main biocpp::io fmt::fmt-header-only seqan3::seqan3)
     target_compile_options (${target} PUBLIC -Wno-unused -Wno-interference-size) # TODO: remove the latter
     set_target_properties(${target}
         PROPERTIES
@@ -57,6 +58,7 @@ macro (biocpp_snippets test_name_prefix snippet_base_path)
 endmacro ()
 
 biocpp_require_ccache ()
+biocpp_require_fmt ()
 biocpp_require_test ()
 
 biocpp_snippets ("snippet" "${CMAKE_CURRENT_SOURCE_DIR}")

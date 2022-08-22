@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 
+#include <bio/alphabet/adaptation/char.hpp>
 #include <bio/alphabet/aminoacid/aa27.hpp>
 #include <bio/alphabet/concept.hpp>
 #include <bio/alphabet/nucleotide/dna5.hpp>

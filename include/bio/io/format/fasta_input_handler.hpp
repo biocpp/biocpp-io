@@ -20,7 +20,6 @@
 #include <string_view>
 #include <vector>
 
-#include <seqan3/core/debug_stream/detail/to_string.hpp>
 #include <seqan3/core/range/type_traits.hpp>
 #include <seqan3/utility/char_operations/predicate.hpp>
 

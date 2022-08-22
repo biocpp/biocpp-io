@@ -1,6 +1,5 @@
 #include <filesystem>
 
-#include <seqan3/core/debug_stream.hpp>
 #include <bio/io/seq_io/reader.hpp>
 
 #include "../../unit/seq_io/data.hpp"

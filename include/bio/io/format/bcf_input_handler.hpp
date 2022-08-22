@@ -21,8 +21,6 @@
 #include <string_view>
 #include <vector>
 
-#include <seqan3/core/debug_stream.hpp> //TODO evaluate if there is a better solution
-#include <seqan3/core/debug_stream/detail/to_string.hpp>
 #include <seqan3/core/range/type_traits.hpp>
 #include <seqan3/utility/detail/to_little_endian.hpp>
 
@@ -324,7 +322,7 @@ namespace bio::io
  *
  * | Member          | Type    | Default | Description                                                      |
  * |-----------------|---------|---------|------------------------------------------------------------------|
- * |`print_warnings` |`bool`   | `false` | Whether to print non-critical warngings to seqan3::debug_stream  |
+ * |`print_warnings` |`bool`   | `false` | Whether to print non-critical warngings to std::cerr             |
  *
  * ### Performance
  *

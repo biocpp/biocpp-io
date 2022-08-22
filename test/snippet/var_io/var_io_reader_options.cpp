@@ -1,6 +1,6 @@
 #include <filesystem>
 
-#include <seqan3/core/debug_stream.hpp>
+#include <bio/alphabet/fmt.hpp>
 #include <bio/io/var_io/reader.hpp>
 
 #include "../../unit/format/vcf_data.hpp"
@@ -31,12 +31,7 @@ std::vector records = bio::io::var_io::reader{"example.vcf", options} | bio::ran
 
 // process the records later-on
 for (auto & rec : records)
-{
-    seqan3::debug_stream << rec.chrom() << ':'
-                         << rec.pos()   << ':'
-                         << rec.ref()   << ':'
-                         << rec.alt()   << '\n';
-}
+    fmt::print("{}:{}:{}:{}\n", rec.chrom(), rec.pos(), rec.ref(), rec.alt());
 //![field_types_deep]
 }
 
@@ -50,8 +45,7 @@ bio::io::var_io::reader reader{"example.vcf", options};
 
 for (auto & rec : reader)
 {
-    seqan3::debug_stream << rec.chrom() << ':'
-                         << rec.pos()   << '\n';
+    fmt::print("{}:{}\n", rec.chrom(), rec.pos());
     // record does not have any other members!
 }
 //![field_types_expert]

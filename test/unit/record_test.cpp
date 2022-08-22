@@ -10,7 +10,6 @@
 
 #include <gtest/gtest.h>
 
-#include <seqan3/core/debug_stream.hpp>
 #include <seqan3/utility/tuple/concept.hpp>
 
 #include <bio/alphabet/nucleotide/dna4.hpp>
@@ -23,17 +22,6 @@
 using namespace bio::alphabet::literals;
 
 using default_fields = bio::meta::vtag_t<bio::io::field::seq, bio::io::field::id, bio::io::field::qual>;
-
-// This is needed for EXPECT_RANGE_EQ:
-namespace seqan3
-{
-template <typename char_t>
-inline debug_stream_type<char_t> & operator<<(debug_stream_type<char_t> & stream, bio::io::field f)
-{
-    stream << "<field: " << static_cast<size_t>(f) << ">";
-    return stream;
-}
-} // namespace seqan3
 
 // ----------------------------------------------------------------------------
 // fields

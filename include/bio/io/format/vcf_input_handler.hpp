@@ -21,8 +21,6 @@
 #include <string_view>
 #include <vector>
 
-#include <seqan3/core/debug_stream.hpp> //TODO evaluate if there is a better solution
-#include <seqan3/core/debug_stream/detail/to_string.hpp>
 #include <seqan3/core/range/type_traits.hpp>
 
 #include <bio/meta/tag/vtag.hpp>
@@ -57,7 +55,7 @@ namespace bio::io
  *
  * | Member          | Type    | Default | Description                                                      |
  * |-----------------|---------|---------|------------------------------------------------------------------|
- * |`print_warnings` |`bool`   | `false` | Whether to print non-critical warnings to seqan3::debug_stream   |
+ * |`print_warnings` |`bool`   | `false` | Whether to print non-critical warnings to std::cerr              |
  *
  * ### Performance
  *
@@ -189,8 +187,8 @@ private:
 
                 if (print_warnings)
                 {
-                    seqan3::debug_stream << "[bio::io::var_io::warning] The contig name \"" << raw_field
-                                         << "\" found on line " << line << " is not present in the header.\n";
+                    std::cerr << "[bio::io::var_io::warning] The contig name \"" << raw_field << "\" found on line "
+                              << line << " is not present in the header.\n";
                 }
             }
             else
@@ -271,8 +269,8 @@ private:
 
                 if (print_warnings)
                 {
-                    seqan3::debug_stream << "[bio::io::var_io::warning] The filter name \"" << subfield
-                                         << "\" found on line " << line << " was not present in the header.\n";
+                    std::cerr << "[bio::io::var_io::warning] The filter name \"" << subfield << "\" found on line "
+                              << line << " was not present in the header.\n";
                 }
             }
             else
@@ -292,8 +290,8 @@ private:
     {
         if (print_warnings)
         {
-            seqan3::debug_stream << "[bio::io::var_io::warning] The INFO name \"" << info_name << "\" found on line "
-                                 << line << " was not present in the header.\n";
+            std::cerr << "[bio::io::var_io::warning] The INFO name \"" << info_name << "\" found on line " << line
+                      << " was not present in the header.\n";
         }
 
         if (var_io::reserved_infos.contains(info_name))
@@ -403,9 +401,8 @@ private:
                     if (int32_t exp_val = header.infos[info_pos].number;
                         print_warnings && num_val != exp_val && exp_val >= 0)
                     {
-                        seqan3::debug_stream << "[bio::io::var_io::warning] Expected to find " << exp_val
-                                             << " values for the INFO field " << key << " but found: " << num_val
-                                             << "\n";
+                        std::cerr << "[bio::io::var_io::warning] Expected to find " << exp_val
+                                  << " values for the INFO field " << key << " but found: " << num_val << "\n";
                     }
                 }
                 else // val_t == std::string or std::string_view
@@ -423,8 +420,8 @@ private:
     {
         if (print_warnings)
         {
-            seqan3::debug_stream << "[bio::io::var_io::warning] The FORMAT name \"" << format_name
-                                 << "\" found on line " << line << " was not present in the header.\n";
+            std::cerr << "[bio::io::var_io::warning] The FORMAT name \"" << format_name << "\" found on line " << line
+                      << " was not present in the header.\n";
         }
 
         if (var_io::reserved_formats.contains(format_name))

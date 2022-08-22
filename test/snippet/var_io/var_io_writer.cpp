@@ -1,6 +1,5 @@
 #include <filesystem>
 
-#include <seqan3/core/debug_stream.hpp>
 #include <bio/io/var_io/writer.hpp>
 #include <bio/io/var_io/reader.hpp>
 
