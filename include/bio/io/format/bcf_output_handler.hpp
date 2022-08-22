@@ -16,15 +16,13 @@
 #include <bit>
 #include <numeric>
 
-#include <seqan3/utility/char_operations/predicate.hpp>
-#include <seqan3/utility/views/join_with.hpp>
-
 #include <bio/meta/tag/vtag.hpp>
 
 #include <bio/io/detail/magic_get.hpp>
 #include <bio/io/detail/misc.hpp>
 #include <bio/io/format/bcf.hpp>
 #include <bio/io/format/format_output_handler.hpp>
+#include <bio/io/misc/char_predicate.hpp>
 #include <bio/io/record.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
 #include <bio/io/var_io/header.hpp>
@@ -310,7 +308,7 @@ private:
         // TODO use views::eager_split once that can handle predicates
         for (size_t i = 0, j = 0; i <= gt_string.size(); ++i)
         {
-            if (i == gt_string.size() || (seqan3::is_char<'/'> || seqan3::is_char<'|'>)(gt_string[i]))
+            if (i == gt_string.size() || (is_char<'/'> || is_char<'|'>)(gt_string[i]))
             {
                 std::string_view substr = gt_string.substr(j, i - j);
 
@@ -344,7 +342,7 @@ private:
 
                 ++n_alleles;
                 j      = i + 1;
-                phased = seqan3::is_char<'|'>(gt_string[i]);
+                phased = is_char<'|'>(gt_string[i]);
             }
         }
 
@@ -757,7 +755,7 @@ private:
             // TODO use views::eager_split once that can handle predicates
             for (size_t i = 0, j = 0; i <= s.size(); ++i)
             {
-                if (i == s.size() || (seqan3::is_char<'/'> || seqan3::is_char<'|'>)(s[i]))
+                if (i == s.size() || (is_char<'/'> || is_char<'|'>)(s[i]))
                 {
                     std::string_view substr = s.substr(j, i - j);
 

@@ -21,7 +21,6 @@
 #include <vector>
 
 #include <seqan3/core/range/type_traits.hpp>
-#include <seqan3/utility/char_operations/predicate.hpp>
 
 #include <bio/meta/tag/vtag.hpp>
 #include <bio/ranges/views/to_char.hpp>
@@ -29,6 +28,7 @@
 #include <bio/io/detail/range.hpp>
 #include <bio/io/format/fastq.hpp>
 #include <bio/io/format/format_input_handler.hpp>
+#include <bio/io/misc/char_predicate.hpp>
 #include <bio/io/plain_io/reader.hpp>
 
 namespace bio::io
@@ -134,13 +134,13 @@ private:
             if (current_line.empty())
                 error("Expected to be on begin of record but line is empty.");
 
-            if ((!seqan3::is_char<'@'>)(current_line[0]))
+            if ((!is_char<'@'>)(current_line[0]))
                 error("ID-line does not begin with '@'.");
 
             if (truncate_ids)
             {
                 size_t e = 1;
-                for (; e < current_line.size() && (!seqan3::is_space)(current_line[e]); ++e)
+                for (; e < current_line.size() && (!is_space)(current_line[e]); ++e)
                 {}
                 detail::string_copy(current_line.substr(1, e - 1), id_buffer);
             }
@@ -173,7 +173,7 @@ private:
             if (it == std::default_sentinel)
                 error("Reached end of file while trying to read third FastQ record line.");
 
-            if ((!seqan3::is_char<'+'>)((*it)[0]))
+            if ((!is_char<'+'>)((*it)[0]))
                 error("Third FastQ record line does not begin with '+'.");
 
             // we don't process the rest of the line

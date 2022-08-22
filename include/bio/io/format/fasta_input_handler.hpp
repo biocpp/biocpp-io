@@ -21,7 +21,6 @@
 #include <vector>
 
 #include <seqan3/core/range/type_traits.hpp>
-#include <seqan3/utility/char_operations/predicate.hpp>
 
 #include <bio/meta/tag/vtag.hpp>
 #include <bio/ranges/views/to_char.hpp>
@@ -29,6 +28,7 @@
 #include <bio/io/detail/range.hpp>
 #include <bio/io/format/fasta.hpp>
 #include <bio/io/format/format_input_handler.hpp>
+#include <bio/io/misc/char_predicate.hpp>
 #include <bio/io/plain_io/reader.hpp>
 
 namespace bio::io
@@ -118,7 +118,7 @@ private:
     //!\brief Read the raw record [the base class invokes this function].
     void read_raw_record()
     {
-        constexpr auto not_id = !(seqan3::is_char<'>'> || seqan3::is_char<';'>);
+        constexpr auto not_id = !(is_char<'>'> || is_char<';'>);
 
         id_buffer.clear();
         seq_buffer.clear();
@@ -142,7 +142,7 @@ private:
         if (truncate_ids)
         {
             size_t e = 1;
-            for (; e < current_line.size() && (!seqan3::is_space)(current_line[e]); ++e)
+            for (; e < current_line.size() && (!is_space)(current_line[e]); ++e)
             {}
             detail::string_copy(current_line.substr(1, e - 1), id_buffer);
         }
@@ -162,8 +162,7 @@ private:
         {
             ++it;
             ++line;
-            std::ranges::copy(*it | std::views::filter(!(seqan3::is_space || seqan3::is_digit)),
-                              std::back_insert_iterator{seq_buffer});
+            std::ranges::copy(*it | std::views::filter(!(is_space || is_digit)), std::back_insert_iterator{seq_buffer});
         }
 
         if (seq_buffer.empty())
