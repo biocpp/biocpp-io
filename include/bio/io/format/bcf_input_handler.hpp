@@ -21,8 +21,6 @@
 #include <string_view>
 #include <vector>
 
-#include <seqan3/core/range/type_traits.hpp>
-
 #include <bio/meta/tag/vtag.hpp>
 #include <bio/meta/type_list/traits.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>

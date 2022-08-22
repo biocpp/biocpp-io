@@ -27,8 +27,6 @@
 #    error "This file cannot be used when building without GZip-support."
 #endif // BIOCPP_IO_HAS_ZLIB
 
-#include <seqan3/core/range/type_traits.hpp>
-
 #include <bio/io/detail/to_little_endian.hpp>
 #include <bio/io/exception.hpp>
 #include <bio/io/stream/compression.hpp>

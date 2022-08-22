@@ -10,8 +10,6 @@
 
 #include <gtest/gtest.h>
 
-#include <seqan3/utility/tuple/concept.hpp>
-
 #include <bio/alphabet/nucleotide/dna4.hpp>
 #include <bio/test/expect_range_eq.hpp>
 #include <bio/test/expect_same_type.hpp>
@@ -55,7 +53,8 @@ TEST_F(record, definition_tuple_traits)
     EXPECT_TRUE((std::is_same_v<std::tuple_element_t<1, record_type>, bio::alphabet::dna4_vector>));
     EXPECT_EQ(std::tuple_size_v<record_type>, 2ul);
 
-    EXPECT_TRUE(seqan3::tuple_like<record_type>);
+    // TODO(bio): reactivate once in biocpp_core
+    //      EXPECT_TRUE(bio::meta::tuple_like<record_type>);
 }
 
 TEST_F(record, record_element)
