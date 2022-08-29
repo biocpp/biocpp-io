@@ -29,11 +29,10 @@
 #include <cstring>
 #include <mutex>
 
-#include <seqan3/contrib/parallel/buffer_queue.hpp>
-#include <seqan3/utility/parallel/detail/reader_writer_manager.hpp>
-
 #include <bio/io/exception.hpp>
 #include <bio/io/stream/detail/bgzf_stream_util.hpp>
+#include <bio/io/stream/detail/buffer_queue.hpp>
+#include <bio/io/stream/detail/reader_writer_manager.hpp>
 
 namespace bio::io::contrib
 {
@@ -68,8 +67,8 @@ private:
     typedef ByteAT      byte_allocator_type;
     typedef byte_type * byte_buffer_type;
 
-    typedef std::vector<char_type, char_allocator_type>  TBuffer;
-    typedef seqan3::contrib::fixed_buffer_queue<int32_t> TJobQueue;
+    typedef std::vector<char_type, char_allocator_type> TBuffer;
+    typedef fixed_buffer_queue<int32_t>                 TJobQueue;
 
     static const size_t MAX_PUTBACK = 4;
 
@@ -127,14 +126,14 @@ private:
     };
 
     // string of recyclable jobs
-    size_t                                numThreads;
-    size_t                                numJobs;
-    std::vector<DecompressionJob>         jobs;
-    TJobQueue                             runningQueue;
-    TJobQueue                             todoQueue;
-    seqan3::detail::reader_writer_manager runningQueueManager; // synchronises reader, writer with running queue.
-    seqan3::detail::reader_writer_manager todoQueueManager;    // synchronises reader, writer with todo queue.
-    int                                   currentJobId;
+    size_t                        numThreads;
+    size_t                        numJobs;
+    std::vector<DecompressionJob> jobs;
+    TJobQueue                     runningQueue;
+    TJobQueue                     todoQueue;
+    reader_writer_manager         runningQueueManager; // synchronises reader, writer with running queue.
+    reader_writer_manager         todoQueueManager;    // synchronises reader, writer with todo queue.
+    int                           currentJobId;
 
     struct DecompressionThread
     {
@@ -152,7 +151,7 @@ private:
             while (true)
             {
                 int jobId = -1;
-                if (streamBuf->todoQueue.wait_pop(jobId) == seqan3::contrib::queue_op_status::closed)
+                if (streamBuf->todoQueue.wait_pop(jobId) == queue_op_status::closed)
                     return;
 
                 DecompressionJob & job     = streamBuf->jobs[jobId];
@@ -242,7 +241,7 @@ eofSkip:
                                                             ~std::ios_base::failbit);
                     }
 
-                    if (streamBuf->runningQueue.try_push(jobId) != seqan3::contrib::queue_op_status::success)
+                    if (streamBuf->runningQueue.try_push(jobId) != queue_op_status::success)
                     {
                         // signal that job is ready
                         {
@@ -284,8 +283,8 @@ public:
       numJobs(numThreads * jobsPerThread),
       runningQueue(numJobs),
       todoQueue(numJobs),
-      runningQueueManager(seqan3::detail::reader_count{1}, seqan3::detail::writer_count{numThreads}, runningQueue),
-      todoQueueManager(seqan3::detail::reader_count{numThreads}, seqan3::detail::writer_count{1}, todoQueue),
+      runningQueueManager(/*readers*/ 1, /*writers*/ numThreads, runningQueue),
+      todoQueueManager(/*readers*/ numThreads, /*writers*/ 1, todoQueue),
       putbackBuffer(MAX_PUTBACK)
     {
         jobs.resize(numJobs);
@@ -294,8 +293,8 @@ public:
         // Prepare todo queue.
         for (size_t i = 0; i < numJobs; ++i)
         {
-            [[maybe_unused]] seqan3::contrib::queue_op_status status = todoQueue.try_push(i);
-            assert(status == seqan3::contrib::queue_op_status::success);
+            [[maybe_unused]] queue_op_status status = todoQueue.try_push(i);
+            assert(status == queue_op_status::success);
         }
 
         // Start off the threads.
@@ -339,7 +338,7 @@ public:
 
         while (true)
         {
-            if (runningQueue.wait_pop(currentJobId) == seqan3::contrib::queue_op_status::closed)
+            if (runningQueue.wait_pop(currentJobId) == queue_op_status::closed)
             {
                 currentJobId = -1;
                 assert(serializer.error != NULL);

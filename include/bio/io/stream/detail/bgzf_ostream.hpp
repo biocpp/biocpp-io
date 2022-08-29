@@ -25,10 +25,9 @@
 
 #pragma once
 
-#include <seqan3/contrib/parallel/serialised_resource_pool.hpp>
-#include <seqan3/contrib/parallel/suspendable_queue.hpp>
-
 #include <bio/io/stream/detail/bgzf_stream_util.hpp>
+#include <bio/io/stream/detail/serialised_resource_pool.hpp>
+#include <bio/io/stream/detail/suspendable_queue.hpp>
 
 namespace bio::io::contrib
 {
@@ -45,13 +44,12 @@ template <typename Elem,
 class basic_bgzf_ostreambuf : public std::basic_streambuf<Elem, Tr>
 {
 private:
-    typedef std::basic_ostream<Elem, Tr> & ostream_reference;
-    typedef ElemA                          char_allocator_type;
-    typedef ByteT                          byte_type;
-    typedef ByteAT                         byte_allocator_type;
-    typedef byte_type *                    byte_buffer_type;
-    typedef seqan3::contrib::ConcurrentQueue<size_t, seqan3::contrib::Suspendable<seqan3::contrib::Limit>>
-      job_queue_type;
+    typedef std::basic_ostream<Elem, Tr> &              ostream_reference;
+    typedef ElemA                                       char_allocator_type;
+    typedef ByteT                                       byte_type;
+    typedef ByteAT                                      byte_allocator_type;
+    typedef byte_type *                                 byte_buffer_type;
+    typedef ConcurrentQueue<size_t, Suspendable<Limit>> job_queue_type;
 
     int sanitize_compression_level(int level_) const
     {
@@ -109,14 +107,14 @@ public:
     };
 
     // string of recycable jobs
-    size_t                                                  numThreads;
-    size_t                                                  numJobs;
-    std::vector<CompressionJob>                             jobs;
-    job_queue_type                                          jobQueue;
-    job_queue_type                                          idleQueue;
-    seqan3::contrib::Serializer<OutputBuffer, BufferWriter> serializer;
-    size_t                                                  currentJobId;
-    bool                                                    currentJobAvail;
+    size_t                                 numThreads;
+    size_t                                 numJobs;
+    std::vector<CompressionJob>            jobs;
+    job_queue_type                         jobQueue;
+    job_queue_type                         idleQueue;
+    Serializer<OutputBuffer, BufferWriter> serializer;
+    size_t                                 currentJobId;
+    bool                                   currentJobAvail;
 
     struct CompressionThread
     {
