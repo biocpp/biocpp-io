@@ -25,8 +25,7 @@ macro (bio_test unit_test_cpp)
     biocpp_test_component (test_name "${unit_test}" TEST_NAME)
 
     add_executable (${target} ${unit_test_cpp})
-    target_link_libraries (${target} biocpp::test::unit biocpp::io seqan3::seqan3)
-    target_compile_options (${target} PUBLIC -Wno-interference-size) # TODO(bio): remove the latter
+    target_link_libraries (${target} biocpp::test::unit biocpp::io)
     if (BIOCPP_IO_VERBOSE_TESTS)
         gtest_discover_tests(${target} TEST_PREFIX "${test_name}::" PROPERTIES TIMEOUT "30")
     else ()

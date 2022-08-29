@@ -43,8 +43,8 @@ EXPAND_ONLY_PREDEF     = YES
 SKIP_FUNCTION_MACROS   = NO
 SORT_BRIEF_DOCS        = YES
 TOC_INCLUDE_HEADINGS   = 2
-HTML_EXTRA_STYLESHEET  = ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/seqan3.css
-HTML_FOOTER            = ${BIOCPP_IO_DOXYGEN_OUTPUT_DIR}/bio_footer.html
+HTML_EXTRA_STYLESHEET  = ${BIOCPP_CORE_CLONE_DIR}/test/documentation/biocpp.css
+HTML_FOOTER            = ${BIOCPP_CORE_CLONE_DIR}/test/documentation/biocpp_footer.html
 INPUT_ENCODING         = UTF-8
 EXTRA_PACKAGES         = {amsfonts}
 
@@ -91,6 +91,6 @@ ALIASES += header_file{1}="\htmlonly<b>Header File</b><br><div style='text-inden
 
 ### Extra files that we can link to
 
-HTML_EXTRA_FILES       += ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/version.js
-HTML_EXTRA_FILES       += ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/version.php
+HTML_EXTRA_FILES       += ${BIOCPP_CORE_CLONE_DIR}/test/documentation/version.js
+HTML_EXTRA_FILES       += ${BIOCPP_CORE_CLONE_DIR}/test/documentation/version.php
 ${BIOCPP_IO_DOXYFILE_OPTION_POWERED_BY_VERCEL}

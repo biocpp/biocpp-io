@@ -1,13 +1,12 @@
 message (STATUS "Configuring user doc.")
 
 set (BIOCPP_IO_DOXYGEN_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}")
-set (BIOCPP_IO_DOXYGEN_EXCLUDE_SYMBOLS "bio::io::detail") #/""
+set (BIOCPP_IO_DOXYGEN_EXCLUDE_SYMBOLS "bio::io::detail bio::io::contrib") #/""
 set (BIOCPP_IO_DOXYGEN_PREDEFINED_NDEBUG "-NDEBUG") #/""
 set (BIOCPP_IO_DOXYGEN_ENABLED_SECTIONS "") #/"DEV"
 set (BIOCPP_IO_DOXYGEN_EXTRACT_PRIVATE "NO") #/"YES":
 
 configure_file (${BIOCPP_IO_DOXYFILE_IN} ${BIOCPP_IO_DOXYGEN_OUTPUT_DIR}/Doxyfile)
-configure_file (${BIOCPP_IO_FOOTER_HTML_IN} ${BIOCPP_IO_DOXYGEN_OUTPUT_DIR}/bio_footer.html)
 
 add_custom_target(doc_usr ALL
                   COMMAND ${DOXYGEN_EXECUTABLE}

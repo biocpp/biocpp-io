@@ -43,15 +43,6 @@ static_assert(__cplusplus >= 201709, "The BioC++ I/O library requires C++20, mak
 #    error The BioC++ I/O library include directory is not set correctly. Forgot to add -I ${INSTALLDIR}/include to your CXXFLAGS?
 #endif
 
-// SeqAn3 [required]
-#if __has_include(<seqan3/version.hpp>)
-#    include <seqan3/version.hpp>
-static_assert(seqan3::seqan3_version_major == 3, "SeqAn >= 3.1 is required by the BioC++ I/O library.");
-static_assert(seqan3::seqan3_version_minor >= 1, "SeqAn >= 3.1 is required by the BioC++ I/O library.");
-#else
-#    error The SeqAn3 library was not included.
-#endif
-
 // ============================================================================
 //  WORKAROUNDS
 // ============================================================================

@@ -160,7 +160,7 @@ if (BIOCPP_CORE_FOUND)
     bio_config_print ("Required dependency:        BioC++ core library already loaded (${BIOCPP_CORE_VERSION}).")
 else ()
     find_package (biocpp_core REQUIRED QUIET
-                  HINTS ${BIOCPP_IO_CLONE_DIR}/submodule/biocpp-core/build_system
+                  HINTS ${BIOCPP_IO_CLONE_DIR}/submodules/biocpp-core/build_system
                         ${CMAKE_CURRENT_LIST_DIR}/../../biocpp-core/build_system)
 
     if (BIOCPP_CORE_FOUND)
@@ -169,20 +169,6 @@ else ()
     else ()
         bio_config_print ("The BioC++ core library is required, but wasn't found. Get it from https://github.com/biocpp/biocpp-core")
     endif ()
-endif ()
-
-# ----------------------------------------------------------------------------
-# Require SeqAn3
-# ----------------------------------------------------------------------------
-
-find_package (SeqAn3 REQUIRED QUIET
-              HINTS ${CMAKE_CURRENT_LIST_DIR}/../submodules/seqan3/build_system)
-
-if (SEQAN3_FOUND)
-    bio_config_print ("Required dependency:        SeqAn3 found (${SEQAN3_VERSION}).")
-    set (BIOCPP_IO_LIBRARIES ${BIOCPP_IO_LIBRARIES} seqan3_seqan3)
-else ()
-    bio_config_print ("The SeqAn3 library is required, but wasn't found. Get it from https://github.com/seqan/seqan3")
 endif ()
 
 # ----------------------------------------------------------------------------

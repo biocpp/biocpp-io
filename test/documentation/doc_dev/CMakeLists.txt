@@ -7,7 +7,6 @@ set (BIOCPP_IO_DOXYGEN_ENABLED_SECTIONS "DEV")
 set (BIOCPP_IO_DOXYGEN_EXTRACT_PRIVATE "YES")
 
 configure_file (${BIOCPP_IO_DOXYFILE_IN} ${BIOCPP_IO_DOXYGEN_OUTPUT_DIR}/Doxyfile)
-configure_file (${BIOCPP_IO_FOOTER_HTML_IN} ${BIOCPP_IO_DOXYGEN_OUTPUT_DIR}/bio_footer.html)
 
 add_custom_target(doc_dev ALL
                   COMMAND ${DOXYGEN_EXECUTABLE}
