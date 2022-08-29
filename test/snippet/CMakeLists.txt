@@ -26,8 +26,8 @@ macro (biocpp_snippet test_name_prefix snippet snippet_base_path)
     set (target "${snippet_target_name}_snippet")
 
     add_executable (${target} "${snippet_base_path}/${snippet}")
-    target_link_libraries (${target} PUBLIC snippet_main biocpp::io fmt::fmt-header-only seqan3::seqan3)
-    target_compile_options (${target} PUBLIC -Wno-unused -Wno-interference-size) # TODO: remove the latter
+    target_link_libraries (${target} PUBLIC snippet_main biocpp::io fmt::fmt-header-only)
+    target_compile_options (${target} PUBLIC -Wno-unused)
     set_target_properties(${target}
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${snippet_target_path}"

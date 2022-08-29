@@ -1,3 +1,0 @@
-[submodule "submodules/seqan3"]
-	path = submodules/seqan3
-	url = ../../seqan/seqan3.git
