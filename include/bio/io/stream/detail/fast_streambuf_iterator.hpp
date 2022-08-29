@@ -266,8 +266,6 @@ public:
  *
  * The functions bio::io::fast_ostreambuf_iterator::write_range and bio::io::fast_ostreambuf_iterator::write_n allow
  * more efficient writing of ranges by writing in chunks that avoiding overflow checks.
- *
- * \include test/snippet/io/detail/iterator_write_range.cpp
  */
 template <typename char_t, typename traits_t = std::char_traits<char_t>>
 class fast_ostreambuf_iterator
@@ -369,9 +367,6 @@ public:
      * \attention You can only use the return value (end iterator) if your range type models
      *            `std::ranges::borrowed_range`.
      *
-     * Example:
-     *
-     * \include test/snippet/io/detail/iterator_write_range.cpp
      */
     template <std::ranges::forward_range rng_t>
     auto write_range(rng_t && rng)

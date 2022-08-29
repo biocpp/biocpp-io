@@ -609,14 +609,6 @@ public:
      * ### Exceptions
      *
      * Basic exception safety.
-     *
-     * ### Example
-     *
-     * \include test/snippet/io/sequence_file/sequence_file_output_batch_write.cpp
-     *
-     * This is especially useful in combination with file-based filters:
-     *
-     * \include test/snippet/io/sequence_file/sequence_file_output_view_pipeline.cpp
      */
     template <std::ranges::input_range rng_t>
         //!\cond REQ

@@ -205,10 +205,6 @@ public:
      * ### Exceptions
      *
      * No-throw guarantee.
-     *
-     * ### Example
-     *
-     * \include test/snippet/io/sequence_file/sequence_file_output_range_interface.cpp
      */
     iterator begin() noexcept { return {*this}; }
 
