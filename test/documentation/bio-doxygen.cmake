@@ -25,7 +25,6 @@ set (BIOCPP_IO_DOXYGEN_DOT_NUM_THREADS "0")
 ### Configure doc/developer targets.
 set (BIOCPP_IO_DOXYGEN_SOURCE_DIR "${BIOCPP_IO_CLONE_DIR}")
 set (BIOCPP_IO_DOXYFILE_IN ${BIOCPP_IO_DOXYGEN_INPUT_DIR}/bio_doxygen_cfg.in)
-set (BIOCPP_IO_FOOTER_HTML_IN ${BIOCPP_IO_DOXYGEN_SOURCE_DIR}/submodules/seqan3/test/documentation/seqan3_footer.html.in)
 
 option(BIOCPP_IO_USER_DOC "Create build target and test for user documentation." ON)
 option(BIOCPP_IO_DEV_DOC "Create build target and test for developer documentation." ON)

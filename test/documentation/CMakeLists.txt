@@ -1,7 +1,7 @@
 # Minimum cmake version
 cmake_minimum_required(VERSION 3.7)
 
-### Find b.i.o
+### Get our version and directories
 include (../../build_system/biocpp_io-config-version.cmake)
 set (BIOCPP_IO_VERSION "${PACKAGE_VERSION}")
 
@@ -10,7 +10,11 @@ project (biocpp_io_doc LANGUAGES NONE VERSION "${BIOCPP_IO_VERSION}")
 if (NOT EXISTS "${BIOCPP_IO_INCLUDE_DIR}/bio/io.hpp")
     message (FATAL_ERROR "Could not find the BioC++ I/O library. Not building documentation.")
 endif ()
-message (STATUS "Found: ${BIOCPP_IO_INCLUDE_DIR} (${BIOCPP_IO_VERSION})")
+message (STATUS "Found BioC++ I/O library: ${BIOCPP_IO_INCLUDE_DIR} (${BIOCPP_IO_VERSION})")
+
+### Get core's version and directories
+include(../biocpp_require_core_infrastructure.cmake)
+biocpp_require_core_infrastructure(FALSE)
 
 set (BIOCPP_IO_DOXYGEN_INPUT_DIR "${CMAKE_SOURCE_DIR}")
 

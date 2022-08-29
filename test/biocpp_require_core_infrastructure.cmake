@@ -10,12 +10,14 @@
 macro (biocpp_require_core_infrastructure)
 
     if (NOT IS_DIRECTORY ${BIOCPP_CORE_CLONE_DIR})
-        if (IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../../submodule/biocpp-core/build_system OR
-            IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../../../biocpp-core/build_system)
-            find_package (biocpp_core REQUIRED
-                          HINTS ${CMAKE_CURRENT_LIST_DIR}/../../submodule/biocpp-core/build_system
-                          HINTS ${CMAKE_CURRENT_LIST_DIR}/../../../biocpp-core/build_system)
+        set (HINTS_DIR "")
+
+        if (IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../../submodules/biocpp-core/build_system)
+            set (HINTS_DIR "${CMAKE_CURRENT_LIST_DIR}/../../submodules/biocpp-core/build_system")
+        elseif (IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../../../biocpp-core/build_system)
+            set (HINTS_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../biocpp-core/build_system")
         else ()
+            message (STATUS "BioC++ core library required. Being fetched automatically…")
             include (FetchContent)
             FetchContent_Declare(
                 biocpp_core-lib
@@ -24,9 +26,13 @@ macro (biocpp_require_core_infrastructure)
             )
 
             FetchContent_Populate(biocpp_core-lib)
-            find_package (biocpp_core REQUIRED
-                          HINTS ${CMAKE_CURRENT_BINARY_DIR}/_deps/biocpp_core-lib-src/build_system)
+            set (HINTS_DIR "${CMAKE_CURRENT_BINARY_DIR}/_deps/biocpp_core-lib-src/build_system")
+        endif ()
 
+        if (("${ARGC}" STREQUAL "0") OR ("${ARGV1}" STREQUAL "1"))
+            find_package (biocpp_core REQUIRED HINTS "${HINTS_DIR}")
+        else ()
+            include (${HINTS_DIR}/biocpp_core-config-version.cmake)
         endif ()
     endif ()
 

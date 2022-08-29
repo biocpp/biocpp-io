@@ -160,7 +160,7 @@ if (BIOCPP_CORE_FOUND)
     bio_config_print ("Required dependency:        BioC++ core library already loaded (${BIOCPP_CORE_VERSION}).")
 else ()
     find_package (biocpp_core REQUIRED QUIET
-                  HINTS ${BIOCPP_IO_CLONE_DIR}/submodule/biocpp-core/build_system
+                  HINTS ${BIOCPP_IO_CLONE_DIR}/submodules/biocpp-core/build_system
                         ${CMAKE_CURRENT_LIST_DIR}/../../biocpp-core/build_system)
 
     if (BIOCPP_CORE_FOUND)
