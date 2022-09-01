@@ -108,6 +108,36 @@ struct missing_header_error : bio_error
     explicit missing_header_error(auto &&... s) : bio_error{s...} {}
 };
 
+// ----------------------------------------------------------------------------
+// other exceptions
+// ----------------------------------------------------------------------------
+
+/*!\brief Thrown if std::cout is in sync with stdio.
+ * \details
+ *
+ * By default, std::cout is unbuffered and every character is written individually.
+ * This happens to avoid data races if C's I/O is used at the same time.
+ * But it is also very slow, so it is never what you want when you write e.g. an output-file
+ * to std::cout.
+ *
+ * To deactivate synchronisation and enable buffered writing, set the following
+ * somewhere in your application before doing any BioC++ I/O:
+ *
+ * ```cpp
+ * std::ios::sync_with_stdio(false);
+ * ```
+ * Since many developers are unaware of this problem, we have implemented heuristics
+ * in some of our data structures (e.g. bio::io::transparent_ostream ) to detect
+ * slow usage of std::cout and will throw this exception to remind you.
+ *
+ * If you know what you are doing and you want unbuffered writing to std::cout, you
+ * can define the `BIOCPP_IO_NO_SYNC_CHECK` macro while building.
+ */
+struct sync_with_stdio_detected : bio_error
+{
+    //!\brief Constructor that forwards the exception string.
+    explicit sync_with_stdio_detected(auto &&... s) : bio_error{s...} {}
+};
 //!\}
 
 } // namespace bio::io

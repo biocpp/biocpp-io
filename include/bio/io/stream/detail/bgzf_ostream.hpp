@@ -229,7 +229,7 @@ public:
         return serializer;
     }
 
-    int_type overflow(int_type c)
+    virtual int_type overflow(int_type c)
     {
         int w = static_cast<int>(this->pptr() - this->pbase());
         if (c != static_cast<int_type>(EOF))

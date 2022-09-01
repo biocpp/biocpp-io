@@ -302,8 +302,6 @@ public:
       stream_buf{reinterpret_cast<stream_buffer_exposer<char_t, traits_t> *>(&ibuf)}
     {
         assert(stream_buf != nullptr);
-        if (stream_buf->pptr() == stream_buf->epptr())
-            stream_buf->overflow(); // ensures that put area has space available
     }
 
     //!\brief Construct from a stream buffer.
@@ -350,7 +348,7 @@ public:
         return *this;
     }
 
-    //!\brief Returns `true if this iterator has encountered the end-of-file condition on output, `false` otherwise.
+    //!\brief Returns `true` if this iterator has encountered the end-of-file condition on output, `false` otherwise.
     bool failed() const noexcept { return stream_buf->overflow() == traits_t::eof(); }
 
     /*!\brief Writes a range to the associated output.
@@ -363,6 +361,9 @@ public:
      * the remaining space in the put area of the buffer.
      * If the range type models `std::ranges::sized_range` the chunks are written using `std::ranges::copy_n`, which
      * may use memcpy if applicable. Otherwise, a simple for loop iterates over the chunk.
+     *
+     * If the range type is a sized, contiguous range of characters `xsputn()` is used
+     * which may bypass buffers entirely.
      *
      * \attention You can only use the return value (end iterator) if your range type models
      *            `std::ranges::borrowed_range`.
@@ -377,15 +378,25 @@ public:
         it_t  it  = std::ranges::begin(rng);
         sen_t end = std::ranges::end(rng);
 
-        if (stream_buf->epptr() - stream_buf->pptr() == 0 && it != end)
+        char const * const err = "Cannot write to output stream (reached traits::eof() condition).";
+
+        /* In all normal circumstances, the following will run at most once, to initially
+         * create space in the put area.
+         *
+         * For unbuffered streams, e.g. std::cerr or std::cout when in sync with stdio,
+         * the put area will always be empty and we will loop through the characters
+         * here since the code afterwards will not work / would be even more inefficient.
+         */
+        while (stream_buf->epptr() == stream_buf->pptr() && it != end)
         {
-            stream_buf->sputc(*it);
+            if (stream_buf->sputc(*it) == traits_t::eof())
+                throw std::ios_base::failure{err};
             ++it;
         }
 
         while (it != end)
         {
-            size_t const buffer_space = stream_buf->epptr() - stream_buf->pptr();
+            size_t buffer_space = stream_buf->epptr() - stream_buf->pptr();
             assert(buffer_space > 0);
 
             if constexpr (std::sized_sentinel_for<sen_t, it_t>)
@@ -410,7 +421,7 @@ public:
             if (stream_buf->sputc(*it) == traits_t::eof())
             {
                 // LCOV_EXCL_START
-                throw std::ios_base::failure{"Cannot write to output stream (reached traits::eof() condition)."};
+                throw std::ios_base::failure{err};
                 // LCOV_EXCL_STOP
             }
 

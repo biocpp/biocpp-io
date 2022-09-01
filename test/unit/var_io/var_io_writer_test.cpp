@@ -326,3 +326,39 @@ TEST(var_io_writer, compression)
     std::string                  buffer(std::istreambuf_iterator<char>{decompressor}, std::istreambuf_iterator<char>{});
     EXPECT_RANGE_EQ(buffer, example_from_spec_header_regenerated_no_IDX + example_from_spec_records);
 }
+
+TEST(var_io_writer, biocpp_io_issue_53)
+{
+    using namespace bio::alphabet::literals;
+
+    {
+        using writer_t = decltype(bio::io::var_io::writer{std::cout, bio::io::vcf{}});
+        writer_t * ptr = nullptr;
+
+        EXPECT_THROW((ptr = new writer_t{std::cout, bio::io::vcf{}}), bio::io::sync_with_stdio_detected);
+        delete ptr;
+        ptr = nullptr;
+    }
+
+    std::ios::sync_with_stdio(false);
+
+    {
+        bio::io::var_io::header hdr{};
+        hdr.file_format   = "VCFv4.3";
+        hdr.column_labels = {"CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "x"};
+
+        bio::io::var_io::writer writer{std::cout, bio::io::vcf{}};
+        writer.set_header(hdr);
+        bio::io::var_io::default_record<> record{};
+        record.chrom()     = "chr1";
+        record.pos()       = 11111;
+        record.id()        = "test";
+        record.ref()       = "ATC"_dna5;
+        record.alt()       = {"AGC", "A"};
+        record.qual()      = 1.F;
+        record.filter()    = {"PASS"};
+        record.genotypes() = {};
+        record.info()      = {};
+        writer.push_back(record);
+    }
+}
