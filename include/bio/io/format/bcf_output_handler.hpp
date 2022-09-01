@@ -51,24 +51,9 @@ namespace bio::io
  * TODO after genotype redesign
  */
 template <>
-class format_output_handler<bcf> : public format_output_handler_base<format_output_handler<bcf>>
+class format_output_handler<bcf>
 {
 private:
-    /*!\name CRTP related entities
-     * \{
-     */
-    //!\brief The base class.
-    using base_t = format_output_handler_base<format_output_handler<bcf>>;
-    //!\brief Befriend the base class so we can instantiate.
-    friend base_t;
-
-    using base_t::stream;
-    // WE EXPLICITLY DO NOT INHERIT THE FOLLOWING:
-    //     using base_t::it;
-    //     using base_t::write_field;
-    //     using base_t::write_field_aux;
-    //!\}
-
     //!\brief Print an error message with current record number in diagnostic.
     [[noreturn]] void error(auto const &... messages) const
     {
@@ -95,6 +80,8 @@ private:
     //!\brief Part of the record that can be written en-bloc.
     detail::bcf_record_core record_core;
 
+    //!\brief A pointer to the output stream.
+    std::ostream *                        stream = nullptr;
     //!\brief An intermediate stream that is guaranteed to always hold the complete current record in memory.
     std::ostringstream                    buffer_stream;
     //!\brief Accessor for the the buffer_stream.
@@ -1140,12 +1127,11 @@ public:
     format_output_handler & operator=(format_output_handler const &) = delete; //!< Deleted.
 
     //!\brief Move construction.
-    format_output_handler(format_output_handler && rhs) : base_t(std::move(rhs)) { move_impl(std::move(rhs)); }
+    format_output_handler(format_output_handler && rhs) { move_impl(std::move(rhs)); }
 
     //!\brief Move assignment.
     format_output_handler & operator=(format_output_handler && rhs)
     {
-        base_t::operator=(std::move(rhs));
         move_impl(std::move(rhs));
         return *this;
     }
@@ -1153,6 +1139,7 @@ public:
     //!\brief Helper function for move-constructor and move-assignment.
     void move_impl(format_output_handler && rhs)
     {
+        std::swap(stream, rhs.stream);
         std::swap(header_has_been_written, rhs.header_has_been_written);
         std::swap(header, rhs.header);
         std::swap(idx_desc, rhs.idx_desc);
@@ -1182,7 +1169,7 @@ public:
      * The options argument is typically bio::io::var_io::writer_options, but any object with a subset of similarly
      * named members is also accepted. See bio::io::format_output_handler<bcf> for the supported options and defaults.
      */
-    format_output_handler(std::ostream & str, auto const & options) : base_t{str}
+    format_output_handler(std::ostream & str, auto const & options) : stream{&str}
     {
         // extract options
         if constexpr (requires { (bool)options.compress_integers; })

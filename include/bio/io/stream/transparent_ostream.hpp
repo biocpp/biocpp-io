@@ -282,7 +282,7 @@ public:
     /*!\brief Construct from a stream.
      * \param[in] stream  The stream to wrap.
      * \param[in] options See bio::io::transparent_ostream_options.
-     *
+     * \throws bio::io::sync_with_stdio_detected See documentation.
      * \details
      *
      * The compression format is "none" by default. It can manually be selected via the options.
@@ -291,6 +291,20 @@ public:
                                  transparent_ostream_options options = transparent_ostream_options{}) :
       options_{std::move(options)}, primary_stream{&stream, stream_deleter_noop}
     {
+#ifndef BIOCPP_IO_NO_SYNC_CHECK
+        if (stream.rdbuf() == std::cout.rdbuf()) // this is std::cout
+        {
+            bool old_state = std::ios::sync_with_stdio(false);
+            if (old_state == true)
+            {
+                throw sync_with_stdio_detected{
+                  "You are writing data to unbuffered std::cout.\n"
+                  "Call `std::ios::sync_with_stdio(false);` somewhere in your program before performing I/O "
+                  "or define BIOCPP_IO_NO_SYNC_CHECK when building to silence this error."};
+            }
+        }
+#endif
+
         init();
     }
 
@@ -308,7 +322,10 @@ public:
     }
 
     //!\brief The filename this object was created from; empty if this object was not created from a file.
-    std::filesystem::path const & filename() { return filename_; }
+    std::filesystem::path const & filename()
+    {
+        return filename_;
+    }
 
     /*!\brief The filename this object was created from without compression-specific suffix.
      *
@@ -319,13 +336,19 @@ public:
      *
      * If this object was not created from a file, an empty path is returned.
      */
-    std::filesystem::path const & truncated_filename() { return truncated_filename_; }
+    std::filesystem::path const & truncated_filename()
+    {
+        return truncated_filename_;
+    }
 
     //!\brief Expose the base class's rdbuf which also accepts an argument.
     using base_t::rdbuf;
 
     //!\brief Expose the read buffer.
-    std::basic_streambuf<char> * rdbuf() const { return secondary_stream->rdbuf(); }
+    std::basic_streambuf<char> * rdbuf() const
+    {
+        return secondary_stream->rdbuf();
+    }
 };
 
 } // namespace bio::io
