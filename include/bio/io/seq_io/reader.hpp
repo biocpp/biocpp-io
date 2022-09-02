@@ -117,8 +117,22 @@ private:
 
     //!\brief Expose the options type to the base-class.
     using options_t = reader_options<option_args_t...>;
-    //!\}
 
+public:
+    using typename base_t::record_type;
+
+private:
+    //!\brief The fields used by this reader.
+    static constexpr auto field_ids = meta::vtag<field::id, field::seq, field::qual>;
+
+    //!\brief This is called by the base-class before reading.
+    static auto record_as_tuple_record(record_type & in_record)
+    {
+        // TODO move this to base-class (needs magic_get or similar)
+        return tie_record(field_ids, in_record.id, in_record.seq, in_record.qual);
+    }
+
+    //!\}
 public:
     //!\brief Inherit the format_type definition.
     using format_type = typename base_t::format_type;

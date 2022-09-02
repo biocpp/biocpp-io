@@ -35,7 +35,7 @@ Here, `.id()` (bio::io::record#id()) and `.seq()` (bio::io::record#seq()) are us
 documentation has entries for all field-accessor member functions, but it depends on the specific specialisation
 (used by the reader) whether that function is available.
 So, on the record defined by bio::io::seq_io::reader above, the members `.id()`, `.seq()`, `.qual()` are available, but
-the member `.pos()` would not be.
+the member `.pos` would not be.
 
 When the number of fields in the record is low and you know the order, you can also use
 [structured bindings](https://en.cppreference.com/w/cpp/language/structured_binding)
@@ -96,9 +96,9 @@ For some readers, more options are available, e.g. bio::io::seq_io::reader assum
 
 The snippet above illustrates how the alphabet can be changed (and how to provide another option at the same time).
 
-Instead of using these pre-defined `field_types`, you can also define them completely manually. You can decide to even read only a subset of the fields by changing the `.field_ids` member:
+Instead of using these pre-defined record aliases, you can also define them completely manually. You can decide to even read only a subset of the fields by setting some to be ignored::
 
-\snippet test/snippet/seq_io/seq_io_reader_options.cpp example_advanced2
+\snippet test/snippet/seq_io/seq_io_reader_options.cpp example_advanced
 
 This code makes FASTA the only legal format and creates records with only the sequence field asa std::string.
 

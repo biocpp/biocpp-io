@@ -93,7 +93,7 @@ private:
      * \{
      */
     //!\brief The fields that this format supports [the base class accesses this type].
-    using format_fields = decltype(var_io::default_field_ids);
+    using format_fields = decltype(detail::field_ids);
     //!\brief Type of the raw record.
     using raw_record_type =
       record<format_fields,

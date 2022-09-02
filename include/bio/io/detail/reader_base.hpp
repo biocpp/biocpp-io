@@ -101,7 +101,7 @@ public:
      * To be able to easily backup the first record of a mate-pair, you need to create a temporary
      * variable (`last_record`). This type alias helps define it.
      */
-    using record_type = record<decltype(options_t::field_ids), decltype(options_t::field_types)>;
+    using record_type = decltype(options_t::record);
     //!\brief The iterator type of this view (an input iterator).
     using iterator    = detail::in_file_iterator<derived_t>;
     //!\brief The type returned by end().
@@ -296,7 +296,6 @@ protected:
             return;
         }
 
-        assert(!format_handler.valueless_by_exception());
         std::visit([&](auto & f) { f.parse_next_record_into(record_buffer); }, format_handler);
     }
 

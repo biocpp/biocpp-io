@@ -299,9 +299,9 @@ public:
      * Basic exception safety.
      */
     template <std::ranges::input_range rng_t>
-        //!\cond REQ
-        requires(bio::meta::template_specialisation_of<std::remove_cvref_t<std::ranges::range_reference_t<rng_t>>,
-                                                       bio::io::record>)
+    derived_t & operator=(rng_t && range)
+      //!\cond REQ
+      requires(requires { to_derived().push_back(*std::ranges::begin(range)); })
     //!\endcond
     writer_base & operator=(rng_t && range)
     {
@@ -342,12 +342,13 @@ public:
     //!\overload
     template <std::ranges::input_range rng_t>
         //!\cond REQ
-        requires(bio::meta::template_specialisation_of<std::remove_cvref_t<std::ranges::range_reference_t<rng_t>>,
-                                                       bio::io::record>)
+      requires(requires { f.push_back(*std::ranges::begin(range)); })
     //!\endcond
     friend writer_base operator|(rng_t && range, writer_base && f)
     {
-        f = range;
+        //TODO(GCC11): replace with assignment once GCC10 is dropped
+        for (auto && record : range)
+            f.push_back(std::forward<decltype(record)>(record));
         return std::move(f);
     }
     //!\}

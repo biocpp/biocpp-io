@@ -26,6 +26,26 @@
 #include <bio/io/exception.hpp>
 #include <bio/io/record.hpp>
 
+// ----------------------------------------------------------------------------
+// forwards
+// ----------------------------------------------------------------------------
+
+namespace bio::io::var_io
+{
+
+template <typename chrom_t,
+          typename pos_t,
+          typename id_t,
+          typename ref_t,
+          typename alt_t,
+          typename qual_t,
+          typename filter_t,
+          typename info_t,
+          typename genotypes_t>
+struct record;
+
+}
+
 namespace bio::io
 {
 
@@ -171,7 +191,7 @@ private:
     template <field field_id, typename parsed_record_t>
     void parse_record_impl(meta::vtag_t<field_id> const & /**/, parsed_record_t & parsed_record)
     {
-        if constexpr (parsed_record_t::field_ids::contains(field_id))
+        if constexpr (detail::has_non_ignore_field<field_id, parsed_record_t>())
         {
             auto & parsed_field = get<field_id>(parsed_record);
             to_derived()->parse_field(meta::vtag<field_id>, parsed_field);
@@ -219,8 +239,9 @@ public:
      */
     void parse_current_record_into(auto & parsed_record)
     {
-        parsed_record.clear(); // TODO it might be beneficial to not clear and better reuse better memory
-        to_derived()->parse_record(typename derived_t::format_fields{}, parsed_record);
+        auto tuple_record = derived_t::record2tuple_record(parsed_record);
+        tuple_record.clear(); // TODO it might be beneficial to not clear and better reuse memory
+        to_derived()->parse_record(typename derived_t::format_fields{}, tuple_record);
     }
 
     /*!\brief Parse input into the record argument.
@@ -232,7 +253,7 @@ public:
     void parse_next_record_into(auto & parsed_record)
     {
         read_next_raw_record();
-        parse_current_record_into(parsed_record);
+        to_derived()->parse_current_record_into(parsed_record);
     }
     //!\}
 };

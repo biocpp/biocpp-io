@@ -9,9 +9,12 @@
 #pragma once
 
 #include <concepts>
+#include <string_view>
 #include <tuple>
 
+#include <bio/alphabet/concept.hpp>
 #include <bio/meta/type_list/type_list.hpp>
+#include <bio/ranges/views/char_strictly_to.hpp>
 
 #include <bio/io/platform.hpp>
 
@@ -22,6 +25,11 @@
 
 namespace bio::io
 {
+
+template <alphabet::alphabet alph_t>
+using conversion_view_t = decltype(std::string_view{} | bio::views::char_strictly_to<alph_t>);
+
+using ignore_t = std::remove_cvref_t<decltype(std::ignore)>;
 
 //-----------------------------------------------------------------------------
 // ownership

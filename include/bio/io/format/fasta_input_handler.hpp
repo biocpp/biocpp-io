@@ -28,6 +28,7 @@
 #include <bio/io/format/format_input_handler.hpp>
 #include <bio/io/misc/char_predicate.hpp>
 #include <bio/io/plain_io/reader.hpp>
+#include <bio/io/seq_io/record.hpp>
 
 namespace bio::io
 {
@@ -62,7 +63,9 @@ namespace bio::io
  * Requesting views never implies a second copy.
  */
 template <>
-class format_input_handler<fasta> : public format_input_handler_base<format_input_handler<fasta>>
+class format_input_handler<fasta> :
+  public format_input_handler_base<format_input_handler<fasta>>,
+  public seq_io::format_handler_mixin
 {
 private:
     /*!\name CRTP related entities

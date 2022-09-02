@@ -986,7 +986,8 @@ private:
     //!\brief Write the record (supports const and non-const lvalue ref).
     void write_record_impl(auto & record)
     {
-        using field_ids = typename std::remove_cvref_t<decltype(record)>::field_ids;
+        using record_t  = std::remove_cvref_t<decltype(record)>;
+        using field_ids = typename record_t::field_ids;
 
         if (!header_has_been_written)
         {
@@ -1002,9 +1003,10 @@ private:
             write_header();
         }
 
-        static_assert(field_ids::contains(field::chrom), "The record must contain the CHROM field.");
-        static_assert(field_ids::contains(field::pos), "The record must contain the POS field.");
-        static_assert(field_ids::contains(field::ref), "The record must contain the REF field.");
+        static_assert(detail::has_non_ignore_field<field::chrom, record_t>(),
+                      "The record must contain the CHROM field.");
+        static_assert(detail::has_non_ignore_field<field::pos, record_t>(), "The record must contain the POS field.");
+        static_assert(detail::has_non_ignore_field<field::ref, record_t>(), "The record must contain the REF field.");
 
         /* IMPLEMENTATION NOTE:
          * A problem when writing BCF is that the first fields of the record hold the size of the record
@@ -1040,20 +1042,20 @@ private:
 
         set_core_rlen(get<field::ref>(record));
 
-        if constexpr (field_ids::contains(field::qual))
+        if constexpr (detail::has_non_ignore_field<field::qual, record_t>())
             set_core_qual(get<field::qual>(record));
 
-        if constexpr (field_ids::contains(field::info))
+        if constexpr (detail::has_non_ignore_field<field::info, record_t>())
             set_core_n_info(get<field::info>(record));
 
-        if constexpr (field_ids::contains(field::alt))
+        if constexpr (detail::has_non_ignore_field<field::alt, record_t>())
             set_core_n_allele(get<field::alt>(record));
         else
             record_core.n_allele = 1; // the REF allele
 
         record_core.n_sample = header->column_labels.size() > 9 ? header->column_labels.size() - 9 : 0;
 
-        if constexpr (field_ids::contains(field::genotypes))
+        if constexpr (detail::has_non_ignore_field<field::genotypes, record_t>())
             set_core_n_fmt(get<field::genotypes>(record));
 
         // write record core
@@ -1061,24 +1063,24 @@ private:
 
         /* After this point, the order of writers is important! */
 
-        if constexpr (field_ids::contains(field::id))
+        if constexpr (detail::has_non_ignore_field<field::id, record_t>())
             write_field(meta::vtag<field::id>, get<field::id>(record));
         else
             write_field(meta::vtag<field::id>, std::string_view{});
 
         write_field(meta::vtag<field::ref>, get<field::ref>(record));
 
-        if constexpr (field_ids::contains(field::alt))
+        if constexpr (detail::has_non_ignore_field<field::alt, record_t>())
             write_field(meta::vtag<field::alt>, get<field::alt>(record));
         else
             write_field(meta::vtag<field::alt>, std::span<std::string_view>{});
 
-        if constexpr (field_ids::contains(field::filter))
+        if constexpr (detail::has_non_ignore_field<field::filter, record_t>())
             write_field(meta::vtag<field::filter>, get<field::filter>(record));
         else
             write_field(meta::vtag<field::filter>, std::span<std::string_view>{});
 
-        if constexpr (field_ids::contains(field::info))
+        if constexpr (detail::has_non_ignore_field<field::info, record_t>())
             write_field(meta::vtag<field::info>, get<field::info>(record));
         else
             write_field(meta::vtag<field::info>, std::span<var_io::info_element<>>{});
@@ -1089,7 +1091,7 @@ private:
 
         if (header->column_labels.size() > 8)
         {
-            if constexpr (field_ids::contains(field::genotypes))
+            if constexpr (detail::has_non_ignore_field<field::genotypes, record_t>())
                 write_field(meta::vtag<field::genotypes>, get<field::genotypes>(record));
             else
                 write_field(meta::vtag<field::genotypes>, std::span<var_io::genotype_element<>>{});

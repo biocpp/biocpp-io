@@ -105,6 +105,9 @@ private:
     {
         // TODO fix me
     }
+
+    //!\brief Write numbers.
+    void write_field_aux(ignore_t) {}
     //!\}
 
     /*!\name Writing individual fields (step 2)

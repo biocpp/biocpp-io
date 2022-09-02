@@ -28,6 +28,7 @@
 #include <bio/io/format/format_input_handler.hpp>
 #include <bio/io/misc/char_predicate.hpp>
 #include <bio/io/plain_io/reader.hpp>
+#include <bio/io/seq_io/record.hpp>
 
 namespace bio::io
 {
@@ -56,7 +57,9 @@ namespace bio::io
  * when shallow records are returned.
  */
 template <>
-class format_input_handler<fastq> : public format_input_handler_base<format_input_handler<fastq>>
+class format_input_handler<fastq> :
+  public format_input_handler_base<format_input_handler<fastq>>,
+  public seq_io::format_handler_mixin
 {
 private:
     /*!\name CRTP related entities
@@ -92,7 +95,7 @@ private:
      * \{
      */
     //!\brief The fields that this format supports [the base class accesses this type].
-    using format_fields     = meta::vtag_t<field::id, field::seq, field::qual>;
+    using format_fields     = decltype(seq_io::field_ids);
     //!\brief Type of the raw record.
     using raw_record_type   = record<format_fields, meta::list_traits::repeat<3, std::string_view>>;
     //!\brief Type of the low-level iterator.

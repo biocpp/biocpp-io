@@ -475,13 +475,13 @@ private:
     //!\brief Write the record (supports const and non-const lvalue ref).
     void write_record_impl(auto & record)
     {
-        using field_ids = typename std::remove_cvref_t<decltype(record)>::field_ids;
+        using record_t = std::remove_cvref_t<decltype(record)>;
 
         if (!header_has_been_written)
         {
             if (header == nullptr)
             {
-                if constexpr (field_ids::contains(field::_private))
+                if constexpr (detail::has_non_ignore_field<field::_private, record_t>())
                 {
                     if (var_io::header const * ptr = get<field::_private>(record).header_ptr; ptr != nullptr)
                         set_header(*ptr);
@@ -491,50 +491,51 @@ private:
             write_header();
         }
 
-        static_assert(field_ids::contains(field::chrom), "The record must contain the CHROM field.");
+        static_assert(detail::has_non_ignore_field<field::chrom, record_t>(),
+                      "The record must contain the CHROM field.");
         write_field(meta::vtag<field::chrom>, get<field::chrom>(record));
         it = '\t';
 
-        static_assert(field_ids::contains(field::pos), "The record must contain the POS field.");
+        static_assert(detail::has_non_ignore_field<field::pos, record_t>(), "The record must contain the POS field.");
         write_field(meta::vtag<field::pos>, get<field::pos>(record));
         it = '\t';
 
-        if constexpr (field_ids::contains(field::id))
+        if constexpr (detail::has_non_ignore_field<field::id, record_t>())
             write_field(meta::vtag<field::id>, get<field::id>(record));
         else
             it = '.';
         it = '\t';
 
-        static_assert(field_ids::contains(field::ref), "The record must contain the REF field.");
+        static_assert(detail::has_non_ignore_field<field::ref, record_t>(), "The record must contain the REF field.");
         write_field(meta::vtag<field::ref>, get<field::ref>(record));
         it = '\t';
 
-        if constexpr (field_ids::contains(field::alt))
+        if constexpr (detail::has_non_ignore_field<field::alt, record_t>())
             write_field(meta::vtag<field::alt>, get<field::alt>(record));
         else
             it = '.';
         it = '\t';
 
-        if constexpr (field_ids::contains(field::qual))
+        if constexpr (detail::has_non_ignore_field<field::qual, record_t>())
             write_field(meta::vtag<field::qual>, get<field::qual>(record));
         else
             it = '.';
         it = '\t';
 
-        if constexpr (field_ids::contains(field::filter))
+        if constexpr (detail::has_non_ignore_field<field::filter, record_t>())
             write_field(meta::vtag<field::filter>, get<field::filter>(record));
         else
             it = '.';
         it = '\t';
 
-        if constexpr (field_ids::contains(field::info))
+        if constexpr (detail::has_non_ignore_field<field::info, record_t>())
             write_field(meta::vtag<field::info>, get<field::info>(record));
         else
             it = '.';
 
         if (header->column_labels.size() > 8)
         {
-            if constexpr (field_ids::contains(field::genotypes))
+            if constexpr (detail::has_non_ignore_field<field::genotypes, record_t>())
             {
                 it = '\t';
                 write_field(meta::vtag<field::genotypes>, get<field::genotypes>(record));

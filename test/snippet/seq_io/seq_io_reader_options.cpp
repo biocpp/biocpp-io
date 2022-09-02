@@ -9,33 +9,23 @@ int main()
 //![example_simple]
 bio::io::seq_io::reader_options options
 {
-    .field_types  = bio::io::seq_io::field_types_protein,
-    .truncate_ids = true
+    .record         = bio::io::seq_io::record_protein_shallow{},
+    .stream_options = bio::io::transparent_istream_options{ .threads = 1 },
+    .truncate_ids   = true
 };
 //![example_simple]
 }
 
-{
-//![example_advanced1]
-bio::io::seq_io::reader_options options
-{
-    .field_types    = bio::io::seq_io::field_types<bio::io::ownership::shallow, bio::alphabet::dna4, bio::alphabet::phred42>,
-    .stream_options = bio::io::transparent_istream_options{ .threads = 1 }
-};
-//![example_advanced1]
-}
-
-//TODO if https://gcc.gnu.org/bugzilla/show_bug.cgi?id=101803 gets backported to GCC10 we can omit
-// bio::io::transparent_istream_options from the above example
+// TODO(GCC11): omit bio::io::transparent_istream_options from the above example
+// and bio::io::seq_io::record below
 
 {
-//![example_advanced2]
+//![example_advanced]
 bio::io::seq_io::reader_options options
 {
-    .field_ids   = bio::meta::vtag<bio::io::field::seq>,
-    .field_types = bio::meta::ttag<std::string>,
-    .formats     = bio::meta::ttag<bio::io::fasta>
+    .formats     = bio::meta::ttag<bio::io::fasta>,
+    .record      = bio::io::seq_io::record{.seq = std::ignore, .qual = std::ignore }
 };
-//![example_advanced2]
+//![example_advanced]
 }
 }
