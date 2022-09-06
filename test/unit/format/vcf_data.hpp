@@ -13,7 +13,7 @@
 #include <bio/ranges/views/char_strictly_to.hpp>
 
 #include <bio/io/detail/magic_get.hpp>
-#include <bio/io/var_io/reader.hpp>
+#include <bio/io/var_io/record.hpp>
 
 //=============================================================================
 // Official example
@@ -214,7 +214,7 @@ inline std::string const incomplete_header_after =
 /* auxiliary stuff */
 using tf_view = decltype(std::string_view{} | bio::views::char_strictly_to<bio::alphabet::dna5>);
 
-bool operator==(tf_view const & lhs, tf_view const & rhs)
+constexpr bool operator==(tf_view const & lhs, tf_view const & rhs)
 {
     return std::ranges::equal(lhs, rhs);
 }
@@ -234,8 +234,9 @@ auto make_ref(std::string_view const str)
 template <bio::io::ownership own, typename int_t = int32_t>
 auto example_records_default_style()
 {
-    using record_t =
-      bio::io::record<decltype(bio::io::var_io::default_field_ids), decltype(bio::io::var_io::field_types<own>)>;
+    using record_t = std::conditional_t<own == bio::io::ownership::shallow,
+                                        bio::io::var_io::record_default_shallow,
+                                        bio::io::var_io::record_default>;
 
     bio::io::var_io::record_private_data priv{};
     constexpr int_t                      mv = bio::io::var_io::missing_value<int_t>;
@@ -261,8 +262,9 @@ auto example_records_default_style()
 template <bio::io::ownership own, typename int_t = int32_t>
 auto example_records_bcf_style()
 {
-    using record_t = bio::io::record<decltype(bio::io::var_io::default_field_ids),
-                                     decltype(bio::io::var_io::field_types_bcf_style<own>)>;
+    using record_t = std::conditional_t<own == bio::io::ownership::shallow,
+                                        bio::io::var_io::record_idx_shallow,
+                                        bio::io::var_io::record_idx>;
 
     bio::io::var_io::record_private_data priv{};
     constexpr int_t                      mv = bio::io::var_io::missing_value<int_t>;
@@ -297,8 +299,7 @@ auto example_records_novariant()
     using svec                              = std::vector<std::string_view>;
 
     // clang-format off
-    auto rec0 = bio::io::make_record(bio::io::var_io::default_field_ids,
-                                 "20",
+    auto rec0 = bio::io::var_io::record{"20",
                                  14370,
                                  "rs6054257",
                                  "G",
@@ -314,10 +315,9 @@ auto example_records_novariant()
                                             std::pair{"GQ", ivec{48, 48, 43}},
                                             std::pair{"DP", ivec{1, 8, 5}},
                                             std::pair{"HQ", ivecvec{ivec{51, 51}, {51, 51}, {mv, mv}}}},
-                                 priv);
+                                 priv};
 
-    auto rec1 = bio::io::make_record(bio::io::var_io::default_field_ids,
-                                 "20",
+    auto rec1 = bio::io::var_io::record{"20",
                                  17330,
                                  ".",
                                  "T",
@@ -331,10 +331,9 @@ auto example_records_novariant()
                                             std::pair{"GQ", ivec{49,  3, 41}},
                                             std::pair{"DP", ivec{3, 5, 3}},
                                             std::pair{"HQ", ivecvec{ivec{58, 50}, {65, 3}}}},
-                                 priv);
+                                 priv};
 
-    auto rec2 = bio::io::make_record(bio::io::var_io::default_field_ids,
-                                 "20",
+    auto rec2 = bio::io::var_io::record{"20",
                                  1110696,
                                  "rs6040355",
                                  "A",
@@ -350,10 +349,9 @@ auto example_records_novariant()
                                             std::pair{"GQ", ivec{21,  2, 35}},
                                             std::pair{"DP", ivec{6, 0, 4}},
                                             std::pair{"HQ", ivecvec{ivec{23, 27}, {18, 2}}}},
-                                 priv);
+                                 priv};
 
-    auto rec3 = bio::io::make_record(bio::io::var_io::default_field_ids,
-                                 "20",
+    auto rec3 = bio::io::var_io::record{"20",
                                  1230237,
                                  ".",
                                  "T",
@@ -367,10 +365,9 @@ auto example_records_novariant()
                                             std::pair{"GQ", ivec{54, 48, 61}},
                                             std::pair{"DP", ivec{7, 4, 2}},
                                             std::pair{"HQ", ivecvec{ivec{56, 60}, {51, 51}}}},
-                                 priv);
+                                 priv};
 
-    auto rec4 = bio::io::make_record(bio::io::var_io::default_field_ids,
-                                 "20",
+    auto rec4 = bio::io::var_io::record{"20",
                                  1234567,
                                  "microsat1",
                                  "GTC",
@@ -383,7 +380,7 @@ auto example_records_novariant()
                                  std::tuple{std::pair{"GT", svec{"0/1", "0/2", "1/1"}},
                                             std::pair{"GQ", ivec{35, 17, 40}},
                                             std::pair{"DP", ivec{4, 2, 3}}},
-                                 priv);
+                                 priv};
     // clang-format on
     return std::tuple{rec0, rec1, rec2, rec3, rec4};
 }

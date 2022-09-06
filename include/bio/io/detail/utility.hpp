@@ -67,4 +67,17 @@ struct move_tracker
     bool moved_from = false;
 };
 
+//!\brief Helper for clearing objects that provide such functionality.
+//!\ingroup io
+void clear(auto && arg) requires(requires { arg.clear(); })
+{
+    arg.clear();
+}
+
+//!\overload
+void clear(auto && arg)
+{
+    arg = {};
+}
+
 } // namespace bio::io::detail

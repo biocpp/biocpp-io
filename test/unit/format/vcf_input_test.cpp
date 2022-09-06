@@ -11,7 +11,7 @@
 #include <bio/test/expect_range_eq.hpp>
 
 #include <bio/io/format/vcf_input_handler.hpp>
-#include <bio/io/var_io/reader.hpp>
+#include <bio/io/var_io/record.hpp>
 
 #include "vcf_data.hpp"
 
@@ -31,10 +31,13 @@ void field_types()
 
     bio::io::var_io::record_private_data priv{&handler.get_header()};
 
-    using fields_t = std::conditional_t<s == style::def,
-                                        decltype(bio::io::var_io::field_types<own>),
-                                        decltype(bio::io::var_io::field_types_bcf_style<own>)>;
-    using record_t = bio::io::record<decltype(bio::io::var_io::default_field_ids), fields_t>;
+    using record_t = std::conditional_t<s == style::def,
+                                        std::conditional_t<own == bio::io::ownership::deep,
+                                                           bio::io::var_io::record_default,
+                                                           bio::io::var_io::record_default_shallow>,
+                                        std::conditional_t<own == bio::io::ownership::deep,
+                                                           bio::io::var_io::record_idx,
+                                                           bio::io::var_io::record_idx_shallow>>;
 
     std::vector<record_t> recs;
 
@@ -44,23 +47,33 @@ void field_types()
         recs = example_records_bcf_style<own>();
 
     for (auto & rec : recs)
-        get<bio::io::field::_private>(rec) = priv;
+        rec._private = priv;
 
     record_t rec;
 
     handler.parse_next_record_into(rec);
+    rec._private.raw_record  = nullptr;
+    rec._private.record_core = nullptr;
     EXPECT_EQ(rec, recs[0]);
 
     handler.parse_next_record_into(rec);
+    rec._private.raw_record  = nullptr;
+    rec._private.record_core = nullptr;
     EXPECT_EQ(rec, recs[1]);
 
     handler.parse_next_record_into(rec);
+    rec._private.raw_record  = nullptr;
+    rec._private.record_core = nullptr;
     EXPECT_EQ(rec, recs[2]);
 
     handler.parse_next_record_into(rec);
+    rec._private.raw_record  = nullptr;
+    rec._private.record_core = nullptr;
     EXPECT_EQ(rec, recs[3]);
 
     handler.parse_next_record_into(rec);
+    rec._private.raw_record  = nullptr;
+    rec._private.record_core = nullptr;
     EXPECT_EQ(rec, recs[4]);
 }
 
@@ -92,8 +105,7 @@ TEST(vcf, incomplete_header)
 
     std::istringstream istr{incomplete_header_before + example_from_spec_records};
 
-    using record_t =
-      bio::io::record<decltype(bio::io::var_io::default_field_ids), decltype(bio::io::var_io::field_types<>)>;
+    using record_t = bio::io::var_io::record_default_shallow;
 
     bio::io::format_input_handler<bio::io::vcf> handler{istr, bio::io::var_io::reader_options{.print_warnings = false}};
 
@@ -104,7 +116,7 @@ TEST(vcf, incomplete_header)
     auto recs = example_records_default_style<bio::io::ownership::shallow>();
 
     for (auto & rec : recs)
-        get<bio::io::field::_private>(rec) = priv;
+        rec._private = priv;
 
     EXPECT_EQ(hdr.to_plaintext(), incomplete_header_before);
 

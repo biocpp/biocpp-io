@@ -45,11 +45,23 @@ namespace bio::io
  * Most file writer inherit from this class to reduce implementation overhead. It is not relevant for most users
  * of the library.
  */
-template <typename options_t>
+template <typename derived_t, typename options_t>
 class writer_base
 {
-protected:
-    //!\privatesection
+private:
+    /*!\name CRTP related entities
+     * \{
+     */
+    //!\brief Befriend the derived type so it can instantiate.
+    friend derived_t;
+
+    //!\brief Downcast self to derived type.
+    derived_t & to_derived() { return *static_cast<derived_t *>(this); }
+
+    //!\brief Downcast self to derived type. [const-qualified version]
+    derived_t const & to_derived() const { return *static_cast<derived_t const *>(this); }
+    //!\}
+
     /*!\name Format handling
      * \{
      */
@@ -83,7 +95,7 @@ public:
      * \{
      */
     //!\brief The iterator type of this view (an input iterator).
-    using iterator = detail::out_file_iterator<writer_base>;
+    using iterator = detail::out_file_iterator<derived_t>;
     //!\brief The type returned by end().
     using sentinel = std::default_sentinel_t;
     //!\}
@@ -206,7 +218,7 @@ public:
      *
      * No-throw guarantee.
      */
-    iterator begin() noexcept { return {*this}; }
+    iterator begin() noexcept { return {to_derived()}; }
 
     /*!\brief Returns a sentinel for comparison with iterator.
      * \returns An end that is never reached.
@@ -223,64 +235,6 @@ public:
      * No-throw guarantee.
      */
     sentinel end() noexcept { return {}; }
-
-    /*!\brief Write a bio::io::record to the file.
-     * \tparam field_types Types of the fields in the record.
-     * \tparam field_ids   IDs of the fields in the record.
-     * \param[in] r        The record to write.
-     *
-     * \details
-     *
-     * ### Complexity
-     *
-     * Constant. TODO linear in the size of the written sequences?
-     *
-     * ### Exceptions
-     *
-     * Basic exception safety.
-     */
-    template <typename field_types, typename field_ids>
-    void push_back(record<field_types, field_ids> const & r)
-    {
-        write_record(r);
-    }
-
-    //!\overload
-    template <typename field_types, typename field_ids>
-    void push_back(record<field_types, field_ids> & r)
-    {
-        write_record(r); // pass as non-const to allow parsing views that are not const-iterable
-    }
-
-    //!\overload
-    template <typename field_types, typename field_ids>
-    void push_back(record<field_types, field_ids> && r)
-    {
-        write_record(r); // pass as non-const to allow parsing views that are not const-iterable
-    }
-
-    /*!\brief Write a record to the file by passing individual fields.
-     * \param[in] ids    The composition of fields; a bio::meta::vtag over bio::io::field.
-     * \param[in] args   The fields to be written.
-     *
-     * \details
-     *
-     * Uses the field IDs specified as the first arguments to construct a record from the following arguments.
-     * Then writes that record as if calling push_back().
-     *
-     * ### Complexity
-     *
-     * Constant.
-     *
-     * ### Exceptions
-     *
-     * Basic exception safety.
-     */
-    template <auto... field_ids>
-    void emplace_back(meta::vtag_t<field_ids...> ids, auto &&... args)
-    {
-        push_back(tie_record(ids, args...));
-    }
 
     /*!\brief Write a range of records to the file.
      * \tparam rng_t     Type of the range, must be a std::ranges::input_range over bio::io::record.
@@ -303,11 +257,10 @@ public:
       //!\cond REQ
       requires(requires { to_derived().push_back(*std::ranges::begin(range)); })
     //!\endcond
-    writer_base & operator=(rng_t && range)
     {
         for (auto && record : range)
-            push_back(std::forward<decltype(record)>(record));
-        return *this;
+            to_derived().push_back(std::forward<decltype(record)>(record));
+        return to_derived();
     }
 
     /*!\brief            Write a range of records (or tuples) to the file.
@@ -329,11 +282,10 @@ public:
      * Basic exception safety.
      */
     template <std::ranges::input_range rng_t>
-        //!\cond REQ
-        requires(bio::meta::template_specialisation_of<std::remove_cvref_t<std::ranges::range_reference_t<rng_t>>,
-                                                       bio::io::record>)
+    friend derived_t & operator|(rng_t && range, derived_t & f)
+      //!\cond REQ
+      requires(requires { f = range; })
     //!\endcond
-    friend writer_base & operator|(rng_t && range, writer_base & f)
     {
         f = range;
         return f;
@@ -341,10 +293,10 @@ public:
 
     //!\overload
     template <std::ranges::input_range rng_t>
-        //!\cond REQ
+    friend derived_t operator|(rng_t && range, derived_t && f)
+      //!\cond REQ
       requires(requires { f.push_back(*std::ranges::begin(range)); })
     //!\endcond
-    friend writer_base operator|(rng_t && range, writer_base && f)
     {
         //TODO(GCC11): replace with assignment once GCC10 is dropped
         for (auto && record : range)

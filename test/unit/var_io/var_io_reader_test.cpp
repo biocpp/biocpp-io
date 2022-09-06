@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 #include <bio/test/expect_range_eq.hpp>
+#include <bio/test/expect_same_type.hpp>
 #include <bio/test/tmp_directory.hpp>
 #include <bio/test/tmp_filename.hpp>
 
@@ -57,37 +58,33 @@ void var_io_reader_filename_constructor(bool ext_check, auto &&... args)
 TEST(var_io_reader, constructor1_just_filename)
 {
     var_io_reader_filename_constructor(true);
-    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::reader{""}), bio::io::var_io::reader<>>));
+    EXPECT_SAME_TYPE(decltype(bio::io::var_io::reader{""}), bio::io::var_io::reader<>);
 }
 
 TEST(var_io_reader, constructor1_with_opts)
 {
-    bio::io::var_io::reader_options opt{.field_types = bio::io::var_io::field_types_bcf_style<>};
+    bio::io::var_io::reader_options opt{.record = bio::io::var_io::record_idx{}};
     using control_t =
-      bio::io::var_io::reader<decltype(bio::io::var_io::default_field_ids),
-                              decltype(bio::io::var_io::field_types_bcf_style<bio::io::ownership::shallow>),
-                              bio::meta::type_list<bio::io::vcf, bio::io::bcf>>;
+      bio::io::var_io::reader<bio::meta::type_list<bio::io::vcf, bio::io::bcf>, bio::io::var_io::record_idx>;
 
     var_io_reader_filename_constructor(true, std::move(opt));
-    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::reader{"", opt}), control_t>));
+    EXPECT_SAME_TYPE((decltype(bio::io::var_io::reader{"", opt})), control_t);
 }
 
 TEST(var_io_reader, constructor2_just_filename_direct_format)
 {
     var_io_reader_filename_constructor(false, bio::io::vcf{});
-    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::reader{"", bio::io::vcf{}}), bio::io::var_io::reader<>>));
+    EXPECT_SAME_TYPE((decltype(bio::io::var_io::reader{"", bio::io::vcf{}})), bio::io::var_io::reader<>);
 }
 
 TEST(var_io_reader, constructor2_with_opts_direct_format)
 {
-    bio::io::var_io::reader_options opt{.field_types = bio::io::var_io::field_types_bcf_style<>};
+    bio::io::var_io::reader_options opt{.record = bio::io::var_io::record_idx{}};
     using control_t =
-      bio::io::var_io::reader<decltype(bio::io::var_io::default_field_ids),
-                              decltype(bio::io::var_io::field_types_bcf_style<bio::io::ownership::shallow>),
-                              bio::meta::type_list<bio::io::vcf, bio::io::bcf>>;
+      bio::io::var_io::reader<bio::meta::type_list<bio::io::vcf, bio::io::bcf>, bio::io::var_io::record_idx>;
 
     var_io_reader_filename_constructor(false, bio::io::vcf{}, std::move(opt));
-    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::reader{"", bio::io::vcf{}, opt}), control_t>));
+    EXPECT_SAME_TYPE((decltype(bio::io::var_io::reader{"", bio::io::vcf{}, opt})), control_t);
 }
 
 TEST(var_io_reader, constructor2_just_filename_format_variant)
@@ -95,20 +92,18 @@ TEST(var_io_reader, constructor2_just_filename_format_variant)
     std::variant<bio::io::vcf, bio::io::bcf> var{};
 
     var_io_reader_filename_constructor(false, var);
-    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::reader{"", var}), bio::io::var_io::reader<>>));
+    EXPECT_SAME_TYPE((decltype(bio::io::var_io::reader{"", var})), bio::io::var_io::reader<>);
 }
 
 TEST(var_io_reader, constructor2_with_opts_format_variant)
 {
     std::variant<bio::io::vcf, bio::io::bcf> var{};
-    bio::io::var_io::reader_options          opt{.field_types = bio::io::var_io::field_types_bcf_style<>};
+    bio::io::var_io::reader_options          opt{.record = bio::io::var_io::record_idx{}};
     using control_t =
-      bio::io::var_io::reader<decltype(bio::io::var_io::default_field_ids),
-                              decltype(bio::io::var_io::field_types_bcf_style<bio::io::ownership::shallow>),
-                              bio::meta::type_list<bio::io::vcf, bio::io::bcf>>;
+      bio::io::var_io::reader<bio::meta::type_list<bio::io::vcf, bio::io::bcf>, bio::io::var_io::record_idx>;
 
     var_io_reader_filename_constructor(false, var, std::move(opt));
-    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::reader{"", var, std::move(opt)}), control_t>));
+    EXPECT_SAME_TYPE((decltype(bio::io::var_io::reader{"", var, std::move(opt)})), control_t);
 }
 
 TEST(var_io_reader, constructor3)
@@ -116,20 +111,18 @@ TEST(var_io_reader, constructor3)
     std::istringstream str;
 
     EXPECT_NO_THROW((bio::io::var_io::reader{str, bio::io::vcf{}}));
-    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::reader{str, bio::io::vcf{}}), bio::io::var_io::reader<>>));
+    EXPECT_SAME_TYPE((decltype(bio::io::var_io::reader{str, bio::io::vcf{}})), bio::io::var_io::reader<>);
 }
 
 TEST(var_io_reader, constructor3_with_opts)
 {
     std::istringstream              str;
-    bio::io::var_io::reader_options opt{.field_types = bio::io::var_io::field_types_bcf_style<>};
+    bio::io::var_io::reader_options opt{.record = bio::io::var_io::record_idx{}};
     using control_t =
-      bio::io::var_io::reader<decltype(bio::io::var_io::default_field_ids),
-                              decltype(bio::io::var_io::field_types_bcf_style<bio::io::ownership::shallow>),
-                              bio::meta::type_list<bio::io::vcf, bio::io::bcf>>;
+      bio::io::var_io::reader<bio::meta::type_list<bio::io::vcf, bio::io::bcf>, bio::io::var_io::record_idx>;
 
     EXPECT_NO_THROW((bio::io::var_io::reader{str, bio::io::vcf{}, opt}));
-    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::reader{str, bio::io::vcf{}, opt}), control_t>));
+    EXPECT_SAME_TYPE((decltype(bio::io::var_io::reader{str, bio::io::vcf{}, opt})), control_t);
 }
 
 TEST(var_io_reader, constructor4)
@@ -144,14 +137,12 @@ TEST(var_io_reader, constructor4)
 TEST(var_io_reader, constructor4_with_opts)
 {
     std::istringstream              str;
-    bio::io::var_io::reader_options opt{.field_types = bio::io::var_io::field_types_bcf_style<>};
+    bio::io::var_io::reader_options opt{.record = bio::io::var_io::record_idx{}};
     using control_t =
-      bio::io::var_io::reader<decltype(bio::io::var_io::default_field_ids),
-                              decltype(bio::io::var_io::field_types_bcf_style<bio::io::ownership::shallow>),
-                              bio::meta::type_list<bio::io::vcf, bio::io::bcf>>;
+      bio::io::var_io::reader<bio::meta::type_list<bio::io::vcf, bio::io::bcf>, bio::io::var_io::record_idx>;
 
     EXPECT_NO_THROW((bio::io::var_io::reader{std::move(str), bio::io::vcf{}, opt}));
-    EXPECT_TRUE((std::same_as<decltype(bio::io::var_io::reader{std::move(str), bio::io::vcf{}, opt}), control_t>));
+    EXPECT_SAME_TYPE((decltype(bio::io::var_io::reader{std::move(str), bio::io::vcf{}, opt})), control_t);
 }
 
 TEST(var_io_reader, iteration)
@@ -171,7 +162,7 @@ TEST(var_io_reader, iteration)
         for (auto & rec : reader)
         {
             ++count;
-            EXPECT_EQ(rec.chrom(), "20");
+            EXPECT_EQ(rec.chrom, "20");
             // only very basic check here, rest in format test
         }
         EXPECT_EQ(count, 5ull);
@@ -218,7 +209,7 @@ TEST(var_io_reader, get_header)
         bio::io::var_io::reader reader{str, bio::io::vcf{}};
 
         auto it = reader.begin();
-        EXPECT_EQ(it->chrom(), "20");
+        EXPECT_EQ(it->chrom, "20");
 
         bio::io::var_io::header const & hdr = reader.header();
 
@@ -228,29 +219,12 @@ TEST(var_io_reader, get_header)
 
 TEST(var_io_reader, custom_field_types)
 {
-    bio::io::var_io::reader_options opt{.field_types =
-                                          bio::io::var_io::field_types_bcf_style<bio::io::ownership::deep>};
+    bio::io::var_io::reader_options opt{.record = bio::io::var_io::record_idx{}};
 
     std::istringstream      str{static_cast<std::string>(example_from_spec)};
     bio::io::var_io::reader reader{str, bio::io::vcf{}, opt};
 
-    EXPECT_TRUE(
-      (std::same_as<std::ranges::range_value_t<decltype(reader)>,
-                    bio::io::record<decltype(bio::io::var_io::default_field_ids),
-                                    decltype(bio::io::var_io::field_types_bcf_style<bio::io::ownership::deep>)>>));
-}
-
-TEST(var_io_reader, custom_field_ids_structured_bindings)
-{
-    bio::io::var_io::reader_options opt{
-      .field_ids   = bio::meta::vtag<bio::io::field::chrom, bio::io::field::pos, bio::io::field::ref>,
-      .field_types = bio::meta::ttag<std::string, uint32_t, std::string>};
-
-    std::istringstream      str{static_cast<std::string>(example_from_spec)};
-    bio::io::var_io::reader reader{str, bio::io::vcf{}, opt};
-
-    for (auto & [chrom, pos, ref] : reader)
-        EXPECT_EQ(chrom, "20");
+    EXPECT_SAME_TYPE(std::ranges::range_value_t<decltype(reader)>, bio::io::var_io::record_idx);
 }
 
 TEST(var_io_reader, decompression_filename)
@@ -269,7 +243,7 @@ TEST(var_io_reader, decompression_filename)
     for (auto & rec : reader)
     {
         ++count;
-        EXPECT_EQ(rec.chrom(), "20");
+        EXPECT_EQ(rec.chrom, "20");
         // only very basic check here, rest in format test
     }
     EXPECT_EQ(count, 5ull);
@@ -285,7 +259,7 @@ TEST(var_io_reader, decompression_stream)
     for (auto & rec : reader)
     {
         ++count;
-        EXPECT_EQ(rec.chrom(), "20");
+        EXPECT_EQ(rec.chrom, "20");
         // only very basic check here, rest in format test
     }
     EXPECT_EQ(count, 5ull);
@@ -315,9 +289,9 @@ TEST(var_io_reader, region_filter)
         for (auto & rec : reader)
         {
             ++count;
-            EXPECT_EQ(rec.chrom(), "20");
-            EXPECT_GE(rec.pos(), region.beg);
-            EXPECT_LT(rec.pos(), region.end);
+            EXPECT_EQ(rec.chrom, "20");
+            EXPECT_GE(rec.pos, region.beg);
+            EXPECT_LT(rec.pos, region.end);
         }
         EXPECT_EQ(count, 3ull);
     }
@@ -348,9 +322,9 @@ TEST(var_io_reader, region_filter_linear)
         for (auto & rec : reader)
         {
             ++count;
-            EXPECT_EQ(rec.chrom(), "20");
-            EXPECT_GE(rec.pos(), region.beg);
-            EXPECT_LT(rec.pos(), region.end);
+            EXPECT_EQ(rec.chrom, "20");
+            EXPECT_GE(rec.pos, region.beg);
+            EXPECT_LT(rec.pos, region.end);
         }
         EXPECT_EQ(count, 3ull);
     }
@@ -372,7 +346,7 @@ TEST(var_io_reader, reopen)
         for (auto & rec : reader)
         {
             ++count;
-            EXPECT_EQ(rec.chrom(), "20");
+            EXPECT_EQ(rec.chrom, "20");
         }
         EXPECT_EQ(count, 5ull);
 
@@ -382,7 +356,7 @@ TEST(var_io_reader, reopen)
         for (auto & rec : reader)
         {
             ++count;
-            EXPECT_EQ(rec.chrom(), "20");
+            EXPECT_EQ(rec.chrom, "20");
         }
         EXPECT_EQ(count, 5ull);
     }

@@ -39,7 +39,7 @@ int main()
 bio::io::var_io::reader reader{"example.vcf"};
 
 for (auto & rec : reader)
-    fmt::print("{}:{}:{}:{}\n", rec.chrom(), rec.pos(), rec.ref(), rec.alt());
+    fmt::print("{}:{}:{}:{}\n", rec.chrom, rec.pos, rec.ref, rec.alt);
 
 //![simple_usage_file]
 }
@@ -51,7 +51,7 @@ fmt::print("--\n");
 bio::io::var_io::reader reader{std::cin, bio::io::vcf{}};
 
 for (auto & rec : reader)
-    fmt::print("{}:{}:{}:{}\n", rec.chrom(), rec.pos(), rec.ref(), rec.alt());
+    fmt::print("{}:{}:{}:{}\n", rec.chrom, rec.pos, rec.ref, rec.alt);
 //![simple_usage_stream]
 }
 
@@ -64,7 +64,7 @@ bio::io::var_io::reader reader{"example.vcf.gz", bio::io::var_io::reader_options
 
 // this will only print 3 records instead of 5
 for (auto & rec : reader)
-    fmt::print("{}:{}:{}:{}\n", rec.chrom(), rec.pos(), rec.ref(), rec.alt());
+    fmt::print("{}:{}:{}:{}\n", rec.chrom, rec.pos, rec.ref, rec.alt);
 //![region]
 }
 
@@ -74,10 +74,10 @@ fmt::print("--\n");
 //![views]
 bio::io::var_io::reader reader{"example.vcf"};
 
-auto min_qual = [](auto & rec) { return rec.qual() > 23; };
+auto min_qual = [](auto & rec) { return rec.qual > 23; };
 
 for (auto & rec : reader | std::views::filter(min_qual) | std::views::take(5))
-    fmt::print("{}:{}:{}:{}\n", rec.chrom(), rec.pos(), rec.ref(), rec.alt());
+    fmt::print("{}:{}:{}:{}\n", rec.chrom, rec.pos, rec.ref, rec.alt);
 //![views]
 }
 

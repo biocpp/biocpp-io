@@ -425,3 +425,28 @@ constexpr auto tie_record(meta::vtag_t<field_ids...> BIOCPP_IO_DOXYGEN_ONLY(tag)
 //!\}
 
 } // namespace bio::io
+
+//-------------------------------------------------------------------------------
+// has_non_ignore_field
+//-------------------------------------------------------------------------------
+
+namespace bio::io::detail
+{
+
+//!\brief Auxiliary function to check if a record has a field and it's not std::ignore'd.
+template <field f, typename t>
+consteval bool has_non_ignore_field()
+{
+    using record_t  = typename std::remove_cvref_t<t>;
+    using field_ids = typename record_t::field_ids;
+    if constexpr (field_ids::contains(f))
+    {
+        if constexpr (!decays_to<record_element_t<f, record_t>, ignore_t>)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+} // namespace bio::io::detail

@@ -34,28 +34,28 @@ writer.set_header(header);
 //![simple_usage_file]
 /* construction of writer as defined above */
 
-bio::io::var_io::default_record rec;
-rec.chrom()     = "20";
-rec.pos()       = 14370;
-rec.id()        = "my_var";
-rec.ref()       = "ACT"_dna5;
-rec.alt().push_back("A");                                           // vector of strings by default
-rec.qual()      = 9.4;
-rec.filter().push_back("q10");                                      // vector of strings by default
+bio::io::var_io::record_default rec;
+rec.chrom     = "20";
+rec.pos       = 14370;
+rec.id        = "my_var";
+rec.ref       = "ACT"_dna5;
+rec.alt.push_back("A");                                           // vector of strings by default
+rec.qual      = 9.4;
+rec.filter.push_back("q10");                                      // vector of strings by default
 
 /* info is vector over bio::io::var_io::info_element */
-rec.info().push_back({.id = "DP", .value = 30});                    // DP is single integer (see header)
-rec.info().push_back({.id = "AF", .value = std::vector{0.5f}});     // AF is vector of float (see header)
+rec.info.push_back({.id = "DP", .value = 30});                    // DP is single integer (see header)
+rec.info.push_back({.id = "AF", .value = std::vector{0.5f}});     // AF is vector of float (see header)
 
 /* genotypes is vector over bio::io::var_io::genotype_element */
-rec.genotypes().push_back({ .id = "GT", .value = std::vector{"0|0"s, "1|0"s, "1/1"s}});
+rec.genotypes.push_back({ .id = "GT", .value = std::vector{"0|0"s, "1|0"s, "1/1"s}});
 // value in genotype is always a vector of size == number of samples; see bio::io::var_io::genotype_element_value_type
 
 writer.push_back(rec);
 
 /* change record and repeat */
-// rec.chrom() = ...
-// rec.pos() = ...
+// rec.chrom = ...
+// rec.pos = ...
 // writer.push_back(rec);
 //![simple_usage_file]
 
@@ -74,18 +74,12 @@ writer.emplace_back(
                 bio::io::var_io::info_element{.id = "AF", .value = std::vector{0.5f}}},
     std::vector{bio::io::var_io::genotype_element<bio::io::ownership::deep>{ .id = "GT", .value = std::vector{"0|0"s, "1|0"s, "1/1"s}}});
 //![emplace_back]
-
-//![emplace_back2]
-/* construction of writer as defined above */
-writer.emplace_back(bio::meta::vtag<bio::io::field::chrom, bio::io::field::pos, bio::io::field::ref>,
-                    "20", 14370, "ACT"_dna5);
-//![emplace_back2]
 }
 
 {
 //![options]
 bio::io::var_io::writer writer{"example2.vcf",
-                           bio::io::var_io::writer_options{ .windows_eol = true }};
+                               bio::io::var_io::writer_options{ .windows_eol = true }};
 //![options]
 
 // add header so destructor works
@@ -112,7 +106,7 @@ bio::io::var_io::reader{"example.bcf"} | bio::io::var_io::writer{"example.vcf"};
 //![inout2]
 auto pass = [] (auto & rec)
 {
-    return (rec.filter().empty() || (rec.filter().size() == 1 && rec.filter()[0] == "PASS"));
+    return (rec.filter.empty() || (rec.filter.size() == 1 && rec.filter[0] == "PASS"));
 };
 
 bio::io::var_io::reader r{"example.bcf"};
@@ -127,7 +121,7 @@ bio::io::var_io::reader reader{"example.bcf"};
 bio::io::var_io::writer writer{"example5.vcf"};
 
 for (auto & rec : reader)
-    if (rec.filter().empty() || (rec.filter().size() == 1 && rec.filter()[0] == "PASS"))
+    if (rec.filter.empty() || (rec.filter.size() == 1 && rec.filter[0] == "PASS"))
         writer.push_back(rec);
 //![inout3]
 }

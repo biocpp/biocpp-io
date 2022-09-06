@@ -26,15 +26,15 @@ TEST(biocpp_io_issue_53, standalone)
 
     bio::io::var_io::writer writer{std::cout, bio::io::vcf{}};
     writer.set_header(hdr);
-    bio::io::var_io::default_record<> record{};
-    record.chrom()     = "chr1";
-    record.pos()       = 11111;
-    record.id()        = "test";
-    record.ref()       = "ATC"_dna5;
-    record.alt()       = {"AGC", "A"};
-    record.qual()      = 1.F;
-    record.filter()    = {"PASS"};
-    record.genotypes() = {};
-    record.info()      = {};
+    bio::io::var_io::record record{};
+    record.chrom     = "chr1";
+    record.pos       = 11111;
+    record.id        = "test";
+    record.ref       = "ATC"_dna5;
+    record.alt       = {"AGC", "A"};
+    record.qual      = 1.F;
+    record.filter    = {"PASS"};
+    record.genotypes = {};
+    record.info      = {};
     writer.push_back(record);
 }

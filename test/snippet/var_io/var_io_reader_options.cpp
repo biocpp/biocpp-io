@@ -22,7 +22,7 @@ int main()
 {
 //![field_types_deep]
 // this results in the records becoming "copyable"
-bio::io::var_io::reader_options options{ .field_types = bio::io::var_io::field_types<bio::io::ownership::deep> };
+bio::io::var_io::reader_options options{ .record = bio::io::var_io::record_default{} };
 
 // read the entire file, copy all records into a vector; immediately closes file again
 std::vector records = bio::io::var_io::reader{"example.vcf", options} | bio::ranges::to<std::vector>();
@@ -31,22 +31,28 @@ std::vector records = bio::io::var_io::reader{"example.vcf", options} | bio::ran
 
 // process the records later-on
 for (auto & rec : records)
-    fmt::print("{}:{}:{}:{}\n", rec.chrom(), rec.pos(), rec.ref(), rec.alt());
+    fmt::print("{}:{}:{}:{}\n", rec.chrom, rec.pos, rec.ref, rec.alt);
 //![field_types_deep]
 }
 
 {
 //![field_types_expert]
-bio::io::var_io::reader_options options{
-    .field_ids   = bio::meta::vtag<bio::io::field::chrom, bio::io::field::pos>,
-    .field_types = bio::meta::ttag<std::string_view, int32_t> };
+bio::io::var_io::record r{.id          = std::ignore,
+                          .ref         = std::ignore,
+                          .alt         = std::ignore,
+                          .qual        = std::ignore,
+                          .filter      = std::ignore,
+                          .info        = std::ignore,
+                          .genotypes   = std::ignore};
+
+bio::io::var_io::reader_options options{.record = r};
 
 bio::io::var_io::reader reader{"example.vcf", options};
 
 for (auto & rec : reader)
 {
-    fmt::print("{}:{}\n", rec.chrom(), rec.pos());
-    // record does not have any other members!
+    fmt::print("{}:{}\n", rec.chrom, rec.pos);
+    // all other members are just placeholders / empty!
 }
 //![field_types_expert]
 }

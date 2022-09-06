@@ -986,27 +986,23 @@ private:
     //!\brief Write the record (supports const and non-const lvalue ref).
     void write_record_impl(auto & record)
     {
-        using record_t  = std::remove_cvref_t<decltype(record)>;
-        using field_ids = typename record_t::field_ids;
+        using record_t = std::remove_cvref_t<decltype(record)>;
 
         if (!header_has_been_written)
         {
             if (header == nullptr)
             {
-                if constexpr (field_ids::contains(field::_private))
-                {
-                    if (var_io::header const * ptr = get<field::_private>(record).header_ptr; ptr != nullptr)
-                        set_header(*ptr);
-                }
+                if (var_io::header const * ptr = record._private.header_ptr; ptr != nullptr)
+                    set_header(*ptr);
             }
 
             write_header();
         }
 
-        static_assert(detail::has_non_ignore_field<field::chrom, record_t>(),
+        static_assert(!detail::decays_to<typename record_t::chrom_t, ignore_t>,
                       "The record must contain the CHROM field.");
-        static_assert(detail::has_non_ignore_field<field::pos, record_t>(), "The record must contain the POS field.");
-        static_assert(detail::has_non_ignore_field<field::ref, record_t>(), "The record must contain the REF field.");
+        static_assert(!detail::decays_to<typename record_t::pos_t, ignore_t>, "The record must contain the POS field.");
+        static_assert(!detail::decays_to<typename record_t::ref_t, ignore_t>, "The record must contain the REF field.");
 
         /* IMPLEMENTATION NOTE:
          * A problem when writing BCF is that the first fields of the record hold the size of the record
@@ -1037,51 +1033,51 @@ private:
 
         /* this prepares the record_core and doesn't write anything til the end */
         record_core = {}; // reset this
-        set_core_chrom(get<field::chrom>(record));
-        set_core_pos(get<field::pos>(record));
+        set_core_chrom(record.chrom);
+        set_core_pos(record.pos);
 
-        set_core_rlen(get<field::ref>(record));
+        set_core_rlen(record.ref);
 
-        if constexpr (detail::has_non_ignore_field<field::qual, record_t>())
-            set_core_qual(get<field::qual>(record));
+        if constexpr (!detail::decays_to<typename record_t::qual_t, ignore_t>)
+            set_core_qual(record.qual);
 
-        if constexpr (detail::has_non_ignore_field<field::info, record_t>())
-            set_core_n_info(get<field::info>(record));
+        if constexpr (!detail::decays_to<typename record_t::info_t, ignore_t>)
+            set_core_n_info(record.info);
 
-        if constexpr (detail::has_non_ignore_field<field::alt, record_t>())
-            set_core_n_allele(get<field::alt>(record));
+        if constexpr (!detail::decays_to<typename record_t::alt_t, ignore_t>)
+            set_core_n_allele(record.alt);
         else
             record_core.n_allele = 1; // the REF allele
 
         record_core.n_sample = header->column_labels.size() > 9 ? header->column_labels.size() - 9 : 0;
 
-        if constexpr (detail::has_non_ignore_field<field::genotypes, record_t>())
-            set_core_n_fmt(get<field::genotypes>(record));
+        if constexpr (!detail::decays_to<typename record_t::genotypes_t, ignore_t>)
+            set_core_n_fmt(record.genotypes);
 
         // write record core
         it->write_as_binary(record_core);
 
         /* After this point, the order of writers is important! */
 
-        if constexpr (detail::has_non_ignore_field<field::id, record_t>())
-            write_field(meta::vtag<field::id>, get<field::id>(record));
+        if constexpr (!detail::decays_to<typename record_t::id_t, ignore_t>)
+            write_field(meta::vtag<field::id>, record.id);
         else
             write_field(meta::vtag<field::id>, std::string_view{});
 
-        write_field(meta::vtag<field::ref>, get<field::ref>(record));
+        write_field(meta::vtag<field::ref>, record.ref);
 
-        if constexpr (detail::has_non_ignore_field<field::alt, record_t>())
-            write_field(meta::vtag<field::alt>, get<field::alt>(record));
+        if constexpr (!detail::decays_to<typename record_t::alt_t, ignore_t>)
+            write_field(meta::vtag<field::alt>, record.alt);
         else
             write_field(meta::vtag<field::alt>, std::span<std::string_view>{});
 
-        if constexpr (detail::has_non_ignore_field<field::filter, record_t>())
-            write_field(meta::vtag<field::filter>, get<field::filter>(record));
+        if constexpr (!detail::decays_to<typename record_t::filter_t, ignore_t>)
+            write_field(meta::vtag<field::filter>, record.filter);
         else
             write_field(meta::vtag<field::filter>, std::span<std::string_view>{});
 
-        if constexpr (detail::has_non_ignore_field<field::info, record_t>())
-            write_field(meta::vtag<field::info>, get<field::info>(record));
+        if constexpr (!detail::decays_to<typename record_t::info_t, ignore_t>)
+            write_field(meta::vtag<field::info>, record.info);
         else
             write_field(meta::vtag<field::info>, std::span<var_io::info_element<>>{});
 
@@ -1091,8 +1087,8 @@ private:
 
         if (header->column_labels.size() > 8)
         {
-            if constexpr (detail::has_non_ignore_field<field::genotypes, record_t>())
-                write_field(meta::vtag<field::genotypes>, get<field::genotypes>(record));
+            if constexpr (!detail::decays_to<typename record_t::genotypes_t, ignore_t>)
+                write_field(meta::vtag<field::genotypes>, record.genotypes);
             else
                 write_field(meta::vtag<field::genotypes>, std::span<var_io::genotype_element<>>{});
         }
@@ -1239,15 +1235,15 @@ public:
     }
 
     //!\brief Write the record.
-    template <typename field_types, typename field_ids>
-    void write_record(record<field_types, field_ids> const & record)
+    template <typename... field_types>
+    void write_record(var_io::record<field_types...> const & record)
     {
         write_record_impl(record);
     }
 
     //!\overload
-    template <typename field_types, typename field_ids>
-    void write_record(record<field_types, field_ids> & record)
+    template <typename... field_types>
+    void write_record(var_io::record<field_types...> & record)
     {
         write_record_impl(record);
     }

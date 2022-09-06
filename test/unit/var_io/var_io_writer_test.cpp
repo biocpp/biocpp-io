@@ -17,12 +17,9 @@
 
 #include "../format/vcf_data.hpp"
 
-using custom_field_ids_t = bio::meta::vtag_t<bio::io::field::chrom, bio::io::field::pos, bio::io::field::ref>;
-
 TEST(var_io_writer, concepts)
 {
-    using rec_t =
-      bio::io::record<decltype(bio::io::var_io::default_field_ids), decltype(bio::io::var_io::field_types_bcf_style<>)>;
+    using rec_t = bio::io::var_io::record_idx;
 
     using t = bio::io::var_io::writer<>;
     EXPECT_TRUE((std::ranges::output_range<t, rec_t>));
@@ -181,7 +178,7 @@ void write_record_test_impl()
     {
         priv.header_ptr = &hdr;
         for (auto & rec : records)
-            get<bio::io::field::_private>(rec) = priv;
+            rec._private = priv;
     }
     else
     {
@@ -216,12 +213,13 @@ void write_record_test_impl()
     }
     else if constexpr (i == 4)
     {
-        auto fn = [&writer](auto &... args) { writer.emplace_back(args...); };
-        std::apply(fn, records[0]);
-        std::apply(fn, records[1]);
-        std::apply(fn, records[2]);
-        std::apply(fn, records[3]);
-        std::apply(fn, records[4]);
+        auto fn = [&writer](auto & r)
+        { writer.emplace_back(r.chrom, r.pos, r.id, r.ref, r.alt, r.qual, r.filter, r.info, r.genotypes); };
+        fn(records[0]);
+        fn(records[1]);
+        fn(records[2]);
+        fn(records[3]);
+        fn(records[4]);
     }
 
     EXPECT_EQ(stream.str(), example_from_spec_header_regenerated_no_IDX + example_from_spec_records);
@@ -259,11 +257,35 @@ TEST(var_io_writer, minimal_fields)
 
     writer.set_header(bio::io::var_io::header{example_from_spec_header});
 
-    writer.emplace_back(custom_field_ids_t{}, "20", 14370, "G");
-    writer.emplace_back(custom_field_ids_t{}, "20", 17330, "T");
-    writer.emplace_back(custom_field_ids_t{}, "20", 1110696, "A");
-    writer.emplace_back(custom_field_ids_t{}, "20", 1230237, "T");
-    writer.emplace_back(custom_field_ids_t{}, "20", 1234567, "GTC");
+    bio::io::var_io::record r{.chrom     = {},
+                              .pos       = {},
+                              .id        = std::ignore,
+                              .ref       = std::string{},
+                              .alt       = std::ignore,
+                              .qual      = std::ignore,
+                              .filter    = std::ignore,
+                              .info      = std::ignore,
+                              .genotypes = std::ignore};
+    r.chrom = "20";
+    r.pos   = 14370;
+    r.ref   = "G";
+    writer.push_back(r);
+    r.chrom = "20";
+    r.pos   = 17330;
+    r.ref   = "T";
+    writer.push_back(r);
+    r.chrom = "20";
+    r.pos   = 1110696;
+    r.ref   = "A";
+    writer.push_back(r);
+    r.chrom = "20";
+    r.pos   = 1230237;
+    r.ref   = "T";
+    writer.push_back(r);
+    r.chrom = "20";
+    r.pos   = 1234567;
+    r.ref   = "GTC";
+    writer.push_back(r);
 
     std::string compare = example_from_spec_header_regenerated_no_IDX;
     compare += minimal_field_rows;
@@ -287,9 +309,12 @@ TEST(var_io_writer, no_header1) // record contains header_ptr but this is == nul
 TEST(var_io_writer, no_header2) // record does not contain header_ptr
 {
     std::ostringstream stream{};
-    auto *             writer = new bio::io::var_io::writer{stream, bio::io::vcf{}};
+    auto *             writer  = new bio::io::var_io::writer{stream, bio::io::vcf{}};
+    auto               records = example_records_bcf_style<bio::io::ownership::shallow>();
+    auto &             r       = records[0];
 
-    EXPECT_THROW(writer->emplace_back(custom_field_ids_t{}, "20", 14370, "G"), bio::io::missing_header_error);
+    EXPECT_THROW((writer->emplace_back(r.chrom, r.pos, r.id, r.ref, r.alt, r.qual, r.filter, r.info, r.genotypes)),
+                 bio::io::missing_header_error);
 
     // destructor
     EXPECT_THROW(delete writer, bio::io::missing_header_error);
@@ -349,16 +374,17 @@ TEST(var_io_writer, biocpp_io_issue_53)
 
         bio::io::var_io::writer writer{std::cout, bio::io::vcf{}};
         writer.set_header(hdr);
-        bio::io::var_io::default_record<> record{};
-        record.chrom()     = "chr1";
-        record.pos()       = 11111;
-        record.id()        = "test";
-        record.ref()       = "ATC"_dna5;
-        record.alt()       = {"AGC", "A"};
-        record.qual()      = 1.F;
-        record.filter()    = {"PASS"};
-        record.genotypes() = {};
-        record.info()      = {};
+
+        bio::io::var_io::record record{};
+        record.chrom     = "chr1";
+        record.pos       = 11111;
+        record.id        = "test";
+        record.ref       = "ATC"_dna5;
+        record.alt       = {"AGC", "A"};
+        record.qual      = 1.F;
+        record.filter    = {"PASS"};
+        record.genotypes = {};
+        record.info      = {};
         writer.push_back(record);
     }
 }

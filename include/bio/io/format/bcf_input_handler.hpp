@@ -327,7 +327,9 @@ namespace bio::io
  * TODO after genotype redesign
  */
 template <>
-class format_input_handler<bcf> : public format_input_handler_base<format_input_handler<bcf>>
+class format_input_handler<bcf> :
+  public format_input_handler_base<format_input_handler<bcf>>,
+  public var_io::format_handler_mixin
 {
 private:
     /*!\name CRTP related entities
