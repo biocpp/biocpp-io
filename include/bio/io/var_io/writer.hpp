@@ -42,15 +42,15 @@ namespace bio::io::var_io
  *
  * The Variant I/O writer supports writing the following fields:
  *
- *   1. bio::io::field::chrom
- *   2. bio::io::field::pos
- *   3. bio::io::field::id
- *   4. bio::io::field::ref
- *   5. bio::io::field::alt
- *   6. bio::io::field::qual
- *   7. bio::io::field::filter
- *   8. bio::io::field::info
- *   9. bio::io::field::genotypes
+ *   1. bio::io::detail::field::chrom
+ *   2. bio::io::detail::field::pos
+ *   3. bio::io::detail::field::id
+ *   4. bio::io::detail::field::ref
+ *   5. bio::io::detail::field::alt
+ *   6. bio::io::detail::field::qual
+ *   7. bio::io::detail::field::filter
+ *   8. bio::io::detail::field::info
+ *   9. bio::io::detail::field::genotypes
  *
  * These fields correspond to the order and names defined in the VCF specification. The value conventions
  * also correspond to the VCF specification (i.e. 1-based positions) although many fields can
@@ -60,7 +60,7 @@ namespace bio::io::var_io
  * This writer supports the following formats:
  *
  *   1. VCF (see also bio::io::vcf)
- *   2. BCF (see also bio::io::bcf) [TODO NOT YET]
+ *   2. BCF (see also bio::io::bcf)
  *
  * If you only need to write VCF and not BCF and you have all your column data as strings,
  * you can use bio::io::plain_io::writer instead of this writer (it will be easier to use and faster).
@@ -90,14 +90,7 @@ namespace bio::io::var_io
  *
  * This is especially helpful if your fields exist in other separate data structures already.
  * Be aware that it is easier to mess up the order of the arguments this way.
- * The order/composition can specified by bio::meta::vtag as first argument (see next example).
- * If it is omitted, it is equal to bio::io::var_io::default_field_ids.
- *
- * The #emplace_back() function can be used to write fewer fields:
- *
- * \snippet test/snippet/var_io/var_io_writer.cpp emplace_back2
- *
- * These three fields are required; the missing fields are replaced with ".".
+ * The order/composition is exactly as in bio::io::var_io::record!
  *
  * ### Specifying options
  *
@@ -127,11 +120,11 @@ namespace bio::io::var_io
  *
  */
 template <typename... option_args_t>
-class writer : public writer_base<writer_options<option_args_t...>>
+class writer : public writer_base<writer<option_args_t...>, writer_options<option_args_t...>>
 {
 private:
     //!\brief The base class.
-    using base_t      = writer_base<writer_options<option_args_t...>>;
+    using base_t      = writer_base<writer<option_args_t...>, writer_options<option_args_t...>>;
     //!\brief Inherit the format_type definition.
     using format_type = typename base_t::format_type;
     /* Implementation note
@@ -144,8 +137,21 @@ private:
     //!\brief Make the init_state handler visible.
     using base_t::init_state;
 
+    using base_t::write_record;
+
 public:
-    // TODO wrap this, so we don't return reference to base
+    //!\brief Default constructor is explicitly deleted, you need to give a stream or file name.
+    writer()                           = delete;
+    //!\brief Copy construction is explicitly deleted, because you can't have multiple access to the same file.
+    writer(writer const &)             = delete;
+    //!\brief Move construction is defaulted.
+    writer(writer &&)                  = default;
+    //!\brief Copy assignment is explicitly deleted, because you can't have multiple access to the same file.
+    writer & operator=(writer const &) = delete;
+    //!\brief Move assignment is defaulted.
+    writer & operator=(writer &&)      = default;
+    //!\brief Destructor which can potentially throw.
+
     using base_t::operator=;
 
     // clang-format off
@@ -186,40 +192,78 @@ public:
     //!\brief Destructor which can potentially throw.
     ~writer() noexcept(false) = default;
 
-    // prevent the overload below from removing the overload from base_t
-    using base_t::emplace_back;
-
     /*!\brief Write a record to the file by passing individual fields.
-     * \param[in] args   The fields to be written.
+     * \param[in] chrom     The CHROM parameter.
+     * \param[in] pos       The POS parameter.
+     * \param[in] id        The ID parameter.
+     * \param[in] ref       The REF parameter.
+     * \param[in] alt       The ALT parameter.
+     * \param[in] qual      The QUAL parameter.
+     * \param[in] filter    The FILTER parameter.
+     * \param[in] info      The INFO parameter.
+     * \param[in] genotypes The GENOTYPES parameter.
      *
      * \details
      *
-     * This function is the same as bio::io::writer_base::emplace_back, except that the field_ids can be
-     * omitted. If the number of arguments 10, bio::io::var_io::default_field_ids is chosen; if it is
+     * This function accepts exactly 9 arguments and assumes that these
+     * correspond exactly to the members of the bio::io::var_io::record class.
+     *
+     * ### Example
+     *
+     * \snippet test/snippet/var_io/var_io_writer.cpp emplace_back
+     * TODO add snippet!
      */
-    void emplace_back(auto &&... args)
+    void emplace_back(auto && chrom,
+                      auto && pos,
+                      auto && id,
+                      auto && ref,
+                      auto && alt,
+                      auto && qual,
+                      auto && filter,
+                      auto && info,
+                      auto && genotypes)
     {
-        static_assert(sizeof...(args) == default_field_ids.size || sizeof...(args) == default_field_ids.size - 1,
-                      "emplace_back() has to be called with 9 or 10 arguments (including private_data).");
+        auto record = tie_record(chrom, pos, id, ref, alt, qual, filter, info, genotypes);
+        // TODO check concept
+        write_record(record);
+    }
 
-        if constexpr (sizeof...(args) == default_field_ids.size - 1)
-        {
-            // TODO replace this with some metaprogramming?
-            base_t::emplace_back(meta::vtag<field::chrom,
-                                            field::pos,
-                                            field::id,
-                                            field::ref,
-                                            field::alt,
-                                            field::qual,
-                                            field::filter,
-                                            field::info,
-                                            field::genotypes>,
-                                 args...);
-        }
-        else
-        {
-            base_t::emplace_back(default_field_ids, args...);
-        }
+    /*!\brief Write a record to the file.
+     * \tparam field_types Types of the fields in the record.
+     * \tparam field_ids   IDs of the fields in the record.
+     * \param[in] r        The record to write.
+     *
+     * \details
+     *
+     * ### Complexity
+     *
+     * Constant.
+     *
+     * ### Exceptions
+     *
+     * Basic exception safety.
+     */
+    template <typename... member_types>
+    void push_back(record<member_types...> const & r)
+    {
+        write_record(r);
+        // TODO check concept
+    }
+
+    //!\overload
+    template <typename... member_types>
+    void push_back(record<member_types...> & r)
+    {
+        write_record(r); // pass as non-const to allow parsing views that are not const-iterable
+        // TODO check concept
+    }
+
+    //!\overload
+    template <typename... member_types>
+    void push_back(record<member_types...> && r)
+    {
+        write_record(r); // pass as non-const to allow parsing views that are not const-iterable
+        // TODO check concept
     }
 
     //!\brief Get the header used by the format.

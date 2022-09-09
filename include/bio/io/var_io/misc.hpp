@@ -26,28 +26,18 @@
 
 #include <bio/io/detail/magic_get.hpp>
 #include <bio/io/detail/range.hpp>
+#include <bio/io/detail/tuple_record.hpp>
 #include <bio/io/misc.hpp>
-#include <bio/io/record.hpp>
-
-//-----------------------------------------------------------------------------
-// forwards
-//-----------------------------------------------------------------------------
 
 namespace bio::io::detail
-{
-
-struct bcf_record_core;
-
-} // namespace bio::io::detail
-
-namespace bio::io::var_io
-{
-
-class header;
+{} // namespace bio::io::detail
 
 //-----------------------------------------------------------------------------
 // missing_value
 //-----------------------------------------------------------------------------
+
+namespace bio::io::var_io
+{
 
 /*!\addtogroup var_io
  * \{
@@ -197,368 +187,6 @@ constexpr bool type_id_is_compatible(var_io::value_type_id const lhs, var_io::va
             return lhs == rhs;
     }
 }
-
-} // namespace bio::io::detail
-
-namespace bio::io::var_io
-{
-
-//-----------------------------------------------------------------------------
-// The info element
-//-----------------------------------------------------------------------------
-
-/*!\brief Variant to handle "dynamic typing" in Var I/O INFO fields.
- * \ingroup var_io
- * \details
- *
- * This variant can hold values for the INFO field.
- * Since the type of such fields may only be determined at run-time (depends on values in header), variables
- * of this type can be set to different types at run-time.
- */
-template <ownership own = ownership::shallow>
-using info_element_value_type =
-  std::variant<char,
-               int8_t,
-               int16_t,
-               int32_t,
-               float,
-               std::conditional_t<own == ownership::shallow, std::string_view, std::string>,
-               std::vector<int8_t>,
-               std::vector<int16_t>,
-               std::vector<int32_t>,
-               std::vector<float>,
-               std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>,
-               bool>;
-
-} // namespace bio::io::var_io
-
-namespace bio::io::detail
-{
-//!\brief Auxilliary concept that encompasses bio::io::var_io::info_element_value_type.
-//!\ingroup var_io
-template <typename t>
-concept is_info_element_value_type =
-  one_of<t, var_io::info_element_value_type<ownership::shallow>, var_io::info_element_value_type<ownership::deep>>;
-
-} // namespace bio::io::detail
-
-namespace bio::io::var_io
-{
-
-/*!\brief The type of elements in an INFO field. [default]
- * \ingroup var_io
- * \tparam own Ownership of the type; see bio::io::ownership.
- */
-template <ownership own = ownership::shallow>
-struct info_element
-{
-    //!\brief Type of the ID.
-    using string_t = std::conditional_t<own == ownership::shallow, std::string_view, std::string>;
-
-    //!\brief The ID of the element (as a string or string_view).
-    string_t                     id;
-    //!\brief The value of the element.
-    info_element_value_type<own> value;
-
-    //!\brief Defaulted three-way comparisons.
-    auto operator<=>(info_element const &) const = default;
-};
-
-/*!\brief The type of elements in an INFO field. [full BCF-style]
- * \ingroup var_io
- * \tparam own Ownership of the type; see bio::io::ownership.
- */
-template <ownership own = ownership::shallow>
-struct info_element_bcf
-{
-    //!\brief The IDX of the element (index of that descriptor in the header).
-    int32_t                      idx;
-    //!\brief The value of the element.
-    info_element_value_type<own> value;
-
-    //!\brief Defaulted three-way comparisons.
-    auto operator<=>(info_element_bcf const &) const = default;
-};
-
-//-----------------------------------------------------------------------------
-// The genotype element
-//-----------------------------------------------------------------------------
-
-/*!\brief Variant to handle "dynamic typing" in Var I/O GENOTYPE fields.
- * \ingroup var_io
- * \details
- *
- * This type is similar to bio::io::var_io::info_element_value_type except that it encodes a range of the respective
- * value.
- *
- * It does not contain an entry for bio::io::var_io::value_type_id::flag, because flags cannot appear in
- * the genotype field.
- */
-template <ownership own = ownership::shallow>
-using genotype_element_value_type =
-  std::variant<std::vector<char>,
-               std::vector<int8_t>,
-               std::vector<int16_t>,
-               std::vector<int32_t>,
-               std::vector<float>,
-               std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>,
-               ranges::concatenated_sequences<std::vector<int8_t>>,
-               ranges::concatenated_sequences<std::vector<int16_t>>,
-               ranges::concatenated_sequences<std::vector<int32_t>>,
-               ranges::concatenated_sequences<std::vector<float>>,
-               std::vector<std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>>
-               /* no flag here */>;
-
-} // namespace bio::io::var_io
-
-namespace bio::io::detail
-{
-
-//!\brief Auxilliary concept that encompasses bio::io::var_io::genotype_element_value_type.
-//!\ingroup var_io
-template <typename t>
-concept is_genotype_element_value_type = one_of<t,
-                                                var_io::genotype_element_value_type<ownership::shallow>,
-                                                var_io::genotype_element_value_type<ownership::deep>>;
-
-} // namespace bio::io::detail
-
-namespace bio::io::var_io
-{
-
-/*!\brief A type representing an element in the GENOTYPES field.
- * \ingroup var_io
- *
- * \details
- *
- * Genotypes are represented as decribed in the BCF specification by default, i.e. information is grouped by
- * FORMAT identifier, not by sample.
- *
- * This element consists of the FORMAT ID given as a string and a vector of values inside a variant.
- * The size of the vector is:
- *
- *   * equal to the number of samples; or
- *   * 0 -- if the field is missing from all samples.
- *
- * The variant vector is guaranteed to be over the type defined in the header. Note that this is a vector over such
- * types (one element per sample!), so bio::io::var_io::value_type_id::vector_of_int32 corresponds to
- * std::vector<std::vector<int32_t>>. See bio::io::var_io::genotype_element_value_type for more details.
- *
- * If fields are missing from some samples but not others, the vector will have full size but the respective values
- * will be set to the missing value (see bio::io::var_io::missing_value) or be the empty vector (in case the element
- * type is a vector).
- */
-template <ownership own = ownership::shallow>
-struct genotype_element
-{
-    //!\brief Type of the ID.
-    using string_t = std::conditional_t<own == ownership::shallow, std::string_view, std::string>;
-
-    //!\brief The ID of the element (as a string or string_view).
-    string_t                         id;
-    //!\brief The value of the element.
-    genotype_element_value_type<own> value;
-
-    //!\brief Defaulted three-way comparisons.
-    auto operator<=>(genotype_element const &) const = default;
-};
-
-/*!\brief A type representing an element in the GENOTYPES field. [full BCF-style]
- * \ingroup var_io
- *
- * \details
- *
- * The same as bio::io::var_io::genotype_element except that a numeric IDX is used instead of the ID string.
- */
-template <ownership own = ownership::shallow>
-struct genotype_element_bcf
-{
-    //!\brief The IDX of the element (index of that descriptor in the header).
-    int32_t                          idx;
-    //!\brief The value of the element.
-    genotype_element_value_type<own> value;
-
-    //!\brief Defaulted three-way comparisons.
-    auto operator<=>(genotype_element_bcf const &) const = default;
-};
-
-//-----------------------------------------------------------------------------
-// default_field_ids
-//-----------------------------------------------------------------------------
-
-//!\brief Default fields for bio::io::var_io::reader_options.
-//!\ingroup var_io
-inline constinit auto default_field_ids = meta::vtag<field::chrom,
-                                                     field::pos,
-                                                     field::id,
-                                                     field::ref,
-                                                     field::alt,
-                                                     field::qual,
-                                                     field::filter,
-                                                     field::info,
-                                                     field::genotypes,
-                                                     field::_private>;
-
-//-----------------------------------------------------------------------------
-// record_private_data
-//-----------------------------------------------------------------------------
-
-//!\brief A datastructure that contains private data of variant IO records.
-//!\ingroup var_io
-struct record_private_data
-{
-    //!\privatesection
-    //!\brief Pointer to the header
-    header const * header_ptr = nullptr;
-
-    //!\brief Pointer to record core (if BCF).
-    detail::bcf_record_core const * record_core = nullptr;
-
-    //!\brief Raw record type.
-    using raw_record_t = record<
-      decltype(default_field_ids),
-      meta::list_traits::concat<meta::list_traits::repeat<default_field_ids.size - 1, std::span<std::byte const>>,
-                                meta::type_list<var_io::record_private_data>>>;
-    //!\brief Pointer to raw record.
-    raw_record_t const * raw_record = nullptr;
-
-    //!\brief Defaulted three-way comparison.
-    friend bool operator==(record_private_data const &, record_private_data const &) = default;
-};
-
-//-----------------------------------------------------------------------------
-// Pre-defined field types (reader)
-//-----------------------------------------------------------------------------
-
-/*!\name Pre-defined field types
- * \brief These can be used to configure the behaviour of the bio::io::var_io::reader via
- * bio::io::var_io::reader_options.
- * \{
- */
-/*!\brief The default field types for variant io.
- *!\ingroup var_io
- *
- * \details
- *
- * These traits define a record type with minimal memory allocations for all input formats.
- * It is the recommended record type when iterating ("streaming") over files that ca be any variant IO format.
- *
- * The "style" of the record resembles the VCF specification, i.e. contigs, FILTERs and INFO identifiers are
- * represented as string/string_views. **However,** the genotypes are encoded by-genotype (BCF-style) and not by-sample
- * (VCF-style) for performance reasons.
- *
- * See bio::io::var_io::genotypes_bcf_style for more information on the latter.
- */
-template <ownership own = ownership::shallow>
-inline constinit auto field_types =
-  meta::ttag<std::string_view,                                                            // field::chrom,
-             int32_t,                                                                     // field::pos,
-             std::string_view,                                                            // field::id,
-             decltype(std::string_view{} | bio::views::char_strictly_to<alphabet::dna5>), // field::ref,
-             std::vector<std::string_view>,                                               // field::alt,
-             float,                                                                       // field::qual,
-             std::vector<std::string_view>,                                               // field::filter,
-             std::vector<info_element<ownership::shallow>>,                               // field::info,
-             std::vector<genotype_element<ownership::shallow>>,                           // field::genotypes,
-             record_private_data>;                                                        // field::_private
-
-//!\brief Deep version of bio::io::var_io::field_types.
-//!\ingroup var_io
-template <>
-inline constinit auto field_types<ownership::deep> =
-  meta::ttag<std::string,                                    // field::chrom,
-             int32_t,                                        // field::pos,
-             std::string,                                    // field::id,
-             std::vector<alphabet::dna5>,                    // field::ref,
-             std::vector<std::string>,                       // field::alt,
-             float,                                          // field::qual,
-             std::vector<std::string>,                       // field::filter,
-             std::vector<info_element<ownership::deep>>,     // field::info,
-             std::vector<genotype_element<ownership::deep>>, // field::genotypes,
-             record_private_data>;                           // field::_private
-
-/*!\brief Alternative set of field types (BCF-style, shallow).
- *!\ingroup var_io
- *
- * \details
- *
- * See bio::io::var_io::reader_options for when and why to choose these field types.
- */
-template <ownership own = ownership::shallow>
-inline constinit auto field_types_bcf_style =
-  meta::ttag<int32_t,                                                                     // field::chrom,
-             int32_t,                                                                     // field::pos,
-             std::string_view,                                                            // field::id,
-             decltype(std::string_view{} | bio::views::char_strictly_to<alphabet::dna5>), // field::ref,
-             std::vector<std::string_view>,                                               // field::alt,
-             float,                                                                       // field::qual,
-             std::vector<int32_t>,                                                        // field::filter,
-             std::vector<info_element_bcf<ownership::shallow>>,                           // field::info,
-             std::vector<genotype_element_bcf<ownership::shallow>>,                       // field::genotypes,
-             record_private_data>;                                                        // field::_private
-
-/*!\brief Alternative set of field types (BCF-style, deep).
- *!\ingroup var_io
- *
- * \details
- *
- * See bio::io::var_io::reader_options for when and why to choose these field types.
- */
-template <>
-inline constinit auto field_types_bcf_style<ownership::deep> =
-  meta::ttag<int32_t,                                            // field::chrom,
-             int32_t,                                            // field::pos,
-             std::string,                                        // field::id,
-             std::vector<alphabet::dna5>,                        // field::ref,
-             std::vector<std::string>,                           // field::alt,
-             float,                                              // field::qual,
-             std::vector<int32_t>,                               // field::filter,
-             std::vector<info_element_bcf<ownership::deep>>,     // field::info,
-             std::vector<genotype_element_bcf<ownership::deep>>, // field::genotypes,
-             record_private_data>;                               // field::_private
-
-//!\brief Every field is configured as a std::span of std::byte (this enables "raw" io).
-//!\ingroup var_io
-inline constinit auto field_types_raw =
-  meta::list_traits::concat<meta::list_traits::repeat<default_field_ids.size - 1, std::span<std::byte const>>,
-                            meta::type_list<var_io::record_private_data>>{};
-
-//!\}
-
-/*!\brief A alias for bio::io::record that is usable with variant IO.
- * \ingroup var_io
- * \details
- *
- * This alias is provided purely for convenience. See the documentation for
- * bio::io::var_io::writer for an example of how to use it.
- */
-template <ownership own = ownership::deep>
-using default_record = record<decltype(default_field_ids), decltype(field_types<own>)>;
-
-} // namespace bio::io::var_io
-
-namespace bio::io::detail
-{
-
-//-----------------------------------------------------------------------------
-// BCF record core
-//-----------------------------------------------------------------------------
-
-//!\brief The "core" of a BCF record in bit-compatible representation to the on-disk format.
-//!\ingroup var_io
-struct bcf_record_core
-{
-    int32_t  chrom         = -1;                                    //!< CHROM as IDX.
-    int32_t  pos           = -1;                                    //!< POS.
-    int32_t  rlen          = -1;                                    //!< Not used by this implementation.
-    float    qual          = bio::io::var_io::missing_value<float>; //!< QUAL.
-    uint16_t n_info        = 0;                                     //!< Number of INFOS values.
-    uint16_t n_allele      = 0;                                     //!< Number of alleles.
-    uint32_t n_sample : 24 = 0;                                     //!< Number of samples.
-    uint8_t  n_fmt         = 0;                                     //!< Number of FORMAT values.
-};
-
-static_assert(sizeof(bcf_record_core) == 24, "Bit alignment problem in declaration of bcf_record_core.");
 
 //-----------------------------------------------------------------------------
 // bcf_type_descriptor and utilities
@@ -757,4 +385,56 @@ constexpr size_t vcf_gt_formula(size_t const a, size_t const b)
 }
 
 //!\}
+
+//!\brief The field_ids used in this domain.
+//!\ingroup var_io
+static constexpr auto field_ids = meta::vtag<detail::field::chrom,
+                                             detail::field::pos,
+                                             detail::field::id,
+                                             detail::field::ref,
+                                             detail::field::alt,
+                                             detail::field::qual,
+                                             detail::field::filter,
+                                             detail::field::info,
+                                             detail::field::genotypes,
+                                             detail::field::_private>;
+
 } // namespace bio::io::detail
+
+namespace bio::io::var_io
+{
+
+template <typename chrom_t,
+          typename pos_t,
+          typename id_t,
+          typename ref_t,
+          typename alt_t,
+          typename qual_t,
+          typename filter_t,
+          typename info_t,
+          typename genotypes_t>
+struct record;
+
+//!\brief Mixin for format handlers that helps converts to the tuple-record.
+//!\ingroup var_io
+struct format_handler_mixin
+{
+    //!\brief Convert from domain-specific record to tuple-record.
+    template <typename... arg_ts>
+    static auto record2tuple_record(var_io::record<arg_ts...> & in_record)
+    {
+        return io::detail::tie_tuple_record(detail::field_ids,
+                                            in_record.chrom,
+                                            in_record.pos,
+                                            in_record.id,
+                                            in_record.ref,
+                                            in_record.alt,
+                                            in_record.qual,
+                                            in_record.filter,
+                                            in_record.info,
+                                            in_record.genotypes,
+                                            in_record._private);
+    }
+};
+
+} // namespace bio::io::var_io

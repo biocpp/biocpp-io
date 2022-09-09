@@ -12,7 +12,7 @@
 #include <bio/test/tmp_filename.hpp>
 
 #include <bio/io/format/bcf_input_handler.hpp>
-#include <bio/io/var_io/reader.hpp>
+#include <bio/io/var_io/record.hpp>
 
 #include "bcf_data.hpp"
 #include "vcf_data.hpp"
@@ -113,10 +113,13 @@ void field_types()
 
     bio::io::var_io::record_private_data priv{&handler.get_header()};
 
-    using fields_t = std::conditional_t<s == style::def,
-                                        decltype(bio::io::var_io::field_types<own>),
-                                        decltype(bio::io::var_io::field_types_bcf_style<own>)>;
-    using record_t = bio::io::record<decltype(bio::io::var_io::default_field_ids), fields_t>;
+    using record_t = std::conditional_t<s == style::def,
+                                        std::conditional_t<own == bio::io::ownership::deep,
+                                                           bio::io::var_io::record_default,
+                                                           bio::io::var_io::record_default_shallow>,
+                                        std::conditional_t<own == bio::io::ownership::deep,
+                                                           bio::io::var_io::record_idx,
+                                                           bio::io::var_io::record_idx_shallow>>;
 
     using int_t       = int8_t;
     using vec_t       = bio::ranges::concatenated_sequences<std::vector<int_t>>;
@@ -130,38 +133,38 @@ void field_types()
         recs = example_records_bcf_style<own, int_t>();
 
     // this workaround is pending clarification in https://github.com/samtools/hts-specs/issues/593
-    std::get<vec_t>(bio::io::detail::get_second(recs[1].genotypes().back())).push_back(std::vector{mv});
-    std::get<vec_t>(bio::io::detail::get_second(recs[2].genotypes().back())).push_back(std::vector{mv});
-    std::get<vec_t>(bio::io::detail::get_second(recs[3].genotypes().back())).push_back(std::vector{mv});
+    std::get<vec_t>(bio::io::detail::get_second(recs[1].genotypes.back())).push_back(std::vector{mv});
+    std::get<vec_t>(bio::io::detail::get_second(recs[2].genotypes.back())).push_back(std::vector{mv});
+    std::get<vec_t>(bio::io::detail::get_second(recs[3].genotypes.back())).push_back(std::vector{mv});
 
     for (auto & rec : recs)
-        get<bio::io::field::_private>(rec) = priv;
+        rec._private = priv;
 
     record_t rec;
 
     handler.parse_next_record_into(rec);
-    get<bio::io::field::_private>(rec).raw_record  = nullptr;
-    get<bio::io::field::_private>(rec).record_core = nullptr;
+    rec._private.raw_record  = nullptr;
+    rec._private.record_core = nullptr;
     EXPECT_EQ(rec, recs[0]);
 
     handler.parse_next_record_into(rec);
-    get<bio::io::field::_private>(rec).raw_record  = nullptr;
-    get<bio::io::field::_private>(rec).record_core = nullptr;
+    rec._private.raw_record  = nullptr;
+    rec._private.record_core = nullptr;
     EXPECT_EQ(rec, recs[1]);
 
     handler.parse_next_record_into(rec);
-    get<bio::io::field::_private>(rec).raw_record  = nullptr;
-    get<bio::io::field::_private>(rec).record_core = nullptr;
+    rec._private.raw_record  = nullptr;
+    rec._private.record_core = nullptr;
     EXPECT_EQ(rec, recs[2]);
 
     handler.parse_next_record_into(rec);
-    get<bio::io::field::_private>(rec).raw_record  = nullptr;
-    get<bio::io::field::_private>(rec).record_core = nullptr;
+    rec._private.raw_record  = nullptr;
+    rec._private.record_core = nullptr;
     EXPECT_EQ(rec, recs[3]);
 
     handler.parse_next_record_into(rec);
-    get<bio::io::field::_private>(rec).raw_record  = nullptr;
-    get<bio::io::field::_private>(rec).record_core = nullptr;
+    rec._private.raw_record  = nullptr;
+    rec._private.record_core = nullptr;
     EXPECT_EQ(rec, recs[4]);
 }
 

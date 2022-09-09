@@ -60,7 +60,9 @@ namespace bio::io
  * TODO after genotype redesign
  */
 template <>
-class format_input_handler<vcf> : public format_input_handler_base<format_input_handler<vcf>>
+class format_input_handler<vcf> :
+  public format_input_handler_base<format_input_handler<vcf>>,
+  public var_io::format_handler_mixin
 {
 private:
     /*!\name CRTP related entities
@@ -93,12 +95,12 @@ private:
      * \{
      */
     //!\brief The fields that this format supports [the base class accesses this type].
-    using format_fields = decltype(var_io::default_field_ids);
+    using format_fields   = decltype(detail::field_ids);
     //!\brief Type of the raw record.
-    using raw_record_type =
-      record<format_fields,
-             meta::list_traits::concat<meta::list_traits::repeat<format_fields::size - 1, std::string_view>,
-                                       meta::type_list<var_io::record_private_data>>>;
+    using raw_record_type = io::detail::tuple_record<
+      format_fields,
+      meta::list_traits::concat<meta::list_traits::repeat<format_fields::size - 1, std::string_view>,
+                                meta::type_list<var_io::record_private_data>>>;
 
     //!\brief Type of the low-level iterator.
     using lowlevel_iterator = detail::plaintext_input_iterator<plain_io::record_kind::line_and_fields>;
@@ -129,21 +131,22 @@ private:
         if (size_t field_num = file_it->fields.size(); field_num < 8)
             error("Expected at least 8 fields but got ", field_num);
 
-        get<field::chrom>(raw_record)  = (*file_it).fields[0];
-        get<field::pos>(raw_record)    = (*file_it).fields[1];
-        get<field::id>(raw_record)     = (*file_it).fields[2];
-        get<field::ref>(raw_record)    = (*file_it).fields[3];
-        get<field::alt>(raw_record)    = (*file_it).fields[4];
-        get<field::qual>(raw_record)   = (*file_it).fields[5];
-        get<field::filter>(raw_record) = (*file_it).fields[6];
-        get<field::info>(raw_record)   = (*file_it).fields[7];
+        get<detail::field::chrom>(raw_record)  = (*file_it).fields[0];
+        get<detail::field::pos>(raw_record)    = (*file_it).fields[1];
+        get<detail::field::id>(raw_record)     = (*file_it).fields[2];
+        get<detail::field::ref>(raw_record)    = (*file_it).fields[3];
+        get<detail::field::alt>(raw_record)    = (*file_it).fields[4];
+        get<detail::field::qual>(raw_record)   = (*file_it).fields[5];
+        get<detail::field::filter>(raw_record) = (*file_it).fields[6];
+        get<detail::field::info>(raw_record)   = (*file_it).fields[7];
 
         // fields[7].end() that is guaranteed to be char*
-        char const * end_qual             = (*file_it).fields[7].data() + (*file_it).fields[7].size();
+        char const * end_qual = (*file_it).fields[7].data() + (*file_it).fields[7].size();
         // line.end() that is guaranteed to be char*
-        char const * end_line             = (*file_it).line.data() + (*file_it).line.size();
+        char const * end_line = (*file_it).line.data() + (*file_it).line.size();
         // genotypes go from end of qual til end of line (possibly empty)
-        get<field::genotypes>(raw_record) = std::string_view{end_qual, static_cast<size_t>(end_line - end_qual)};
+        get<detail::field::genotypes>(raw_record) =
+          std::string_view{end_qual, static_cast<size_t>(end_line - end_qual)};
     }
     //!\}
 
@@ -168,10 +171,10 @@ private:
                                            detail::is_info_element_value_type auto & output);
 
     //!\brief Parse the CHROM field. Reading chrom as number means getting the index (not converting string to number).
-    void parse_field(meta::vtag_t<field::chrom> const & /**/, auto & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::chrom> const & /**/, auto & parsed_field)
     {
         using parsed_field_t       = std::remove_cvref_t<decltype(parsed_field)>;
-        std::string_view raw_field = get<field::chrom>(raw_record);
+        std::string_view raw_field = get<detail::field::chrom>(raw_record);
 
         if (raw_field != last_chrom)
         {
@@ -208,9 +211,9 @@ private:
     //!\brief Overload for parsing ALT.
     template <detail::back_insertable parsed_field_t>
         requires std::ranges::range<std::ranges::range_reference_t<parsed_field_t>>
-    void parse_field(meta::vtag_t<field::alt> const & /**/, parsed_field_t & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::alt> const & /**/, parsed_field_t & parsed_field)
     {
-        std::string_view raw_field = get<field::alt>(raw_record);
+        std::string_view raw_field = get<detail::field::alt>(raw_record);
 
         n_alts = 0;
 
@@ -228,9 +231,9 @@ private:
     }
 
     //!\brief Overload for parsing QUAL.
-    void parse_field(meta::vtag_t<field::qual> const & /**/, meta::arithmetic auto & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::qual> const & /**/, meta::arithmetic auto & parsed_field)
     {
-        std::string_view raw_field = get<field::qual>(raw_record);
+        std::string_view raw_field = get<detail::field::qual>(raw_record);
 
         if (raw_field == ".")
         {
@@ -244,10 +247,10 @@ private:
 
     //!\brief Overload for parsing FILTER.
     template <detail::back_insertable parsed_field_t>
-    void parse_field(meta::vtag_t<field::filter> const & /**/, parsed_field_t & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::filter> const & /**/, parsed_field_t & parsed_field)
     {
         using elem_t               = std::ranges::range_value_t<parsed_field_t>;
-        std::string_view raw_field = get<field::filter>(raw_record);
+        std::string_view raw_field = get<detail::field::filter>(raw_record);
 
         if (raw_field == ".")
             return;
@@ -331,13 +334,13 @@ private:
     //!\brief Overload for parsing INFO.
     template <detail::back_insertable parsed_field_t>
         requires detail::info_element_reader_concept<std::ranges::range_reference_t<parsed_field_t>>
-    void parse_field(meta::vtag_t<field::info> const & /**/, parsed_field_t & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::info> const & /**/, parsed_field_t & parsed_field)
     {
         using key_t   = detail::first_elem_t<std::ranges::range_reference_t<parsed_field_t>>;
         using value_t = detail::second_elem_t<std::ranges::range_reference_t<parsed_field_t>>;
         // TODO this function handles value_t being string or string_view but the concept currently disallows this
 
-        std::string_view raw_field = get<field::info>(raw_record);
+        std::string_view raw_field = get<detail::field::info>(raw_record);
 
         if (raw_field == ".")
             return;
@@ -448,10 +451,10 @@ private:
         //!\cond REQ
         requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
     //!\endcond
-    void parse_field(meta::vtag_t<field::genotypes> const & /**/, field_t & parsed_field);
+    void parse_field(meta::vtag_t<detail::field::genotypes> const & /**/, field_t & parsed_field);
 
     //!\brief Overload for parsing the private data.
-    void parse_field(meta::vtag_t<field::_private> const & /**/, var_io::record_private_data & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::_private> const & /**/, var_io::record_private_data & parsed_field)
     {
         parsed_field.header_ptr  = &header;
         parsed_field.raw_record  = nullptr;
@@ -699,7 +702,8 @@ inline size_t format_input_handler<vcf>::parse_element_value_type(var_io::value_
 //!\brief Overload for reading the GENOTYPE field.
 template <detail::back_insertable field_t>
     requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
-inline void format_input_handler<vcf>::parse_field(meta::vtag_t<field::genotypes> const & /**/, field_t & parsed_field)
+inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::genotypes> const & /**/,
+                                                   field_t & parsed_field)
 {
     using genotype_field_t = std::ranges::range_reference_t<field_t>;
 

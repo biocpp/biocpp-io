@@ -61,7 +61,7 @@ concept decays_to = std::same_as<std::decay_t<from_t>, to_t>;
  */
 constexpr bool lazy_concept_checker(auto fun)
 {
-    auto fallback = []<typename T = int>(auto)
+    auto fallback = []<typename t = int>(auto)
     {
         return std::false_type{};
     };

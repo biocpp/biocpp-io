@@ -49,16 +49,16 @@ namespace bio::io::seq_io
  *
  * The Sequence I/O reader supports reading the following fields:
  *
- *   1. bio::io::field::seq
- *   2. bio::io::field::id
- *   3. bio::io::field::qual
+ *   1. bio::io::detail::field::seq
+ *   2. bio::io::detail::field::id
+ *   3. bio::io::detail::field::qual
  *
  * And it supports the following formats:
  *
  *   1. FastA (see also bio::io::fasta)
  *   2. FastQ (see also bio::io::fastq)
  *
- * Fields that are not present in a format (e.g. bio::io::field::qual in FastA) will be returned empty.
+ * Fields that are not present in a format (e.g. bio::io::detail::field::qual in FastA) will be returned empty.
  *
  * ### Simple usage
  *

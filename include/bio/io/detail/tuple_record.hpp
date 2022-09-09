@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides the bio::io::record template and the bio::io::field enum.
+ * \brief Provides the bio::io::detail::tuple_record template and the bio::io::detail::field enum.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
@@ -23,7 +23,7 @@
 #include <bio/io/detail/concept.hpp>
 #include <bio/io/misc.hpp>
 
-namespace bio::io
+namespace bio::io::detail
 {
 
 // ----------------------------------------------------------------------------
@@ -36,8 +36,6 @@ namespace bio::io
  * \details
  *
  * Some of the fields are shared between formats.
- *
- * TODO improve documentation
  */
 enum class field : uint64_t
 {
@@ -83,50 +81,40 @@ enum class field : uint64_t
     user_defined = uint64_t{1} << 32, //!< Identifier for user defined file formats and specialisations.
 };
 
-} // namespace bio::io
-
-namespace bio::io::detail
-{
-
-//!\brief Checks whether a type is a bio::meta::vtag_t over bio::io::field.
+//!\brief Checks whether a type is a bio::meta::vtag_t over bio::io::detail::field.
 template <typename t>
 inline constexpr bool is_fields_tag = false;
 
-//!\brief Checks whether a type is a bio::meta::vtag_t over bio::io::field.
+//!\brief Checks whether a type is a bio::meta::vtag_t over bio::io::detail::field.
 template <field... vs>
 inline constexpr bool is_fields_tag<meta::vtag_t<vs...>> = true;
 
-} // namespace bio::io::detail
-
-namespace bio::io
-{
-
 // ----------------------------------------------------------------------------
-// record
+// tuple_record
 // ----------------------------------------------------------------------------
 
-/*!\brief The class template that file records are based on; behaves like an std::tuple.
+/*!\brief The class template that file tuple_records are based on; behaves like an std::tuple.
  * \implements seqan3::tuple_like
  * \ingroup io
- * \tparam field_ids   A meta::vtag_t type with bio::io::field IDs corresponding to field_types.
- * \tparam field_types The types of the fields in this record as a meta::type_list.
+ * \tparam field_ids   A meta::vtag_t type with bio::io::detail::field IDs corresponding to field_types.
+ * \tparam field_types The types of the fields in this tuple_record as a meta::type_list.
  * \details
  *
  * This class template behaves like a std::tuple, with the exception that it provides an additional
- * get-interface that takes a bio::io::field identifier. The traditional get interfaces (via index and
- * via type) are also supported, but discouraged, because accessing via bio::io::field is unambiguous and
+ * get-interface that takes a bio::io::detail::field identifier. The traditional get interfaces (via index and
+ * via type) are also supported, but discouraged, because accessing via bio::io::detail::field is unambiguous and
  * better readable.
  *
  * In addition to the get()-interfaces, member accessors are provided with the same name as the fields.
  *
  * See bio::io::seq_io::reader for how this data structure is used in practice.
  *
- * See #make_record() and #tie_record() for easy ways to create stand-alone record variables.
+ * See #make_tuple_record() and #tie_tuple_record() for easy ways to create stand-alone tuple_record variables.
  *
  * See the \ref record_faq for more details.
  */
 template <typename field_ids_, typename field_types_>
-struct record : bio::meta::transfer_template_args_onto_t<field_types_, std::tuple>
+struct tuple_record : bio::meta::transfer_template_args_onto_t<field_types_, std::tuple>
 {
 public:
     using field_types = field_types_; //!< The field types as a type_list.
@@ -163,22 +151,25 @@ public:
     /*!\name Constructors, destructor and assignment
      * \{
      */
-    record()                           = default; //!< Defaulted.
-    record(record const &)             = default; //!< Defaulted.
-    record(record &&)                  = default; //!< Defaulted.
-    ~record()                          = default; //!< Defaulted.
-    record & operator=(record const &) = default; //!< Defaulted.
-    record & operator=(record &&)      = default; //!< Defaulted.
+    tuple_record()                                 = default; //!< Defaulted.
+    tuple_record(tuple_record const &)             = default; //!< Defaulted.
+    tuple_record(tuple_record &&)                  = default; //!< Defaulted.
+    ~tuple_record()                                = default; //!< Defaulted.
+    tuple_record & operator=(tuple_record const &) = default; //!< Defaulted.
+    tuple_record & operator=(tuple_record &&)      = default; //!< Defaulted.
 
     //!\brief Inherit tuple's constructors.
     using base_type::base_type;
     //!\}
 
     static_assert(meta::list_traits::size<field_types> == field_ids::size,
-                  "You must give as many IDs as types to bio::io::record.");
+                  "You must give as many IDs as types to bio::io::detail::tuple_record.");
 
     //!\brief Clears containers that provide `.clear()` and (re-)initialises all other elements with `= {}`.
-    void clear() noexcept(noexcept(std::apply(expander, std::declval<record &>()))) { std::apply(expander, *this); }
+    void clear() noexcept(noexcept(std::apply(expander, std::declval<tuple_record &>())))
+    {
+        std::apply(expander, *this);
+    }
 
     /*!\name Get accessors
      * \{
@@ -218,21 +209,22 @@ public:
     }
     //!\}
 
-//!\brief A macro that defines all getter functions for fields contained in bio::io::record.
+//!\brief A macro that defines all getter functions for fields contained in bio::io::detail::tuple_record.
 #define BIOCPP_IO_RECORD_MEMBER(F)                                                                                     \
-    /*!\brief Return the bio::io::field F if available.*/                                                              \
-    decltype(auto) F() noexcept(noexcept(get<field::F>()))                                                             \
+    /*!\brief Return the bio::io::detail::field F if available.*/                                                      \
+    decltype(auto) F() noexcept(noexcept(get<detail::field::F>()))                                                     \
     {                                                                                                                  \
-        return get<field::F>();                                                                                        \
+        return get<detail::field::F>();                                                                                \
     }                                                                                                                  \
-    /*!\brief Return the bio::io::field F if available. [const-qualified version] */                                   \
-    decltype(auto) F() const noexcept(noexcept(get<field::F>()))                                                       \
+    /*!\brief Return the bio::io::detail::field F if available. [const-qualified version] */                           \
+    decltype(auto) F() const noexcept(noexcept(get<detail::field::F>()))                                               \
     {                                                                                                                  \
-        return get<field::F>();                                                                                        \
+        return get<detail::field::F>();                                                                                \
     }
 
     /*!\name Member accessors
-     * \brief This is the same as calling #get<field::X>(); functions are only defined if record has that element.
+     * \brief This is the same as calling #get<detail::field::X>(); functions are only defined if tuple_record has that
+     * element.
      * \{
      */
     BIOCPP_IO_RECORD_MEMBER(seq)
@@ -261,7 +253,7 @@ public:
 #undef BIOCPP_IO_RECORD_MEMBER
 };
 
-} // namespace bio::io
+} // namespace bio::io::detail
 
 //-------------------------------------------------------------------------------
 // tuple traits
@@ -272,156 +264,179 @@ namespace std
 
 /*!\brief Provides access to the number of elements in a tuple as a compile-time constant expression.
  * \implements bio::meta::unary_type_trait
- * \relates bio::io::record
+ * \relates bio::io::detail::tuple_record
  * \see std::tuple_size_v
  */
 template <typename field_ids, typename field_types>
-struct tuple_size<bio::io::record<field_ids, field_types>>
+struct tuple_size<bio::io::detail::tuple_record<field_ids, field_types>>
 {
     //!\brief The value member. Delegates to same value on base_type.
-    static constexpr size_t value = tuple_size_v<typename bio::io::record<field_ids, field_types>::base_type>;
+    static constexpr size_t value =
+      tuple_size_v<typename bio::io::detail::tuple_record<field_ids, field_types>::base_type>;
 };
 
 /*!\brief Obtains the type of the specified element.
  * \implements bio::meta::transformation_trait
- * \relates bio::io::record
+ * \relates bio::io::detail::tuple_record
  * \see [std::tuple_element](https://en.cppreference.com/w/cpp/utility/tuple/tuple_element)
  */
 template <size_t elem_no, typename field_ids, typename field_types>
-struct tuple_element<elem_no, bio::io::record<field_ids, field_types>>
+struct tuple_element<elem_no, bio::io::detail::tuple_record<field_ids, field_types>>
 {
     //!\brief The member type. Delegates to same type on base_type.
-    using type = std::tuple_element_t<elem_no, typename bio::io::record<field_ids, field_types>::base_type>;
+    using type =
+      std::tuple_element_t<elem_no, typename bio::io::detail::tuple_record<field_ids, field_types>::base_type>;
 };
 
 } // namespace std
 
-namespace bio::io
+namespace bio::io::detail
 {
 
 //-------------------------------------------------------------------------------
-// record_element
+// tuple_record_element
 //-------------------------------------------------------------------------------
 
-/*!\brief Like std::tuple_element but with bio::io::field on bio::io::record. [declaration]
+/*!\brief Like std::tuple_element but with bio::io::detail::field on bio::io::detail::tuple_record. [declaration]
  * \implements bio::meta::transformation_trait
- * \relates bio::io::record
+ * \relates bio::io::detail::tuple_record
  */
 template <field f, typename t>
-struct record_element;
+struct tuple_record_element;
 
-//!\brief Like std::tuple_element but with bio::io::field on bio::io::record. [implementation]
+//!\brief Like std::tuple_element but with bio::io::detail::field on bio::io::detail::tuple_record. [implementation]
 template <field f, typename field_ids, typename field_types>
     //!\cond REQ
     requires(field_ids::contains(f))
 //!\endcond
-struct record_element<f, record<field_ids, field_types>> :
-  public std::tuple_element<field_ids::index_of(f), record<field_ids, field_types>>
+struct tuple_record_element<f, tuple_record<field_ids, field_types>> :
+  public std::tuple_element<field_ids::index_of(f), tuple_record<field_ids, field_types>>
 {};
 
-//!\brief Like std::tuple_element but with bio::io::field on bio::io::record. [type trait shortcut]
+//!\brief Like std::tuple_element but with bio::io::detail::field on bio::io::detail::tuple_record. [type trait
+//! shortcut]
 template <field f, typename t>
     //!\cond REQ
-    requires(requires { typename record_element<f, t>::type; })
+    requires(requires { typename tuple_record_element<f, t>::type; })
 //!\endcond
-using record_element_t = typename record_element<f, t>::type;
+using tuple_record_element_t = typename tuple_record_element<f, t>::type;
 
 //-------------------------------------------------------------------------------
-// bio::io::get
+// bio::io::detail::get
 //-------------------------------------------------------------------------------
 
-/*!\name Free function get() interface for bio::io::record based on bio::io::field.
- * \brief This is the tuple interface via bio::io::field, e.g. `get<field::seq>(tuple)`.
- * \relates bio::io::record
+/*!\name Free function get() interface for bio::io::detail::tuple_record based on bio::io::detail::field.
+ * \brief This is the tuple interface via bio::io::detail::field, e.g. `get<detail::field::seq>(tuple)`.
+ * \relates bio::io::detail::tuple_record
  * \{
  */
-//!\brief Free function get() for bio::io::record based on bio::io::field.
+//!\brief Free function get() for bio::io::detail::tuple_record based on bio::io::detail::field.
 template <field f, typename field_ids, typename field_types>
-auto & get(record<field_ids, field_types> & r)
+auto & get(tuple_record<field_ids, field_types> & r)
 {
-    static_assert(field_ids::contains(f), "The record does not contain the field you wish to retrieve.");
+    static_assert(field_ids::contains(f), "The tuple_record does not contain the field you wish to retrieve.");
     return std::get<field_ids::index_of(f)>(r);
 }
 
 //!\overload
 template <field f, typename field_ids, typename field_types>
-auto const & get(record<field_ids, field_types> const & r)
+auto const & get(tuple_record<field_ids, field_types> const & r)
 {
-    static_assert(field_ids::contains(f), "The record does not contain the field you wish to retrieve.");
+    static_assert(field_ids::contains(f), "The tuple_record does not contain the field you wish to retrieve.");
     return std::get<field_ids::index_of(f)>(r);
 }
 
 //!\overload
 template <field f, typename field_ids, typename field_types>
-auto && get(record<field_ids, field_types> && r)
+auto && get(tuple_record<field_ids, field_types> && r)
 {
-    static_assert(field_ids::contains(f), "The record does not contain the field you wish to retrieve.");
+    static_assert(field_ids::contains(f), "The tuple_record does not contain the field you wish to retrieve.");
     return std::get<field_ids::index_of(f)>(std::move(r));
 }
 
 //!\overload
 template <field f, typename field_ids, typename field_types>
-auto const && get(record<field_ids, field_types> const && r)
+auto const && get(tuple_record<field_ids, field_types> const && r)
 {
-    static_assert(field_ids::contains(f), "The record does not contain the field you wish to retrieve.");
+    static_assert(field_ids::contains(f), "The tuple_record does not contain the field you wish to retrieve.");
     return std::get<field_ids::index_of(f)>(std::move(r));
 }
 //!\}
 
-// Implementation note: for some reason, the following is already "related" do bio::io::record
-/*!\name Convenience functions for creating bio::io::record.
+// Implementation note: for some reason, the following is already "related" do bio::io::detail::tuple_record
+/*!\name Convenience functions for creating bio::io::detail::tuple_record.
  * \{
  */
 //-------------------------------------------------------------------------------
-// make_record
+// make_tuple_record
 //-------------------------------------------------------------------------------
 
-/*!\brief Create a deep bio::io::record from the arguments (like std::make_tuple for std::tuple).
+/*!\brief Create a deep bio::io::detail::tuple_record from the arguments (like std::make_tuple for std::tuple).
  * \param[in] tag    A tag that specifies the identifiers of the subsequent arguments.
- * \param[in] fields The arguments to put into the record.
- * \returns A bio::io::record with copies of the field arguments.
+ * \param[in] fields The arguments to put into the tuple_record.
+ * \returns A bio::io::detail::tuple_record with copies of the field arguments.
  * \details
  *
- * The record will contain copies of the arguments.
+ * The tuple_record will contain copies of the arguments.
  *
  * For more information, see \ref record_type and \ref record_make_tie
  *
  * ### Example
  *
- * \snippet test/snippet/record.cpp make_and_tie_record
+ * \snippet test/snippet/detail/tuple_record.cpp make_and_tie_record
  */
 template <auto... field_ids, typename... field_type_ts>
-constexpr auto make_record(meta::vtag_t<field_ids...> BIOCPP_IO_DOXYGEN_ONLY(tag), field_type_ts &&... fields)
-  -> record<meta::vtag_t<field_ids...>, bio::meta::type_list<std::decay_t<field_type_ts>...>>
+constexpr auto make_tuple_record(meta::vtag_t<field_ids...> BIOCPP_IO_DOXYGEN_ONLY(tag), field_type_ts &&... fields)
+  -> tuple_record<meta::vtag_t<field_ids...>, bio::meta::type_list<std::decay_t<field_type_ts>...>>
 {
     return {std::forward<field_type_ts>(fields)...};
 }
 
 //-------------------------------------------------------------------------------
-// tie_record
+// tie_tuple_record
 //-------------------------------------------------------------------------------
 
-/*!\brief Create a shallow bio::io::record from the arguments (like std::tie for std::tuple).
+/*!\brief Create a shallow bio::io::detail::tuple_record from the arguments (like std::tie for std::tuple).
  * \param[in] tag    A tag that specifies the identifiers of the subsequent arguments.
- * \param[in] fields The arguments to represent in the record.
- * \returns A bio::io::record with references to the field arguments.
+ * \param[in] fields The arguments to represent in the tuple_record.
+ * \returns A bio::io::detail::tuple_record with references to the field arguments.
  * \details
  *
- * The record will contain references to the arguments.
+ * The tuple_record will contain references to the arguments.
  *
  * For more information, see \ref record_type and \ref record_make_tie
  *
  * ### Example
  *
- * \snippet test/snippet/record.cpp make_and_tie_record
+ * \snippet test/snippet/detail/tuple_record.cpp make_and_tie_record
  */
 template <auto... field_ids, typename... field_type_ts>
-constexpr auto tie_record(meta::vtag_t<field_ids...> BIOCPP_IO_DOXYGEN_ONLY(tag), field_type_ts &... fields)
-  -> record<meta::vtag_t<field_ids...>, bio::meta::type_list<field_type_ts &...>>
+constexpr auto tie_tuple_record(meta::vtag_t<field_ids...> BIOCPP_IO_DOXYGEN_ONLY(tag), field_type_ts &... fields)
+  -> tuple_record<meta::vtag_t<field_ids...>, bio::meta::type_list<field_type_ts &...>>
 {
     return {fields...};
 }
 
 //!\}
 
-} // namespace bio::io
+//-------------------------------------------------------------------------------
+// has_non_ignore_field
+//-------------------------------------------------------------------------------
+
+//!\brief Auxiliary function to check if a tuple_record has a field and it's not std::ignore'd.
+template <field f, typename t>
+consteval bool has_non_ignore_field()
+{
+    using tuple_record_t = typename std::remove_cvref_t<t>;
+    using field_ids      = typename tuple_record_t::field_ids;
+    if constexpr (field_ids::contains(f))
+    {
+        if constexpr (!decays_to<tuple_record_element_t<f, tuple_record_t>, ignore_t>)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+} // namespace bio::io::detail

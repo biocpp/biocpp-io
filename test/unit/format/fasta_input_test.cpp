@@ -27,10 +27,7 @@ using std::literals::string_view_literals::operator""sv;
 
 struct read : public ::testing::Test
 {
-    using default_rec_t = bio::io::record<
-      bio::meta::vtag_t<bio::io::field::id, bio::io::field::seq>,
-      bio::meta::type_list<std::string_view,
-                           decltype(std::string_view{} | bio::views::char_strictly_to<bio::alphabet::dna5>)>>;
+    using default_rec_t = bio::io::seq_io::record_dna_shallow;
 
     std::vector<std::string> ids{
       {"ID1"},
@@ -57,21 +54,20 @@ struct read : public ::testing::Test
 
         bio::io::format_input_handler<bio::io::fasta> input_handler{istream};
 
-        bio::io::record<bio::meta::vtag_t<bio::io::field::id, bio::io::field::seq>, bio::meta::type_list<id_t, seq_t>>
-          rec;
+        bio::io::seq_io::record<id_t, seq_t> rec;
 
         for (unsigned i = 0; i < 3; ++i)
         {
             input_handler.parse_next_record_into(rec);
             if constexpr (std::same_as<std::ranges::range_value_t<seq_t>, char>)
             {
-                EXPECT_RANGE_EQ(rec.seq() | bio::views::char_strictly_to<bio::alphabet::dna5>, seqs[i]);
+                EXPECT_RANGE_EQ(rec.seq | bio::views::char_strictly_to<bio::alphabet::dna5>, seqs[i]);
             }
             else
             {
-                EXPECT_RANGE_EQ(rec.seq(), seqs[i]);
+                EXPECT_RANGE_EQ(rec.seq, seqs[i]);
             }
-            EXPECT_RANGE_EQ(rec.id(), ids[i]);
+            EXPECT_RANGE_EQ(rec.id, ids[i]);
         }
     }
 
@@ -207,14 +203,14 @@ ACGTTTA
     default_rec_t                                 rec;
 
     input_handler.parse_next_record_into(rec);
-    EXPECT_RANGE_EQ(rec.id(), "ID1 foo"sv);
-    EXPECT_RANGE_EQ(rec.seq(), seqs[0]);
+    EXPECT_RANGE_EQ(rec.id, "ID1 foo"sv);
+    EXPECT_RANGE_EQ(rec.seq, seqs[0]);
     input_handler.parse_next_record_into(rec);
-    EXPECT_RANGE_EQ(rec.id(), "ID2"sv);
-    EXPECT_RANGE_EQ(rec.seq(), seqs[1]);
+    EXPECT_RANGE_EQ(rec.id, "ID2"sv);
+    EXPECT_RANGE_EQ(rec.seq, seqs[1]);
     input_handler.parse_next_record_into(rec);
-    EXPECT_RANGE_EQ(rec.id(), "ID3 lala"sv);
-    EXPECT_RANGE_EQ(rec.seq(), seqs[2]);
+    EXPECT_RANGE_EQ(rec.id, "ID3 lala"sv);
+    EXPECT_RANGE_EQ(rec.seq, seqs[2]);
 }
 
 TEST_F(read, truncate_ids_on)
@@ -233,14 +229,14 @@ ACGTTTA
     default_rec_t                                 rec;
 
     input_handler.parse_next_record_into(rec);
-    EXPECT_RANGE_EQ(rec.id(), "ID1"sv);
-    EXPECT_RANGE_EQ(rec.seq(), seqs[0]);
+    EXPECT_RANGE_EQ(rec.id, "ID1"sv);
+    EXPECT_RANGE_EQ(rec.seq, seqs[0]);
     input_handler.parse_next_record_into(rec);
-    EXPECT_RANGE_EQ(rec.id(), "ID2"sv);
-    EXPECT_RANGE_EQ(rec.seq(), seqs[1]);
+    EXPECT_RANGE_EQ(rec.id, "ID2"sv);
+    EXPECT_RANGE_EQ(rec.seq, seqs[1]);
     input_handler.parse_next_record_into(rec);
-    EXPECT_RANGE_EQ(rec.id(), "ID3"sv);
-    EXPECT_RANGE_EQ(rec.seq(), seqs[2]);
+    EXPECT_RANGE_EQ(rec.id, "ID3"sv);
+    EXPECT_RANGE_EQ(rec.seq, seqs[2]);
 }
 
 // ----------------------------------------------------------------------------
@@ -294,8 +290,7 @@ TEST_F(read, fail_illegal_alphabet)
 
     std::istringstream                            istream{input};
     bio::io::format_input_handler<bio::io::fasta> input_handler{istream};
-    using rec_t = bio::io::record<bio::meta::vtag_t<bio::io::field::id, bio::io::field::seq>,
-                                  bio::meta::type_list<std::string_view, std::vector<bio::alphabet::dna5>>>;
+    using rec_t = bio::io::seq_io::record<std::string_view, std::vector<bio::alphabet::dna5>>;
 
     rec_t rec;
 

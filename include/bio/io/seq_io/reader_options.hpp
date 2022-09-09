@@ -31,103 +31,33 @@
 #include <bio/io/format/fasta.hpp>
 #include <bio/io/format/fastq.hpp>
 #include <bio/io/misc.hpp>
-#include <bio/io/seq_io/misc.hpp>
+#include <bio/io/seq_io/record.hpp>
 #include <bio/io/stream/transparent_istream.hpp>
 
 namespace bio::io::seq_io
 {
 
-/*!\addtogroup seq_io
- * \{
- */
-
-/*!\name Pre-defined field types
- * \brief These can be used to configure the behaviour of the bio::io::seq_io::reader via
- * bio::io::seq_io::reader_options.
- * \{
- */
-
-/*!\brief The generic field types template.
- * \tparam ownership Return shallow or deep types.
- * \details
- *
- * You can use this to configure a deep record or one with custom alphabets.
- *
- * ### Example
- *
- * \snippet test/snippet/seq_io/seq_io_reader_options.cpp example_simple
- *
- * Type of the ID will be std::string, type of the sequence will be std::vector<alphabet::dna4> and
- * type of the qualities will be std::vector<bio::alphabet::phred42>.
- */
-template <bio::io::ownership ownership   = bio::io::ownership::shallow,
-          alphabet::alphabet seq_alph_t  = alphabet::dna5,
-          alphabet::alphabet qual_alph_t = alphabet::phred63>
-inline constinit auto field_types = []()
-{
-    if constexpr (ownership == bio::io::ownership::deep)
-    {
-        return meta::ttag<std::string,
-                          std::conditional_t<std::same_as<seq_alph_t, char>, std::string, std::vector<seq_alph_t>>,
-                          std::conditional_t<std::same_as<qual_alph_t, char>, std::string, std::vector<qual_alph_t>>>;
-    }
-    else
-    {
-        return meta::ttag<std::string_view,
-                          std::conditional_t<std::same_as<seq_alph_t, char>,
-                                             std::string_view,
-                                             decltype(std::string_view{} | bio::views::char_strictly_to<seq_alph_t>)>,
-                          std::conditional_t<std::same_as<qual_alph_t, char>,
-                                             std::string_view,
-                                             decltype(std::string_view{} | bio::views::char_strictly_to<qual_alph_t>)>>;
-    }
-}();
-
-/*!\brief The field types for reading DNA data.
- * \details
- *
- * This is the default.
- *
- * Configures a shallow record where sequence data is alphabet::dna5 and quality data is bio::alphabet::phred63.
- */
-inline constinit auto field_types_dna = field_types<>;
-
-/*!\brief The field types for reading protein data.
- * \tparam ownership Return shallow or deep types.
- * \details
- *
- * Configures a shallow record where sequence data is bio::alphabet::aa27 and quality data is bio::alphabet::phred63.
- */
-inline constinit auto field_types_protein = field_types<ownership::shallow, bio::alphabet::aa27>;
-
-/*!\brief The field types for reading any data.
- * \details
- *
- * Configures a shallow record where sequence and quality data are plain characters.
- * This can be used in cases where the application needs to handle nucleotide *and*
- * protein data.
- */
-inline constinit auto field_types_char = field_types<ownership::shallow, char, char>;
-//!\}
-//!\}
-
 /*!\brief Options that can be used to configure the behaviour of bio::io::seq_io::reader.
- * \tparam field_ids_t   Type of the field_ids member (usually deduced).
- * \tparam field_types_t Type of the field_types member (usually deduced).
+ * \ingroup seq_io
+ * \tparam record_t      Type of the record member (usually deduced).
  * \tparam formats_t     Type of the formats member (usually deduced).
  * \ingroup seq_io
  * \details
  *
- * By default, the reader options assume DNA data. You can select bio::io::seq_io::field_types_protein to
- * read protein data or bio::io::seq_io::field_types_char to store in an agnostic type.
+ * The options can be used to configure the behaviour of the reader. An important option is
+ * the record type. By default, the reader assumes that sequence data is DNA, but this can be changed
+ * to any other bio::alphabet::alphabet or the plain `char` type which accepts any values.
+ *
+ * Furthermore, different container and view types can be chosen. See bio::io::seq_io::record
+ * for more details.
  *
  * ### Example
  *
- * The reader options can be easily set via [designated
+ * Options can be easily set via [designated
  * initialisers](https://en.cppreference.com/w/cpp/language/aggregate_initialization).
  *
- * To switch from DNA reading (the default) to protein reading and activate truncating of IDs, do
- * the following:
+ * To switch from DNA reading (the default) to protein reading, activate truncating of IDs, and set the maximum
+ * number of decoder threads (affect only bgzipped files), do the following:
  *
  * \snippet test/snippet/seq_io/seq_io_reader_options.cpp example_simple
  *
@@ -141,58 +71,14 @@ inline constinit auto field_types_char = field_types<ownership::shallow, char, c
  *
  * ### Example (advanced)
  *
- * This code switches from alphabet::dna5 to alphabet::dna4 alphabet, from bio::alphabet::phred63 to
- * bio::alphabet::phred42, and reduces the amount of threads used:
- *
- * \snippet test/snippet/seq_io/seq_io_reader_options.cpp example_advanced1
- *
- * This code makes FASTA the only legal format and creates records with only the sequence field as
+ * This code makes FASTA the only legal format and creates records with only the ID field as
  * a std::string:
  *
- * \snippet test/snippet/seq_io/seq_io_reader_options.cpp example_advanced2
- *
- * ### Field type specific restrictions
- *
- * This section is only relevant if you specify the #field_types member manually, i.e. if you
- * change the field_types but do not use one of the predefined tags.
- *
- * 1. bio::io::field::id
- *   * any back-insertable range over the `char` alphabet (copy of elements returned)
- *   * std::string_view (view into a buffer is returned)
- * 2. bio::io::field::seq
- *   * any back-insertable range over the `char` alphabet (copy of elements returned)
- *   * any back-insertable range over a bio::alphabet::alphabet (elements are transformed via
- * bio::views::char_strictly_to)
- *   * std::string_view (view into a buffer is returned)
- *   * a std::ranges::transform_view defined on a std::string_view (transformation view is returned)
- * 3. bio::io::field::qual
- *   * any back-insertable range over the `char` alphabet (copy of elements returned)
- *   * any back-insertable range over a bio::alphabet::alphabet (elements are transformed via
- * bio::views::char_strictly_to)
- *   * std::string_view (view into a buffer is returned)
- *   * a std::ranges::transform_view defined on a std::string_view (transformation view is returned)
+ * \snippet test/snippet/seq_io/seq_io_reader_options.cpp example_advanced
  */
-template <typename field_ids_t   = decltype(default_field_ids),
-          typename field_types_t = decltype(field_types_dna),
-          typename formats_t     = meta::type_list<fasta, fastq>>
+template <typename record_t = record_dna_shallow, typename formats_t = meta::type_list<fasta, fastq>>
 struct reader_options
 {
-    /*!\brief The fields that shall be contained in each record; a bio::meta::vtag over bio::io::field.
-     * \details
-     *
-     * It is usually not necessary to change this.
-     * **If you do, you need to adapt field_types, as well!**
-     */
-    field_ids_t field_ids = default_field_ids;
-
-    /*!\brief The types corresponding to each field; a bio::meta::ttag over the types.
-     *
-     * \details
-     *
-     * See bio::io::seq_io::reader for an overview of the supported field/type combinations.
-     */
-    field_types_t field_types = field_types_dna;
-
     /*!\brief The formats that input files can take; a bio::meta::ttag over the types.
      *
      * \details
@@ -201,6 +87,13 @@ struct reader_options
      */
     formats_t formats = meta::ttag<fasta, fastq>;
 
+    /*!\brief A record that can store the fields read from disk.
+     * \details
+     *
+     * See bio::io::seq_io::record for details.
+     */
+    record_t record{};
+
     //!\brief Options that are passed on to the internal stream oject.
     transparent_istream_options stream_options{};
 
@@ -208,46 +101,9 @@ struct reader_options
     bool truncate_ids = false;
 
 private:
-    static_assert(detail::is_fields_tag<field_ids_t>, "field_ids must be a bio::meta::vtag over bio::io::field.");
-
-    static_assert(meta::detail::is_type_list<field_types_t>,
-                  "field_types must be a bio::meta::ttag / bio::meta::type_list.");
-
     static_assert(meta::detail::is_type_list<formats_t>, "formats must be a bio::meta::ttag / bio::meta::type_list.");
 
-    static_assert(field_ids_t::size == field_types_t::size(), "field_ids and field_types must have the same size.");
-
-    //!\brief Type of the record.
-    using record_t = record<field_ids_t, field_types_t>;
-
-    static_assert(detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
-                    !field_ids_t::contains(field::id) ||
-                    detail::back_insertable_with<record_element_t<field::id, rec_t>, char> ||
-                    std::same_as<std::string_view, record_element_t<field::id, rec_t>>) { return std::true_type{}; }),
-                  "Requirements for the field-type of the ID-field not met. See documentation for "
-                  "bio::io::seq_io::reader_options.");
-
-    static_assert(detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
-                    !field_ids_t::contains(field::seq) ||
-                    (detail::back_insertable<record_element_t<field::seq, rec_t>> &&
-                     alphabet::alphabet<std::ranges::range_reference_t<record_element_t<field::seq, rec_t>>>) ||
-                    std::same_as<std::string_view, record_element_t<field::seq, rec_t>> ||
-                    detail::transform_view_on_string_view<record_element_t<field::seq, rec_t>>) {
-                      return std::true_type{};
-                  }),
-                  "Requirements for the field-type of the SEQ-field not met. See documentation for "
-                  "bio::io::seq_io::reader_options.");
-
-    static_assert(detail::lazy_concept_checker([]<typename rec_t = record_t>(auto) requires(
-                    !field_ids_t::contains(field::qual) ||
-                    (detail::back_insertable<record_element_t<field::qual, rec_t>> &&
-                     alphabet::alphabet<std::ranges::range_reference_t<record_element_t<field::qual, rec_t>>>) ||
-                    std::same_as<std::string_view, record_element_t<field::qual, rec_t>> ||
-                    detail::transform_view_on_string_view<record_element_t<field::qual, rec_t>>) {
-                      return std::true_type{};
-                  }),
-                  "Requirements for the field-type of the QUAL-field not met. See documentation for "
-                  "bio::io::seq_io::reader_options.");
+    static_assert(detail::record_read_concept_checker(std::type_identity<record_t>{}));
 };
 
 } // namespace bio::io::seq_io

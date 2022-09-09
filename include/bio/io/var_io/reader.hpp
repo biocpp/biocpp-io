@@ -39,33 +39,22 @@ namespace bio::io::var_io
  *
  * ### Introduction
  *
- * Variant files are files that contain sequence variation information. Well-known formats include
- * VCF and BCF.
- *
- * The Variant I/O reader supports reading the following fields:
- *
- *   1. bio::io::field::chrom
- *   2. bio::io::field::pos
- *   3. bio::io::field::id
- *   4. bio::io::field::ref
- *   5. bio::io::field::alt
- *   6. bio::io::field::qual
- *   7. bio::io::field::filter
- *   8. bio::io::field::info
- *   9. bio::io::field::genotypes
- *
- * These fields correspond to the order and names defined in the VCF specification. The types and values that
- * are returned by default also correspond to VCF specification (i.e. 1-based positions, string as strings and not
- * as numbers) **with one exception:** the genotypes are not grouped by sample (as in the VCF format) but by
- * genotype field (as in the BCF format).
- * This results in a notably better performance when reading BCF files.
- *
- * This reader supports the following formats:
+ * Variant files are files that contain sequence variation information. This reader supports the
+ * following formats:
  *
  *   1. VCF (see also bio::io::vcf)
  *   2. BCF (see also bio::io::bcf)
  *
- * If you only need to read VCF and not BCF and you do not want to parse the fields into high-level data structures
+ * The Variant I/O reader creates records (bio::io::var_io::record) that each contain the well-known
+ * members (chrom, pos, ID, ...).
+ * The types and values in the record correspond to VCF specification by default (i.e. 1-based
+ * positions, string as strings and not as numbers) **with one exception:** the genotypes are not
+ * grouped by sample (as in the VCF format) but by genotype field (as in the BCF format).
+ * This results in a notably better performance when reading BCF files.
+ * The types of the record members can be changed to achieve different behaviour; see
+ * bio::io::var_io::record for more details.
+ *
+ * If you only need to read VCF (and not BCF), and you do not want to parse the fields into high-level data structures
  * (and simply use them as strings), you can use bio::io::plain_io::reader instead of this reader.
  *
  * ### Simple usage
@@ -162,7 +151,7 @@ private:
              * We are currently doing a simplified indexed access where we do not process all
              * possible chunks but just do a linear scan from the beginning of the first overlapping chunk.
              * This is definitely worse than what htslib is doing, but still very good for the tests performed.
-             * I doubt that we can ever reach htslib's performance fullty while using C++ iostreams.
+             * I doubt that we can ever reach htslib's performance fully while using C++ iostreams.
              */
 
             // we take the smallest begin-offset
@@ -220,8 +209,15 @@ private:
         else /* only read sub-region */
         {
             // this record holds the bare minimum to check if regions overlap; always shallow
-            using record_t = record<meta::vtag_t<field::chrom, field::pos, field::ref>,
-                                    meta::type_list<std::string_view, int64_t, std::string_view>>;
+            using record_t = record<std::string_view,
+                                    int64_t,
+                                    ignore_t,
+                                    std::string_view,
+                                    ignore_t,
+                                    ignore_t,
+                                    ignore_t,
+                                    ignore_t,
+                                    ignore_t>;
             record_t temp_record;
 
             while (true)
@@ -236,9 +232,9 @@ private:
                 std::visit([&](auto & f) { f.parse_next_record_into(temp_record); }, format_handler);
 
                 // TODO undo "- 1" if interval notation gets decided on
-                genomic_region<ownership::shallow> rec_reg{.chrom = temp_record.chrom(),
-                                                           .beg   = temp_record.pos() - 1,
-                                                           .end   = rec_reg.beg + (int64_t)temp_record.ref().size()};
+                genomic_region<ownership::shallow> rec_reg{.chrom = temp_record.chrom,
+                                                           .beg   = temp_record.pos - 1,
+                                                           .end   = rec_reg.beg + (int64_t)temp_record.ref.size()};
 
                 std::weak_ordering ordering = rec_reg.relative_to(options.region);
                 if (ordering == std::weak_ordering::less) // records lies before the target region → skip

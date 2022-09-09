@@ -67,11 +67,10 @@ TEST(seq_io_reader, constructor1_just_filename)
 
 TEST(seq_io_reader, constructor1_with_opts)
 {
-    bio::io::seq_io::reader_options opt{.field_types = bio::io::seq_io::field_types_protein};
+    bio::io::seq_io::reader_options opt{.record = bio::io::seq_io::record_protein_shallow{}};
     seq_io_reader_filename_constructor(true, std::move(opt));
 
-    using control_t = bio::io::seq_io::reader<std::remove_cvref_t<decltype(bio::io::seq_io::default_field_ids)>,
-                                              std::remove_cvref_t<decltype(bio::io::seq_io::field_types_protein)>,
+    using control_t = bio::io::seq_io::reader<bio::io::seq_io::record_protein_shallow,
                                               bio::meta::type_list<bio::io::fasta, bio::io::fastq>>;
     EXPECT_TRUE((std::same_as<decltype(bio::io::seq_io::reader{"", opt}), control_t>));
 }
@@ -84,11 +83,10 @@ TEST(seq_io_reader, constructor2_just_filename_direct_format)
 
 TEST(seq_io_reader, constructor2_with_opts_direct_format)
 {
-    bio::io::seq_io::reader_options opt{.field_types = bio::io::seq_io::field_types_dna};
+    bio::io::seq_io::reader_options opt{.record = bio::io::seq_io::record_dna_shallow{}};
     seq_io_reader_filename_constructor(false, bio::io::fasta{}, std::move(opt));
 
-    using control_t = bio::io::seq_io::reader<std::remove_cvref_t<decltype(bio::io::seq_io::default_field_ids)>,
-                                              std::remove_cvref_t<decltype(bio::io::seq_io::field_types_dna)>,
+    using control_t = bio::io::seq_io::reader<bio::io::seq_io::record_dna_shallow,
                                               bio::meta::type_list<bio::io::fasta, bio::io::fastq>>;
     EXPECT_TRUE((std::same_as<decltype(bio::io::seq_io::reader{"", bio::io::fasta{}, opt}), control_t>));
 }
@@ -104,11 +102,10 @@ TEST(seq_io_reader, constructor2_just_filename_format_variant)
 TEST(seq_io_reader, constructor2_with_opts_format_variant)
 {
     bio::io::seq_io::reader<>::format_type var{};
-    bio::io::seq_io::reader_options        opt{.field_types = bio::io::seq_io::field_types_dna};
+    bio::io::seq_io::reader_options        opt{.record = bio::io::seq_io::record_dna_shallow{}};
     seq_io_reader_filename_constructor(false, var, std::move(opt));
 
-    using control_t = bio::io::seq_io::reader<std::remove_cvref_t<decltype(bio::io::seq_io::default_field_ids)>,
-                                              std::remove_cvref_t<decltype(bio::io::seq_io::field_types_dna)>,
+    using control_t = bio::io::seq_io::reader<bio::io::seq_io::record_dna_shallow,
                                               bio::meta::type_list<bio::io::fasta, bio::io::fastq>>;
     EXPECT_TRUE((std::same_as<decltype(bio::io::seq_io::reader{"", var, std::move(opt)}), control_t>));
 }
@@ -124,11 +121,10 @@ TEST(seq_io_reader, constructor3)
 TEST(seq_io_reader, constructor3_with_opts)
 {
     std::istringstream              str;
-    bio::io::seq_io::reader_options opt{.field_types = bio::io::seq_io::field_types_dna};
+    bio::io::seq_io::reader_options opt{.record = bio::io::seq_io::record_dna_shallow{}};
     EXPECT_NO_THROW((bio::io::seq_io::reader{str, bio::io::fasta{}, opt}));
 
-    using control_t = bio::io::seq_io::reader<std::remove_cvref_t<decltype(bio::io::seq_io::default_field_ids)>,
-                                              std::remove_cvref_t<decltype(bio::io::seq_io::field_types_dna)>,
+    using control_t = bio::io::seq_io::reader<bio::io::seq_io::record_dna_shallow,
                                               bio::meta::type_list<bio::io::fasta, bio::io::fastq>>;
     EXPECT_TRUE((std::same_as<decltype(bio::io::seq_io::reader{str, bio::io::fasta{}, opt}), control_t>));
 }
@@ -145,11 +141,10 @@ TEST(seq_io_reader, constructor4)
 TEST(seq_io_reader, constructor4_with_opts)
 {
     std::istringstream              str;
-    bio::io::seq_io::reader_options opt{.field_types = bio::io::seq_io::field_types_dna};
+    bio::io::seq_io::reader_options opt{.record = bio::io::seq_io::record_dna_shallow{}};
     EXPECT_NO_THROW((bio::io::seq_io::reader{std::move(str), bio::io::fasta{}, opt}));
 
-    using control_t = bio::io::seq_io::reader<std::remove_cvref_t<decltype(bio::io::seq_io::default_field_ids)>,
-                                              std::remove_cvref_t<decltype(bio::io::seq_io::field_types_dna)>,
+    using control_t = bio::io::seq_io::reader<bio::io::seq_io::record_dna_shallow,
                                               bio::meta::type_list<bio::io::fasta, bio::io::fastq>>;
     EXPECT_TRUE((std::same_as<decltype(bio::io::seq_io::reader{std::move(str), bio::io::fasta{}, opt}), control_t>));
 }
@@ -171,7 +166,7 @@ TEST(seq_io_reader, iteration)
         for (auto & rec : reader)
         {
             ++count;
-            EXPECT_TRUE(rec.id().starts_with("ID"));
+            EXPECT_TRUE(rec.id.starts_with("ID"));
             // only very basic check here, rest in format test
         }
         EXPECT_EQ(count, 5ull);
@@ -202,24 +197,21 @@ TEST(seq_io_reader, empty_stream)
 
 TEST(seq_io_reader, custom_field_types)
 {
-    bio::io::seq_io::reader_options opt{.field_types = bio::io::seq_io::field_types<bio::io::ownership::deep>};
+    bio::io::seq_io::reader_options opt{.record = bio::io::seq_io::record_dna{}};
 
     std::istringstream      str{static_cast<std::string>(input)};
     bio::io::seq_io::reader reader{str, bio::io::fasta{}, opt};
 
-    EXPECT_TRUE((std::same_as<decltype(reader.front().seq()), std::vector<bio::alphabet::dna5> &>));
-    EXPECT_TRUE((std::same_as<decltype(reader.front().id()), std::string &>));
+    EXPECT_TRUE((std::same_as<decltype(reader.front().seq), std::vector<bio::alphabet::dna5>>));
+    EXPECT_TRUE((std::same_as<decltype(reader.front().id), std::string>));
 }
 
-TEST(seq_io_reader, custom_field_ids_structured_bindings)
+TEST(seq_io_reader, structured_bindings)
 {
-    bio::io::seq_io::reader_options opt{.field_ids   = bio::meta::vtag<bio::io::field::seq, bio::io::field::id>,
-                                        .field_types = bio::meta::ttag<std::string, std::string>};
-
     std::istringstream      str{static_cast<std::string>(input)};
-    bio::io::seq_io::reader reader{str, bio::io::fasta{}, opt};
+    bio::io::seq_io::reader reader{str, bio::io::fasta{}};
 
-    for (auto & [seq, id] : reader)
+    for (auto & [id, seq, qual] : reader)
         EXPECT_TRUE(id.starts_with("ID"));
 }
 
@@ -239,7 +231,7 @@ TEST(seq_io_reader, decompression_filename)
     for (auto & rec : reader)
     {
         ++count;
-        EXPECT_TRUE(rec.id().starts_with("ID"));
+        EXPECT_TRUE(rec.id.starts_with("ID"));
         // only very basic check here, rest in format test
     }
     EXPECT_EQ(count, 5ull);
@@ -255,7 +247,7 @@ TEST(seq_io_reader, decompression_stream)
     for (auto & rec : reader)
     {
         ++count;
-        EXPECT_TRUE(rec.id().starts_with("ID"));
+        EXPECT_TRUE(rec.id.starts_with("ID"));
         // only very basic check here, rest in format test
     }
     EXPECT_EQ(count, 5ull);

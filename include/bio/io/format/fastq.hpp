@@ -36,8 +36,8 @@ namespace bio::io
  *
  * ### Fields
  *
- * The FastQ format provides the fields bio::io::field::seq, bio::io::field::id and bio::io::field::qual.
- * All fields are required when writing.
+ * The FastQ format provides the fields bio::io::detail::field::seq, bio::io::detail::field::id and
+ * bio::io::detail::field::qual. All fields are required when writing.
  *
  * ### Implementation notes
  *

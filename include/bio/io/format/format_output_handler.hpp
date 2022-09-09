@@ -18,7 +18,7 @@
 #include <bio/ranges/views/to_char.hpp>
 
 #include <bio/io/detail/concept.hpp>
-#include <bio/io/record.hpp>
+#include <bio/io/detail/tuple_record.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
 
 namespace bio::io
@@ -32,9 +32,10 @@ namespace bio::io
  * public member function with the following signature:
  *
  * ```cpp
- * void write_record(bio::io::record<field_types, field_ids> && record)
+ * void write_record(record_type && record)
  * ```
- * It must accept any bio::io::record and write that record's fields to the file.
+ * It must accept the domain's record type (e.g. bio::io::seq_io::record) and write that record's fields
+ * to the file.
  *
  * This template may be specialised with a user-provided type, however the process is non-trivial. Documentation
  * can be found here (TODO).
@@ -105,13 +106,16 @@ private:
     {
         // TODO fix me
     }
+
+    //!\brief Write numbers.
+    void write_field_aux(ignore_t) {}
     //!\}
 
     /*!\name Writing individual fields (step 2)
      * \{
      */
     //!\brief Various types have sane default implementations.
-    template <field field_id>
+    template <detail::field field_id>
     void write_field(meta::vtag_t<field_id> /**/, auto & field)
     {
         if constexpr (requires(derived_t & d) { d.write_field_aux(field); })
@@ -132,7 +136,7 @@ private:
      * \{
      */
     //     template <typename field_types, typename field_ids>
-    //     void write_record(bio::io::record<field_types, field_ids> && record)
+    //     void write_record(record_t && record)
     //     {
     //         // derived classes need to implement this as a public member
     //     }

@@ -1,7 +1,7 @@
 # Record FAQ {#record_faq}
 
-Records in the I/O library are implemented as a specialisation of the bio::io::record template.¹
-This behaves very similar to a std::tuple with the difference that a bio::io::field identifier is associated with every
+Records in the I/O library are implemented as a specialisation of the bio::io::detail::tuple_record template.¹
+This behaves very similar to a std::tuple with the difference that a bio::io::detail::field identifier is associated with every
 element and a corresponding member function is provided, so you can easily access the elements without knowing the order.
 
 <small>¹ With the exception of bio::io::plain_io which uses bio::io::plain_io::record.</small>
@@ -31,11 +31,11 @@ The easiest way to access a field, is by calling the respective member function:
 
 \snippet test/snippet/seq_io/seq_io_reader.cpp simple_usage_file
 
-Here, `.id()` (bio::io::record#id()) and `.seq()` (bio::io::record#seq()) are used to access the fields. Note, that the
+Here, `.id()` (bio::io::detail::tuple_record#id()) and `.seq()` (bio::io::detail::tuple_record#seq()) are used to access the fields. Note, that the
 documentation has entries for all field-accessor member functions, but it depends on the specific specialisation
 (used by the reader) whether that function is available.
 So, on the record defined by bio::io::seq_io::reader above, the members `.id()`, `.seq()`, `.qual()` are available, but
-the member `.pos()` would not be.
+the member `.pos` would not be.
 
 When the number of fields in the record is low and you know the order, you can also use
 [structured bindings](https://en.cppreference.com/w/cpp/language/structured_binding)
@@ -48,12 +48,12 @@ It is independent of the names you give to the bindings, so this syntax is error
 (e.g. those defined by bio::io::var_io::reader).
 
 In generic contexts, you can also access fields via `get<0>(rec)` (returns the 0-th field in the record) or
-`get<bio::io::field::id>(rec)` (the same as calling `rec.id()`); but most users will never need this.
+`get<bio::io::detail::field::id>(rec)` (the same as calling `rec.id()`); but most users will never need this.
 
 
 ## Does my record own the data? (Shallow vs deep records) {#shallow_vs_deep}
 
-As shown above, every field has an identifier (e.g. bio::io::field::id) and a type (e.g. std::string_view).
+As shown above, every field has an identifier (e.g. bio::io::detail::field::id) and a type (e.g. std::string_view).
 You may have wondered, why std::string_view is used as a type and what these `transform_view`s are.
 These imply that the record is a *shallow* data structure, i.e. the fields *appear* like strings or vectors, but they
 are implemented more like references or pointers.
@@ -96,9 +96,9 @@ For some readers, more options are available, e.g. bio::io::seq_io::reader assum
 
 The snippet above illustrates how the alphabet can be changed (and how to provide another option at the same time).
 
-Instead of using these pre-defined `field_types`, you can also define them completely manually. You can decide to even read only a subset of the fields by changing the `.field_ids` member:
+Instead of using these pre-defined record aliases, you can also define them completely manually. You can decide to even read only a subset of the fields by setting some to be ignored::
 
-\snippet test/snippet/seq_io/seq_io_reader_options.cpp example_advanced2
+\snippet test/snippet/seq_io/seq_io_reader_options.cpp example_advanced
 
 This code makes FASTA the only legal format and creates records with only the sequence field asa std::string.
 
@@ -109,11 +109,11 @@ exact restrictions on allowed types.
 
 ## How can I create record variables?
 
-There are various easy ways to create a bio::io::record that do not involve manually providing the template arguments:
+There are various easy ways to create a bio::io::detail::tuple_record that do not involve manually providing the template arguments:
 
 1. Deduce from the reader.
 2. Use an alias.
-3. Use bio::io::make_record or bio::io::tie_record.
+3. Use bio::io::detail::make_tuple_record or bio::io::detail::tie_tuple_record.
 
 ### Deduce from the reader {#record_type_from_reader}
 
@@ -144,13 +144,13 @@ This is based on the assumption that aliases are typically used to define local 
 ### Making and tying records {#record_make_tie}
 
 There are convenience functions for making and tying records, similar to std::make_tuple and std::tie:
-\snippet test/snippet/record.cpp make_and_tie_record
+\snippet test/snippet/detail/tuple_record.cpp make_and_tie_record
 
 The type of rec1 is:
-\snippet test/snippet/record.cpp make_and_tie_record_type_rec1
+\snippet test/snippet/detail/tuple_record.cpp make_and_tie_record_type_rec1
 
 The type of rec2 is:
-\snippet test/snippet/record.cpp make_and_tie_record_type_rec2
+\snippet test/snippet/detail/tuple_record.cpp make_and_tie_record_type_rec2
 
-When creating a record from existing variables, you can use bio::io::tie_record to avoid needless copies.
+When creating a record from existing variables, you can use bio::io::detail::tie_tuple_record to avoid needless copies.
 Instead of manually entering the identifiers as a bio::meta::vtag, you can use bio::io::seq_io::default_field_ids (or the respective defaults of another reader/writer).

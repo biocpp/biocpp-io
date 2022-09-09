@@ -28,6 +28,7 @@
 #include <bio/io/format/format_input_handler.hpp>
 #include <bio/io/misc/char_predicate.hpp>
 #include <bio/io/plain_io/reader.hpp>
+#include <bio/io/seq_io/record.hpp>
 
 namespace bio::io
 {
@@ -56,7 +57,9 @@ namespace bio::io
  * when shallow records are returned.
  */
 template <>
-class format_input_handler<fastq> : public format_input_handler_base<format_input_handler<fastq>>
+class format_input_handler<fastq> :
+  public format_input_handler_base<format_input_handler<fastq>>,
+  public seq_io::format_handler_mixin
 {
 private:
     /*!\name CRTP related entities
@@ -92,9 +95,9 @@ private:
      * \{
      */
     //!\brief The fields that this format supports [the base class accesses this type].
-    using format_fields     = meta::vtag_t<field::id, field::seq, field::qual>;
+    using format_fields     = decltype(seq_io::field_ids);
     //!\brief Type of the raw record.
-    using raw_record_type   = record<format_fields, meta::list_traits::repeat<3, std::string_view>>;
+    using raw_record_type   = io::detail::tuple_record<format_fields, meta::list_traits::repeat<3, std::string_view>>;
     //!\brief Type of the low-level iterator.
     using lowlevel_iterator = detail::plaintext_input_iterator<plain_io::record_kind::line>;
 
@@ -147,7 +150,7 @@ private:
                 detail::string_copy(current_line.substr(1), id_buffer);
             }
 
-            get<field::id>(raw_record) = id_buffer;
+            get<detail::field::id>(raw_record) = id_buffer;
         }
 
         /* READ SEQ */
@@ -160,7 +163,7 @@ private:
 
             detail::string_copy(*it, seq_buffer); // is allowed to be empty
 
-            get<field::seq>(raw_record) = seq_buffer;
+            get<detail::field::seq>(raw_record) = seq_buffer;
         }
 
         /* READ third line */
@@ -187,7 +190,7 @@ private:
 
             detail::string_copy(*it, qual_buffer); // is allowed to be empty
 
-            get<field::qual>(raw_record) = qual_buffer;
+            get<detail::field::qual>(raw_record) = qual_buffer;
         }
 
         if (size_t ssize = seq_buffer.size(), qsize = qual_buffer.size(); ssize != qsize)
@@ -200,19 +203,19 @@ private:
      * \{
      */
     //!\brief We can prevent another copy if the user wants a string.
-    void parse_field(meta::vtag_t<field::id> const & /**/, std::string & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::id> const & /**/, std::string & parsed_field)
     {
         std::swap(id_buffer, parsed_field);
     }
 
     //!\brief We can prevent another copy if the user wants a string.
-    void parse_field(meta::vtag_t<field::seq> const & /**/, std::string & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::seq> const & /**/, std::string & parsed_field)
     {
         std::swap(seq_buffer, parsed_field);
     }
 
     //!\brief We can prevent another copy if the user wants a string.
-    void parse_field(meta::vtag_t<field::qual> const & /**/, std::string & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::qual> const & /**/, std::string & parsed_field)
     {
         std::swap(qual_buffer, parsed_field);
     }

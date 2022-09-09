@@ -23,7 +23,6 @@
 #include <bio/io/format/bcf.hpp>
 #include <bio/io/format/format_output_handler.hpp>
 #include <bio/io/misc/char_predicate.hpp>
-#include <bio/io/record.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
 #include <bio/io/var_io/header.hpp>
 #include <bio/io/var_io/misc.hpp>
@@ -554,7 +553,7 @@ private:
      */
 
     //!\brief Overload for ID.
-    void write_field(meta::vtag_t<field::id> /**/, auto && field)
+    void write_field(meta::vtag_t<detail::field::id> /**/, auto && field)
     {
         static_assert(detail::type_2_bcf_type_descriptor<std::remove_cvref_t<decltype(field)>> ==
                         detail::bcf_type_descriptor::char8,
@@ -563,7 +562,7 @@ private:
     }
 
     //!\brief Overload for REF.
-    void write_field(meta::vtag_t<field::ref> /**/, auto && field)
+    void write_field(meta::vtag_t<detail::field::ref> /**/, auto && field)
     {
         static_assert(detail::type_2_bcf_type_descriptor<std::remove_cvref_t<decltype(field)>> ==
                         detail::bcf_type_descriptor::char8,
@@ -572,7 +571,7 @@ private:
     }
 
     //!\brief Overload for ALT (single argument).
-    void write_field(meta::vtag_t<field::alt> /**/, auto && field)
+    void write_field(meta::vtag_t<detail::field::alt> /**/, auto && field)
     {
         static_assert(detail::type_2_bcf_type_descriptor<std::remove_cvref_t<decltype(field)>> ==
                         detail::bcf_type_descriptor::char8,
@@ -583,16 +582,16 @@ private:
     //!\brief Overload for ALT that is range-of-range.
     template <std::ranges::input_range rng_t>
         requires std::ranges::forward_range<std::ranges::range_reference_t<rng_t>>
-    void write_field(meta::vtag_t<field::alt> /**/, rng_t && range)
+    void write_field(meta::vtag_t<detail::field::alt> /**/, rng_t && range)
     {
         for (auto && elem : range)
-            write_field(meta::vtag<field::alt>, elem);
+            write_field(meta::vtag<detail::field::alt>, elem);
     }
 
     //!\brief Overload for FILTER; handles vector of numeric IDs and vector of IDX
     template <std::ranges::input_range rng_t>
         requires(!std::same_as<std::ranges::range_value_t<rng_t>, char>)
-    void write_field(meta::vtag_t<field::filter> /**/, rng_t && range)
+    void write_field(meta::vtag_t<detail::field::filter> /**/, rng_t && range)
     {
         write_type_descriptor(idx_desc, std::ranges::distance(range));
 
@@ -617,10 +616,10 @@ private:
     }
 
     //!\brief Overload for FILTER; single string or single IDX
-    void write_field(meta::vtag_t<field::filter> /**/, auto && field)
+    void write_field(meta::vtag_t<detail::field::filter> /**/, auto && field)
     {
         std::span<std::remove_reference_t<decltype(field)>> s{&field, 1};
-        write_field(meta::vtag<field::filter>, s); // delegate to previous overload
+        write_field(meta::vtag<detail::field::filter>, s); // delegate to previous overload
     }
 
     //!\brief Deduce descriptor from parameter type and optionally compress (integers) and verify with header.
@@ -706,7 +705,7 @@ private:
     //!\brief Overload for INFO; range of pairs.
     template <std::ranges::input_range rng_t>
         requires(detail::info_element_writer_concept<std::ranges::range_reference_t<rng_t>>)
-    void write_field(meta::vtag_t<field::info> /**/, rng_t && range)
+    void write_field(meta::vtag_t<detail::field::info> /**/, rng_t && range)
     {
         for (auto & info_element : range)
             write_info_element(info_element);
@@ -715,7 +714,7 @@ private:
     //!\brief Overload for INFO; tuple of pairs.
     template <typename... elem_ts>
         requires(detail::info_element_writer_concept<elem_ts> &&...)
-    void write_field(meta::vtag_t<field::info> /**/, std::tuple<elem_ts...> & tup) // TODO add const version
+    void write_field(meta::vtag_t<detail::field::info> /**/, std::tuple<elem_ts...> & tup) // TODO add const version
     {
         auto func = [&](auto &... field) { (write_info_element(field), ...); };
         std::apply(func, tup);
@@ -944,7 +943,7 @@ private:
     //!\brief Overload for GENOTYPES.
     template <std::ranges::forward_range range_t>
         requires(detail::genotype_writer_concept<std::ranges::range_reference_t<range_t>>)
-    void write_field(meta::vtag_t<field::genotypes> /**/, range_t && range)
+    void write_field(meta::vtag_t<detail::field::genotypes> /**/, range_t && range)
     {
         for (auto && genotype : range)
             write_genotypes_element(genotype);
@@ -953,7 +952,8 @@ private:
     //!\brief Overload for GENOTYPES; tuple of pairs.
     template <typename... elem_ts>
         requires(detail::genotype_writer_concept<elem_ts> &&...)
-    void write_field(meta::vtag_t<field::genotypes> /**/, std::tuple<elem_ts...> & tup) // TODO add const version
+    void write_field(meta::vtag_t<detail::field::genotypes> /**/,
+                     std::tuple<elem_ts...> & tup) // TODO add const version
     {
         auto func = [&](auto &... field) { (write_genotypes_element(field), ...); };
         std::apply(func, tup);
@@ -986,25 +986,23 @@ private:
     //!\brief Write the record (supports const and non-const lvalue ref).
     void write_record_impl(auto & record)
     {
-        using field_ids = typename std::remove_cvref_t<decltype(record)>::field_ids;
+        using record_t = std::remove_cvref_t<decltype(record)>;
 
         if (!header_has_been_written)
         {
             if (header == nullptr)
             {
-                if constexpr (field_ids::contains(field::_private))
-                {
-                    if (var_io::header const * ptr = get<field::_private>(record).header_ptr; ptr != nullptr)
-                        set_header(*ptr);
-                }
+                if (var_io::header const * ptr = record._private.header_ptr; ptr != nullptr)
+                    set_header(*ptr);
             }
 
             write_header();
         }
 
-        static_assert(field_ids::contains(field::chrom), "The record must contain the CHROM field.");
-        static_assert(field_ids::contains(field::pos), "The record must contain the POS field.");
-        static_assert(field_ids::contains(field::ref), "The record must contain the REF field.");
+        static_assert(!detail::decays_to<typename record_t::chrom_t, ignore_t>,
+                      "The record must contain the CHROM field.");
+        static_assert(!detail::decays_to<typename record_t::pos_t, ignore_t>, "The record must contain the POS field.");
+        static_assert(!detail::decays_to<typename record_t::ref_t, ignore_t>, "The record must contain the REF field.");
 
         /* IMPLEMENTATION NOTE:
          * A problem when writing BCF is that the first fields of the record hold the size of the record
@@ -1035,53 +1033,53 @@ private:
 
         /* this prepares the record_core and doesn't write anything til the end */
         record_core = {}; // reset this
-        set_core_chrom(get<field::chrom>(record));
-        set_core_pos(get<field::pos>(record));
+        set_core_chrom(record.chrom);
+        set_core_pos(record.pos);
 
-        set_core_rlen(get<field::ref>(record));
+        set_core_rlen(record.ref);
 
-        if constexpr (field_ids::contains(field::qual))
-            set_core_qual(get<field::qual>(record));
+        if constexpr (!detail::decays_to<typename record_t::qual_t, ignore_t>)
+            set_core_qual(record.qual);
 
-        if constexpr (field_ids::contains(field::info))
-            set_core_n_info(get<field::info>(record));
+        if constexpr (!detail::decays_to<typename record_t::info_t, ignore_t>)
+            set_core_n_info(record.info);
 
-        if constexpr (field_ids::contains(field::alt))
-            set_core_n_allele(get<field::alt>(record));
+        if constexpr (!detail::decays_to<typename record_t::alt_t, ignore_t>)
+            set_core_n_allele(record.alt);
         else
             record_core.n_allele = 1; // the REF allele
 
         record_core.n_sample = header->column_labels.size() > 9 ? header->column_labels.size() - 9 : 0;
 
-        if constexpr (field_ids::contains(field::genotypes))
-            set_core_n_fmt(get<field::genotypes>(record));
+        if constexpr (!detail::decays_to<typename record_t::genotypes_t, ignore_t>)
+            set_core_n_fmt(record.genotypes);
 
         // write record core
         it->write_as_binary(record_core);
 
         /* After this point, the order of writers is important! */
 
-        if constexpr (field_ids::contains(field::id))
-            write_field(meta::vtag<field::id>, get<field::id>(record));
+        if constexpr (!detail::decays_to<typename record_t::id_t, ignore_t>)
+            write_field(meta::vtag<detail::field::id>, record.id);
         else
-            write_field(meta::vtag<field::id>, std::string_view{});
+            write_field(meta::vtag<detail::field::id>, std::string_view{});
 
-        write_field(meta::vtag<field::ref>, get<field::ref>(record));
+        write_field(meta::vtag<detail::field::ref>, record.ref);
 
-        if constexpr (field_ids::contains(field::alt))
-            write_field(meta::vtag<field::alt>, get<field::alt>(record));
+        if constexpr (!detail::decays_to<typename record_t::alt_t, ignore_t>)
+            write_field(meta::vtag<detail::field::alt>, record.alt);
         else
-            write_field(meta::vtag<field::alt>, std::span<std::string_view>{});
+            write_field(meta::vtag<detail::field::alt>, std::span<std::string_view>{});
 
-        if constexpr (field_ids::contains(field::filter))
-            write_field(meta::vtag<field::filter>, get<field::filter>(record));
+        if constexpr (!detail::decays_to<typename record_t::filter_t, ignore_t>)
+            write_field(meta::vtag<detail::field::filter>, record.filter);
         else
-            write_field(meta::vtag<field::filter>, std::span<std::string_view>{});
+            write_field(meta::vtag<detail::field::filter>, std::span<std::string_view>{});
 
-        if constexpr (field_ids::contains(field::info))
-            write_field(meta::vtag<field::info>, get<field::info>(record));
+        if constexpr (!detail::decays_to<typename record_t::info_t, ignore_t>)
+            write_field(meta::vtag<detail::field::info>, record.info);
         else
-            write_field(meta::vtag<field::info>, std::span<var_io::info_element<>>{});
+            write_field(meta::vtag<detail::field::info>, std::span<var_io::info_element<>>{});
 
         assert(streambuf_exposer->pptr() - streambuf_exposer->pbase() - this_record_offset > 0);
         //              (position in the buffer                              ) - (where this record starts)
@@ -1089,10 +1087,10 @@ private:
 
         if (header->column_labels.size() > 8)
         {
-            if constexpr (field_ids::contains(field::genotypes))
-                write_field(meta::vtag<field::genotypes>, get<field::genotypes>(record));
+            if constexpr (!detail::decays_to<typename record_t::genotypes_t, ignore_t>)
+                write_field(meta::vtag<detail::field::genotypes>, record.genotypes);
             else
-                write_field(meta::vtag<field::genotypes>, std::span<var_io::genotype_element<>>{});
+                write_field(meta::vtag<detail::field::genotypes>, std::span<var_io::genotype_element<>>{});
         }
 
         l_indiv_tmp = streambuf_exposer->pptr() - streambuf_exposer->pbase() - this_record_offset - l_shared_tmp;
@@ -1237,15 +1235,15 @@ public:
     }
 
     //!\brief Write the record.
-    template <typename field_types, typename field_ids>
-    void write_record(record<field_types, field_ids> const & record)
+    template <typename... field_types>
+    void write_record(var_io::record<field_types...> const & record)
     {
         write_record_impl(record);
     }
 
     //!\overload
-    template <typename field_types, typename field_ids>
-    void write_record(record<field_types, field_ids> & record)
+    template <typename... field_types>
+    void write_record(var_io::record<field_types...> & record)
     {
         write_record_impl(record);
     }

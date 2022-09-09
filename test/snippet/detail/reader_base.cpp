@@ -18,12 +18,12 @@ int main()
 {
 //![read_pair_processing]
 // choose deep records so they can be copied/moved
-bio::io::seq_io::reader_options options{ .field_types = bio::io::seq_io::field_types<bio::io::ownership::deep> };
+bio::io::seq_io::reader_options options{ .record = bio::io::seq_io::record_dna{} };
 
 // open an interleaved paired-end FastQ file
 bio::io::seq_io::reader reader{"example.fastq", options};
 
-// ask the reader for its record_type; create a variable to hold previous record
+// "ask" the reader for its record_type; create a variable to hold previous record
 decltype(reader)::record_type last_record;
 
 bool is_first_of_pair = true;
