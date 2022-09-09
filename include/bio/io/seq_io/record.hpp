@@ -183,7 +183,7 @@ namespace bio::io::detail // TODO move this to seq_io::detail?
 template <typename id_t, typename seq_t, typename qual_t>
 constexpr bool record_read_concept_checker(std::type_identity<seq_io::record<id_t, seq_t, qual_t>>)
 {
-    //TODO(GCC11): once GCC10 is dropped, remove the "<typename t = seq_t>"
+    // TODO(GCC11): once GCC10 is dropped, remove the "<typename t = seq_t>"
     static_assert(io::detail::lazy_concept_checker([]<typename t = id_t>(auto) requires(
                     io::detail::back_insertable_with<t, char> ||
                     io::detail::one_of<t, std::string_view, ignore_t, ignore_t const>) { return std::true_type{}; }),
