@@ -513,11 +513,12 @@ private:
      * \{
      */
     //!\brief The fields that this format supports [the base class accesses this type].
-    using format_fields   = std::remove_cvref_t<decltype(detail::field_ids)>;
+    using format_fields = std::remove_cvref_t<decltype(detail::field_ids)>;
     //!\brief Type of the raw record.
-    using raw_record_type = record<format_fields,
-                                   meta::list_traits::concat<meta::list_traits::repeat<9, std::span<std::byte const>>,
-                                                             meta::type_list<var_io::record_private_data>>>;
+    using raw_record_type =
+      io::detail::tuple_record<format_fields,
+                               meta::list_traits::concat<meta::list_traits::repeat<9, std::span<std::byte const>>,
+                                                         meta::type_list<var_io::record_private_data>>>;
 
     //!\brief The raw record.
     raw_record_type raw_record;
@@ -556,34 +557,34 @@ private:
         record_core = reinterpret_cast<detail::bcf_record_core const *>(record_data.data());
         gt_cache.resize(record_core->n_sample);
 
-        std::byte const * cache_ptr     = nullptr;
-        std::byte const * cache_ptr_bak = nullptr;
+        std::byte const * cache_ptr           = nullptr;
+        std::byte const * cache_ptr_bak       = nullptr;
         // offset, count
-        get<field::chrom>(raw_record)   = record_data.subspan(0, 4);
-        get<field::pos>(raw_record)     = record_data.subspan(4, 4);
-        get<field::qual>(raw_record)    = record_data.subspan(12, 4);
+        get<detail::field::chrom>(raw_record) = record_data.subspan(0, 4);
+        get<detail::field::pos>(raw_record)   = record_data.subspan(4, 4);
+        get<detail::field::qual>(raw_record)  = record_data.subspan(12, 4);
 
         cache_ptr = record_data.data() + 24; // == sizeof(record_core)
 
-        cache_ptr_bak              = cache_ptr;
-        id_cache                   = decode_string(cache_ptr); // store string_view already
-        get<field::id>(raw_record) = raw_f_t{cache_ptr_bak, size_t(cache_ptr - cache_ptr_bak)};
+        cache_ptr_bak                      = cache_ptr;
+        id_cache                           = decode_string(cache_ptr); // store string_view already
+        get<detail::field::id>(raw_record) = raw_f_t{cache_ptr_bak, size_t(cache_ptr - cache_ptr_bak)};
 
-        cache_ptr_bak               = cache_ptr;
-        ref_cache                   = decode_string(cache_ptr); // store string_view already
-        get<field::ref>(raw_record) = raw_f_t{cache_ptr_bak, size_t(cache_ptr - cache_ptr_bak)};
+        cache_ptr_bak                       = cache_ptr;
+        ref_cache                           = decode_string(cache_ptr); // store string_view already
+        get<detail::field::ref>(raw_record) = raw_f_t{cache_ptr_bak, size_t(cache_ptr - cache_ptr_bak)};
 
         cache_ptr_bak = cache_ptr;
         for (size_t i = 1; i < record_core->n_allele; ++i)
             alts_cache.push_back(decode_string(cache_ptr));
-        get<field::alt>(raw_record) = raw_f_t{cache_ptr_bak, size_t(cache_ptr - cache_ptr_bak)};
+        get<detail::field::alt>(raw_record) = raw_f_t{cache_ptr_bak, size_t(cache_ptr - cache_ptr_bak)};
 
-        get<field::filter>(raw_record) = decode_any_field(cache_ptr);
+        get<detail::field::filter>(raw_record) = decode_any_field(cache_ptr);
 
-        size_t distance_to_genotypes = (record_data.data() + genotype_offset) - cache_ptr;
-        get<field::info>(raw_record) = raw_f_t{cache_ptr, distance_to_genotypes};
+        size_t distance_to_genotypes         = (record_data.data() + genotype_offset) - cache_ptr;
+        get<detail::field::info>(raw_record) = raw_f_t{cache_ptr, distance_to_genotypes};
 
-        get<field::genotypes>(raw_record) = record_data.subspan(genotype_offset /*, end*/);
+        get<detail::field::genotypes>(raw_record) = record_data.subspan(genotype_offset /*, end*/);
     }
     //!\}
 
@@ -724,25 +725,25 @@ private:
      * \{
      */
     //!\brief Reading of CHROM field.
-    void parse_field(meta::vtag_t<field::chrom> const & /**/, std::integral auto & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::chrom> const & /**/, std::integral auto & parsed_field)
     {
         parsed_field = record_core->chrom;
     }
 
     //!\overload
-    void parse_field(meta::vtag_t<field::chrom> const & /**/, auto & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::chrom> const & /**/, auto & parsed_field)
     {
         parse_field_aux(header.contigs[header.idx_to_contig_pos().at(record_core->chrom)].id, parsed_field);
     }
 
     //!\brief Reading of POS field.
-    void parse_field(meta::vtag_t<field::pos> const & /**/, std::integral auto & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::pos> const & /**/, std::integral auto & parsed_field)
     {
         parsed_field = record_core->pos + 1; // one-based positions
     }
 
     //!\brief Reading of ID field.
-    void parse_field(meta::vtag_t<field::id> const & /**/, auto & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::id> const & /**/, auto & parsed_field)
     {
         if (std::ranges::empty(id_cache))
             parse_field_aux(std::string_view{"."}, parsed_field);
@@ -751,13 +752,13 @@ private:
     }
 
     //!\brief Reading of REF field.
-    void parse_field(meta::vtag_t<field::ref> const & /**/, auto & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::ref> const & /**/, auto & parsed_field)
     {
         parse_field_aux(ref_cache, parsed_field);
     }
 
     //!\brief Reading of ALT field.
-    void parse_field(meta::vtag_t<field::alt> const & /**/, std::vector<std::string_view> & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::alt> const & /**/, std::vector<std::string_view> & parsed_field)
     {
         parsed_field = alts_cache;
     }
@@ -765,7 +766,7 @@ private:
     //!\overload
     template <detail::back_insertable parsed_field_t>
         requires(std::ranges::range<std::ranges::range_reference_t<parsed_field_t>>)
-    void parse_field(meta::vtag_t<field::alt> const & /**/, parsed_field_t & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::alt> const & /**/, parsed_field_t & parsed_field)
     {
         for (std::string_view const alt : alts_cache)
         {
@@ -778,7 +779,7 @@ private:
     }
 
     //!\brief Reading of QUAL field.
-    void parse_field(meta::vtag_t<field::qual> const & /**/, meta::arithmetic auto & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::qual> const & /**/, meta::arithmetic auto & parsed_field)
     {
         parsed_field = record_core->qual;
     }
@@ -786,19 +787,19 @@ private:
     //!\brief Reading of FILTER field.
     template <detail::back_insertable parsed_field_t>
         requires detail::int_range<parsed_field_t>
-    void parse_field(meta::vtag_t<field::filter> const & /**/, parsed_field_t & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::filter> const & /**/, parsed_field_t & parsed_field)
     {
-        decode_numbers_into(get<field::filter>(raw_record), parsed_field);
+        decode_numbers_into(get<detail::field::filter>(raw_record), parsed_field);
     }
 
     //!\overload
     template <detail::back_insertable parsed_field_t>
         requires detail::out_string<std::ranges::range_reference_t<parsed_field_t>>
-    void parse_field(meta::vtag_t<field::filter> const & /**/, parsed_field_t & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::filter> const & /**/, parsed_field_t & parsed_field)
     {
         std::vector<int32_t> tmp; // ATTENTION this allocates, TODO change
 
-        decode_numbers_into(get<field::filter>(raw_record), tmp);
+        decode_numbers_into(get<detail::field::filter>(raw_record), tmp);
 
         for (int32_t const idx : tmp)
         {
@@ -811,9 +812,9 @@ private:
     //!\brief Reading of the INFO field.
     template <detail::back_insertable parsed_field_t>
         requires detail::info_element_reader_concept<std::ranges::range_reference_t<parsed_field_t>>
-    void parse_field(meta::vtag_t<field::info> const & /**/, parsed_field_t & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::info> const & /**/, parsed_field_t & parsed_field)
     {
-        std::span<std::byte const> raw_field = get<field::info>(raw_record);
+        std::span<std::byte const> raw_field = get<detail::field::info>(raw_record);
         std::byte const *          cache_ptr = raw_field.data();
 
         for (size_t i = 0; i < record_core->n_info; ++i)
@@ -890,7 +891,7 @@ private:
     //!\brief Implementation for parsing into genotypes.
     void parse_genotypes_impl(auto & parsed_field)
     {
-        std::span<std::byte const> raw_field = get<field::genotypes>(raw_record);
+        std::span<std::byte const> raw_field = get<detail::field::genotypes>(raw_record);
 
         std::byte const * cache_ptr = raw_field.data();
 
@@ -982,13 +983,13 @@ private:
     //!\brief Reading of the GENOTYPES field.
     template <detail::back_insertable field_t>
         requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
-    void parse_field(meta::vtag_t<field::genotypes> const & /**/, field_t & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::genotypes> const & /**/, field_t & parsed_field)
     {
         parse_genotypes_impl(parsed_field);
     }
 
     //!\brief Overload for parsing the private data.
-    void parse_field(meta::vtag_t<field::_private> const & /**/, var_io::record_private_data & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::_private> const & /**/, var_io::record_private_data & parsed_field)
     {
         parsed_field.header_ptr  = &header;
         parsed_field.raw_record  = &raw_record;

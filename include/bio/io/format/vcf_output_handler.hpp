@@ -18,7 +18,6 @@
 #include <bio/io/detail/magic_get.hpp>
 #include <bio/io/format/format_output_handler.hpp>
 #include <bio/io/format/vcf.hpp>
-#include <bio/io/record.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
 #include <bio/io/var_io/header.hpp>
 #include <bio/io/var_io/misc.hpp>
@@ -335,7 +334,7 @@ private:
      * \{
      */
     //!\brief Overload for CHROM and numeric IDs (text IDs are handled by defaults).
-    void write_field(meta::vtag_t<field::chrom> /**/, auto & field)
+    void write_field(meta::vtag_t<detail::field::chrom> /**/, auto & field)
     {
         write_id(header->contigs, header->idx_to_contig_pos(), field);
     }
@@ -346,12 +345,12 @@ private:
     template <std::ranges::input_range rng_t>
         requires std::ranges::input_range<std::ranges::range_reference_t<rng_t>> // TOOD and requires
                                                                                  // write_field_aux(value)
-    void write_field(meta::vtag_t<field::alt> /**/, rng_t & range) { write_delimited(range, ','); }
+    void write_field(meta::vtag_t<detail::field::alt> /**/, rng_t & range) { write_delimited(range, ','); }
 
     // QUAL is handled by defaults
 
     //!\brief Overload for FILTER; single string is handled by default; single-numeric by this overload.
-    void write_field(meta::vtag_t<field::filter> /**/, auto & field)
+    void write_field(meta::vtag_t<detail::field::filter> /**/, auto & field)
     {
         write_id(header->filters, header->idx_to_filter_pos(), field);
     }
@@ -359,16 +358,16 @@ private:
     //!\brief Overload for FILTER; handles vector of numeric IDs and vector
     template <std::ranges::input_range rng_t>
         requires(!std::same_as<std::ranges::range_value_t<rng_t>, char>)
-    void write_field(meta::vtag_t<field::filter> /**/, rng_t & range)
+    void write_field(meta::vtag_t<detail::field::filter> /**/, rng_t & range)
     {
-        auto func = [this](auto const & val) { write_field(meta::vtag<field::filter>, val); };
+        auto func = [this](auto const & val) { write_field(meta::vtag<detail::field::filter>, val); };
         write_delimited(range, ';', func);
     }
 
     //!\brief Overload for INFO; range of pairs.
     template <std::ranges::input_range rng_t>
         requires(detail::info_element_writer_concept<std::ranges::range_reference_t<rng_t>>)
-    void write_field(meta::vtag_t<field::info> /**/, rng_t & range)
+    void write_field(meta::vtag_t<detail::field::info> /**/, rng_t & range)
     {
         auto func = [&](auto const & field) { write_info_pair(field); };
         write_delimited(range, ';', func);
@@ -377,7 +376,7 @@ private:
     //!\brief Overload for INFO; range of pairs.
     template <typename... elem_ts>
         requires(detail::info_element_writer_concept<elem_ts> &&...)
-    void write_field(meta::vtag_t<field::info> /**/, std::tuple<elem_ts...> & tup) // TODO add const version
+    void write_field(meta::vtag_t<detail::field::info> /**/, std::tuple<elem_ts...> & tup) // TODO add const version
     {
         auto func = [&](auto const & field) { write_info_pair(field); };
         write_delimited(tup, ';', func);
@@ -386,7 +385,7 @@ private:
     //!\brief Overload for GENOTYPES.
     template <std::ranges::forward_range range_t>
         requires(detail::genotype_writer_concept<std::ranges::range_reference_t<range_t>>)
-    void write_field(meta::vtag_t<field::genotypes> /**/, range_t & range)
+    void write_field(meta::vtag_t<detail::field::genotypes> /**/, range_t & range)
     {
         if (header->column_labels.size() <= 8)
             return;
@@ -421,7 +420,7 @@ private:
     //!\brief Overload for GENOTYPES; nonvariant.
     template <typename... elem_ts>
         requires(detail::genotype_writer_concept<std::remove_cvref_t<elem_ts>> &&...)
-    void write_field(meta::vtag_t<field::genotypes> /**/, std::tuple<elem_ts...> & tup)
+    void write_field(meta::vtag_t<detail::field::genotypes> /**/, std::tuple<elem_ts...> & tup)
     {
         if (header->column_labels.size() <= 8)
             return;
@@ -490,43 +489,43 @@ private:
 
         static_assert(!detail::decays_to<typename record_t::chrom_t, ignore_t>,
                       "The record must contain the CHROM field.");
-        write_field(meta::vtag<field::chrom>, record.chrom);
+        write_field(meta::vtag<detail::field::chrom>, record.chrom);
         it = '\t';
 
         static_assert(!detail::decays_to<typename record_t::pos_t, ignore_t>, "The record must contain the POS field.");
-        write_field(meta::vtag<field::pos>, record.pos);
+        write_field(meta::vtag<detail::field::pos>, record.pos);
         it = '\t';
 
         if constexpr (!detail::decays_to<typename record_t::id_t, ignore_t>)
-            write_field(meta::vtag<field::id>, record.id);
+            write_field(meta::vtag<detail::field::id>, record.id);
         else
             it = '.';
         it = '\t';
 
         static_assert(!detail::decays_to<typename record_t::ref_t, ignore_t>, "The record must contain the REF field.");
-        write_field(meta::vtag<field::ref>, record.ref);
+        write_field(meta::vtag<detail::field::ref>, record.ref);
         it = '\t';
 
         if constexpr (!detail::decays_to<typename record_t::alt_t, ignore_t>)
-            write_field(meta::vtag<field::alt>, record.alt);
+            write_field(meta::vtag<detail::field::alt>, record.alt);
         else
             it = '.';
         it = '\t';
 
         if constexpr (!detail::decays_to<typename record_t::qual_t, ignore_t>)
-            write_field(meta::vtag<field::qual>, record.qual);
+            write_field(meta::vtag<detail::field::qual>, record.qual);
         else
             it = '.';
         it = '\t';
 
         if constexpr (!detail::decays_to<typename record_t::filter_t, ignore_t>)
-            write_field(meta::vtag<field::filter>, record.filter);
+            write_field(meta::vtag<detail::field::filter>, record.filter);
         else
             it = '.';
         it = '\t';
 
         if constexpr (!detail::decays_to<typename record_t::info_t, ignore_t>)
-            write_field(meta::vtag<field::info>, record.info);
+            write_field(meta::vtag<detail::field::info>, record.info);
         else
             it = '.';
 
@@ -535,7 +534,7 @@ private:
             if constexpr (!detail::decays_to<typename record_t::genotypes_t, ignore_t>)
             {
                 it = '\t';
-                write_field(meta::vtag<field::genotypes>, record.genotypes);
+                write_field(meta::vtag<detail::field::genotypes>, record.genotypes);
             }
             else
             {

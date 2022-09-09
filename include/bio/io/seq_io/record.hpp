@@ -28,10 +28,10 @@
 #include <bio/io/detail/concept.hpp>
 #include <bio/io/detail/misc.hpp>
 #include <bio/io/detail/range.hpp>
+#include <bio/io/detail/tuple_record.hpp>
 #include <bio/io/format/fasta.hpp>
 #include <bio/io/format/fastq.hpp>
 #include <bio/io/misc.hpp>
-#include <bio/io/record.hpp>
 #include <bio/io/stream/transparent_istream.hpp>
 
 namespace bio::io::seq_io
@@ -209,7 +209,7 @@ namespace bio::io::seq_io
 
 //!\brief The field_ids used in this domain.
 //!\ingroup seq_io
-static constexpr auto field_ids = meta::vtag<field::id, field::seq, field::qual>;
+static constexpr auto field_ids = meta::vtag<detail::field::id, detail::field::seq, detail::field::qual>;
 
 template <typename id_t, typename seq_t, typename qual_t>
 struct record;
@@ -222,7 +222,7 @@ struct format_handler_mixin
     template <typename... arg_ts>
     static auto record2tuple_record(seq_io::record<arg_ts...> & in_record)
     {
-        return tie_record(field_ids, in_record.id, in_record.seq, in_record.qual);
+        return io::detail::tie_tuple_record(field_ids, in_record.id, in_record.seq, in_record.qual);
     }
 };
 

@@ -26,7 +26,6 @@
 #include <bio/io/detail/misc.hpp>
 #include <bio/io/exception.hpp>
 #include <bio/io/format/format_input_handler.hpp>
-#include <bio/io/record.hpp>
 #include <bio/io/stream/transparent_istream.hpp>
 
 namespace bio::io
@@ -88,7 +87,7 @@ public:
      * \brief The exact type of the record depends on the options!
      * \{
      */
-    /*!\brief The type of the record, a specialisation of bio::io::record.
+    /*!\brief The type of the record.
      * \details
      *
      * ### Example

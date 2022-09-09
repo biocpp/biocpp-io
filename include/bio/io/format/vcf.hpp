@@ -33,15 +33,15 @@ namespace bio::io
  *
  * The format consists of the following fields:
  *
- *   1. bio::io::field::chrom
- *   2. bio::io::field::pos
- *   3. bio::io::field::id
- *   4. bio::io::field::ref
- *   5. bio::io::field::alt
- *   6. bio::io::field::qual
- *   7. bio::io::field::filter
- *   8. bio::io::field::info
- *   9. bio::io::field::genotypes
+ *   1. bio::io::detail::field::chrom
+ *   2. bio::io::detail::field::pos
+ *   3. bio::io::detail::field::id
+ *   4. bio::io::detail::field::ref
+ *   5. bio::io::detail::field::alt
+ *   6. bio::io::detail::field::qual
+ *   7. bio::io::detail::field::filter
+ *   8. bio::io::detail::field::info
+ *   9. bio::io::detail::field::genotypes
  *
  * See bio::io::var_io::reader and bio::io::var_io::writer for more details.
  *

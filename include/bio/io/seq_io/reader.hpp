@@ -49,16 +49,16 @@ namespace bio::io::seq_io
  *
  * The Sequence I/O reader supports reading the following fields:
  *
- *   1. bio::io::field::seq
- *   2. bio::io::field::id
- *   3. bio::io::field::qual
+ *   1. bio::io::detail::field::seq
+ *   2. bio::io::detail::field::id
+ *   3. bio::io::detail::field::qual
  *
  * And it supports the following formats:
  *
  *   1. FastA (see also bio::io::fasta)
  *   2. FastQ (see also bio::io::fastq)
  *
- * Fields that are not present in a format (e.g. bio::io::field::qual in FastA) will be returned empty.
+ * Fields that are not present in a format (e.g. bio::io::detail::field::qual in FastA) will be returned empty.
  *
  * ### Simple usage
  *
@@ -117,22 +117,8 @@ private:
 
     //!\brief Expose the options type to the base-class.
     using options_t = reader_options<option_args_t...>;
-
-public:
-    using typename base_t::record_type;
-
-private:
-    //!\brief The fields used by this reader.
-    static constexpr auto field_ids = meta::vtag<field::id, field::seq, field::qual>;
-
-    //!\brief This is called by the base-class before reading.
-    static auto record_as_tuple_record(record_type & in_record)
-    {
-        // TODO move this to base-class (needs magic_get or similar)
-        return tie_record(field_ids, in_record.id, in_record.seq, in_record.qual);
-    }
-
     //!\}
+
 public:
     //!\brief Inherit the format_type definition.
     using format_type = typename base_t::format_type;

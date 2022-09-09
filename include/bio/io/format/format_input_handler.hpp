@@ -23,8 +23,8 @@
 #include <bio/io/detail/charconv.hpp>
 #include <bio/io/detail/concept.hpp>
 #include <bio/io/detail/range.hpp>
+#include <bio/io/detail/tuple_record.hpp>
 #include <bio/io/exception.hpp>
-#include <bio/io/record.hpp>
 
 // ----------------------------------------------------------------------------
 // forwards
@@ -58,7 +58,8 @@ namespace bio::io
  * ```cpp
  * void parse_next_record_into(auto & parsed_record);
  * ```
- * It must accept any bio::io::record and "fill" that record with the content found in that file.
+ * It must accept the domain's record type (e.g. bio::io::seq_io::record) and "fill" that record with
+ * the content found in that file.
  *
  * This template may be specialised with a user-provided type, however the process is non-trivial. Documentation
  * can be found here (TODO).
@@ -167,7 +168,7 @@ private:
      * \{
      */
     //!\brief Various target types have sane default implementations.
-    template <field field_id>
+    template <detail::field field_id>
     void parse_field(meta::vtag_t<field_id> const & /**/, auto & parsed_field)
     {
         if constexpr (requires { derived_t::parse_field_aux(get<field_id>(to_derived()->raw_record), parsed_field); })
@@ -188,7 +189,7 @@ private:
      * \{
      */
     //!\brief Only act on those fields that are present in the record and also provided by the format.
-    template <field field_id, typename parsed_record_t>
+    template <detail::field field_id, typename parsed_record_t>
     void parse_record_impl(meta::vtag_t<field_id> const & /**/, parsed_record_t & parsed_record)
     {
         if constexpr (detail::has_non_ignore_field<field_id, parsed_record_t>())
@@ -200,7 +201,7 @@ private:
     }
 
     //!\brief Splits the record into individual fields.
-    template <field... field_ids, typename parsed_record_t>
+    template <io::detail::field... field_ids, typename parsed_record_t>
     void parse_record(meta::vtag_t<field_ids...> const & /**/, parsed_record_t & parsed_record)
     {
         (to_derived()->parse_record_impl(meta::vtag<field_ids>, parsed_record), ...);

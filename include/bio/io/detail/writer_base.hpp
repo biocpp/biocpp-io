@@ -27,7 +27,6 @@
 #include <bio/io/detail/out_file_iterator.hpp>
 #include <bio/io/exception.hpp>
 #include <bio/io/format/format_output_handler.hpp>
-#include <bio/io/record.hpp>
 #include <bio/io/stream/concept.hpp>
 #include <bio/io/stream/transparent_ostream.hpp>
 
@@ -237,7 +236,7 @@ public:
     sentinel end() noexcept { return {}; }
 
     /*!\brief Write a range of records to the file.
-     * \tparam rng_t     Type of the range, must be a std::ranges::input_range over bio::io::record.
+     * \tparam rng_t     Type of the range, must be a std::ranges::input_range over records.
      * \param[in] range  The range to write.
      *
      * \details
@@ -264,7 +263,7 @@ public:
     }
 
     /*!\brief            Write a range of records (or tuples) to the file.
-     * \tparam rng_t     Type of the range, must be a std::ranges::input_range over bio::io::record.
+     * \tparam rng_t     Type of the range, must be a std::ranges::input_range over records.
      * \param[in] range  The range to write.
      * \param[in] f      The file being written to.
      *

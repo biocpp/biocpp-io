@@ -26,8 +26,8 @@
 
 #include <bio/io/detail/magic_get.hpp>
 #include <bio/io/detail/range.hpp>
+#include <bio/io/detail/tuple_record.hpp>
 #include <bio/io/misc.hpp>
-#include <bio/io/record.hpp>
 
 namespace bio::io::detail
 {} // namespace bio::io::detail
@@ -388,16 +388,16 @@ constexpr size_t vcf_gt_formula(size_t const a, size_t const b)
 
 //!\brief The field_ids used in this domain.
 //!\ingroup var_io
-static constexpr auto field_ids = meta::vtag<field::chrom,
-                                             field::pos,
-                                             field::id,
-                                             field::ref,
-                                             field::alt,
-                                             field::qual,
-                                             field::filter,
-                                             field::info,
-                                             field::genotypes,
-                                             field::_private>;
+static constexpr auto field_ids = meta::vtag<detail::field::chrom,
+                                             detail::field::pos,
+                                             detail::field::id,
+                                             detail::field::ref,
+                                             detail::field::alt,
+                                             detail::field::qual,
+                                             detail::field::filter,
+                                             detail::field::info,
+                                             detail::field::genotypes,
+                                             detail::field::_private>;
 
 } // namespace bio::io::detail
 
@@ -423,17 +423,17 @@ struct format_handler_mixin
     template <typename... arg_ts>
     static auto record2tuple_record(var_io::record<arg_ts...> & in_record)
     {
-        return tie_record(detail::field_ids,
-                          in_record.chrom,
-                          in_record.pos,
-                          in_record.id,
-                          in_record.ref,
-                          in_record.alt,
-                          in_record.qual,
-                          in_record.filter,
-                          in_record.info,
-                          in_record.genotypes,
-                          in_record._private);
+        return io::detail::tie_tuple_record(detail::field_ids,
+                                            in_record.chrom,
+                                            in_record.pos,
+                                            in_record.id,
+                                            in_record.ref,
+                                            in_record.alt,
+                                            in_record.qual,
+                                            in_record.filter,
+                                            in_record.info,
+                                            in_record.genotypes,
+                                            in_record._private);
     }
 };
 

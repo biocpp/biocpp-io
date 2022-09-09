@@ -44,5 +44,4 @@ add_subdirectories ()
 
 # Top-level tests
 
-bio_test(record_test.cpp)
 bio_test(genomic_region_test.cpp)

@@ -36,8 +36,8 @@ namespace bio::io
  *
  * ### Fields
  *
- * The FastA format provides the fields bio::io::field::seq and bio::io::field::id. Both fields are required when
- * writing.
+ * The FastA format provides the fields bio::io::detail::field::seq and bio::io::detail::field::id. Both fields are
+ * required when writing.
  *
  * ### Implementation notes
  *
