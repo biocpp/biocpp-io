@@ -78,8 +78,8 @@ public:
       std::conditional_t<record_kind_ == plain_io::record_kind::line, std::string_view, plain_io::record>;
     //!\brief A reference to the record type.
     using reference =
-      std::conditional_t<record_kind_ == plain_io::record_kind::line, std::string_view, plain_io::record const &>;
-    using pointer           = value_type const *;      //!< Has no pointer type.
+      std::conditional_t<record_kind_ == plain_io::record_kind::line, std::string_view, plain_io::record &>;
+    using pointer           = value_type *;      //!< Has no pointer type.
     using iterator_category = std::input_iterator_tag; //!< Pure input iterator.
     //!\}
 
@@ -248,7 +248,7 @@ public:
      * \{
      */
     //!\brief Read current value from buffer (no vtable lookup, safe even at end).
-    reference operator*() const
+    reference operator*()
     {
         if constexpr (record_kind_ == plain_io::record_kind::line_and_fields)
             return record_;
@@ -256,7 +256,7 @@ public:
             return record_.line;
     }
     //!\brief Arrow operator.
-    pointer operator->() const
+    pointer operator->()
     {
         if constexpr (record_kind_ == plain_io::record_kind::line_and_fields)
             return &record_;
