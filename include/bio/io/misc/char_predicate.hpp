@@ -156,7 +156,7 @@ inline constexpr auto is_blank = is_char<'\t'> || is_char<' '>;
  * * digits (0123456789)
  * * uppercase letters (ABCDEFGHIJKLMNOPQRSTUVWXYZ)
  * * lowercase letters (abcdefghijklmnopqrstuvwxyz)
- * * punctuation characters (!"#$%&'()*+,-./:;<=>?\@[\]^_`{|}~)
+ * * punctuation characters (<tt>!"#\$%&'()*+,-./:;<=>?\@[\]^_`{|}~</tt>)
  *
  * ### Example
  *
@@ -172,7 +172,7 @@ inline constexpr auto is_graph = is_in_interval<'!', '~'>;
  * This function like object can be used to check if a character `c` is a punctuation character.
  * For the standard ASCII character set, the following characters are punctuation characters:
  *
- * * punctuation characters (!"#$%&'()*+,-./:;<=>?\@[\]^_`{|}~)
+ * * punctuation characters (<tt>!"#\$%&'()*+,-./:;<=>?\@[\]^_`{|}~</tt>)
  *
  * ### Example
  *

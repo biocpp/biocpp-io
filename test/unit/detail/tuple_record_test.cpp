@@ -44,15 +44,15 @@ struct record : public ::testing::Test
 {
     using ids = bio::meta::vtag_t<bio::io::detail::field::id, bio::io::detail::field::seq>;
     using record_type =
-      bio::io::detail::tuple_record<ids, bio::meta::type_list<std::string, bio::alphabet::dna4_vector>>;
+      bio::io::detail::tuple_record<ids, bio::meta::type_list<std::string, std::vector<bio::alphabet::dna4>>>;
 };
 
 TEST_F(record, definition_tuple_traits)
 {
-    EXPECT_TRUE((std::is_same_v<typename record_type::base_type, std::tuple<std::string, bio::alphabet::dna4_vector>>));
+    EXPECT_TRUE((std::is_same_v<typename record_type::base_type, std::tuple<std::string, std::vector<bio::alphabet::dna4>>>));
 
     EXPECT_TRUE((std::is_same_v<std::tuple_element_t<0, record_type>, std::string>));
-    EXPECT_TRUE((std::is_same_v<std::tuple_element_t<1, record_type>, bio::alphabet::dna4_vector>));
+    EXPECT_TRUE((std::is_same_v<std::tuple_element_t<1, record_type>, std::vector<bio::alphabet::dna4>>));
     EXPECT_EQ(std::tuple_size_v<record_type>, 2ul);
 
     // TODO(bio): reactivate once in biocpp_core
@@ -64,7 +64,7 @@ TEST_F(record, record_element)
     EXPECT_TRUE(
       (std::is_same_v<bio::io::detail::tuple_record_element_t<bio::io::detail::field::id, record_type>, std::string>));
     EXPECT_TRUE((std::is_same_v<bio::io::detail::tuple_record_element_t<bio::io::detail::field::seq, record_type>,
-                                bio::alphabet::dna4_vector>));
+                                std::vector<bio::alphabet::dna4>>));
 }
 
 TEST_F(record, construction)
@@ -85,7 +85,7 @@ TEST_F(record, get_by_type)
     record_type r{"MY ID", "ACGT"_dna4};
 
     EXPECT_EQ(std::get<std::string>(r), "MY ID");
-    EXPECT_RANGE_EQ(std::get<bio::alphabet::dna4_vector>(r), "ACGT"_dna4);
+    EXPECT_RANGE_EQ(std::get<std::vector<bio::alphabet::dna4>>(r), "ACGT"_dna4);
 }
 
 TEST_F(record, get_by_field)
