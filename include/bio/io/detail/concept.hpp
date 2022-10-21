@@ -16,6 +16,7 @@
 #include <concepts>
 
 #include <bio/alphabet/concept.hpp>
+#include <bio/meta/overloaded.hpp>
 
 #include <bio/io/detail/utility.hpp>
 
@@ -26,16 +27,6 @@ namespace bio::io::detail
  * \{
  */
 
-/*!\interface   bio::io::detail::one_of <>
- * \tparam t    The query type to compare.
- * \tparam ts   The reference types.
- * \brief       Checks whether the list of reference types contains the query type.
- */
-//!\cond
-template <typename t, typename... ts>
-concept one_of = (std::same_as<t, ts> || ...);
-//!\endcond
-
 /*!\interface   bio::io::detail::deliberate_alphabet <>
  * \tparam t    The query type to compare.
  * \brief       A bio::alphabet::alphabet that is **not** a character or a number (any std::integral).
@@ -43,15 +34,6 @@ concept one_of = (std::same_as<t, ts> || ...);
 //!\cond
 template <typename t>
 concept deliberate_alphabet = alphabet::alphabet<t> && !std::integral<std::remove_cvref_t<t>>;
-//!\endcond
-
-/*!\interface   bio::io::detail::decays_to <>
- * \tparam t    The type to check.
- * \brief       Shortcut for `std::same_as<std::decay_t<from_t>, to_t>`.
- */
-//!\cond
-template <typename from_t, typename to_t>
-concept decays_to = std::same_as<std::decay_t<from_t>, to_t>;
 //!\endcond
 
 /*!\brief Pass this function a constrained functor that accepts one argument and returns std::true_type.
@@ -65,7 +47,7 @@ constexpr bool lazy_concept_checker(auto fun)
     {
         return std::false_type{};
     };
-    using ret_t = decltype(detail::overloaded{fallback, fun}(1));
+    using ret_t = decltype(meta::overloaded{fallback, fun}(1));
     return ret_t::value;
 }
 

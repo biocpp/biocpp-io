@@ -54,8 +54,7 @@ template <>
 inline constexpr char missing_value<char> = char{0x07};
 
 //!\brief Specialisation for integral types.
-template <typename int_t>
-    requires(std::same_as<int_t, int8_t> || std::same_as<int_t, int16_t> || std::same_as<int_t, int32_t>)
+template <meta::one_of<int8_t, int16_t, int32_t> int_t>
 inline constexpr int_t missing_value<int_t> = std::numeric_limits<int_t>::lowest();
 
 //!\brief Specialisation for float.
@@ -98,8 +97,7 @@ template <>
 inline constexpr char end_of_vector<char> = '\0';
 
 //!\brief Specialisation for integral types.
-template <typename int_t>
-    requires(std::same_as<int_t, int8_t> || std::same_as<int_t, int16_t> || std::same_as<int_t, int32_t>)
+template <meta::one_of<int8_t, int16_t, int32_t> int_t>
 inline constexpr int_t end_of_vector<int_t> = std::numeric_limits<int_t>::lowest() + 1;
 
 //!\brief Specialisation for float.
@@ -368,7 +366,7 @@ template <detail::deliberate_alphabet t>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::char8;
 
 //!\brief Specialisation for cstring.
-template <decays_to<char const *> t>
+template <meta::decays_to<char const *> t>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::char8;
 
 //!\brief Specialisation for range.

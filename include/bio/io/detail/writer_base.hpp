@@ -320,7 +320,7 @@ protected:
     void write_record(auto & r)
     {
         init_state = false;
-        std::visit(detail::overloaded([](std::monostate) {}, [&r](auto & handler) { handler.write_record(r); }),
+        std::visit(meta::overloaded([](std::monostate) {}, [&r](auto & handler) { handler.write_record(r); }),
                    format_handler);
     }
 

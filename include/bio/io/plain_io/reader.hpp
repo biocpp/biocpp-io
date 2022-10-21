@@ -79,7 +79,7 @@ public:
     //!\brief A reference to the record type.
     using reference =
       std::conditional_t<record_kind_ == plain_io::record_kind::line, std::string_view, plain_io::record &>;
-    using pointer           = value_type *;      //!< Has no pointer type.
+    using pointer           = value_type *;            //!< Has no pointer type.
     using iterator_category = std::input_iterator_tag; //!< Pure input iterator.
     //!\}
 

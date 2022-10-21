@@ -49,7 +49,8 @@ struct record : public ::testing::Test
 
 TEST_F(record, definition_tuple_traits)
 {
-    EXPECT_TRUE((std::is_same_v<typename record_type::base_type, std::tuple<std::string, std::vector<bio::alphabet::dna4>>>));
+    EXPECT_TRUE(
+      (std::is_same_v<typename record_type::base_type, std::tuple<std::string, std::vector<bio::alphabet::dna4>>>));
 
     EXPECT_TRUE((std::is_same_v<std::tuple_element_t<0, record_type>, std::string>));
     EXPECT_TRUE((std::is_same_v<std::tuple_element_t<1, record_type>, std::vector<bio::alphabet::dna4>>));

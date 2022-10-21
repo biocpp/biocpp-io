@@ -16,6 +16,9 @@
 #include <ranges>
 #include <span>
 
+#include <bio/meta/concept/core_language.hpp>
+#include <bio/ranges/concept.hpp>
+
 #include <bio/io/platform.hpp>
 
 namespace bio::io::detail
@@ -28,32 +31,6 @@ namespace bio::io::detail
 // ----------------------------------------------------------------------------
 // concepts
 // ----------------------------------------------------------------------------
-
-/*!\interface bio::io::detail::back_insertable_with <>
- * \extends std::ranges::output_range
- * \tparam rng_t The container type.
- * \tparam val_t The type to append to the container.
- * \brief Describes range types that can grow in amortised constant time by appending an element of type val_t.
- */
-//!\cond
-template <typename rng_t, typename val_t>
-concept back_insertable_with = std::ranges::output_range<rng_t, val_t> && requires(rng_t & v)
-{
-    v.push_back(std::declval<val_t>());
-};
-//!\endcond
-
-/*!\interface bio::io::detail::back_insertable <>
- * \extends std::ranges::output_range
- * \extends std::ranges::input_range
- * \tparam rng_t The container type.
- * \brief Describes range types that can grow in amortised constant time by appending an element.
- */
-//!\cond
-template <typename rng_t>
-concept back_insertable =
-  std::ranges::input_range<rng_t> && back_insertable_with<rng_t, std::ranges::range_reference_t<rng_t>>;
-//!\endcond
 
 //!\brief A range whose value type is `char`.
 template <typename t>
@@ -69,7 +46,7 @@ char const * > ;
 template <typename t>
 concept int_range =
   std::ranges::forward_range<t> && std::integral<std::remove_cvref_t<std::ranges::range_value_t<t>>> &&
-  !std::same_as<char, std::remove_cvref_t<std::ranges::range_value_t<t>>>;
+  meta::different_from<char, std::ranges::range_value_t<t>>;
 
 /*!\interface bio::io::detail::out_string <>
  * \tparam rng_t The container type.
@@ -77,13 +54,13 @@ concept int_range =
  */
 //!\cond
 template <typename rng_t>
-concept out_string = back_insertable_with<rng_t, char> || std::same_as<rng_t &, std::string_view &>;
+concept out_string = ranges::back_insertable_with<rng_t, char> || std::same_as<rng_t &, std::string_view &>;
 //!\endcond
 
 //!\brief Range that is random-access, output, sized and has .resize() and .clear()
 template <typename rng_t>
 concept vector_like = std::ranges::random_access_range<rng_t> && std::ranges::sized_range<rng_t> &&
-  std::ranges::output_range<rng_t, std::ranges::range_reference_t<rng_t>> && requires(rng_t & v)
+  ranges::back_insertable<rng_t> && requires(rng_t & v)
 {
     v.resize(3);
     v.clear();
@@ -132,8 +109,8 @@ concept transform_view_on_string_view = requires
  * If the input range is sized and the target range offers a `.resize()` member, this function uses
  * resize and assignment instead of back-insertion.
  */
-void sized_range_copy(std::ranges::input_range auto &&                                           in,
-                      back_insertable_with<std::ranges::range_reference_t<decltype(in)>> auto && out)
+void sized_range_copy(std::ranges::input_range auto &&                                                   in,
+                      ranges::back_insertable_with<std::ranges::range_reference_t<decltype(in)>> auto && out)
 {
     using in_t  = decltype(in);
     using out_t = decltype(out);

@@ -23,6 +23,7 @@
 
 #include <bio/meta/tag/vtag.hpp>
 #include <bio/meta/type_list/traits.hpp>
+#include <bio/ranges/concept.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
 
 #include <bio/io/detail/magic_get.hpp>
@@ -209,7 +210,7 @@ private:
     /* POS, ID, REF are handled correctly by default */
 
     //!\brief Overload for parsing ALT.
-    template <detail::back_insertable parsed_field_t>
+    template <ranges::back_insertable parsed_field_t>
         requires std::ranges::range<std::ranges::range_reference_t<parsed_field_t>>
     void parse_field(meta::vtag_t<detail::field::alt> const & /**/, parsed_field_t & parsed_field)
     {
@@ -246,7 +247,7 @@ private:
     }
 
     //!\brief Overload for parsing FILTER.
-    template <detail::back_insertable parsed_field_t>
+    template <ranges::back_insertable parsed_field_t>
     void parse_field(meta::vtag_t<detail::field::filter> const & /**/, parsed_field_t & parsed_field)
     {
         using elem_t               = std::ranges::range_value_t<parsed_field_t>;
@@ -332,7 +333,7 @@ private:
     }
 
     //!\brief Overload for parsing INFO.
-    template <detail::back_insertable parsed_field_t>
+    template <ranges::back_insertable parsed_field_t>
         requires detail::info_element_reader_concept<std::ranges::range_reference_t<parsed_field_t>>
     void parse_field(meta::vtag_t<detail::field::info> const & /**/, parsed_field_t & parsed_field)
     {
@@ -447,7 +448,7 @@ private:
     }
 
     //!\brief Overload for parsing GENOTYPES.
-    template <detail::back_insertable field_t>
+    template <ranges::back_insertable field_t>
         //!\cond REQ
         requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
     //!\endcond
@@ -700,7 +701,7 @@ inline size_t format_input_handler<vcf>::parse_element_value_type(var_io::value_
 }
 
 //!\brief Overload for reading the GENOTYPE field.
-template <detail::back_insertable field_t>
+template <ranges::back_insertable field_t>
     requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
 inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::genotypes> const & /**/,
                                                    field_t & parsed_field)
@@ -745,7 +746,7 @@ inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::g
         auto const & format = header.formats[format_pos];
 
         init_element_value_type(format.type_id, current_value);
-        auto reserve = detail::overloaded(
+        auto reserve = meta::overloaded(
           [&]<typename t>(ranges::concatenated_sequences<t> & seqs)
           {
               size_t n_samples       = column_number - 8;
@@ -801,7 +802,7 @@ inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::g
                 field = *fields_it;
                 ++fields_it;
 
-                auto parse_and_append = detail::overloaded(
+                auto parse_and_append = meta::overloaded(
                   [field]<typename t>(ranges::concatenated_sequences<t> & seqs)
                   {
                       seqs.push_back();
