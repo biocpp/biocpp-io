@@ -18,6 +18,7 @@
 #include <vector>
 
 #include <bio/meta/tag/vtag.hpp>
+#include <bio/ranges/concept.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
 
 #include <bio/io/detail/charconv.hpp>
@@ -139,7 +140,7 @@ private:
     }
 
     //!\brief Parse into string-like types.
-    template <detail::back_insertable parsed_field_t>
+    template <ranges::back_insertable parsed_field_t>
         requires detail::char_range<parsed_field_t>
     static void parse_field_aux(std::string_view const in, parsed_field_t & parsed_field)
     {
@@ -147,7 +148,7 @@ private:
     }
 
     //!\brief Parse into containers of alphabets.
-    template <detail::back_insertable parsed_field_t>
+    template <ranges::back_insertable parsed_field_t>
         requires detail::deliberate_alphabet<std::ranges::range_reference_t<parsed_field_t>>
     static void parse_field_aux(std::string_view const in, parsed_field_t & parsed_field)
     {

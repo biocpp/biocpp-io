@@ -32,18 +32,6 @@ namespace bio::io::detail
  * \{
  */
 
-//!\brief Wrapper to create an overload set of multiple functors.
-template <typename... functors>
-struct overloaded : functors...
-{
-    using functors::operator()...;
-};
-
-//!\brief Deduction guide for bio::io::detail::overloaded.
-template <typename... functors>
-overloaded(functors...) -> overloaded<functors...>;
-//!\}
-
 //!\brief Can be included as a member to infer whether parent is in moved-from state.
 //!\ingroup io
 struct move_tracker

@@ -309,10 +309,9 @@ public:
     }
 
     //!\overload
-    template <typename temporary_stream_t>
+    template <meta::different_from<transparent_ostream> temporary_stream_t>
         //!\cond REQ
-        requires(!std::same_as<temporary_stream_t, transparent_ostream> && movable_ostream<temporary_stream_t> &&
-                 !std::is_lvalue_reference_v<temporary_stream_t>)
+        requires(movable_ostream<temporary_stream_t> && !std::is_lvalue_reference_v<temporary_stream_t>)
     //!\endcond
     explicit transparent_ostream(temporary_stream_t &&       stream,
                                  transparent_ostream_options options = transparent_ostream_options{}) :

@@ -17,7 +17,7 @@
 #include <string_view>
 #include <vector>
 
-#include <bio/alphabet/adaptation/char.hpp> // make sure that some concept checks don't fail when using strings
+#include <bio/alphabet/custom/char.hpp> // make sure that some concept checks don't fail when using strings
 #include <bio/meta/tag/ttag.hpp>
 #include <bio/meta/type_list/traits.hpp>
 

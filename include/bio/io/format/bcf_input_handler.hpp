@@ -465,7 +465,7 @@ private:
 
     // IMPLEMENTATION NOTE: the following is the only decoder that is used in parsed record reading.
     //!\brief Decodes any range of integral and stores in any range of integral (no check of sizes).
-    template <detail::back_insertable out_t>
+    template <ranges::back_insertable out_t>
         requires detail::int_range<out_t>
     void decode_numbers_into(std::span<std::byte const> in, out_t & out)
     {
@@ -764,7 +764,7 @@ private:
     }
 
     //!\overload
-    template <detail::back_insertable parsed_field_t>
+    template <ranges::back_insertable parsed_field_t>
         requires(std::ranges::range<std::ranges::range_reference_t<parsed_field_t>>)
     void parse_field(meta::vtag_t<detail::field::alt> const & /**/, parsed_field_t & parsed_field)
     {
@@ -785,7 +785,7 @@ private:
     }
 
     //!\brief Reading of FILTER field.
-    template <detail::back_insertable parsed_field_t>
+    template <ranges::back_insertable parsed_field_t>
         requires detail::int_range<parsed_field_t>
     void parse_field(meta::vtag_t<detail::field::filter> const & /**/, parsed_field_t & parsed_field)
     {
@@ -793,7 +793,7 @@ private:
     }
 
     //!\overload
-    template <detail::back_insertable parsed_field_t>
+    template <ranges::back_insertable parsed_field_t>
         requires detail::out_string<std::ranges::range_reference_t<parsed_field_t>>
     void parse_field(meta::vtag_t<detail::field::filter> const & /**/, parsed_field_t & parsed_field)
     {
@@ -810,7 +810,7 @@ private:
     }
 
     //!\brief Reading of the INFO field.
-    template <detail::back_insertable parsed_field_t>
+    template <ranges::back_insertable parsed_field_t>
         requires detail::info_element_reader_concept<std::ranges::range_reference_t<parsed_field_t>>
     void parse_field(meta::vtag_t<detail::field::info> const & /**/, parsed_field_t & parsed_field)
     {
@@ -929,20 +929,19 @@ private:
 
                 /* we transform number to string and store in caches */
                 std::visit(
-                  [&]<typename rng_t>(rng_t && int_range)
+                  [&]<typename rng_t>(rng_t && rng)
                   {
-                      using innermost_val_t = bio::ranges::range_innermost_value_t<rng_t>;
                       if constexpr (std::ranges::range<std::ranges::range_value_t<rng_t>> &&
-                                    std::integral<innermost_val_t> && !std::same_as<innermost_val_t, char>)
+                                    detail::int_range<std::ranges::range_value_t<rng_t>>)
                       {
-                          if (std::ranges::size(int_range) != record_core->n_sample)
+                          if (std::ranges::size(rng) != record_core->n_sample)
                               error("Expected exactly one GT string per sample.");
 
                           for (size_t sample = 0; sample < record_core->n_sample; ++sample)
                           {
                               gt_cache[sample].clear();
                               number_cache.clear();
-                              parse_gt_field(int_range[sample], number_cache, gt_cache[sample]);
+                              parse_gt_field(rng[sample], number_cache, gt_cache[sample]);
                           }
                       }
                       else
@@ -981,7 +980,7 @@ private:
     }
 
     //!\brief Reading of the GENOTYPES field.
-    template <detail::back_insertable field_t>
+    template <ranges::back_insertable field_t>
         requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
     void parse_field(meta::vtag_t<detail::field::genotypes> const & /**/, field_t & parsed_field)
     {

@@ -111,164 +111,161 @@ public:
     }
 
     template <std::ranges::input_range range_type>
-        requires std::convertible_to<std::ranges::range_value_t<range_type>, value_type>
-        buffer_queue(size_type const init_capacity, range_type && r) : buffer_queue{init_capacity}
-        {
-            std::ranges::copy(r, std::ranges::begin(buffer));
-        }
+        requires(std::convertible_to<std::ranges::range_value_t<range_type>, value_type>)
+    buffer_queue(size_type const init_capacity, range_type && r) : buffer_queue{init_capacity}
+    {
+        std::ranges::copy(r, std::ranges::begin(buffer));
+    }
 
-        /*!\name Waiting operations
+    /*!\name Waiting operations
          * \{
          */
-        template <typename value2_t>
-            requires std::convertible_to<value2_t, value_t>
-        void push(value2_t && value)
-        {
-            spin_delay delay{};
+    template <typename value2_t>
+        requires std::convertible_to<value2_t, value_t>
+    void push(value2_t && value)
+    {
+        spin_delay delay{};
 
-            for (;;)
+        for (;;)
+        {
+            auto status = try_push(std::forward<value2_t>(value));
+            if (status == queue_op_status::closed)
+                throw queue_op_status::closed;
+            else if (status == queue_op_status::success)
+                return;
+
+            assert(status != queue_op_status::empty);
+            assert(status == queue_op_status::full);
+            delay.wait(); // pause and then try again.
+        }
+    } // throws if closed
+
+    template <typename value2_t>
+        requires(std::convertible_to<value2_t, value_t>)
+    queue_op_status wait_push(value2_t && value)
+    {
+        spin_delay delay{};
+
+        for (;;)
+        {
+            auto status = try_push(std::forward<value2_t>(value));
+            // wait until queue is not full anymore..
+            if (status != queue_op_status::full)
+                return status;
+
+            assert(status != queue_op_status::empty);
+            assert(status == queue_op_status::full);
+            delay.wait(); // pause and then try again.
+        }
+    }
+
+    value_type value_pop() // throws if closed
+    {
+        spin_delay delay{};
+
+        value_type value{};
+        for (;;)
+        {
+            if (!writer_waiting.load())
             {
-                auto status = try_push(std::forward<value2_t>(value));
+                auto status = try_pop(value);
+
                 if (status == queue_op_status::closed)
                     throw queue_op_status::closed;
                 else if (status == queue_op_status::success)
-                    return;
+                    return value;
 
-                assert(status != queue_op_status::empty);
-                assert(status == queue_op_status::full);
-                delay.wait(); // pause and then try again.
+                assert(status != queue_op_status::full);
+                assert(status == queue_op_status::empty);
             }
-        } // throws if closed
-
-        template <typename value2_t>
-            requires std::convertible_to<value2_t, value_t> queue_op_status wait_push(value2_t && value)
-            {
-                spin_delay delay{};
-
-                for (;;)
-                {
-                    auto status = try_push(std::forward<value2_t>(value));
-                    // wait until queue is not full anymore..
-                    if (status != queue_op_status::full)
-                        return status;
-
-                    assert(status != queue_op_status::empty);
-                    assert(status == queue_op_status::full);
-                    delay.wait(); // pause and then try again.
-                }
-            }
-
-        value_type value_pop() // throws if closed
-        {
-            spin_delay delay{};
-
-            value_type value{};
-            for (;;)
-            {
-                if (!writer_waiting.load())
-                {
-                    auto status = try_pop(value);
-
-                    if (status == queue_op_status::closed)
-                        throw queue_op_status::closed;
-                    else if (status == queue_op_status::success)
-                        return value;
-
-                    assert(status != queue_op_status::full);
-                    assert(status == queue_op_status::empty);
-                }
-                delay.wait(); // pause and then try again.
-            }
+            delay.wait(); // pause and then try again.
         }
+    }
 
-        queue_op_status wait_pop(value_type & value)
+    queue_op_status wait_pop(value_type & value)
+    {
+        spin_delay delay{};
+
+        queue_op_status status;
+        for (;;)
         {
-            spin_delay delay{};
-
-            queue_op_status status;
-            for (;;)
+            if (!writer_waiting.load())
             {
-                if (!writer_waiting.load())
-                {
-                    status = try_pop(value);
+                status = try_pop(value);
 
-                    if (status == queue_op_status::closed || status == queue_op_status::success)
-                        break;
+                if (status == queue_op_status::closed || status == queue_op_status::success)
+                    break;
 
-                    assert(status != queue_op_status::full);
-                    assert(status == queue_op_status::empty);
-                }
-                delay.wait(); // pause and then try again.
+                assert(status != queue_op_status::full);
+                assert(status == queue_op_status::empty);
             }
-            return status;
+            delay.wait(); // pause and then try again.
         }
-        //!\}
+        return status;
+    }
+    //!\}
 
-        /*!\name Non-waiting operations
+    /*!\name Non-waiting operations
          * \{
          */
-        template <typename value2_t>
-            requires std::convertible_to<value2_t, value_t> queue_op_status try_push(value2_t &&);
+    template <typename value2_t>
+        requires(std::convertible_to<value2_t, value_t>)
+    queue_op_status try_push(value2_t &&);
 
-        queue_op_status try_pop(value_t &);
-        //!\}
+    queue_op_status try_pop(value_t &);
+    //!\}
 
-        /*!\name State operations
+    /*!\name State operations
          * \{
          */
-        void close()
-        {
-            if (writer_waiting.exchange(true)) // First writer that closes the queue will continue, the rest returns.
-                return;
+    void close()
+    {
+        if (writer_waiting.exchange(true)) // First writer that closes the queue will continue, the rest returns.
+            return;
 
-            try
-            {
-                std::unique_lock write_lock{mutex};
-                closed_flag = true;
-                writer_waiting.store(false); // reset the lock.
-            }
-            catch (...)
-            {
-                writer_waiting.store(false); // reset the lock.
-                std::rethrow_exception(std::current_exception());
-            }
-        }
-
-        bool is_closed() const noexcept
+        try
         {
-            return closed_flag;
+            std::unique_lock write_lock{mutex};
+            closed_flag = true;
+            writer_waiting.store(false); // reset the lock.
         }
-
-        bool is_empty() const noexcept
+        catch (...)
         {
-            std::unique_lock write_lock(mutex);
-            return pop_front_position == push_back_position;
+            writer_waiting.store(false); // reset the lock.
+            std::rethrow_exception(std::current_exception());
         }
+    }
 
-        bool is_full() const noexcept
-        {
-            std::unique_lock write_lock(mutex);
-            return is_ring_buffer_exhausted(pop_front_position, push_back_position);
-        }
+    bool is_closed() const noexcept { return closed_flag; }
 
-        size_type size() const noexcept
+    bool is_empty() const noexcept
+    {
+        std::unique_lock write_lock(mutex);
+        return pop_front_position == push_back_position;
+    }
+
+    bool is_full() const noexcept
+    {
+        std::unique_lock write_lock(mutex);
+        return is_ring_buffer_exhausted(pop_front_position, push_back_position);
+    }
+
+    size_type size() const noexcept
+    {
+        std::unique_lock write_lock(mutex);
+        if (to_buffer_position(pop_front_position) <= to_buffer_position(push_back_position))
         {
-            std::unique_lock write_lock(mutex);
-            if (to_buffer_position(pop_front_position) <= to_buffer_position(push_back_position))
-            {
-                return to_buffer_position(push_back_position) - to_buffer_position(pop_front_position);
-            }
-            else
-            {
-                assert(buffer.size() >
-                       (to_buffer_position(pop_front_position) - to_buffer_position(push_back_position)));
-                return buffer.size() -
-                       (to_buffer_position(pop_front_position) - to_buffer_position(push_back_position));
-            }
+            return to_buffer_position(push_back_position) - to_buffer_position(pop_front_position);
         }
-        //!\}
-    private:
-        /*!\brief Checks if the capacity of the ring buffer is exhausted.
+        else
+        {
+            assert(buffer.size() > (to_buffer_position(pop_front_position) - to_buffer_position(push_back_position)));
+            return buffer.size() - (to_buffer_position(pop_front_position) - to_buffer_position(push_back_position));
+        }
+    }
+    //!\}
+private:
+    /*!\brief Checks if the capacity of the ring buffer is exhausted.
          * \param[in] from The thread local position to read from the buffer.
          * \param[in] to The thread local position to write to the buffer.
          *
@@ -277,14 +274,14 @@ public:
          * The bio::io::contrib::buffer_queue::cyclic_increment ensures that the `push_back_position` is at least
          * `ring_buffer_capacity` many slots ahead of `pop_front_position` if the queue is full.
          */
-        constexpr bool is_ring_buffer_exhausted(size_type const from, size_type const to) const
-        {
-            assert(to <= (from + ring_buffer_capacity + 1)); // The tail cannot overwrite the head.
+    constexpr bool is_ring_buffer_exhausted(size_type const from, size_type const to) const
+    {
+        assert(to <= (from + ring_buffer_capacity + 1)); // The tail cannot overwrite the head.
 
-            return to >= from + ring_buffer_capacity;
-        }
+        return to >= from + ring_buffer_capacity;
+    }
 
-        /*!\brief Maps the given position to the respective position within the ring buffer.
+    /*!\brief Maps the given position to the respective position within the ring buffer.
          * \param[in] position The position to map to the ring buffer position.
          *
          * \details
@@ -297,12 +294,12 @@ public:
          * won't be changed and positions that reach the buffer size are updated by
          * bio::io::contrib::buffer_queue::cyclic_increment in such a way that the masking still works correctly.
          */
-        constexpr size_type to_buffer_position(size_type const position) const
-        {
-            return position & (ring_buffer_capacity - 1);
-        }
+    constexpr size_type to_buffer_position(size_type const position) const
+    {
+        return position & (ring_buffer_capacity - 1);
+    }
 
-        /*!\brief Increments the given position by one and returns the next position in the buffer.
+    /*!\brief Increments the given position by one and returns the next position in the buffer.
          * \param[in] position The position to increment.
          *
          * \details
@@ -321,39 +318,36 @@ public:
          * Accordingly, the modulo operation to receive the actual ring-buffer position can be replaced by
          * `position & (ring_buffer_capacity - 1)`.
          */
-        size_type cyclic_increment(size_type position)
-        {
-            // invariants:
-            //   - ring_buffer_capacity is a power of 2
-            //   - (position % ring_buffer_capacity) is in [0, buffer.size())
-            //
-            // return the next greater position that fulfils the invariants
-            if (to_buffer_position(++position) >= buffer.size())
-                position += ring_buffer_capacity - buffer.size(); // If the position reached
-            return position;
-        }
+    size_type cyclic_increment(size_type position)
+    {
+        // invariants:
+        //   - ring_buffer_capacity is a power of 2
+        //   - (position % ring_buffer_capacity) is in [0, buffer.size())
+        //
+        // return the next greater position that fulfils the invariants
+        if (to_buffer_position(++position) >= buffer.size())
+            position += ring_buffer_capacity - buffer.size(); // If the position reached
+        return position;
+    }
 
-        template <typename value2_t>
-            requires(std::convertible_to<value2_t, value_t>)
-        &&(buffer_policy == buffer_queue_policy::fixed) bool overflow(value2_t &&)
-        {
-            return false;
-        }
+    template <typename value2_t>
+        requires(std::convertible_to<value2_t, value_t> && buffer_policy == buffer_queue_policy::fixed)
+    bool overflow(value2_t &&) { return false; }
 
-        template <typename value2_t>
-            requires(std::convertible_to<value2_t, value_t>)
-        &&(buffer_policy == buffer_queue_policy::dynamic) bool overflow(value2_t && value);
+    template <typename value2_t>
+        requires(std::convertible_to<value2_t, value_t> && buffer_policy == buffer_queue_policy::dynamic)
+    bool overflow(value2_t && value);
 
-        //!\brief The buffer that is used as ring buffer.
-        buffer_t buffer;
-        alignas(64) std::shared_mutex mutable mutex{};
-        alignas(64) std::atomic<size_type> pop_front_position{0};
-        alignas(64) std::atomic<size_type> pending_pop_front_position{0};
-        alignas(64) std::atomic<size_type> push_back_position{0};
-        alignas(64) std::atomic<size_type> pending_push_back_position{0};
-        alignas(64) std::atomic<size_type> ring_buffer_capacity{0};
-        alignas(64) std::atomic_bool writer_waiting{false};
-        alignas(64) bool closed_flag{false};
+    //!\brief The buffer that is used as ring buffer.
+    buffer_t buffer;
+    alignas(64) std::shared_mutex mutable mutex{};
+    alignas(64) std::atomic<size_type> pop_front_position{0};
+    alignas(64) std::atomic<size_type> pending_pop_front_position{0};
+    alignas(64) std::atomic<size_type> push_back_position{0};
+    alignas(64) std::atomic<size_type> pending_push_back_position{0};
+    alignas(64) std::atomic<size_type> ring_buffer_capacity{0};
+    alignas(64) std::atomic_bool writer_waiting{false};
+    alignas(64) bool closed_flag{false};
 };
 
 // Specifies a fixed size buffer queue.
@@ -374,9 +368,8 @@ using dynamic_buffer_queue = buffer_queue<value_t, buffer_t, buffer_queue_policy
 
 template <std::semiregular value_t, typename buffer_t, buffer_queue_policy buffer_policy>
 template <typename value2_t>
-    requires(std::convertible_to<value2_t, value_t>)
-&&(buffer_policy ==
-   buffer_queue_policy::dynamic) inline bool buffer_queue<value_t, buffer_t, buffer_policy>::overflow(value2_t && value)
+    requires(std::convertible_to<value2_t, value_t> && buffer_policy == buffer_queue_policy::dynamic)
+inline bool buffer_queue<value_t, buffer_t, buffer_policy>::overflow(value2_t && value)
 {
     // try to extend capacity
     std::unique_lock write_lock{mutex};
@@ -527,7 +520,7 @@ inline queue_op_status buffer_queue<value_t, buffer_t, buffer_policy>::try_pop(v
  */
 template <std::semiregular value_t, typename buffer_t, buffer_queue_policy buffer_policy>
 template <typename value2_t>
-    requires std::convertible_to<value2_t, value_t>
+    requires(std::convertible_to<value2_t, value_t>)
 inline queue_op_status buffer_queue<value_t, buffer_t, buffer_policy>::try_push(value2_t && value)
 {
     // try to push the value
@@ -569,8 +562,8 @@ inline queue_op_status buffer_queue<value_t, buffer_t, buffer_policy>::try_push(
                     spin_delay delay{};
                     // the slot this thread acquired to write to
                     size_type  acquired_slot = local_pending_push_back_position;
-                    while (
-                      !this->push_back_position.compare_exchange_weak(acquired_slot, next_local_push_back_position))
+                    while (!this->push_back_position.compare_exchange_weak(acquired_slot,
+                                                                           next_local_push_back_position))
                     {
                         acquired_slot = local_pending_push_back_position;
                         delay.wait();

@@ -175,9 +175,9 @@ private:
     {
         size_t run_length = 1;
 
-        auto eq = detail::overloaded{[](std::ranges::range auto && lhs, std::ranges::range auto && rhs)
-                                     { return std::ranges::equal(lhs, rhs); },
-                                     [](auto && lhs, auto && rhs) { return lhs == rhs; }};
+        auto eq = meta::overloaded{[](std::ranges::range auto && lhs, std::ranges::range auto && rhs)
+                                   { return std::ranges::equal(lhs, rhs); },
+                                   [](auto && lhs, auto && rhs) { return lhs == rhs; }};
 
         for (auto rit = std::ranges::begin(range), next = std::ranges::next(rit); rit != std::ranges::end(range);
              ++rit, ++next)
@@ -446,8 +446,8 @@ private:
             return;
         }
 
-        auto to_size = detail::overloaded{[](char const * const cstr) { return std::string_view{cstr}.size(); },
-                                          [](std::ranges::range auto & rng) { return std::ranges::distance(rng); }};
+        auto to_size = meta::overloaded{[](char const * const cstr) { return std::string_view{cstr}.size(); },
+                                        [](std::ranges::range auto & rng) { return std::ranges::distance(rng); }};
 
         size_t size_sum = std::transform_reduce(std::ranges::begin(vector_of_string),
                                                 std::ranges::end(vector_of_string),
@@ -999,10 +999,12 @@ private:
             write_header();
         }
 
-        static_assert(!detail::decays_to<typename record_t::chrom_t, ignore_t>,
+        static_assert(meta::different_from<typename record_t::chrom_t, ignore_t>,
                       "The record must contain the CHROM field.");
-        static_assert(!detail::decays_to<typename record_t::pos_t, ignore_t>, "The record must contain the POS field.");
-        static_assert(!detail::decays_to<typename record_t::ref_t, ignore_t>, "The record must contain the REF field.");
+        static_assert(meta::different_from<typename record_t::pos_t, ignore_t>,
+                      "The record must contain the POS field.");
+        static_assert(meta::different_from<typename record_t::ref_t, ignore_t>,
+                      "The record must contain the REF field.");
 
         /* IMPLEMENTATION NOTE:
          * A problem when writing BCF is that the first fields of the record hold the size of the record
@@ -1038,20 +1040,20 @@ private:
 
         set_core_rlen(record.ref);
 
-        if constexpr (!detail::decays_to<typename record_t::qual_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::qual_t, ignore_t>)
             set_core_qual(record.qual);
 
-        if constexpr (!detail::decays_to<typename record_t::info_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::info_t, ignore_t>)
             set_core_n_info(record.info);
 
-        if constexpr (!detail::decays_to<typename record_t::alt_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::alt_t, ignore_t>)
             set_core_n_allele(record.alt);
         else
             record_core.n_allele = 1; // the REF allele
 
         record_core.n_sample = header->column_labels.size() > 9 ? header->column_labels.size() - 9 : 0;
 
-        if constexpr (!detail::decays_to<typename record_t::genotypes_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::genotypes_t, ignore_t>)
             set_core_n_fmt(record.genotypes);
 
         // write record core
@@ -1059,24 +1061,24 @@ private:
 
         /* After this point, the order of writers is important! */
 
-        if constexpr (!detail::decays_to<typename record_t::id_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::id_t, ignore_t>)
             write_field(meta::vtag<detail::field::id>, record.id);
         else
             write_field(meta::vtag<detail::field::id>, std::string_view{});
 
         write_field(meta::vtag<detail::field::ref>, record.ref);
 
-        if constexpr (!detail::decays_to<typename record_t::alt_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::alt_t, ignore_t>)
             write_field(meta::vtag<detail::field::alt>, record.alt);
         else
             write_field(meta::vtag<detail::field::alt>, std::span<std::string_view>{});
 
-        if constexpr (!detail::decays_to<typename record_t::filter_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::filter_t, ignore_t>)
             write_field(meta::vtag<detail::field::filter>, record.filter);
         else
             write_field(meta::vtag<detail::field::filter>, std::span<std::string_view>{});
 
-        if constexpr (!detail::decays_to<typename record_t::info_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::info_t, ignore_t>)
             write_field(meta::vtag<detail::field::info>, record.info);
         else
             write_field(meta::vtag<detail::field::info>, std::span<var_io::info_element<>>{});
@@ -1087,7 +1089,7 @@ private:
 
         if (header->column_labels.size() > 8)
         {
-            if constexpr (!detail::decays_to<typename record_t::genotypes_t, ignore_t>)
+            if constexpr (meta::different_from<typename record_t::genotypes_t, ignore_t>)
                 write_field(meta::vtag<detail::field::genotypes>, record.genotypes);
             else
                 write_field(meta::vtag<detail::field::genotypes>, std::span<var_io::genotype_element<>>{});

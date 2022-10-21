@@ -19,8 +19,10 @@
 #include <vector>
 
 #include <bio/alphabet/nucleotide/dna5.hpp>
+#include <bio/meta/concept/core_language.hpp>
 #include <bio/meta/tag/ttag.hpp>
 #include <bio/meta/tag/vtag.hpp>
+#include <bio/ranges/concept.hpp>
 #include <bio/ranges/container/concatenated_sequences.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
 
@@ -103,7 +105,7 @@ namespace bio::io::detail
 //!\brief Auxilliary concept that encompasses bio::io::var_io::info_element_value_type.
 //!\ingroup var_io
 template <typename t>
-concept is_info_element_value_type =
+concept is_info_element_value_type = meta::
   one_of<t, var_io::info_element_value_type<ownership::shallow>, var_io::info_element_value_type<ownership::deep>>;
 
 } // namespace bio::io::detail
@@ -183,9 +185,9 @@ namespace bio::io::detail
 //!\brief Auxilliary concept that encompasses bio::io::var_io::genotype_element_value_type.
 //!\ingroup var_io
 template <typename t>
-concept is_genotype_element_value_type = one_of<t,
-                                                var_io::genotype_element_value_type<ownership::shallow>,
-                                                var_io::genotype_element_value_type<ownership::deep>>;
+concept is_genotype_element_value_type = meta::one_of<t,
+                                                      var_io::genotype_element_value_type<ownership::shallow>,
+                                                      var_io::genotype_element_value_type<ownership::deep>>;
 
 } // namespace bio::io::detail
 
@@ -838,8 +840,8 @@ constexpr bool record_read_concept_checker(
 {
     // TODO(GCC11): once GCC10 is dropped, remove the "<typename t = seq_t>"
     static_assert(detail::lazy_concept_checker([]<typename t = chrom_t>(auto) requires(
-                    detail::back_insertable_with<t, char> ||
-                    detail::one_of<std::remove_reference_t<t>, std::string_view, int32_t, ignore_t, ignore_t const>) {
+                    ranges::back_insertable_with<t, char> ||
+                    meta::one_of<std::remove_reference_t<t>, std::string_view, int32_t, ignore_t, ignore_t const>) {
                       return std::true_type{};
                   }),
                   "Requirements for the field-type of the CHROM-field not met. See documentation for "
@@ -847,56 +849,57 @@ constexpr bool record_read_concept_checker(
 
     static_assert(detail::lazy_concept_checker([]<typename t = pos_t>(auto) requires(
                     std::integral<std::remove_reference_t<t>> ||
-                    detail::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const>) { return std::true_type{}; }),
+                    meta::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const>) { return std::true_type{}; }),
                   "Requirements for the field-type of the POS-field not met. See documentation for "
                   "bio::io::var_io::reader_options.");
 
     static_assert(detail::lazy_concept_checker([]<typename t = id_t>(auto) requires(
-                    detail::back_insertable_with<t, char> ||
-                    detail::one_of<std::remove_reference_t<t>, std::string_view, ignore_t, ignore_t const>) {
+                    ranges::back_insertable_with<t, char> ||
+                    meta::one_of<std::remove_reference_t<t>, std::string_view, ignore_t, ignore_t const>) {
                       return std::true_type{};
                   }),
                   "Requirements for the field-type of the ID-field not met. See documentation for "
                   "bio::io::var_io::reader_options.");
 
     static_assert(detail::lazy_concept_checker([]<typename t = ref_t>(auto) requires(
-                    (detail::back_insertable<t> && alphabet::alphabet<std::ranges::range_reference_t<t>>) ||
-                    detail::one_of<std::remove_reference_t<t>, std::string_view, ignore_t, ignore_t const> ||
+                    (ranges::back_insertable<t> && alphabet::alphabet<std::ranges::range_reference_t<t>>) ||
+                    meta::one_of<std::remove_reference_t<t>, std::string_view, ignore_t, ignore_t const> ||
                     detail::transform_view_on_string_view<t>) { return std::true_type{}; }),
                   "Requirements for the field-type of the REF-field not met. See documentation for "
                   "bio::io::var_io::reader_options.");
 
-    static_assert(
-      detail::lazy_concept_checker([]<typename t = alt_t>(auto) requires(
-        detail::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const> ||
-        (detail::back_insertable<t> &&
-           (detail::back_insertable<std::ranges::range_reference_t<t>> &&
-            alphabet::alphabet<std::ranges::range_reference_t<std::ranges::range_reference_t<t>>>) ||
-         std::same_as<std::remove_reference_t<std::ranges::range_reference_t<t>>, std::string_view> ||
-         detail::transform_view_on_string_view<std::ranges::range_reference_t<t>>)) { return std::true_type{}; }),
-      "Requirements for the field-type of the ALT-field not met. See documentation for "
-      "bio::io::var_io::reader_options.");
+    static_assert(detail::lazy_concept_checker([]<typename t = alt_t>(auto) requires(
+                    meta::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const> ||
+                    (ranges::back_insertable<t> &&
+                     ((ranges::back_insertable<std::ranges::range_reference_t<t>> &&
+                       alphabet::alphabet<std::ranges::range_reference_t<std::ranges::range_reference_t<t>>>) ||
+                      meta::decays_to<std::ranges::range_reference_t<t>, std::string_view> ||
+                      detail::transform_view_on_string_view<std::ranges::range_reference_t<t>>))) {
+                      return std::true_type{};
+                  }),
+                  "Requirements for the field-type of the ALT-field not met. See documentation for "
+                  "bio::io::var_io::reader_options.");
 
     static_assert(detail::lazy_concept_checker([]<typename t = qual_t>(auto) requires(
                     meta::arithmetic<std::remove_reference_t<t>> ||
-                    detail::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const>) { return std::true_type{}; }),
+                    meta::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const>) { return std::true_type{}; }),
                   "Requirements for the field-type of the QUAL-field not met. See documentation for "
                   "bio::io::var_io::reader_options.");
 
     static_assert(
       detail::lazy_concept_checker([]<typename t = filter_t>(auto) requires(
-        detail::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const> ||
-        (detail::back_insertable<t> &&
-         (detail::back_insertable_with<std::ranges::range_reference_t<t>, char> ||
-          detail::one_of<std::remove_reference_t<std::ranges::range_reference_t<t>>, std::string_view, int32_t>))) {
+        meta::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const> ||
+        (ranges::back_insertable<t> &&
+         (ranges::back_insertable_with<std::ranges::range_reference_t<t>, char> ||
+          meta::one_of<std::remove_reference_t<std::ranges::range_reference_t<t>>, std::string_view, int32_t>))) {
           return std::true_type{};
       }),
       "Requirements for the field-type of the FILTER-field not met. See documentation for "
       "bio::io::var_io::reader_options.");
 
     static_assert(detail::lazy_concept_checker([]<typename t = info_t>(auto) requires(
-                    detail::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const> ||
-                    (detail::back_insertable<t> &&
+                    meta::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const> ||
+                    (ranges::back_insertable<t> &&
                      detail::info_element_reader_concept<std::remove_reference_t<std::ranges::range_reference_t<t>>>)) {
                       return std::true_type{};
                   }),
@@ -904,8 +907,8 @@ constexpr bool record_read_concept_checker(
                   "bio::io::var_io::reader_options.");
 
     static_assert(detail::lazy_concept_checker([]<typename t = genotypes_t>(auto) requires(
-                    detail::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const> ||
-                    (detail::back_insertable<t> &&
+                    meta::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const> ||
+                    (ranges::back_insertable<t> &&
                      detail::genotype_reader_concept<std::remove_reference_t<std::ranges::range_reference_t<t>>>)) {
                       return std::true_type{};
                   }),

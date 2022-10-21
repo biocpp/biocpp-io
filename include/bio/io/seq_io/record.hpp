@@ -16,13 +16,13 @@
 #include <string>
 #include <vector>
 
-#include <bio/alphabet/adaptation/char.hpp>
 #include <bio/alphabet/aminoacid/aa27.hpp>
 #include <bio/alphabet/concept.hpp>
 #include <bio/alphabet/nucleotide/dna5.hpp>
 #include <bio/alphabet/quality/phred42.hpp>
 #include <bio/meta/tag/ttag.hpp>
 #include <bio/meta/type_list/traits.hpp>
+#include <bio/ranges/concept.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
 
 #include <bio/io/detail/concept.hpp>
@@ -185,20 +185,20 @@ constexpr bool record_read_concept_checker(std::type_identity<seq_io::record<id_
 {
     // TODO(GCC11): once GCC10 is dropped, remove the "<typename t = seq_t>"
     static_assert(io::detail::lazy_concept_checker([]<typename t = id_t>(auto) requires(
-                    io::detail::back_insertable_with<t, char> ||
-                    io::detail::one_of<t, std::string_view, ignore_t, ignore_t const>) { return std::true_type{}; }),
+                    ranges::back_insertable_with<t, char> ||
+                    meta::one_of<t, std::string_view, ignore_t, ignore_t const>) { return std::true_type{}; }),
                   "Requirements for the type of the ID-field not met. See documentation for bio::io::seq_io::record.");
     static_assert(io::detail::lazy_concept_checker([]<typename t = seq_t>(auto) requires(
-                    io::detail::one_of<t, std::string_view, ignore_t, ignore_t const> ||
-                    (io::detail::back_insertable<t> && alphabet::alphabet<std::ranges::range_reference_t<t>>) ||
+                    meta::one_of<t, std::string_view, ignore_t, ignore_t const> ||
+                    (ranges::back_insertable<t> && alphabet::alphabet<std::ranges::range_reference_t<t>>) ||
                     io::detail::transform_view_on_string_view<t>) { return std::true_type{}; }),
                   "Requirements for the type of the SEQ-field not met. See documentation for bio::io::seq_io::record.");
-    static_assert(
-      io::detail::lazy_concept_checker([]<typename t = qual_t>(auto) requires(
-        io::detail::one_of<t, std::string_view, ignore_t, ignore_t const> ||
-        (io::detail::back_insertable<t> && alphabet::alphabet<std::ranges::range_reference_t<t>>) ||
-        io::detail::transform_view_on_string_view<t>) { return std::true_type{}; }),
-      "Requirements for the type of the QUAL-field not met. See documentation for bio::io::seq_io::record.");
+    static_assert(io::detail::lazy_concept_checker([]<typename t = qual_t>(auto) requires(
+                    meta::one_of<t, std::string_view, ignore_t, ignore_t const> ||
+                    (ranges::back_insertable<t> && alphabet::alphabet<std::ranges::range_reference_t<t>>) ||
+                    io::detail::transform_view_on_string_view<t>) { return std::true_type{}; }),
+                  "Requirements for the type of the QUAL-field not met. See documentation for "
+                  "bio::io::seq_io::record.");
     return true;
 }
 

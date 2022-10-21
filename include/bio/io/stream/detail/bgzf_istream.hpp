@@ -197,8 +197,8 @@ private:
                         }
 
                         // check header
-                        if (!bio::io::detail::header_matches<compression_format::bgzf>(
-                              {job.inputBuffer.begin(), job.inputBuffer.end()}))
+                        if (!bio::io::detail::header_matches<compression_format::bgzf>({job.inputBuffer.begin(),
+                                                                                        job.inputBuffer.end()}))
                         {
                             streamBuf->serializer.fileOfs = -1;
                             streamBuf->serializer.error   = new io_error("Invalid BGZF block header.");

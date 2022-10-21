@@ -269,9 +269,9 @@ public:
     //!\brief Get the header used by the format.
     bio::io::var_io::header const & header()
     {
-        return std::visit(
-          detail::overloaded{[](std::monostate) {}, [](auto const & handler) { return handler.get_header(); }},
-          format_handler);
+        return std::visit(meta::overloaded{[](std::monostate) {},
+                                           [](auto const & handler) { return handler.get_header(); }},
+                          format_handler);
     }
 
     //!\brief Set the header to the given value.
@@ -282,8 +282,8 @@ public:
         if (!init_state)
             throw bio_error{"You cannot change the header after I/O has happened."};
 
-        std::visit(detail::overloaded{[](std::monostate) {},
-                                      [&hdr](auto & handler) { handler.set_header(std::forward<header_t>(hdr)); }},
+        std::visit(meta::overloaded{[](std::monostate) {},
+                                    [&hdr](auto & handler) { handler.set_header(std::forward<header_t>(hdr)); }},
                    format_handler);
     }
 };

@@ -285,9 +285,8 @@ public:
     }
 
     //!\overload
-    template <typename temporary_stream_t>
-        requires(!std::same_as<temporary_stream_t, transparent_istream> && movable_istream<temporary_stream_t> &&
-                 !std::is_lvalue_reference_v<temporary_stream_t>)
+    template <meta::different_from<transparent_istream> temporary_stream_t>
+        requires(movable_istream<temporary_stream_t> && !std::is_lvalue_reference_v<temporary_stream_t>)
     explicit transparent_istream(temporary_stream_t &&       stream,
                                  transparent_istream_options options = transparent_istream_options{}) :
       options_{std::move(options)}, primary_stream{new temporary_stream_t{std::move(stream)}, stream_deleter_default}
