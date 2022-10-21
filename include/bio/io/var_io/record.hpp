@@ -868,16 +868,17 @@ constexpr bool record_read_concept_checker(
                   "Requirements for the field-type of the REF-field not met. See documentation for "
                   "bio::io::var_io::reader_options.");
 
-    static_assert(
-      detail::lazy_concept_checker([]<typename t = alt_t>(auto) requires(
-        meta::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const> ||
-        (ranges::back_insertable<t> &&
-         ((ranges::back_insertable<std::ranges::range_reference_t<t>> &&
-           alphabet::alphabet<std::ranges::range_reference_t<std::ranges::range_reference_t<t>>>) ||
-          meta::decays_to<std::ranges::range_reference_t<t>, std::string_view> ||
-          detail::transform_view_on_string_view<std::ranges::range_reference_t<t>>))) { return std::true_type{}; }),
-      "Requirements for the field-type of the ALT-field not met. See documentation for "
-      "bio::io::var_io::reader_options.");
+    static_assert(detail::lazy_concept_checker([]<typename t = alt_t>(auto) requires(
+                    meta::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const> ||
+                    (ranges::back_insertable<t> &&
+                     ((ranges::back_insertable<std::ranges::range_reference_t<t>> &&
+                       alphabet::alphabet<std::ranges::range_reference_t<std::ranges::range_reference_t<t>>>) ||
+                      meta::decays_to<std::ranges::range_reference_t<t>, std::string_view> ||
+                      detail::transform_view_on_string_view<std::ranges::range_reference_t<t>>))) {
+                      return std::true_type{};
+                  }),
+                  "Requirements for the field-type of the ALT-field not met. See documentation for "
+                  "bio::io::var_io::reader_options.");
 
     static_assert(detail::lazy_concept_checker([]<typename t = qual_t>(auto) requires(
                     meta::arithmetic<std::remove_reference_t<t>> ||

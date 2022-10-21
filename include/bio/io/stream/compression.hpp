@@ -212,9 +212,10 @@ constexpr bool header_matches<compression_format::bgzf>(std::string_view const t
 template <>
 constexpr bool header_matches<compression_format::none>(std::string_view const to_compare)
 {
-    return !(
-      header_matches<compression_format::bgzf>(to_compare) || header_matches<compression_format::gz>(to_compare) ||
-      header_matches<compression_format::bz2>(to_compare) || header_matches<compression_format::zstd>(to_compare));
+    return !(header_matches<compression_format::bgzf>(to_compare) ||
+             header_matches<compression_format::gz>(to_compare) ||
+             header_matches<compression_format::bz2>(to_compare) ||
+             header_matches<compression_format::zstd>(to_compare));
 }
 
 //!\brief Header matches "none" if it doesn't match any known compression.

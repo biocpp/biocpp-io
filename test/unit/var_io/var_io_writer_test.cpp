@@ -40,8 +40,8 @@ void var_io_writer_filename_constructor(bool ext_check, auto &&... args)
         bio::test::tmp_filename filename{"var_io_writer_constructor.vcf"};
 
         // constructor
-        EXPECT_NO_THROW(
-          (ptr = new bio::io::var_io::writer{filename.get_path(), std::forward<decltype(args)>(args)...}));
+        EXPECT_NO_THROW((ptr =
+                           new bio::io::var_io::writer{filename.get_path(), std::forward<decltype(args)>(args)...}));
 
         // destructor
         EXPECT_THROW(delete ptr, bio::io::missing_header_error);

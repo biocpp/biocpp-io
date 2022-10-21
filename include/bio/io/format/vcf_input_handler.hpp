@@ -262,8 +262,8 @@ private:
             if (auto it = header.string_to_filter_pos().find(subfield);
                 it == header.string_to_filter_pos().end()) // filter name was not in header, insert!
             {
-                header.filters.push_back(
-                  {.id = static_cast<std::string>(subfield), .description = "\"Automatically added by SeqAn3.\""});
+                header.filters.push_back({.id          = static_cast<std::string>(subfield),
+                                          .description = "\"Automatically added by SeqAn3.\""});
 
                 header.add_missing(); // update IDX and hash-tables
 

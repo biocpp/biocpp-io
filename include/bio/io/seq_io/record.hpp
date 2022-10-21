@@ -193,12 +193,12 @@ constexpr bool record_read_concept_checker(std::type_identity<seq_io::record<id_
                     (ranges::back_insertable<t> && alphabet::alphabet<std::ranges::range_reference_t<t>>) ||
                     io::detail::transform_view_on_string_view<t>) { return std::true_type{}; }),
                   "Requirements for the type of the SEQ-field not met. See documentation for bio::io::seq_io::record.");
-    static_assert(
-      io::detail::lazy_concept_checker([]<typename t = qual_t>(auto) requires(
-        meta::one_of<t, std::string_view, ignore_t, ignore_t const> ||
-        (ranges::back_insertable<t> && alphabet::alphabet<std::ranges::range_reference_t<t>>) ||
-        io::detail::transform_view_on_string_view<t>) { return std::true_type{}; }),
-      "Requirements for the type of the QUAL-field not met. See documentation for bio::io::seq_io::record.");
+    static_assert(io::detail::lazy_concept_checker([]<typename t = qual_t>(auto) requires(
+                    meta::one_of<t, std::string_view, ignore_t, ignore_t const> ||
+                    (ranges::back_insertable<t> && alphabet::alphabet<std::ranges::range_reference_t<t>>) ||
+                    io::detail::transform_view_on_string_view<t>) { return std::true_type{}; }),
+                  "Requirements for the type of the QUAL-field not met. See documentation for "
+                  "bio::io::seq_io::record.");
     return true;
 }
 

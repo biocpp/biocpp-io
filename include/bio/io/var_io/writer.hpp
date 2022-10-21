@@ -269,9 +269,9 @@ public:
     //!\brief Get the header used by the format.
     bio::io::var_io::header const & header()
     {
-        return std::visit(
-          meta::overloaded{[](std::monostate) {}, [](auto const & handler) { return handler.get_header(); }},
-          format_handler);
+        return std::visit(meta::overloaded{[](std::monostate) {},
+                                           [](auto const & handler) { return handler.get_header(); }},
+                          format_handler);
     }
 
     //!\brief Set the header to the given value.
