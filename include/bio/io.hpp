@@ -124,6 +124,17 @@ namespace bio::io::detail
 namespace bio::io::plain_io
 {}
 
+/*!\if DEV
+ * \namespace bio::io::plain_io::detail
+ * \brief The plain_io internal namespace.
+ * \details
+ * The contents of this namespace are not visible to consumers of the library and the documentation is
+ * only generated for developers.
+ * \endif
+ */
+namespace bio::io::plain_io::detail
+{}
+
 /*!\namespace bio::io::seq_io
  * \brief Namespace for the Seq I/O submodule.
  */

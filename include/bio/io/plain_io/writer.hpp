@@ -50,7 +50,7 @@ concept writable_to_output =
 
 } // namespace bio::io::plain_io
 
-namespace bio::io::detail
+namespace bio::io::plain_io::detail
 {
 
 //!\brief An output iterator for writing into plaintext files via certain convenience functions.
@@ -274,7 +274,7 @@ public:
     //!\}
 };
 
-} // namespace bio::io::detail
+} // namespace bio::io::plain_io::detail
 
 namespace bio::io::plain_io
 {

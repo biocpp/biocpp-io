@@ -104,7 +104,7 @@ private:
                                 meta::type_list<var_io::record_private_data>>>;
 
     //!\brief Type of the low-level iterator.
-    using lowlevel_iterator = detail::plaintext_input_iterator<plain_io::record_kind::line_and_fields>;
+    using lowlevel_iterator = plain_io::detail::input_iterator<plain_io::record_kind::line_and_fields>;
 
     //!\brief The raw record.
     raw_record_type   raw_record;
