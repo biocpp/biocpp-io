@@ -1002,11 +1002,11 @@ private:
             write_header();
         }
 
-        static_assert(meta::different_from<typename record_t::chrom_t, ignore_t>,
+        static_assert(meta::different_from<typename record_t::chrom_t, meta::ignore_t>,
                       "The record must contain the CHROM field.");
-        static_assert(meta::different_from<typename record_t::pos_t, ignore_t>,
+        static_assert(meta::different_from<typename record_t::pos_t, meta::ignore_t>,
                       "The record must contain the POS field.");
-        static_assert(meta::different_from<typename record_t::ref_t, ignore_t>,
+        static_assert(meta::different_from<typename record_t::ref_t, meta::ignore_t>,
                       "The record must contain the REF field.");
 
         /* IMPLEMENTATION NOTE:
@@ -1043,20 +1043,20 @@ private:
 
         set_core_rlen(record.ref);
 
-        if constexpr (meta::different_from<typename record_t::qual_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::qual_t, meta::ignore_t>)
             set_core_qual(record.qual);
 
-        if constexpr (meta::different_from<typename record_t::info_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::info_t, meta::ignore_t>)
             set_core_n_info(record.info);
 
-        if constexpr (meta::different_from<typename record_t::alt_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::alt_t, meta::ignore_t>)
             set_core_n_allele(record.alt);
         else
             record_core.n_allele = 1; // the REF allele
 
         record_core.n_sample = header->column_labels.size() > 9 ? header->column_labels.size() - 9 : 0;
 
-        if constexpr (meta::different_from<typename record_t::genotypes_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::genotypes_t, meta::ignore_t>)
             set_core_n_fmt(record.genotypes);
 
         // write record core
@@ -1064,24 +1064,24 @@ private:
 
         /* After this point, the order of writers is important! */
 
-        if constexpr (meta::different_from<typename record_t::id_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::id_t, meta::ignore_t>)
             write_field(meta::vtag<detail::field::id>, record.id);
         else
             write_field(meta::vtag<detail::field::id>, std::string_view{});
 
         write_field(meta::vtag<detail::field::ref>, record.ref);
 
-        if constexpr (meta::different_from<typename record_t::alt_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::alt_t, meta::ignore_t>)
             write_field(meta::vtag<detail::field::alt>, record.alt);
         else
             write_field(meta::vtag<detail::field::alt>, std::span<std::string_view>{});
 
-        if constexpr (meta::different_from<typename record_t::filter_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::filter_t, meta::ignore_t>)
             write_field(meta::vtag<detail::field::filter>, record.filter);
         else
             write_field(meta::vtag<detail::field::filter>, std::span<std::string_view>{});
 
-        if constexpr (meta::different_from<typename record_t::info_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::info_t, meta::ignore_t>)
             write_field(meta::vtag<detail::field::info>, record.info);
         else
             write_field(meta::vtag<detail::field::info>, std::span<var_io::info_element<>>{});
@@ -1092,7 +1092,7 @@ private:
 
         if (header->column_labels.size() > 8)
         {
-            if constexpr (meta::different_from<typename record_t::genotypes_t, ignore_t>)
+            if constexpr (meta::different_from<typename record_t::genotypes_t, meta::ignore_t>)
                 write_field(meta::vtag<detail::field::genotypes>, record.genotypes);
             else
                 write_field(meta::vtag<detail::field::genotypes>, std::span<var_io::genotype_element<>>{});

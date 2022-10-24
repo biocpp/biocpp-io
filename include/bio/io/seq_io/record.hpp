@@ -66,7 +66,7 @@ struct record
      *
      * 1. any back-insertable range over the `char` alphabet, e.g. a std::string (**deep**)
      * 2. std::string_view (**shallow**)
-     * 3. bio::meta::ignore_t (**ignored**)
+     * 3. bio::meta::meta::ignore_t (**ignored**)
      *
      * See \ref shallow_vs_deep for more details on what "deep" and "shallow" mean here.
      *
@@ -95,7 +95,7 @@ struct record
      *   2. any back-insertable range over a bio::alphabet::alphabet (**deep**, converted elements)
      *   3. std::string_view (**shallow**)
      *   4. a std::ranges::transform_view defined on a std::string_view (**shallow**, converted elements)
-     *   5. bio::meta::ignore_t (**ignored**)
+     *   5. bio::meta::meta::ignore_t (**ignored**)
      *
      * ### Type requirements when writing
      *
@@ -124,7 +124,7 @@ struct record
      *   2. any back-insertable range over a bio::alphabet::quality (**deep**, converted elements)
      *   3. std::string_view (**shallow**)
      *   4. a std::ranges::transform_view defined on a std::string_view (**shallow**, converted elements)
-     *   5. bio::meta::ignore_t (**ignored**)
+     *   5. bio::meta::meta::ignore_t (**ignored**)
      *
      * ### Type requirements when writing
      *
@@ -161,16 +161,17 @@ using record_dna = record<std::string, std::vector<alphabet::dna5>, std::vector<
 //!\brief Record type that reads DNA sequences (bio::alphabet::dna5)
 // and corresponding qualities ( bio::alphabet::phred42); shallow version.
 //!\ingroup seq_io
-using record_dna_shallow =
-  record<std::string_view, conversion_view_t<alphabet::dna5>, conversion_view_t<alphabet::phred42>>;
+using record_dna_shallow = record<std::string_view,
+                                  views::char_conversion_view_t<alphabet::dna5>,
+                                  views::char_conversion_view_t<alphabet::phred42>>;
 
 //!\brief Record type that reads DNA sequences (bio::alphabet::aa27) and ignores qualities.
 //!\ingroup seq_io
-using record_protein = record<std::string, std::vector<alphabet::aa27>, ignore_t>;
+using record_protein = record<std::string, std::vector<alphabet::aa27>, meta::ignore_t>;
 
 //!\brief Record type that reads DNA sequences (bio::alphabet::aa27) and ignores qualities; shallow version.
 //!\ingroup seq_io
-using record_protein_shallow = record<std::string_view, conversion_view_t<alphabet::aa27>, ignore_t>;
+using record_protein_shallow = record<std::string_view, views::char_conversion_view_t<alphabet::aa27>, meta::ignore_t>;
 
 //!\}
 
@@ -185,15 +186,15 @@ constexpr bool record_read_concept_checker(std::type_identity<seq_io::record<id_
 {
     // TODO(GCC11): once GCC10 is dropped, remove the "<typename t = seq_t>"
     static_assert(ranges::back_insertable_with<id_t, char> ||
-                    meta::one_of<id_t, std::string_view, ignore_t, ignore_t const>,
+                    meta::one_of<id_t, std::string_view, meta::ignore_t, meta::ignore_t const>,
                   "Requirements for the type of the ID-field not met. See documentation for bio::io::seq_io::record.");
     static_assert(io::detail::lazy_concept_checker([]<typename t = seq_t>(auto) requires(
-                    meta::one_of<t, std::string_view, ignore_t, ignore_t const> ||
+                    meta::one_of<t, std::string_view, meta::ignore_t, meta::ignore_t const> ||
                     (ranges::back_insertable<t> && alphabet::alphabet<std::ranges::range_reference_t<t>>) ||
                     io::detail::transform_view_on_string_view<t>) { return std::true_type{}; }),
                   "Requirements for the type of the SEQ-field not met. See documentation for bio::io::seq_io::record.");
     static_assert(io::detail::lazy_concept_checker([]<typename t = qual_t>(auto) requires(
-                    meta::one_of<t, std::string_view, ignore_t, ignore_t const> ||
+                    meta::one_of<t, std::string_view, meta::ignore_t, meta::ignore_t const> ||
                     (ranges::back_insertable<t> && alphabet::alphabet<std::ranges::range_reference_t<t>>) ||
                     io::detail::transform_view_on_string_view<t>) { return std::true_type{}; }),
                   "Requirements for the type of the QUAL-field not met. See documentation for "

@@ -487,53 +487,53 @@ private:
             write_header();
         }
 
-        static_assert(meta::different_from<typename record_t::chrom_t, ignore_t>,
+        static_assert(meta::different_from<typename record_t::chrom_t, meta::ignore_t>,
                       "The record must contain the CHROM field.");
         write_field(meta::vtag<detail::field::chrom>, record.chrom);
         it = '\t';
 
-        static_assert(meta::different_from<typename record_t::pos_t, ignore_t>,
+        static_assert(meta::different_from<typename record_t::pos_t, meta::ignore_t>,
                       "The record must contain the POS field.");
         write_field(meta::vtag<detail::field::pos>, record.pos);
         it = '\t';
 
-        if constexpr (meta::different_from<typename record_t::id_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::id_t, meta::ignore_t>)
             write_field(meta::vtag<detail::field::id>, record.id);
         else
             it = '.';
         it = '\t';
 
-        static_assert(meta::different_from<typename record_t::ref_t, ignore_t>,
+        static_assert(meta::different_from<typename record_t::ref_t, meta::ignore_t>,
                       "The record must contain the REF field.");
         write_field(meta::vtag<detail::field::ref>, record.ref);
         it = '\t';
 
-        if constexpr (meta::different_from<typename record_t::alt_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::alt_t, meta::ignore_t>)
             write_field(meta::vtag<detail::field::alt>, record.alt);
         else
             it = '.';
         it = '\t';
 
-        if constexpr (meta::different_from<typename record_t::qual_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::qual_t, meta::ignore_t>)
             write_field(meta::vtag<detail::field::qual>, record.qual);
         else
             it = '.';
         it = '\t';
 
-        if constexpr (meta::different_from<typename record_t::filter_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::filter_t, meta::ignore_t>)
             write_field(meta::vtag<detail::field::filter>, record.filter);
         else
             it = '.';
         it = '\t';
 
-        if constexpr (meta::different_from<typename record_t::info_t, ignore_t>)
+        if constexpr (meta::different_from<typename record_t::info_t, meta::ignore_t>)
             write_field(meta::vtag<detail::field::info>, record.info);
         else
             it = '.';
 
         if (header->column_labels.size() > 8)
         {
-            if constexpr (meta::different_from<typename record_t::genotypes_t, ignore_t>)
+            if constexpr (meta::different_from<typename record_t::genotypes_t, meta::ignore_t>)
             {
                 it = '\t';
                 write_field(meta::vtag<detail::field::genotypes>, record.genotypes);

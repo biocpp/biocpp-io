@@ -431,7 +431,7 @@ consteval bool has_non_ignore_field()
     using field_ids      = typename tuple_record_t::field_ids;
     if constexpr (field_ids::contains(f))
     {
-        if constexpr (!meta::decays_to<tuple_record_element_t<f, tuple_record_t>, ignore_t>)
+        if constexpr (!meta::decays_to<tuple_record_element_t<f, tuple_record_t>, meta::ignore_t>)
         {
             return true;
         }

@@ -211,13 +211,13 @@ private:
             // this record holds the bare minimum to check if regions overlap; always shallow
             using record_t = record<std::string_view,
                                     int64_t,
-                                    ignore_t,
+                                    meta::ignore_t,
                                     std::string_view,
-                                    ignore_t,
-                                    ignore_t,
-                                    ignore_t,
-                                    ignore_t,
-                                    ignore_t>;
+                                    meta::ignore_t,
+                                    meta::ignore_t,
+                                    meta::ignore_t,
+                                    meta::ignore_t,
+                                    meta::ignore_t>;
             record_t temp_record;
 
             while (true)
