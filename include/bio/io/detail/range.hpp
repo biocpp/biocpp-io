@@ -39,8 +39,7 @@ concept char_range =
 
 //!\brief A range whose value type is `char` or a C-String.
 template <typename t>
-concept char_range_or_cstring = char_range<t> || std::same_as < std::decay_t<t>,
-char const * > ;
+concept char_range_or_cstring = char_range<t> || meta::decays_to<t, char const *>;
 
 //!\brief A range whose value type is an integral type other than `char`.
 template <typename t>
