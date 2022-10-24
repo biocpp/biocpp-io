@@ -176,7 +176,7 @@ using record_protein_shallow = record<std::string_view, conversion_view_t<alphab
 
 } // namespace bio::io::seq_io
 
-namespace bio::io::detail // TODO move this to seq_io::detail?
+namespace bio::io::seq_io::detail
 {
 
 //!\brief Validates the concepts that the record type needs to satisfy when being passed to a reader.
@@ -184,9 +184,8 @@ template <typename id_t, typename seq_t, typename qual_t>
 constexpr bool record_read_concept_checker(std::type_identity<seq_io::record<id_t, seq_t, qual_t>>)
 {
     // TODO(GCC11): once GCC10 is dropped, remove the "<typename t = seq_t>"
-    static_assert(io::detail::lazy_concept_checker([]<typename t = id_t>(auto) requires(
-                    ranges::back_insertable_with<t, char> ||
-                    meta::one_of<t, std::string_view, ignore_t, ignore_t const>) { return std::true_type{}; }),
+    static_assert(ranges::back_insertable_with<id_t, char> ||
+                    meta::one_of<id_t, std::string_view, ignore_t, ignore_t const>,
                   "Requirements for the type of the ID-field not met. See documentation for bio::io::seq_io::record.");
     static_assert(io::detail::lazy_concept_checker([]<typename t = seq_t>(auto) requires(
                     meta::one_of<t, std::string_view, ignore_t, ignore_t const> ||
@@ -202,14 +201,14 @@ constexpr bool record_read_concept_checker(std::type_identity<seq_io::record<id_
     return true;
 }
 
-} // namespace bio::io::detail
+//!\brief The field_ids used in this domain.
+//!\ingroup seq_io
+static constexpr auto field_ids = meta::vtag<io::detail::field::id, io::detail::field::seq, io::detail::field::qual>;
+
+} // namespace bio::io::seq_io::detail
 
 namespace bio::io::seq_io
 {
-
-//!\brief The field_ids used in this domain.
-//!\ingroup seq_io
-static constexpr auto field_ids = meta::vtag<detail::field::id, detail::field::seq, detail::field::qual>;
 
 template <typename id_t, typename seq_t, typename qual_t>
 struct record;
@@ -222,7 +221,7 @@ struct format_handler_mixin
     template <typename... arg_ts>
     static auto record2tuple_record(seq_io::record<arg_ts...> & in_record)
     {
-        return io::detail::tie_tuple_record(field_ids, in_record.id, in_record.seq, in_record.qual);
+        return io::detail::tie_tuple_record(detail::field_ids, in_record.id, in_record.seq, in_record.qual);
     }
 };
 

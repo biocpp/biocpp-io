@@ -35,7 +35,7 @@ class plaintext_input_iterator
 {
 private:
     //!\brief Down-cast pointer to the stream-buffer.
-    bio::io::detail::stream_buffer_exposer<char> * stream_buf = nullptr;
+    io::detail::stream_buffer_exposer<char> * stream_buf = nullptr;
 
     //!\brief Place to store lines that overlap buffer boundaries.
     std::string         overflow_buffer;

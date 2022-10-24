@@ -95,7 +95,7 @@ private:
      * \{
      */
     //!\brief The fields that this format supports [the base class accesses this type].
-    using format_fields     = decltype(seq_io::field_ids);
+    using format_fields     = decltype(seq_io::detail::field_ids);
     //!\brief Type of the raw record.
     using raw_record_type   = io::detail::tuple_record<format_fields, meta::list_traits::repeat<3, std::string_view>>;
     //!\brief Type of the low-level iterator.
