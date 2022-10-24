@@ -16,16 +16,3 @@
 /*!\defgroup io I/O
  * \brief The Input/Output module from the I/O library.
  */
-
-/*!\namespace bio::io
- * \brief Main namespace for the I/O module.
- */
-
-/*!\if DEV
- * \namespace bio::io::detail
- * \brief The internal namespace.
- * \details
- * The contents of this namespace are not visible to consumers of the library and the documentation is
- * only generated for developers.
- * \endif
- */

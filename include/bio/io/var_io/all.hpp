@@ -25,7 +25,3 @@
  *
  *
  */
-
-/*!\namespace bio::io::var_io
- * \brief Namespace for the Var I/O module.
- */

@@ -8,18 +8,40 @@
 
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
-
 /*!\file
  * \brief Provides The BioC++ I/O library version macros and global variables.
  * \author Hannes Hauswedell <hannes.hauswedell AT decode.is>
  */
 
+// ============================================================================
+//  Dependencies
+// ============================================================================
+
+// Self [required]
+#if __has_include(<bio/io.hpp>)
+#    include <bio/io.hpp>
+#else
+#    error The BioC++ I/O library include directory is not set correctly. Forgot to add -I ${INSTALLDIR}/include to your CXXFLAGS?
+#endif
+
+// The BioC++ core library [required]
+#if __has_include(<bio/core.hpp>)
+#    include <bio/core.hpp>
+#else
+#    error Could not find the BioC++ core library. Please add its include directory!
+#endif
+
+static_assert(bio::biocpp_core_version_major == 0 && bio::biocpp_core_version_minor == 6,
+              "This version of the BioC++ I/O module requires version 0.6.x of the BioC++ core library.");
+
+// ============================================================================
+//  VERSION
+// ============================================================================
+
 //!\brief The major version as MACRO.
 #define BIOCPP_IO_VERSION_MAJOR 0
 //!\brief The minor version as MACRO.
-#define BIOCPP_IO_VERSION_MINOR 1
+#define BIOCPP_IO_VERSION_MINOR 3
 //!\brief The patch version as MACRO.
 #define BIOCPP_IO_VERSION_PATCH 0
 
@@ -40,23 +62,76 @@
 #define BIOCPP_IO_VERSION_CSTRING                                                                                      \
     BIOCPP_IO_VERSION_CSTRING_HELPER_FUNC(BIOCPP_IO_VERSION_MAJOR, BIOCPP_IO_VERSION_MINOR, BIOCPP_IO_VERSION_PATCH)
 
-namespace bio::io
+namespace bio
 {
 
 //!\brief The major version.
-constexpr uint8_t bio_version_major = BIOCPP_IO_VERSION_MAJOR;
+constexpr std::size_t io_version_major = BIOCPP_IO_VERSION_MAJOR;
 //!\brief The minor version.
-constexpr uint8_t bio_version_minor = BIOCPP_IO_VERSION_MINOR;
+constexpr std::size_t io_version_minor = BIOCPP_IO_VERSION_MINOR;
 //!\brief The patch version.
-constexpr uint8_t bio_version_patch = BIOCPP_IO_VERSION_PATCH;
+constexpr std::size_t io_version_patch = BIOCPP_IO_VERSION_PATCH;
 
 //!\brief The full version as `std::size_t`.
-constexpr std::size_t bio_version = BIOCPP_IO_VERSION;
+constexpr std::size_t io_version = BIOCPP_IO_VERSION;
 
 //!\brief The full version as null terminated string.
-constexpr char const * bio_version_cstring = BIOCPP_IO_VERSION_CSTRING;
+constexpr std::string_view bio_version_cstring = BIOCPP_IO_VERSION_CSTRING;
 
-} // namespace bio::io
+} // namespace bio
 
 #undef BIOCPP_IO_VERSION_CSTRING_HELPER_STR
 #undef BIOCPP_IO_VERSION_CSTRING_HELPER_FUNC
+
+// ============================================================================
+//  WORKAROUNDS
+// ============================================================================
+
+//!\brief Bugs in GCC lead to our "readers" not working when declared as views.
+#ifndef BIOCPP_IO_NO_VIEWBASE
+#    if defined(__GNUC__) && ((__GNUC__ == 10 && __GNUC_MINOR__ == 4) || (__GNUC__ == 11 && __GNUC_MINOR__ < 4) ||     \
+                              (__GNUC__ == 12 && __GNUC_MINOR__ < 2))
+#        define BIOCPP_IO_NO_VIEWBASE 1
+#    else
+#        define BIOCPP_IO_NO_VIEWBASE 0
+#    endif
+#endif
+
+// ============================================================================
+//  NAMESPACES
+// ============================================================================
+
+/*!\namespace bio::io
+ * \brief Main namespace for the I/O module.
+ */
+namespace bio::io
+{}
+
+/*!\if DEV
+ * \namespace bio::io::detail
+ * \brief The internal namespace.
+ * \details
+ * The contents of this namespace are not visible to consumers of the library and the documentation is
+ * only generated for developers.
+ * \endif
+ */
+namespace bio::io::detail
+{}
+
+/*!\namespace bio::io::plain_io
+ * \brief Namespace for the Plain I/O submodule.
+ */
+namespace bio::io::plain_io
+{}
+
+/*!\namespace bio::io::seq_io
+ * \brief Namespace for the Seq I/O submodule.
+ */
+namespace bio::io::seq_io
+{}
+
+/*!\namespace bio::io::var_io
+ * \brief Namespace for the Var I/O module.
+ */
+namespace bio::io::var_io
+{}

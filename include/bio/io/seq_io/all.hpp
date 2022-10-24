@@ -19,7 +19,3 @@
  * \ingroup io
  * \brief Reader and writer for sequence files (FastA, FastQ, …).
  */
-
-/*!\namespace bio::io::seq_io
- * \brief Namespace for the Seq I/O submodule.
- */

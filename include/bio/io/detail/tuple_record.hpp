@@ -386,7 +386,7 @@ auto const && get(tuple_record<field_ids, field_types> const && r)
  * \snippet test/snippet/detail/tuple_record.cpp make_and_tie_record
  */
 template <auto... field_ids, typename... field_type_ts>
-constexpr auto make_tuple_record(meta::vtag_t<field_ids...> BIOCPP_IO_DOXYGEN_ONLY(tag), field_type_ts &&... fields)
+constexpr auto make_tuple_record(meta::vtag_t<field_ids...> BIOCPP_DOXYGEN_ONLY(tag), field_type_ts &&... fields)
   -> tuple_record<meta::vtag_t<field_ids...>, bio::meta::type_list<std::decay_t<field_type_ts>...>>
 {
     return {std::forward<field_type_ts>(fields)...};
@@ -411,7 +411,7 @@ constexpr auto make_tuple_record(meta::vtag_t<field_ids...> BIOCPP_IO_DOXYGEN_ON
  * \snippet test/snippet/detail/tuple_record.cpp make_and_tie_record
  */
 template <auto... field_ids, typename... field_type_ts>
-constexpr auto tie_tuple_record(meta::vtag_t<field_ids...> BIOCPP_IO_DOXYGEN_ONLY(tag), field_type_ts &... fields)
+constexpr auto tie_tuple_record(meta::vtag_t<field_ids...> BIOCPP_DOXYGEN_ONLY(tag), field_type_ts &... fields)
   -> tuple_record<meta::vtag_t<field_ids...>, bio::meta::type_list<field_type_ts &...>>
 {
     return {fields...};

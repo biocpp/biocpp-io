@@ -18,7 +18,7 @@
 
 #include <bio/meta/concept/core_language.hpp>
 
-#include <bio/io/platform.hpp>
+#include <bio/io.hpp>
 
 namespace bio::io::detail
 {

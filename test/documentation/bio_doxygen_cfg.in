@@ -48,7 +48,7 @@ HTML_FOOTER            = ${BIOCPP_CORE_CLONE_DIR}/test/documentation/biocpp_foot
 INPUT_ENCODING         = UTF-8
 EXTRA_PACKAGES         = {amsfonts}
 
-PREDEFINED             = "BIOCPP_IO_DOXYGEN_ONLY(x)= x" \
+PREDEFINED             = "BIOCPP_DOXYGEN_ONLY(x)= x" \
                          "${BIOCPP_IO_DOXYGEN_PREDEFINED_NDEBUG}"
 
 EXPAND_AS_DEFINED      = BIOCPP_IO_RECORD_MEMBER BIOCPP_IO_NO_VIEWBASE

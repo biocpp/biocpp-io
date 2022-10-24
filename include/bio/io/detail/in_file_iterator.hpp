@@ -15,7 +15,7 @@
 #include <cassert>
 #include <ranges>
 
-#include <bio/io/platform.hpp>
+#include <bio/io.hpp>
 
 namespace bio::io::detail
 {

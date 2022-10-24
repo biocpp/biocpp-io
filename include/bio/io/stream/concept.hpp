@@ -16,7 +16,7 @@
 #include <iosfwd>
 #include <type_traits>
 
-#include <bio/io/platform.hpp>
+#include <bio/io.hpp>
 
 namespace bio::io
 {
