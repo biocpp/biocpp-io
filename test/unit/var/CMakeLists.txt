@@ -1,0 +1,5 @@
+bio_test(var_header_test.cpp)
+bio_test(var_reader_test.cpp)
+bio_test(var_record_test.cpp)
+bio_test(var_writer_test.cpp)
+bio_test(var_writer_test_issue53.cpp)

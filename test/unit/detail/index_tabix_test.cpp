@@ -47,4 +47,4 @@ TEST(index_tabix, read_write)
     }
 }
 
-// TODO explicit tests for reg2chunks? Is implicitly tests by indexed var_io tests
+// TODO explicit tests for reg2chunks? Is implicitly tests by indexed var tests

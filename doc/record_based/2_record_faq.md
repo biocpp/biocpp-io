@@ -4,48 +4,48 @@ Records in the I/O library are implemented as a specialisation of the bio::io::d
 This behaves very similar to a std::tuple with the difference that a bio::io::detail::field identifier is associated with every
 element and a corresponding member function is provided, so you can easily access the elements without knowing the order.
 
-<small>¹ With the exception of bio::io::plain_io which uses bio::io::plain_io::record.</small>
+<small>¹ With the exception of bio::io::txt which uses bio::io::txt::record.</small>
 
 [TOC]
 
-\note This page contains details on how records are defined. It is meant to provide a better understanding of the design and performance implications. We recommend starting with the snippets shown in the API (e.g. bio::io::seq_io::reader, bio::io::var_io::reader, …) and only return to this page if you have questions or want to fine-tune things.
+\note This page contains details on how records are defined. It is meant to provide a better understanding of the design and performance implications. We recommend starting with the snippets shown in the API (e.g. bio::io::seq::reader, bio::io::var::reader, …) and only return to this page if you have questions or want to fine-tune things.
 
 ## What is the full type of my record? {#record_type}
 
 Most records you interact with are produced by readers.
 
-\snippet test/snippet/seq_io/seq_io_reader.cpp simple_usage_file
+\snippet test/snippet/seq/seq_reader.cpp simple_usage_file
 
 In this example, `rec` is the record and with each iteration of the loop, a new record is generated from the file. The exact type of the record depends on the reader. In the above example, it is:
 
-\snippet test/snippet/seq_io/seq_io_reader.cpp simple_usage_file_type
+\snippet test/snippet/seq/seq_reader.cpp simple_usage_file_type
 
 That is quite long and difficulat to remember (even though definitions of X* and Y* are omitted here),
 so we write `auto &` instead.
 But it is important to know which fields are contained in the record (in this case ID, SEQ and QUAL).
-The documentation for the reader will tell you this, e.g. bio::io::seq_io::reader.
+The documentation for the reader will tell you this, e.g. bio::io::seq::reader.
 
 ## How can I access the fields?
 
 The easiest way to access a field, is by calling the respective member function:
 
-\snippet test/snippet/seq_io/seq_io_reader.cpp simple_usage_file
+\snippet test/snippet/seq/seq_reader.cpp simple_usage_file
 
 Here, `.id()` (bio::io::detail::tuple_record#id()) and `.seq()` (bio::io::detail::tuple_record#seq()) are used to access the fields. Note, that the
 documentation has entries for all field-accessor member functions, but it depends on the specific specialisation
 (used by the reader) whether that function is available.
-So, on the record defined by bio::io::seq_io::reader above, the members `.id()`, `.seq()`, `.qual()` are available, but
+So, on the record defined by bio::io::seq::reader above, the members `.id()`, `.seq()`, `.qual()` are available, but
 the member `.pos` would not be.
 
 When the number of fields in the record is low and you know the order, you can also use
 [structured bindings](https://en.cppreference.com/w/cpp/language/structured_binding)
 to decompose the record into its fields:
 
-\snippet test/snippet/seq_io/seq_io_reader.cpp decomposed
+\snippet test/snippet/seq/seq_reader.cpp decomposed
 
-Note that the order of the fields is fixed (in this case it is defined by bio::io::seq_io::default_field_ids).
+Note that the order of the fields is fixed (in this case it is defined by bio::io::seq::default_field_ids).
 It is independent of the names you give to the bindings, so this syntax is error-prone when used with large records
-(e.g. those defined by bio::io::var_io::reader).
+(e.g. those defined by bio::io::var::reader).
 
 In generic contexts, you can also access fields via `get<0>(rec)` (returns the 0-th field in the record) or
 `get<bio::io::detail::field::id>(rec)` (the same as calling `rec.id()`); but most users will never need this.
@@ -70,11 +70,11 @@ as soon as the next record is read from the file.
 If you need to change a record in-place and/or "store" the record for longer than one iteration of the reader, you need to use *deep records* instead.
 You can tell the reader that you want deep records by providing the respective options:
 
-\snippet test/snippet/seq_io/seq_io_reader.cpp options2
+\snippet test/snippet/seq/seq_reader.cpp options2
 
 This snippet behaves similar to the previous one, except that the type of `rec` is now the following:
 
-\snippet test/snippet/seq_io/seq_io_reader.cpp options2_type
+\snippet test/snippet/seq/seq_reader.cpp options2_type
 
 This allows you to call std::vector's `.push_back()` member function (which is not possible in the default case).
 Creating this kind of record is likely a bit slower than the shallow record.
@@ -90,15 +90,15 @@ Creating this kind of record is likely a bit slower than the shallow record.
 ## How can I change the field types?
 
 In the previous section, we showed how to change the field types from being shallow to deep.
-For some readers, more options are available, e.g. bio::io::seq_io::reader assumes nucleotide data for the SEQ field by default, but you might want to read protein data instead.
+For some readers, more options are available, e.g. bio::io::seq::reader assumes nucleotide data for the SEQ field by default, but you might want to read protein data instead.
 
-\snippet test/snippet/seq_io/seq_io_reader.cpp options
+\snippet test/snippet/seq/seq_reader.cpp options
 
 The snippet above illustrates how the alphabet can be changed (and how to provide another option at the same time).
 
 Instead of using these pre-defined record aliases, you can also define them completely manually. You can decide to even read only a subset of the fields by setting some to be ignored::
 
-\snippet test/snippet/seq_io/seq_io_reader_options.cpp example_advanced
+\snippet test/snippet/seq/seq_reader_options.cpp example_advanced
 
 This code makes FASTA the only legal format and creates records with only the sequence field asa std::string.
 
@@ -131,14 +131,14 @@ Note how it is possible to "ask" the reader for the type of its record to create
 
 When writing a file without reading a file previously, you can use one of the predefined aliases:
 
-* bio::io::var_io::default_record
+* bio::io::var::default_record
 
 This longer example illustrates using an alias:
 
-\snippet test/snippet/var_io/var_io_writer.cpp creation
-\snippet test/snippet/var_io/var_io_writer.cpp simple_usage_file
+\snippet test/snippet/var/var_writer.cpp creation
+\snippet test/snippet/var/var_writer.cpp simple_usage_file
 
-Here bio::io::var_io::default_record is the type that a bio::io::var_io::reader would generate if it is defined without any options, **except that the alias is deep by default.**
+Here bio::io::var::default_record is the type that a bio::io::var::reader would generate if it is defined without any options, **except that the alias is deep by default.**
 This is based on the assumption that aliases are typically used to define local variables whose values you want to change.
 
 ### Making and tying records {#record_make_tie}
@@ -153,4 +153,4 @@ The type of rec2 is:
 \snippet test/snippet/detail/tuple_record.cpp make_and_tie_record_type_rec2
 
 When creating a record from existing variables, you can use bio::io::detail::tie_tuple_record to avoid needless copies.
-Instead of manually entering the identifiers as a bio::meta::vtag, you can use bio::io::seq_io::default_field_ids (or the respective defaults of another reader/writer).
+Instead of manually entering the identifiers as a bio::meta::vtag, you can use bio::io::seq::default_field_ids (or the respective defaults of another reader/writer).

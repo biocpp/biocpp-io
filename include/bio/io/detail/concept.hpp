@@ -39,7 +39,7 @@ concept deliberate_alphabet = alphabet::alphabet<t> && !std::integral<std::remov
 /*!\brief Pass this function a constrained functor that accepts one argument and returns std::true_type.
  * \details
  *
- * See e.g. bio::io::seq_io::reader_options to see how this is used.
+ * See e.g. bio::io::seq::reader_options to see how this is used.
  */
 constexpr bool lazy_concept_checker(auto fun)
 {

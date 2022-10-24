@@ -38,7 +38,7 @@ Details on how records are defined is available here: \ref record_faq
 
 So called *readers* are responsible for detecting the format and decoding a file into a series of records:
 
-\snippet test/snippet/seq_io/seq_io_reader.cpp simple_usage_file
+\snippet test/snippet/seq/seq_reader.cpp simple_usage_file
 
 The reader is an *input range* which is C++ terminology for "something that you can iterate over (once)".
 The last bit is important, it implies that once you reach the end, the reader will be "empty". To iterate over it again, you need to recreate it.

@@ -26,8 +26,8 @@ namespace bio::io
  *
  * \details
  *
- * This is the FastQ format tag. If you want to read FastQ files, use bio::io::seq_io::reader, and if you want
- * to write FastQ files, use bio::io::seq_io::writer.
+ * This is the FastQ format tag. If you want to read FastQ files, use bio::io::seq::reader, and if you want
+ * to write FastQ files, use bio::io::seq::writer.
  *
  * ### Introduction
  *

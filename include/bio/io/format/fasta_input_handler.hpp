@@ -27,8 +27,8 @@
 #include <bio/io/format/fasta.hpp>
 #include <bio/io/format/format_input_handler.hpp>
 #include <bio/io/misc/char_predicate.hpp>
-#include <bio/io/plain_io/reader.hpp>
-#include <bio/io/seq_io/record.hpp>
+#include <bio/io/seq/record.hpp>
+#include <bio/io/txt/reader.hpp>
 
 namespace bio::io
 {
@@ -65,7 +65,7 @@ namespace bio::io
 template <>
 class format_input_handler<fasta> :
   public format_input_handler_base<format_input_handler<fasta>>,
-  public seq_io::format_handler_mixin
+  public seq::format_handler_mixin
 {
 private:
     /*!\name CRTP related entities
@@ -103,7 +103,7 @@ private:
     using raw_record_type =
       io::detail::tuple_record<format_fields, meta::type_list<std::string_view, std::string_view>>;
     //!\brief Type of the low-level iterator.
-    using lowlevel_iterator = plain_io::detail::input_iterator<plain_io::record_kind::line>;
+    using lowlevel_iterator = txt::detail::input_iterator<txt::record_kind::line>;
 
     //!\brief The raw record.
     raw_record_type raw_record;
@@ -206,7 +206,7 @@ public:
      * \param[in] options An object with options for the input handler.
      * \details
      *
-     * The options argument is typically bio::io::seq_io::reader_options, but any object with a subset of similarly
+     * The options argument is typically bio::io::seq::reader_options, but any object with a subset of similarly
      * named members is also accepted. See bio::io::format_input_handler<bio::io::fasta> for the supported options and
      * defaults.
      */

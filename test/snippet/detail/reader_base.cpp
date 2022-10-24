@@ -1,8 +1,8 @@
 #include <filesystem>
 
-#include <bio/io/seq_io/reader.hpp>
+#include <bio/io/seq/reader.hpp>
 
-#include "../../unit/seq_io/data.hpp"
+#include "../../unit/seq/data.hpp"
 
 void process_read_pair(auto&&, auto&&) {}
 
@@ -18,10 +18,10 @@ int main()
 {
 //![read_pair_processing]
 // choose deep records so they can be copied/moved
-bio::io::seq_io::reader_options options{ .record = bio::io::seq_io::record_dna{} };
+bio::io::seq::reader_options options{ .record = bio::io::seq::record_dna{} };
 
 // open an interleaved paired-end FastQ file
-bio::io::seq_io::reader reader{"example.fastq", options};
+bio::io::seq::reader reader{"example.fastq", options};
 
 // "ask" the reader for its record_type; create a variable to hold previous record
 decltype(reader)::record_type last_record;

@@ -11,7 +11,7 @@
 #include <bio/test/expect_range_eq.hpp>
 
 #include <bio/io/format/bcf_output_handler.hpp>
-#include <bio/io/var_io/reader.hpp>
+#include <bio/io/var/reader.hpp>
 
 #include "bcf_data.hpp"
 #include "vcf_data.hpp"
@@ -29,9 +29,9 @@ void field_types()
     std::ostringstream ostr{};
 
     {
-        bio::io::format_output_handler<bio::io::bcf> handler{ostr, bio::io::var_io::writer_options{}};
+        bio::io::format_output_handler<bio::io::bcf> handler{ostr, bio::io::var::writer_options{}};
 
-        bio::io::var_io::header hdr{example_from_spec_bcf_header};
+        bio::io::var::header hdr{example_from_spec_bcf_header};
         hdr.add_missing();
         handler.set_header(std::move(hdr));
 
@@ -75,9 +75,9 @@ TEST(bcf_output, novariant)
     std::ostringstream ostr{};
 
     {
-        bio::io::format_output_handler<bio::io::bcf> handler{ostr, bio::io::var_io::writer_options{}};
+        bio::io::format_output_handler<bio::io::bcf> handler{ostr, bio::io::var::writer_options{}};
 
-        bio::io::var_io::header hdr{example_from_spec_header};
+        bio::io::var::header hdr{example_from_spec_header};
         hdr.add_missing();
         handler.set_header(std::move(hdr));
 

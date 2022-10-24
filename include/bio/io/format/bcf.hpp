@@ -26,8 +26,8 @@ namespace bio::io
  *
  * \details
  *
- * This is the BCF format tag. If you want to read BCF files, use bio::io::var_io::reader, and if you want
- * to write BCF files, use bio::io::var_io::writer.
+ * This is the BCF format tag. If you want to read BCF files, use bio::io::var::reader, and if you want
+ * to write BCF files, use bio::io::var::writer.
  *
  * ### Fields
  *
@@ -43,7 +43,7 @@ namespace bio::io
  *   8. bio::io::detail::field::info
  *   9. bio::io::detail::field::genotypes
  *
- * See bio::io::var_io::reader and bio::io::var_io::writer for more details.
+ * See bio::io::var::reader and bio::io::var::writer for more details.
  *
  * ### Implementation
  *

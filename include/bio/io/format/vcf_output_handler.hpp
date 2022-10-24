@@ -19,9 +19,9 @@
 #include <bio/io/format/format_output_handler.hpp>
 #include <bio/io/format/vcf.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
-#include <bio/io/var_io/header.hpp>
-#include <bio/io/var_io/misc.hpp>
-#include <bio/io/var_io/writer_options.hpp>
+#include <bio/io/var/header.hpp>
+#include <bio/io/var/misc.hpp>
+#include <bio/io/var/writer_options.hpp>
 
 namespace bio::io
 {
@@ -76,8 +76,7 @@ private:
     bool                 header_has_been_written = false;
 
     //!\brief Pointer to header that can be owning or non-owning.
-    std::unique_ptr<var_io::header const, void (*)(var_io::header const *)> header = {nullptr,
-                                                                                      [](var_io::header const *) {}};
+    std::unique_ptr<var::header const, void (*)(var::header const *)> header = {nullptr, [](var::header const *) {}};
     //!\}
 
     /*!\name Options
@@ -103,7 +102,7 @@ private:
     //!\brief Get the size of a range or genotype_element_value_type.
     static size_t dyn_vec_size(auto & in)
     {
-        if constexpr (var_io::detail::is_genotype_element_value_type<std::remove_cvref_t<decltype(in)>>)
+        if constexpr (var::detail::is_genotype_element_value_type<std::remove_cvref_t<decltype(in)>>)
             return std::visit([](auto & val) { return std::ranges::size(val); }, in);
         else
             return std::ranges::size(in);
@@ -181,18 +180,18 @@ private:
             }
         };
 
-        if constexpr (var_io::detail::is_info_element_value_type<std::remove_cvref_t<decltype(var)>>)
+        if constexpr (var::detail::is_info_element_value_type<std::remove_cvref_t<decltype(var)>>)
             std::visit(visitor, var);
         else
             visitor(var);
     }
 
     //!\brief Write variant or a type that is given inplace of a variant; possibly verify.
-    void write_variant(auto const & var, var_io::value_type_id const type_id)
+    void write_variant(auto const & var, var::value_type_id const type_id)
     {
-        if constexpr (var_io::detail::is_info_element_value_type<std::remove_cvref_t<decltype(var)>>)
+        if constexpr (var::detail::is_info_element_value_type<std::remove_cvref_t<decltype(var)>>)
         {
-            if (!var_io::detail::type_id_is_compatible(type_id, var_io::value_type_id{var.index()}))
+            if (!var::detail::type_id_is_compatible(type_id, var::value_type_id{var.index()}))
                 throw format_error{"The variant was not in the proper state."}; // TODO improve text
         }
         else
@@ -247,16 +246,14 @@ private:
             }
         };
 
-        if constexpr (var_io::detail::is_genotype_element_value_type<std::remove_cvref_t<decltype(var)>>)
+        if constexpr (var::detail::is_genotype_element_value_type<std::remove_cvref_t<decltype(var)>>)
             std::visit(visitor, var);
         else
             visitor(var);
     }
 
     //!\brief Implementation for writing the ID field.
-    void write_id(auto const &                         header_container,
-                  var_io::header::idx_to_pos_t const & idx_to_pos_map,
-                  auto const &                         field)
+    void write_id(auto const & header_container, var::header::idx_to_pos_t const & idx_to_pos_map, auto const & field)
     {
         using field_t = std::remove_cvref_t<decltype(field)>;
         if constexpr (std::integral<field_t>) // field is index
@@ -293,9 +290,9 @@ private:
         else
             pos = header->string_to_info_pos().at(key);
 
-        var_io::value_type_id type_id = header->infos[pos].type_id;
+        var::value_type_id type_id = header->infos[pos].type_id;
 
-        if (type_id != var_io::value_type_id::flag) // all fields that aren't flags have second part
+        if (type_id != var::value_type_id::flag) // all fields that aren't flags have second part
         {
             it = '=';
             write_variant(val, type_id);
@@ -322,7 +319,7 @@ private:
     void write_field_aux(meta::arithmetic auto const number)
     {
         using field_t = std::remove_cvref_t<decltype(number)>;
-        if (number == var_io::missing_value<field_t>)
+        if (number == var::missing_value<field_t>)
             it = '.';
         else
             it->write_number(number);
@@ -366,7 +363,7 @@ private:
 
     //!\brief Overload for INFO; range of pairs.
     template <std::ranges::input_range rng_t>
-        requires(var_io::detail::info_element_writer_concept<std::ranges::range_reference_t<rng_t>>)
+        requires(var::detail::info_element_writer_concept<std::ranges::range_reference_t<rng_t>>)
     void write_field(meta::vtag_t<detail::field::info> /**/, rng_t & range)
     {
         auto func = [&](auto const & field) { write_info_pair(field); };
@@ -375,7 +372,7 @@ private:
 
     //!\brief Overload for INFO; range of pairs.
     template <typename... elem_ts>
-        requires(var_io::detail::info_element_writer_concept<elem_ts> &&...)
+        requires(var::detail::info_element_writer_concept<elem_ts> &&...)
     void write_field(meta::vtag_t<detail::field::info> /**/, std::tuple<elem_ts...> & tup) // TODO add const version
     {
         auto func = [&](auto const & field) { write_info_pair(field); };
@@ -384,7 +381,7 @@ private:
 
     //!\brief Overload for GENOTYPES.
     template <std::ranges::forward_range range_t>
-        requires(var_io::detail::genotype_writer_concept<std::ranges::range_reference_t<range_t>>)
+        requires(var::detail::genotype_writer_concept<std::ranges::range_reference_t<range_t>>)
     void write_field(meta::vtag_t<detail::field::genotypes> /**/, range_t & range)
     {
         if (header->column_labels.size() <= 8)
@@ -419,7 +416,7 @@ private:
 
     //!\brief Overload for GENOTYPES; nonvariant.
     template <typename... elem_ts>
-        requires(var_io::detail::genotype_writer_concept<std::remove_cvref_t<elem_ts>> &&...)
+        requires(var::detail::genotype_writer_concept<std::remove_cvref_t<elem_ts>> &&...)
     void write_field(meta::vtag_t<detail::field::genotypes> /**/, std::tuple<elem_ts...> & tup)
     {
         if (header->column_labels.size() <= 8)
@@ -480,7 +477,7 @@ private:
         {
             if (header == nullptr)
             {
-                if (var_io::header const * ptr = record._private.header_ptr; ptr != nullptr)
+                if (var::header const * ptr = record._private.header_ptr; ptr != nullptr)
                     set_header(*ptr);
             }
 
@@ -567,7 +564,7 @@ public:
      * \param[in] options An object with options for the output handler.
      * \details
      *
-     * The options argument is typically bio::io::var_io::writer_options, but any object with a subset of similarly
+     * The options argument is typically bio::io::var::writer_options, but any object with a subset of similarly
      * named members is also accepted. See bio::io::format_output_handler<vcf> for the supported options and defaults.
      */
     format_output_handler(std::ostream & str, auto const & options) : base_t{str}
@@ -601,7 +598,7 @@ public:
     //!\}
 
     //!\brief Get the header.
-    var_io::header const & get_header() const
+    var::header const & get_header() const
     {
         if (header == nullptr)
             throw missing_header_error{"Attempting to read header, but no header was set."};
@@ -610,23 +607,23 @@ public:
     }
 
     //!\brief Set the header.
-    void set_header(var_io::header const & hdr)
+    void set_header(var::header const & hdr)
     {
-        header = {&hdr, [](var_io::header const *) {}};
+        header = {&hdr, [](var::header const *) {}};
     }
     //!\overload
-    void set_header(var_io::header const && hdr)
+    void set_header(var::header const && hdr)
     {
-        header = {new var_io::header(std::move(hdr)), [](var_io::header const * ptr) { delete ptr; }};
+        header = {new var::header(std::move(hdr)), [](var::header const * ptr) { delete ptr; }};
     }
     //!\overload
-    void set_header(var_io::header & hdr)
+    void set_header(var::header & hdr)
     {
         hdr.add_missing();
         set_header(std::as_const(hdr));
     }
     //!\overload
-    void set_header(var_io::header && hdr)
+    void set_header(var::header && hdr)
     {
         hdr.add_missing();
         set_header(std::move(std::as_const(hdr)));
@@ -634,14 +631,14 @@ public:
 
     //!\brief Write the record.
     template <typename... field_types>
-    void write_record(var_io::record<field_types...> const & record)
+    void write_record(var::record<field_types...> const & record)
     {
         write_record_impl(record);
     }
 
     //!\overload
     template <typename... field_types>
-    void write_record(var_io::record<field_types...> & record)
+    void write_record(var::record<field_types...> & record)
     {
         write_record_impl(record);
     }
