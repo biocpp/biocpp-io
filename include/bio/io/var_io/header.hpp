@@ -149,7 +149,7 @@ public:
         else if (plaintext_header.ends_with("\n"))
             plaintext_header = plaintext_header.substr(0, plaintext_header.size() - 1);
 
-        for (std::string_view const line : plaintext_header | detail::eager_split('\n'))
+        for (std::string_view const line : plaintext_header | io::detail::eager_split('\n'))
             parse_line(line);
 
         add_missing();
@@ -744,7 +744,7 @@ private:
         /* IDX */
         auto idx = new_entry.other_fields.extract("IDX");
         if (!idx.empty())
-            detail::string_to_number(idx.mapped(), new_entry.idx);
+            io::detail::string_to_number(idx.mapped(), new_entry.idx);
         max_other_idx_ = std::max(max_other_idx_, new_entry.idx);
 
         if (is_info)
@@ -788,7 +788,7 @@ private:
         /* IDX */
         auto idx = new_entry.other_fields.extract("IDX");
         if (!idx.empty())
-            detail::string_to_number(idx.mapped(), new_entry.idx);
+            io::detail::string_to_number(idx.mapped(), new_entry.idx);
         max_other_idx_ = std::max(max_other_idx_, new_entry.idx);
 
         // PASS line was added by us before and is now swapped with user-provided
@@ -823,14 +823,14 @@ private:
         /* Length */
         auto length = new_entry.other_fields.extract("length");
         if (!length.empty())
-            detail::string_to_number(length.mapped(), new_entry.length);
+            io::detail::string_to_number(length.mapped(), new_entry.length);
 
         /* IDX */
         auto idx = new_entry.other_fields.extract("IDX");
         if (idx.empty())
             new_entry.idx = ++max_contig_idx_;
         else
-            detail::string_to_number(idx.mapped(), new_entry.idx);
+            io::detail::string_to_number(idx.mapped(), new_entry.idx);
         max_contig_idx_ = std::max(max_contig_idx_, new_entry.idx);
 
         if (string_to_contig_pos_.contains(new_entry.id))
@@ -844,7 +844,7 @@ private:
     //!\brief Parse the line with column labels / sample names.
     void parse_column_labels_line(std::string_view const l)
     {
-        for (std::string_view field : l | detail::eager_split('\t'))
+        for (std::string_view field : l | io::detail::eager_split('\t'))
             column_labels.push_back(static_cast<std::string>(field));
     }
 
@@ -878,7 +878,7 @@ private:
             default:
                 {
                     int32_t ret = 0;
-                    detail::string_to_number(in, ret);
+                    io::detail::string_to_number(in, ret);
                     return ret;
                 }
         }
@@ -946,9 +946,9 @@ private:
     {
         other_fields_t ret;
 
-        for (std::string_view const pair : value_pairs | detail::eager_split(',', true))
+        for (std::string_view const pair : value_pairs | io::detail::eager_split(',', true))
         {
-            auto pair_split = pair | detail::eager_split('=');
+            auto pair_split = pair | io::detail::eager_split('=');
             auto it1        = pair_split.begin();
             auto it2        = std::ranges::next(it1);
             auto it3        = std::ranges::next(it2); // TODO whats going on here?
@@ -1019,7 +1019,7 @@ inline std::unordered_map<std::string_view, header::format_t> const reserved_for
 
 } // namespace bio::io::var_io
 
-namespace bio::io::detail
+namespace bio::io::var_io::detail
 {
 
 //!\brief Data structure that represents the beginning of a BCF file.
@@ -1032,4 +1032,4 @@ struct bcf_header
     std::string         text;            //!< The text (VCF) header.
 };
 
-} // namespace bio::io::detail
+} // namespace bio::io::var_io::detail

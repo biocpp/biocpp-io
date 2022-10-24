@@ -96,7 +96,7 @@ private:
      * \{
      */
     //!\brief The fields that this format supports [the base class accesses this type].
-    using format_fields   = decltype(detail::field_ids);
+    using format_fields   = decltype(var_io::detail::field_ids);
     //!\brief Type of the raw record.
     using raw_record_type = io::detail::tuple_record<
       format_fields,
@@ -159,7 +159,7 @@ private:
     // implementation after class
     template <typename t>
         //!\cond REQ
-        requires(detail::is_info_element_value_type<t> || detail::is_genotype_element_value_type<t>)
+        requires(var_io::detail::is_info_element_value_type<t> || var_io::detail::is_genotype_element_value_type<t>)
     //!\endcond
     static void init_element_value_type(var_io::value_type_id const id, t & output);
 
@@ -167,9 +167,9 @@ private:
     struct parse_element_value_type_fn;
 
     // implementation after class
-    static size_t parse_element_value_type(var_io::value_type_id const               id,
-                                           std::string_view const                    input_string,
-                                           detail::is_info_element_value_type auto & output);
+    static size_t parse_element_value_type(var_io::value_type_id const                       id,
+                                           std::string_view const                            input_string,
+                                           var_io::detail::is_info_element_value_type auto & output);
 
     //!\brief Parse the CHROM field. Reading chrom as number means getting the index (not converting string to number).
     void parse_field(meta::vtag_t<detail::field::chrom> const & /**/, auto & parsed_field)
@@ -334,7 +334,7 @@ private:
 
     //!\brief Overload for parsing INFO.
     template <ranges::back_insertable parsed_field_t>
-        requires detail::info_element_reader_concept<std::ranges::range_reference_t<parsed_field_t>>
+        requires var_io::detail::info_element_reader_concept<std::ranges::range_reference_t<parsed_field_t>>
     void parse_field(meta::vtag_t<detail::field::info> const & /**/, parsed_field_t & parsed_field)
     {
         using key_t   = detail::first_elem_t<std::ranges::range_reference_t<parsed_field_t>>;
@@ -383,7 +383,7 @@ private:
             /* PARSE VALUE */
             if (val.empty()) // no "=" → flag
             {
-                if constexpr (detail::is_info_element_value_type<value_t>)
+                if constexpr (var_io::detail::is_info_element_value_type<value_t>)
                 {
                     if (header.infos[info_pos].type_id != var_io::value_type_id::flag ||
                         header.infos[info_pos].number != 0)
@@ -397,7 +397,7 @@ private:
             }
             else // any other type than flag
             {
-                if constexpr (detail::is_info_element_value_type<value_t>)
+                if constexpr (var_io::detail::is_info_element_value_type<value_t>)
                 {
                     int32_t num_val = parse_element_value_type(header.infos[info_pos].type_id, val, parsed_value);
                     if (int32_t exp_val = header.infos[info_pos].number;
@@ -450,7 +450,7 @@ private:
     //!\brief Overload for parsing GENOTYPES.
     template <ranges::back_insertable field_t>
         //!\cond REQ
-        requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
+        requires var_io::detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
     //!\endcond
     void parse_field(meta::vtag_t<detail::field::genotypes> const & /**/, field_t & parsed_field);
 
@@ -525,7 +525,7 @@ public:
  */
 template <typename t>
     //!\cond REQ
-    requires(detail::is_info_element_value_type<t> || detail::is_genotype_element_value_type<t>)
+    requires(var_io::detail::is_info_element_value_type<t> || var_io::detail::is_genotype_element_value_type<t>)
 //!\endcond
 inline void format_input_handler<vcf>::init_element_value_type(var_io::value_type_id const id, t & output)
 {
@@ -599,7 +599,7 @@ inline void format_input_handler<vcf>::init_element_value_type(var_io::value_typ
             }
         case var_io::value_type_id::flag:
             {
-                if constexpr (detail::is_genotype_element_value_type<t>)
+                if constexpr (var_io::detail::is_genotype_element_value_type<t>)
                 {
                     throw unreachable_code{__FILE__, ':', __LINE__, '\n', __PRETTY_FUNCTION__};
                 }
@@ -691,7 +691,7 @@ struct format_input_handler<vcf>::parse_element_value_type_fn
  * input_string The string data to read from. \param[out] output       The object to store the result into. \returns The
  * number of elements stored in the output in case ID is one of the "vector_of_"-types; 1 otherwise.
  */
-template <detail::is_info_element_value_type output_t>
+template <var_io::detail::is_info_element_value_type output_t>
 inline size_t format_input_handler<vcf>::parse_element_value_type(var_io::value_type_id const id,
                                                                   std::string_view const      input_string,
                                                                   output_t &                  output)
@@ -702,7 +702,7 @@ inline size_t format_input_handler<vcf>::parse_element_value_type(var_io::value_
 
 //!\brief Overload for reading the GENOTYPE field.
 template <ranges::back_insertable field_t>
-    requires detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
+    requires var_io::detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
 inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::genotypes> const & /**/,
                                                    field_t & parsed_field)
 {
@@ -763,7 +763,7 @@ inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::g
                       concat_capacity = n_samples * (n_alts + 1);
                       break;
                   case bio::io::var_io::header_number::G:
-                      concat_capacity = n_samples * (detail::vcf_gt_formula(n_alts, n_alts) + 1);
+                      concat_capacity = n_samples * (var_io::detail::vcf_gt_formula(n_alts, n_alts) + 1);
                       break;
                   case bio::io::var_io::header_number::dot:
                       // assume 1 value per sample if nothing else is known

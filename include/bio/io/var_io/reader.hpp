@@ -106,7 +106,7 @@ private:
     friend base_t;
     //!\cond
     // Doxygen is confused by this for some reason
-    friend detail::in_file_iterator<reader>;
+    friend io::detail::in_file_iterator<reader>;
     //!\endcond
 
     //!\brief Expose the options type to the base-class.
@@ -143,7 +143,7 @@ private:
 
         if (!index_file.empty())
         {
-            detail::tabix_index index;
+            io::detail::tabix_index index;
             index.read(index_file);
             std::vector<std::pair<uint64_t, uint64_t>> chunks = index.reg2chunks(options.region);
 
@@ -156,12 +156,12 @@ private:
 
             // we take the smallest begin-offset
             uint64_t const min_beg           = std::ranges::min(chunks | std::views::elements<0>);
-            auto [disk_offset, block_offset] = detail::decode_bgz_virtual_offset(min_beg);
+            auto [disk_offset, block_offset] = io::detail::decode_bgz_virtual_offset(min_beg);
 
             // seek on-disk
             stream.seekg_primary(disk_offset);
             // seek inside block
-            detail::fast_istreambuf_iterator<char> it{stream};
+            io::detail::fast_istreambuf_iterator<char> it{stream};
             it.skip_n(block_offset);
             std::visit([](auto & f) { f.reset_stream(); }, format_handler);
         }

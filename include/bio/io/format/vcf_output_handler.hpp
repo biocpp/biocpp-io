@@ -103,7 +103,7 @@ private:
     //!\brief Get the size of a range or genotype_element_value_type.
     static size_t dyn_vec_size(auto & in)
     {
-        if constexpr (detail::is_genotype_element_value_type<std::remove_cvref_t<decltype(in)>>)
+        if constexpr (var_io::detail::is_genotype_element_value_type<std::remove_cvref_t<decltype(in)>>)
             return std::visit([](auto & val) { return std::ranges::size(val); }, in);
         else
             return std::ranges::size(in);
@@ -181,7 +181,7 @@ private:
             }
         };
 
-        if constexpr (detail::is_info_element_value_type<std::remove_cvref_t<decltype(var)>>)
+        if constexpr (var_io::detail::is_info_element_value_type<std::remove_cvref_t<decltype(var)>>)
             std::visit(visitor, var);
         else
             visitor(var);
@@ -190,9 +190,9 @@ private:
     //!\brief Write variant or a type that is given inplace of a variant; possibly verify.
     void write_variant(auto const & var, var_io::value_type_id const type_id)
     {
-        if constexpr (detail::is_info_element_value_type<std::remove_cvref_t<decltype(var)>>)
+        if constexpr (var_io::detail::is_info_element_value_type<std::remove_cvref_t<decltype(var)>>)
         {
-            if (!detail::type_id_is_compatible(type_id, var_io::value_type_id{var.index()}))
+            if (!var_io::detail::type_id_is_compatible(type_id, var_io::value_type_id{var.index()}))
                 throw format_error{"The variant was not in the proper state."}; // TODO improve text
         }
         else
@@ -247,7 +247,7 @@ private:
             }
         };
 
-        if constexpr (detail::is_genotype_element_value_type<std::remove_cvref_t<decltype(var)>>)
+        if constexpr (var_io::detail::is_genotype_element_value_type<std::remove_cvref_t<decltype(var)>>)
             std::visit(visitor, var);
         else
             visitor(var);
@@ -366,7 +366,7 @@ private:
 
     //!\brief Overload for INFO; range of pairs.
     template <std::ranges::input_range rng_t>
-        requires(detail::info_element_writer_concept<std::ranges::range_reference_t<rng_t>>)
+        requires(var_io::detail::info_element_writer_concept<std::ranges::range_reference_t<rng_t>>)
     void write_field(meta::vtag_t<detail::field::info> /**/, rng_t & range)
     {
         auto func = [&](auto const & field) { write_info_pair(field); };
@@ -375,7 +375,7 @@ private:
 
     //!\brief Overload for INFO; range of pairs.
     template <typename... elem_ts>
-        requires(detail::info_element_writer_concept<elem_ts> &&...)
+        requires(var_io::detail::info_element_writer_concept<elem_ts> &&...)
     void write_field(meta::vtag_t<detail::field::info> /**/, std::tuple<elem_ts...> & tup) // TODO add const version
     {
         auto func = [&](auto const & field) { write_info_pair(field); };
@@ -384,7 +384,7 @@ private:
 
     //!\brief Overload for GENOTYPES.
     template <std::ranges::forward_range range_t>
-        requires(detail::genotype_writer_concept<std::ranges::range_reference_t<range_t>>)
+        requires(var_io::detail::genotype_writer_concept<std::ranges::range_reference_t<range_t>>)
     void write_field(meta::vtag_t<detail::field::genotypes> /**/, range_t & range)
     {
         if (header->column_labels.size() <= 8)
@@ -419,7 +419,7 @@ private:
 
     //!\brief Overload for GENOTYPES; nonvariant.
     template <typename... elem_ts>
-        requires(detail::genotype_writer_concept<std::remove_cvref_t<elem_ts>> &&...)
+        requires(var_io::detail::genotype_writer_concept<std::remove_cvref_t<elem_ts>> &&...)
     void write_field(meta::vtag_t<detail::field::genotypes> /**/, std::tuple<elem_ts...> & tup)
     {
         if (header->column_labels.size() <= 8)

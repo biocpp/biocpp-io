@@ -135,3 +135,14 @@ namespace bio::io::seq_io
  */
 namespace bio::io::var_io
 {}
+
+/*!\if DEV
+ * \namespace bio::io::var_io::detail
+ * \brief The var_io internal namespace.
+ * \details
+ * The contents of this namespace are not visible to consumers of the library and the documentation is
+ * only generated for developers.
+ * \endif
+ */
+namespace bio::io::var_io::detail
+{}

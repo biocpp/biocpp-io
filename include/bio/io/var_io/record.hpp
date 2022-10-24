@@ -48,7 +48,7 @@ class header;
 // BCF record core
 //-----------------------------------------------------------------------------
 
-namespace bio::io::detail
+namespace bio::io::var_io::detail
 {
 
 //!\brief The "core" of a BCF record in bit-compatible representation to the on-disk format.
@@ -67,7 +67,7 @@ struct bcf_record_core
 
 static_assert(sizeof(bcf_record_core) == 24, "Bit alignment problem in declaration of bcf_record_core.");
 
-} // namespace bio::io::detail
+} // namespace bio::io::var_io::detail
 
 //-----------------------------------------------------------------------------
 // The info element
@@ -101,7 +101,7 @@ using info_element_value_type =
 
 } // namespace bio::io::var_io
 
-namespace bio::io::detail
+namespace bio::io::var_io::detail
 {
 //!\brief Auxilliary concept that encompasses bio::io::var_io::info_element_value_type.
 //!\ingroup var_io
@@ -109,7 +109,7 @@ template <typename t>
 concept is_info_element_value_type = meta::
   one_of<t, var_io::info_element_value_type<ownership::shallow>, var_io::info_element_value_type<ownership::deep>>;
 
-} // namespace bio::io::detail
+} // namespace bio::io::var_io::detail
 
 namespace bio::io::var_io
 {
@@ -180,7 +180,7 @@ using genotype_element_value_type =
 
 } // namespace bio::io::var_io
 
-namespace bio::io::detail
+namespace bio::io::var_io::detail
 {
 
 //!\brief Auxilliary concept that encompasses bio::io::var_io::genotype_element_value_type.
@@ -190,7 +190,7 @@ concept is_genotype_element_value_type = meta::one_of<t,
                                                       var_io::genotype_element_value_type<ownership::shallow>,
                                                       var_io::genotype_element_value_type<ownership::deep>>;
 
-} // namespace bio::io::detail
+} // namespace bio::io::var_io::detail
 
 namespace bio::io::var_io
 {
@@ -268,16 +268,16 @@ struct record_private_data
 
     //!\brief Raw record type.
     using raw_record_t =
-      io::detail::tuple_record<meta::vtag_t<detail::field::chrom,
-                                            detail::field::pos,
-                                            detail::field::id,
-                                            detail::field::ref,
-                                            detail::field::alt,
-                                            detail::field::qual,
-                                            detail::field::filter,
-                                            detail::field::info,
-                                            detail::field::genotypes,
-                                            detail::field::_private>,
+      io::detail::tuple_record<meta::vtag_t<io::detail::field::chrom,
+                                            io::detail::field::pos,
+                                            io::detail::field::id,
+                                            io::detail::field::ref,
+                                            io::detail::field::alt,
+                                            io::detail::field::qual,
+                                            io::detail::field::filter,
+                                            io::detail::field::info,
+                                            io::detail::field::genotypes,
+                                            io::detail::field::_private>,
                                meta::list_traits::concat<meta::list_traits::repeat<9, std::span<std::byte const>>,
                                                          meta::type_list<var_io::record_private_data>>>;
     //!\brief Pointer to raw record.
@@ -664,16 +664,16 @@ struct record
     //!\brief Clear all members.
     void clear()
     {
-        detail::clear(chrom);
-        detail::clear(pos);
-        detail::clear(id);
-        detail::clear(ref);
-        detail::clear(alt);
-        detail::clear(qual);
-        detail::clear(filter);
-        detail::clear(info);
-        detail::clear(genotypes);
-        detail::clear(_private);
+        io::detail::clear(chrom);
+        io::detail::clear(pos);
+        io::detail::clear(id);
+        io::detail::clear(ref);
+        io::detail::clear(alt);
+        io::detail::clear(qual);
+        io::detail::clear(filter);
+        io::detail::clear(info);
+        io::detail::clear(genotypes);
+        io::detail::clear(_private);
     }
 
     //!\brief Defaulted comparison operators.
@@ -796,7 +796,7 @@ using record_idx = record<int32_t,                                             /
 
 } // namespace bio::io::var_io
 
-namespace bio::io::detail // TODO move this to var_io::detail?
+namespace bio::io::var_io::detail // TODO move this to var_io::detail?
 {
 
 //-----------------------------------------------------------------------------
@@ -809,9 +809,9 @@ namespace bio::io::detail // TODO move this to var_io::detail?
  */
 //!\cond CONCEPT_DEF
 template <typename t>
-concept info_element_reader_concept = detail::decomposable_into_two<t> &&
-  (detail::out_string<detail::first_elem_t<t>> ||
-   std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::is_info_element_value_type<detail::second_elem_t<t>>;
+concept info_element_reader_concept = io::detail::decomposable_into_two<t> &&(
+  io::detail::out_string<io::detail::first_elem_t<t>> ||
+  std::same_as<int32_t, io::detail::first_elem_t<t>>)&&detail::is_info_element_value_type<io::detail::second_elem_t<t>>;
 //!\endcond
 
 /*!\interface bio::io::detail::genotype_reader_concept <>
@@ -820,9 +820,10 @@ concept info_element_reader_concept = detail::decomposable_into_two<t> &&
  */
 //!\cond CONCEPT_DEF
 template <typename t>
-concept genotype_reader_concept = detail::decomposable_into_two<t> &&
-  (detail::out_string<detail::first_elem_t<t>> ||
-   std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::is_genotype_element_value_type<detail::second_elem_t<t>>;
+concept genotype_reader_concept = io::detail::decomposable_into_two<t> &&
+  (io::detail::out_string<io::detail::first_elem_t<t>> ||
+   std::same_as<int32_t,
+                io::detail::first_elem_t<t>>)&&detail::is_genotype_element_value_type<io::detail::second_elem_t<t>>;
 //!\endcond
 
 //!\brief Validates the concepts that the record type needs to satisfy when being passed to a reader.
@@ -855,20 +856,20 @@ constexpr bool record_read_concept_checker(
                   "Requirements for the field-type of the ID-field not met. See documentation for "
                   "bio::io::var_io::reader_options.");
 
-    static_assert(detail::lazy_concept_checker([]<typename t = ref_t>(auto) requires(
+    static_assert(io::detail::lazy_concept_checker([]<typename t = ref_t>(auto) requires(
                     (ranges::back_insertable<t> && alphabet::alphabet<std::ranges::range_reference_t<t>>) ||
                     meta::one_of<std::remove_reference_t<t>, std::string_view, ignore_t, ignore_t const> ||
-                    detail::transform_view_on_string_view<t>) { return std::true_type{}; }),
+                    io::detail::transform_view_on_string_view<t>) { return std::true_type{}; }),
                   "Requirements for the field-type of the REF-field not met. See documentation for "
                   "bio::io::var_io::reader_options.");
 
-    static_assert(detail::lazy_concept_checker([]<typename t = alt_t>(auto) requires(
+    static_assert(io::detail::lazy_concept_checker([]<typename t = alt_t>(auto) requires(
                     meta::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const> ||
                     (ranges::back_insertable<t> &&
                      ((ranges::back_insertable<std::ranges::range_reference_t<t>> &&
                        alphabet::alphabet<std::ranges::range_reference_t<std::ranges::range_reference_t<t>>>) ||
                       meta::decays_to<std::ranges::range_reference_t<t>, std::string_view> ||
-                      detail::transform_view_on_string_view<std::ranges::range_reference_t<t>>))) {
+                      io::detail::transform_view_on_string_view<std::ranges::range_reference_t<t>>))) {
                       return std::true_type{};
                   }),
                   "Requirements for the field-type of the ALT-field not met. See documentation for "
@@ -880,7 +881,7 @@ constexpr bool record_read_concept_checker(
                   "bio::io::var_io::reader_options.");
 
     static_assert(
-      detail::lazy_concept_checker([]<typename t = filter_t>(auto) requires(
+      io::detail::lazy_concept_checker([]<typename t = filter_t>(auto) requires(
         meta::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const> ||
         (ranges::back_insertable<t> &&
          (ranges::back_insertable_with<std::ranges::range_reference_t<t>, char> ||
@@ -890,7 +891,7 @@ constexpr bool record_read_concept_checker(
       "Requirements for the field-type of the FILTER-field not met. See documentation for "
       "bio::io::var_io::reader_options.");
 
-    static_assert(detail::lazy_concept_checker([]<typename t = info_t>(auto) requires(
+    static_assert(io::detail::lazy_concept_checker([]<typename t = info_t>(auto) requires(
                     meta::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const> ||
                     (ranges::back_insertable<t> &&
                      detail::info_element_reader_concept<std::remove_reference_t<std::ranges::range_reference_t<t>>>)) {
@@ -899,7 +900,7 @@ constexpr bool record_read_concept_checker(
                   "Requirements for the field-type of the INFO-field not met. See documentation for "
                   "bio::io::var_io::reader_options.");
 
-    static_assert(detail::lazy_concept_checker([]<typename t = genotypes_t>(auto) requires(
+    static_assert(io::detail::lazy_concept_checker([]<typename t = genotypes_t>(auto) requires(
                     meta::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const> ||
                     (ranges::back_insertable<t> &&
                      detail::genotype_reader_concept<std::remove_reference_t<std::ranges::range_reference_t<t>>>)) {
@@ -968,9 +969,9 @@ concept var_io_vector_legal_or_dynamic = var_io_legal_vector_type<t> || is_genot
  */
 //!\cond CONCEPT_DEF
 template <typename t>
-concept info_element_writer_concept = detail::decomposable_into_two<t> &&
-  (detail::char_range_or_cstring<detail::first_elem_t<t>> ||
-   std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::var_io_legal_or_dynamic<detail::second_elem_t<t>>;
+concept info_element_writer_concept = io::detail::decomposable_into_two<t> &&
+  (io::detail::char_range_or_cstring<io::detail::first_elem_t<t>> ||
+   std::same_as<int32_t, io::detail::first_elem_t<t>>)&&detail::var_io_legal_or_dynamic<io::detail::second_elem_t<t>>;
 //!\endcond
 
 /*!\interface bio::io::detail::genotype_writer_concept <>
@@ -979,9 +980,10 @@ concept info_element_writer_concept = detail::decomposable_into_two<t> &&
  */
 //!\cond CONCEPT_DEF
 template <typename t>
-concept genotype_writer_concept = detail::decomposable_into_two<t> &&
-  (detail::char_range_or_cstring<detail::first_elem_t<t>> ||
-   std::same_as<int32_t, detail::first_elem_t<t>>)&&detail::var_io_vector_legal_or_dynamic<detail::second_elem_t<t>>;
+concept genotype_writer_concept = io::detail::decomposable_into_two<t> &&
+  (io::detail::char_range_or_cstring<io::detail::first_elem_t<t>> ||
+   std::same_as<int32_t,
+                io::detail::first_elem_t<t>>)&&detail::var_io_vector_legal_or_dynamic<io::detail::second_elem_t<t>>;
 //!\endcond
 
 //!\brief Validates the concepts that the record type needs to satisfy when being passed to a writer.
@@ -1002,4 +1004,4 @@ constexpr bool record_write_concept_checker(
     return true;
 }
 
-} // namespace bio::io::detail
+} // namespace bio::io::var_io::detail
