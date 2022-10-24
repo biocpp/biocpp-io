@@ -18,6 +18,7 @@
 #include <variant>
 #include <vector>
 
+#include <bio/alphabet/custom/char.hpp>
 #include <bio/alphabet/nucleotide/dna5.hpp>
 #include <bio/meta/concept/core_language.hpp>
 #include <bio/meta/tag/ttag.hpp>
@@ -839,25 +840,18 @@ constexpr bool record_read_concept_checker(
 
 {
     // TODO(GCC11): once GCC10 is dropped, remove the "<typename t = seq_t>"
-    static_assert(detail::lazy_concept_checker([]<typename t = chrom_t>(auto) requires(
-                    ranges::back_insertable_with<t, char> ||
-                    meta::one_of<std::remove_reference_t<t>, std::string_view, int32_t, ignore_t, ignore_t const>) {
-                      return std::true_type{};
-                  }),
+    static_assert(ranges::back_insertable_with<chrom_t, char> ||
+                    meta::one_of<std::remove_reference_t<chrom_t>, std::string_view, int32_t, ignore_t, ignore_t const>,
                   "Requirements for the field-type of the CHROM-field not met. See documentation for "
                   "bio::io::var_io::reader_options.");
 
-    static_assert(detail::lazy_concept_checker([]<typename t = pos_t>(auto) requires(
-                    std::integral<std::remove_reference_t<t>> ||
-                    meta::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const>) { return std::true_type{}; }),
+    static_assert(std::integral<std::remove_reference_t<pos_t>> ||
+                    meta::one_of<std::remove_reference_t<pos_t>, ignore_t, ignore_t const>,
                   "Requirements for the field-type of the POS-field not met. See documentation for "
                   "bio::io::var_io::reader_options.");
 
-    static_assert(detail::lazy_concept_checker([]<typename t = id_t>(auto) requires(
-                    ranges::back_insertable_with<t, char> ||
-                    meta::one_of<std::remove_reference_t<t>, std::string_view, ignore_t, ignore_t const>) {
-                      return std::true_type{};
-                  }),
+    static_assert(ranges::back_insertable_with<id_t, char> ||
+                    meta::one_of<std::remove_reference_t<id_t>, std::string_view, ignore_t, ignore_t const>,
                   "Requirements for the field-type of the ID-field not met. See documentation for "
                   "bio::io::var_io::reader_options.");
 
@@ -880,9 +874,8 @@ constexpr bool record_read_concept_checker(
                   "Requirements for the field-type of the ALT-field not met. See documentation for "
                   "bio::io::var_io::reader_options.");
 
-    static_assert(detail::lazy_concept_checker([]<typename t = qual_t>(auto) requires(
-                    meta::arithmetic<std::remove_reference_t<t>> ||
-                    meta::one_of<std::remove_reference_t<t>, ignore_t, ignore_t const>) { return std::true_type{}; }),
+    static_assert(meta::arithmetic<std::remove_reference_t<qual_t>> ||
+                    meta::one_of<std::remove_reference_t<qual_t>, ignore_t, ignore_t const>,
                   "Requirements for the field-type of the QUAL-field not met. See documentation for "
                   "bio::io::var_io::reader_options.");
 

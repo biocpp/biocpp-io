@@ -94,7 +94,7 @@ private:
     //!\brief Write raw data.
     void write_field_aux(std::span<std::byte const> const range)
     {
-        std::string_view const v{range.data(), range.size()};
+        std::string_view const v{(char *)range.data(), range.size()};
         to_derived()->it->write_range(v);
     }
 
