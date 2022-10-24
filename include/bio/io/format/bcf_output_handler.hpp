@@ -24,9 +24,9 @@
 #include <bio/io/format/format_output_handler.hpp>
 #include <bio/io/misc/char_predicate.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
-#include <bio/io/var_io/header.hpp>
-#include <bio/io/var_io/misc.hpp>
-#include <bio/io/var_io/writer_options.hpp>
+#include <bio/io/var/header.hpp>
+#include <bio/io/var/misc.hpp>
+#include <bio/io/var/writer_options.hpp>
 
 namespace bio::io
 {
@@ -66,18 +66,17 @@ private:
      * \{
      */
     //!\brief Whether the header has been written or not.
-    bool                                                                    header_has_been_written = false;
+    bool                                                              header_has_been_written = false;
     //!\brief Pointer to header that can be owning or non-owning.
-    std::unique_ptr<var_io::header const, void (*)(var_io::header const *)> header                  = {nullptr,
-                                                                                                       [](var_io::header const *) {}};
+    std::unique_ptr<var::header const, void (*)(var::header const *)> header = {nullptr, [](var::header const *) {}};
     //!\brief This is the descriptor used for IDX values [stored here, so it doesn't need to be recomputed].
-    var_io::detail::bcf_type_descriptor                                     idx_desc;
+    var::detail::bcf_type_descriptor                                  idx_desc;
 
     //!\brief Index of the current record.
     size_t record_no = 0;
 
     //!\brief Part of the record that can be written en-bloc.
-    var_io::detail::bcf_record_core record_core;
+    var::detail::bcf_record_core record_core;
 
     //!\brief A pointer to the output stream.
     std::ostream *                        stream = nullptr;
@@ -112,7 +111,7 @@ private:
      * \{
      */
     //!\brief Write the type-descriptor byte(s).
-    void write_type_descriptor(var_io::detail::bcf_type_descriptor const desc, size_t const size)
+    void write_type_descriptor(var::detail::bcf_type_descriptor const desc, size_t const size)
     {
         if (size < 15)
         {
@@ -125,14 +124,14 @@ private:
             uint8_t byte = static_cast<uint8_t>(15) << 4;
             byte |= static_cast<uint8_t>(desc);
             it->write_as_binary(byte);
-            var_io::detail::bcf_type_descriptor int_desc = var_io::detail::smallest_int_desc(size);
+            var::detail::bcf_type_descriptor int_desc = var::detail::smallest_int_desc(size);
             write_type_descriptor1(int_desc);
             write_single_impl(size, int_desc);
         }
     }
 
     //!\brief Overload that is hardcoded for size==1
-    void write_type_descriptor1(var_io::detail::bcf_type_descriptor const desc)
+    void write_type_descriptor1(var::detail::bcf_type_descriptor const desc)
     {
         uint8_t byte = static_cast<uint8_t>(1) << 4;
         byte |= static_cast<uint8_t>(desc);
@@ -140,23 +139,23 @@ private:
     }
 
     //!\brief Write a single value.
-    void write_single_impl(meta::arithmetic auto num, var_io::detail::bcf_type_descriptor const desc)
+    void write_single_impl(meta::arithmetic auto num, var::detail::bcf_type_descriptor const desc)
     {
         switch (desc)
         {
-            case var_io::detail::bcf_type_descriptor::char8:
+            case var::detail::bcf_type_descriptor::char8:
                 it->write_as_binary(static_cast<char>(num));
                 break;
-            case var_io::detail::bcf_type_descriptor::int8:
+            case var::detail::bcf_type_descriptor::int8:
                 it->write_as_binary(static_cast<int8_t>(num));
                 break;
-            case var_io::detail::bcf_type_descriptor::int16:
+            case var::detail::bcf_type_descriptor::int16:
                 it->write_as_binary(static_cast<int16_t>(num));
                 break;
-            case var_io::detail::bcf_type_descriptor::int32:
+            case var::detail::bcf_type_descriptor::int32:
                 it->write_as_binary(static_cast<int32_t>(num));
                 break;
-            case var_io::detail::bcf_type_descriptor::float32:
+            case var::detail::bcf_type_descriptor::float32:
                 it->write_as_binary(static_cast<float>(num));
                 break;
             default:
@@ -171,7 +170,7 @@ private:
      *
      * The functor takes the value and the descriptor as arguments.
      */
-    void run_length_encode(auto & range, var_io::detail::bcf_type_descriptor const desc, auto && fun)
+    void run_length_encode(auto & range, var::detail::bcf_type_descriptor const desc, auto && fun)
     {
         size_t run_length = 1;
 
@@ -189,7 +188,7 @@ private:
             else
             {
                 // write size
-                var_io::detail::bcf_type_descriptor int_desc = var_io::detail::smallest_int_desc(run_length);
+                var::detail::bcf_type_descriptor int_desc = var::detail::smallest_int_desc(run_length);
                 write_type_descriptor1(int_desc);
                 write_single_impl(run_length, int_desc);
 
@@ -203,7 +202,7 @@ private:
     }
 
     //!\brief Write a range of values.
-    void write_range_impl(std::ranges::forward_range auto && range, var_io::detail::bcf_type_descriptor const desc)
+    void write_range_impl(std::ranges::forward_range auto && range, var::detail::bcf_type_descriptor const desc)
     {
         using data_t = decltype(range);
         using elem_t = std::ranges::range_value_t<data_t>;
@@ -228,8 +227,8 @@ private:
                 // TODO this is probably not the most efficient implementation
                 for (elem_t const elem : range)
                 {
-                    target_t buf = (elem == var_io::missing_value<elem_t>) ? var_io::missing_value<target_t>
-                                                                           : static_cast<target_t>(elem);
+                    target_t buf =
+                      (elem == var::missing_value<elem_t>) ? var::missing_value<target_t> : static_cast<target_t>(elem);
                     it->write_as_binary(buf);
                 }
             }
@@ -237,19 +236,19 @@ private:
 
         switch (desc)
         {
-            case var_io::detail::bcf_type_descriptor::char8:
+            case var::detail::bcf_type_descriptor::char8:
                 dump_or_convert(char{});
                 break;
-            case var_io::detail::bcf_type_descriptor::int8:
+            case var::detail::bcf_type_descriptor::int8:
                 dump_or_convert(int8_t{});
                 break;
-            case var_io::detail::bcf_type_descriptor::int16:
+            case var::detail::bcf_type_descriptor::int16:
                 dump_or_convert(int16_t{});
                 break;
-            case var_io::detail::bcf_type_descriptor::int32:
+            case var::detail::bcf_type_descriptor::int32:
                 dump_or_convert(int32_t{});
                 break;
-            case var_io::detail::bcf_type_descriptor::float32:
+            case var::detail::bcf_type_descriptor::float32:
                 dump_or_convert(float{});
                 break;
             default:
@@ -260,9 +259,9 @@ private:
     //!\brief Write a range of ranges.
     template <std::ranges::forward_range rng_t>
         requires std::ranges::forward_range<std::ranges::range_reference_t<rng_t>>
-    void write_range_impl(rng_t & range, [[maybe_unused]] var_io::detail::bcf_type_descriptor const desc)
+    void write_range_impl(rng_t & range, [[maybe_unused]] var::detail::bcf_type_descriptor const desc)
     {
-        assert(desc == var_io::detail::bcf_type_descriptor::char8);
+        assert(desc == var::detail::bcf_type_descriptor::char8);
         using alph_t = std::ranges::range_value_t<std::ranges::range_reference_t<rng_t>>;
 
         bool first = true;
@@ -285,7 +284,7 @@ private:
     }
 
     //!\brief Write the GT field (has custom writer, because it pretends to be a string but is encoded differently).
-    size_t write_GT_impl(std::string_view const gt_string, var_io::detail::bcf_type_descriptor const desc)
+    size_t write_GT_impl(std::string_view const gt_string, var::detail::bcf_type_descriptor const desc)
     {
         bool phased = false;
 
@@ -310,15 +309,15 @@ private:
 
                 switch (desc)
                 {
-                    case var_io::detail::bcf_type_descriptor::int8:
+                    case var::detail::bcf_type_descriptor::int8:
                         assert(encoded_buf < std::numeric_limits<int8_t>::max());
                         it->write_as_binary(static_cast<int8_t>(encoded_buf));
                         break;
-                    case var_io::detail::bcf_type_descriptor::int16:
+                    case var::detail::bcf_type_descriptor::int16:
                         assert(encoded_buf < std::numeric_limits<int16_t>::max());
                         it->write_as_binary(static_cast<int16_t>(encoded_buf));
                         break;
-                    case var_io::detail::bcf_type_descriptor::int32:
+                    case var::detail::bcf_type_descriptor::int32:
                         assert(encoded_buf < std::numeric_limits<int32_t>::max());
                         it->write_as_binary(static_cast<int32_t>(encoded_buf));
                         break;
@@ -341,13 +340,13 @@ private:
      * \param[in] front_missing Whether to add an initial missing value [see below].
      * \details
      *
-     * This function adds padding values. For an existing vector, num times the var_io::detail::end_of_vector
+     * This function adds padding values. For an existing vector, num times the var::detail::end_of_vector
      * value ("EOV") is written.
      *
      * In the case where a vector in a vector-of-vectors is completely absent, you need to set
-     * front_missing. In that case the first value written will be bio::io::var_io::missing_value instead of EOV.
+     * front_missing. In that case the first value written will be bio::io::var::missing_value instead of EOV.
      */
-    void write_range_padding(size_t num, var_io::detail::bcf_type_descriptor const desc, bool front_missing)
+    void write_range_padding(size_t num, var::detail::bcf_type_descriptor const desc, bool front_missing)
     {
         if (num == 0)
             return;
@@ -356,30 +355,30 @@ private:
         {
             if (front_missing)
             {
-                it->write_as_binary(var_io::missing_value<target_t>);
+                it->write_as_binary(var::missing_value<target_t>);
                 --num;
             }
 
             // TODO this could be optimised with some manner of views::repeat_n | views::convert | views::join
             for (size_t i = 0; i < num; ++i)
-                it->write_as_binary(var_io::detail::end_of_vector<target_t>);
+                it->write_as_binary(var::detail::end_of_vector<target_t>);
         };
 
         switch (desc)
         {
-            case var_io::detail::bcf_type_descriptor::char8:
+            case var::detail::bcf_type_descriptor::char8:
                 func(char{});
                 break;
-            case var_io::detail::bcf_type_descriptor::int8:
+            case var::detail::bcf_type_descriptor::int8:
                 func(int8_t{});
                 break;
-            case var_io::detail::bcf_type_descriptor::int16:
+            case var::detail::bcf_type_descriptor::int16:
                 func(int16_t{});
                 break;
-            case var_io::detail::bcf_type_descriptor::int32:
+            case var::detail::bcf_type_descriptor::int32:
                 func(int32_t{});
                 break;
-            case var_io::detail::bcf_type_descriptor::float32:
+            case var::detail::bcf_type_descriptor::float32:
                 func(float{});
                 break;
             default:
@@ -392,17 +391,16 @@ private:
         //!\cond REQ
         requires(alphabet::alphabet<elem_t> || meta::arithmetic<elem_t>)
     //!\endcond
-    void write_typed_data(elem_t const num, var_io::detail::bcf_type_descriptor const desc)
+    void write_typed_data(elem_t const num, var::detail::bcf_type_descriptor const desc)
     {
         write_type_descriptor1(desc);
         write_single_impl(num, desc);
     }
 
     //!\overload
-    void write_typed_data(detail::char_range auto &&                                 data,
-                          [[maybe_unused]] var_io::detail::bcf_type_descriptor const desc)
+    void write_typed_data(detail::char_range auto && data, [[maybe_unused]] var::detail::bcf_type_descriptor const desc)
     {
-        assert(desc == var_io::detail::bcf_type_descriptor::char8);
+        assert(desc == var::detail::bcf_type_descriptor::char8);
 
         if (std::ranges::empty(data) || std::ranges::equal(data, std::string_view{"."}))
         {
@@ -411,20 +409,20 @@ private:
         else
         {
             size_t size = std::ranges::distance(data);
-            write_type_descriptor(var_io::detail::bcf_type_descriptor::char8, size);
+            write_type_descriptor(var::detail::bcf_type_descriptor::char8, size);
             it->write_range(data);
         }
     }
 
     //!\overload
-    void write_typed_data(char const * const cstring, var_io::detail::bcf_type_descriptor const desc)
+    void write_typed_data(char const * const cstring, var::detail::bcf_type_descriptor const desc)
     {
-        assert(desc == var_io::detail::bcf_type_descriptor::char8);
+        assert(desc == var::detail::bcf_type_descriptor::char8);
         return write_typed_data(std::string_view{cstring}, desc);
     }
 
     //!\overload
-    void write_typed_data(std::ranges::forward_range auto && data, var_io::detail::bcf_type_descriptor const desc)
+    void write_typed_data(std::ranges::forward_range auto && data, var::detail::bcf_type_descriptor const desc)
     {
         static_assert(!std::ranges::range<std::ranges::range_reference_t<decltype(data)>>);
         write_type_descriptor(desc, std::ranges::distance(data));
@@ -436,9 +434,9 @@ private:
         //!\cond REQ
         requires detail::char_range_or_cstring<std::ranges::range_value_t<data_t>>
     //!\endcond
-    void write_typed_data(data_t && vector_of_string, [[maybe_unused]] var_io::detail::bcf_type_descriptor const desc)
+    void write_typed_data(data_t && vector_of_string, [[maybe_unused]] var::detail::bcf_type_descriptor const desc)
     {
-        assert(desc == var_io::detail::bcf_type_descriptor::char8);
+        assert(desc == var::detail::bcf_type_descriptor::char8);
 
         size_t num_strings = std::ranges::distance(vector_of_string);
         if (num_strings == 0)
@@ -463,9 +461,9 @@ private:
     }
 
     //!\overload
-    void write_typed_data(bool, [[maybe_unused]] var_io::detail::bcf_type_descriptor const desc)
+    void write_typed_data(bool, [[maybe_unused]] var::detail::bcf_type_descriptor const desc)
     {
-        assert(desc == var_io::detail::bcf_type_descriptor::int8);
+        assert(desc == var::detail::bcf_type_descriptor::int8);
         // This is the behaviour according to spec:
         // write_typed_data(int8_t{1}, false);
         // but bcftools and htslib expect this:
@@ -475,7 +473,7 @@ private:
     //!\brief This overload adds an automatically deduced descriptor.
     void write_typed_data(auto && num)
     {
-        return write_typed_data(num, var_io::detail::type_2_bcf_type_descriptor<std::remove_cvref_t<decltype(num)>>);
+        return write_typed_data(num, var::detail::type_2_bcf_type_descriptor<std::remove_cvref_t<decltype(num)>>);
     }
     //!\}
 
@@ -520,7 +518,7 @@ private:
     {
         using field_t = decltype(field);
 
-        if constexpr (var_io::detail::info_element_writer_concept<field_t>)
+        if constexpr (var::detail::info_element_writer_concept<field_t>)
             record_core.n_info = 1;
         else
             record_core.n_info = detail::range_or_tuple_size(field);
@@ -556,8 +554,8 @@ private:
     //!\brief Overload for ID.
     void write_field(meta::vtag_t<detail::field::id> /**/, auto && field)
     {
-        static_assert(var_io::detail::type_2_bcf_type_descriptor<std::remove_cvref_t<decltype(field)>> ==
-                        var_io::detail::bcf_type_descriptor::char8,
+        static_assert(var::detail::type_2_bcf_type_descriptor<std::remove_cvref_t<decltype(field)>> ==
+                        var::detail::bcf_type_descriptor::char8,
                       "ID field must be provided as string.");
         write_typed_data(field);
     }
@@ -565,8 +563,8 @@ private:
     //!\brief Overload for REF.
     void write_field(meta::vtag_t<detail::field::ref> /**/, auto && field)
     {
-        static_assert(var_io::detail::type_2_bcf_type_descriptor<std::remove_cvref_t<decltype(field)>> ==
-                        var_io::detail::bcf_type_descriptor::char8,
+        static_assert(var::detail::type_2_bcf_type_descriptor<std::remove_cvref_t<decltype(field)>> ==
+                        var::detail::bcf_type_descriptor::char8,
                       "REF field must be provided as string.");
         write_typed_data(field);
     }
@@ -574,8 +572,8 @@ private:
     //!\brief Overload for ALT (single argument).
     void write_field(meta::vtag_t<detail::field::alt> /**/, auto && field)
     {
-        static_assert(var_io::detail::type_2_bcf_type_descriptor<std::remove_cvref_t<decltype(field)>> ==
-                        var_io::detail::bcf_type_descriptor::char8,
+        static_assert(var::detail::type_2_bcf_type_descriptor<std::remove_cvref_t<decltype(field)>> ==
+                        var::detail::bcf_type_descriptor::char8,
                       "ALT field must be provided as (range of) string(s).");
         write_typed_data(field);
     }
@@ -624,37 +622,37 @@ private:
     }
 
     //!\brief Deduce descriptor from parameter type and optionally compress (integers) and verify with header.
-    var_io::detail::bcf_type_descriptor get_desc(auto & param, var_io::header::info_t const & hdr_entry)
+    var::detail::bcf_type_descriptor get_desc(auto & param, var::header::info_t const & hdr_entry)
     {
-        using param_t                                        = std::remove_cvref_t<decltype(param)>;
-        constexpr var_io::detail::bcf_type_descriptor c_desc = var_io::detail::type_2_bcf_type_descriptor<param_t>;
-        var_io::detail::bcf_type_descriptor           desc   = c_desc;
+        using param_t                                     = std::remove_cvref_t<decltype(param)>;
+        constexpr var::detail::bcf_type_descriptor c_desc = var::detail::type_2_bcf_type_descriptor<param_t>;
+        var::detail::bcf_type_descriptor           desc   = c_desc;
 
-        if constexpr (c_desc == var_io::detail::bcf_type_descriptor::int8 ||
-                      c_desc == var_io::detail::bcf_type_descriptor::int16 ||
-                      c_desc == var_io::detail::bcf_type_descriptor::int32)
+        if constexpr (c_desc == var::detail::bcf_type_descriptor::int8 ||
+                      c_desc == var::detail::bcf_type_descriptor::int16 ||
+                      c_desc == var::detail::bcf_type_descriptor::int32)
         {
             // explicit integer width given in header
             if (hdr_entry.other_fields.find("IntegerBits") != hdr_entry.other_fields.end())
             {
-                desc = var_io::detail::value_type_id_2_type_descriptor(hdr_entry.type_id);
-                if (!var_io::detail::type_descriptor_is_int(desc)) // ignore header value if it isn't intX
+                desc = var::detail::value_type_id_2_type_descriptor(hdr_entry.type_id);
+                if (!var::detail::type_descriptor_is_int(desc)) // ignore header value if it isn't intX
                     desc = c_desc;
             }
-            else if constexpr (c_desc == var_io::detail::bcf_type_descriptor::int16 ||
-                               c_desc == var_io::detail::bcf_type_descriptor::int32)
+            else if constexpr (c_desc == var::detail::bcf_type_descriptor::int16 ||
+                               c_desc == var::detail::bcf_type_descriptor::int32)
             {
                 if (compress_integers)
-                    desc = var_io::detail::smallest_int_desc(param);
+                    desc = var::detail::smallest_int_desc(param);
             }
         }
 
         if (verify_header_types)
         {
-            var_io::detail::bcf_type_descriptor header_desc =
-              var_io::detail::value_type_id_2_type_descriptor(hdr_entry.type_id);
-            if (desc != header_desc || !var_io::detail::type_descriptor_is_int(desc) ||
-                !var_io::detail::type_descriptor_is_int(header_desc))
+            var::detail::bcf_type_descriptor header_desc =
+              var::detail::value_type_id_2_type_descriptor(hdr_entry.type_id);
+            if (desc != header_desc || !var::detail::type_descriptor_is_int(desc) ||
+                !var::detail::type_descriptor_is_int(header_desc))
             {
                 error("The type of field ",
                       hdr_entry.id,
@@ -691,10 +689,10 @@ private:
         }
         write_typed_data(idx, idx_desc);
 
-        var_io::header::info_t const & info = header->infos.at(header->idx_to_info_pos().at(idx));
+        var::header::info_t const & info = header->infos.at(header->idx_to_info_pos().at(idx));
 
         /* VALUE */
-        if constexpr (var_io::detail::is_info_element_value_type<value_t>)
+        if constexpr (var::detail::is_info_element_value_type<value_t>)
         {
             auto func = [&](auto & param) { write_typed_data(param, get_desc(param, info)); };
             std::visit(func, value);
@@ -707,7 +705,7 @@ private:
 
     //!\brief Overload for INFO; range of pairs.
     template <std::ranges::input_range rng_t>
-        requires(var_io::detail::info_element_writer_concept<std::ranges::range_reference_t<rng_t>>)
+        requires(var::detail::info_element_writer_concept<std::ranges::range_reference_t<rng_t>>)
     void write_field(meta::vtag_t<detail::field::info> /**/, rng_t && range)
     {
         for (auto & info_element : range)
@@ -716,7 +714,7 @@ private:
 
     //!\brief Overload for INFO; tuple of pairs.
     template <typename... elem_ts>
-        requires(var_io::detail::info_element_writer_concept<elem_ts> &&...)
+        requires(var::detail::info_element_writer_concept<elem_ts> &&...)
     void write_field(meta::vtag_t<detail::field::info> /**/, std::tuple<elem_ts...> & tup) // TODO add const version
     {
         auto func = [&](auto &... field) { (write_info_element(field), ...); };
@@ -789,7 +787,7 @@ private:
         }
         write_typed_data(idx, idx_desc);
 
-        var_io::header::format_t const & format = header->formats.at(header->idx_to_format_pos().at(idx));
+        var::header::format_t const & format = header->formats.at(header->idx_to_format_pos().at(idx));
 
         /* value */
         auto func = [&](auto & values)
@@ -808,7 +806,7 @@ private:
                       " which is more than the number of samples.");
             }
 
-            var_io::detail::bcf_type_descriptor desc = get_desc(values, format);
+            var::detail::bcf_type_descriptor desc = get_desc(values, format);
 
             // if there are no values, we can write the missing field and need no padding values at all
             if (std::ranges::size(values) == 0)
@@ -833,7 +831,7 @@ private:
                 {
                     if constexpr (detail::char_range_or_cstring<value_t>)
                     {
-                        assert(desc == var_io::detail::bcf_type_descriptor::char8);
+                        assert(desc == var::detail::bcf_type_descriptor::char8);
 
                         if (record_core.n_sample != std::ranges::size(values))
                             error("If the GT field is present, a value must be given for every sample.");
@@ -843,13 +841,13 @@ private:
                         // computation of binary value is "(allele_value + 1) << 1 | phased"
                         // we loose one bit because of +1 and one bit because of the shift and one because of signed:
                         if (max_allele_val <= 5)
-                            desc = var_io::detail::bcf_type_descriptor::int8;
+                            desc = var::detail::bcf_type_descriptor::int8;
                         else if (max_allele_val <= 13)
-                            desc = var_io::detail::bcf_type_descriptor::int16;
+                            desc = var::detail::bcf_type_descriptor::int16;
                         else
-                            desc = var_io::detail::bcf_type_descriptor::int32;
+                            desc = var::detail::bcf_type_descriptor::int32;
 
-                        auto fun = [&](auto && val, var_io::detail::bcf_type_descriptor const d)
+                        auto fun = [&](auto && val, var::detail::bcf_type_descriptor const d)
                         {
                             size_t n_alleles = write_GT_impl(detail::to_string_view(val), d);
 
@@ -892,7 +890,7 @@ private:
             {
                 if constexpr (std::same_as<char, bio::ranges::range_innermost_value_t<value_t>>)
                 {
-                    assert(desc == var_io::detail::bcf_type_descriptor::char8);
+                    assert(desc == var::detail::bcf_type_descriptor::char8);
 
                     string_size_buffer.clear();
                     size_t max_length = 0;
@@ -937,7 +935,7 @@ private:
             }
         };
 
-        if constexpr (var_io::detail::is_genotype_element_value_type<value_t>)
+        if constexpr (var::detail::is_genotype_element_value_type<value_t>)
             std::visit(func, value);
         else
             func(value);
@@ -945,7 +943,7 @@ private:
 
     //!\brief Overload for GENOTYPES.
     template <std::ranges::forward_range range_t>
-        requires(var_io::detail::genotype_writer_concept<std::ranges::range_reference_t<range_t>>)
+        requires(var::detail::genotype_writer_concept<std::ranges::range_reference_t<range_t>>)
     void write_field(meta::vtag_t<detail::field::genotypes> /**/, range_t && range)
     {
         for (auto && genotype : range)
@@ -954,7 +952,7 @@ private:
 
     //!\brief Overload for GENOTYPES; tuple of pairs.
     template <typename... elem_ts>
-        requires(var_io::detail::genotype_writer_concept<elem_ts> &&...)
+        requires(var::detail::genotype_writer_concept<elem_ts> &&...)
     void write_field(meta::vtag_t<detail::field::genotypes> /**/,
                      std::tuple<elem_ts...> & tup) // TODO add const version
     {
@@ -983,7 +981,7 @@ private:
         header_has_been_written = true;
 
         /* compute the smallest int type for the dictionaries */
-        idx_desc = var_io::detail::smallest_int_desc(header->max_idx());
+        idx_desc = var::detail::smallest_int_desc(header->max_idx());
     }
 
     //!\brief Write the record (supports const and non-const lvalue ref).
@@ -995,7 +993,7 @@ private:
         {
             if (header == nullptr)
             {
-                if (var_io::header const * ptr = record._private.header_ptr; ptr != nullptr)
+                if (var::header const * ptr = record._private.header_ptr; ptr != nullptr)
                     set_header(*ptr);
             }
 
@@ -1084,7 +1082,7 @@ private:
         if constexpr (meta::different_from<typename record_t::info_t, meta::ignore_t>)
             write_field(meta::vtag<detail::field::info>, record.info);
         else
-            write_field(meta::vtag<detail::field::info>, std::span<var_io::info_element<>>{});
+            write_field(meta::vtag<detail::field::info>, std::span<var::info_element<>>{});
 
         assert(streambuf_exposer->pptr() - streambuf_exposer->pbase() - this_record_offset > 0);
         //              (position in the buffer                              ) - (where this record starts)
@@ -1095,7 +1093,7 @@ private:
             if constexpr (meta::different_from<typename record_t::genotypes_t, meta::ignore_t>)
                 write_field(meta::vtag<detail::field::genotypes>, record.genotypes);
             else
-                write_field(meta::vtag<detail::field::genotypes>, std::span<var_io::genotype_element<>>{});
+                write_field(meta::vtag<detail::field::genotypes>, std::span<var::genotype_element<>>{});
         }
 
         l_indiv_tmp = streambuf_exposer->pptr() - streambuf_exposer->pbase() - this_record_offset - l_shared_tmp;
@@ -1169,7 +1167,7 @@ public:
      * \param[in] options An object with options for the output handler.
      * \details
      *
-     * The options argument is typically bio::io::var_io::writer_options, but any object with a subset of similarly
+     * The options argument is typically bio::io::var::writer_options, but any object with a subset of similarly
      * named members is also accepted. See bio::io::format_output_handler<bcf> for the supported options and defaults.
      */
     format_output_handler(std::ostream & str, auto const & options) : stream{&str}
@@ -1206,7 +1204,7 @@ public:
     //!\}
 
     //!\brief Get the header.
-    var_io::header const & get_header() const
+    var::header const & get_header() const
     {
         if (header == nullptr)
             throw missing_header_error{"Attempting to read header, but no header was set."};
@@ -1215,25 +1213,25 @@ public:
     }
 
     //!\brief Set the header.
-    void set_header(var_io::header const & hdr)
+    void set_header(var::header const & hdr)
     {
         // TODO verify that all header entries have IDX
-        header = {&hdr, [](var_io::header const *) {}};
+        header = {&hdr, [](var::header const *) {}};
     }
     //!\overload
-    void set_header(var_io::header const && hdr)
+    void set_header(var::header const && hdr)
     {
         // TODO verify that all header entries have IDX
-        header = {new var_io::header(std::move(hdr)), [](var_io::header const * ptr) { delete ptr; }};
+        header = {new var::header(std::move(hdr)), [](var::header const * ptr) { delete ptr; }};
     }
     //!\overload
-    void set_header(var_io::header & hdr)
+    void set_header(var::header & hdr)
     {
         hdr.add_missing();
         set_header(std::as_const(hdr));
     }
     //!\overload
-    void set_header(var_io::header && hdr)
+    void set_header(var::header && hdr)
     {
         hdr.add_missing();
         set_header(std::move(std::as_const(hdr)));
@@ -1241,14 +1239,14 @@ public:
 
     //!\brief Write the record.
     template <typename... field_types>
-    void write_record(var_io::record<field_types...> const & record)
+    void write_record(var::record<field_types...> const & record)
     {
         write_record_impl(record);
     }
 
     //!\overload
     template <typename... field_types>
-    void write_record(var_io::record<field_types...> & record)
+    void write_record(var::record<field_types...> & record)
     {
         write_record_impl(record);
     }

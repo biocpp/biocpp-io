@@ -31,7 +31,7 @@
 // forwards
 // ----------------------------------------------------------------------------
 
-namespace bio::io::var_io
+namespace bio::io::var
 {
 
 template <typename chrom_t,
@@ -59,7 +59,7 @@ namespace bio::io
  * ```cpp
  * void parse_next_record_into(auto & parsed_record);
  * ```
- * It must accept the domain's record type (e.g. bio::io::seq_io::record) and "fill" that record with
+ * It must accept the domain's record type (e.g. bio::io::seq::record) and "fill" that record with
  * the content found in that file.
  *
  * This template may be specialised with a user-provided type, however the process is non-trivial. Documentation

@@ -12,7 +12,7 @@
 #include <bio/test/tmp_filename.hpp>
 
 #include <bio/io/format/bcf_input_handler.hpp>
-#include <bio/io/var_io/record.hpp>
+#include <bio/io/var/record.hpp>
 
 #include "bcf_data.hpp"
 #include "vcf_data.hpp"
@@ -109,21 +109,20 @@ void field_types()
     std::istringstream           istr{std::string{example_from_spec_bcf}};
     bio::io::transparent_istream str{istr};
 
-    bio::io::format_input_handler<bio::io::bcf> handler{str, bio::io::var_io::reader_options{}};
+    bio::io::format_input_handler<bio::io::bcf> handler{str, bio::io::var::reader_options{}};
 
-    bio::io::var_io::record_private_data priv{&handler.get_header()};
+    bio::io::var::record_private_data priv{&handler.get_header()};
 
-    using record_t = std::conditional_t<s == style::def,
-                                        std::conditional_t<own == bio::io::ownership::deep,
-                                                           bio::io::var_io::record_default,
-                                                           bio::io::var_io::record_default_shallow>,
-                                        std::conditional_t<own == bio::io::ownership::deep,
-                                                           bio::io::var_io::record_idx,
-                                                           bio::io::var_io::record_idx_shallow>>;
+    using record_t = std::conditional_t<
+      s == style::def,
+      std::conditional_t<own == bio::io::ownership::deep,
+                         bio::io::var::record_default,
+                         bio::io::var::record_default_shallow>,
+      std::conditional_t<own == bio::io::ownership::deep, bio::io::var::record_idx, bio::io::var::record_idx_shallow>>;
 
     using int_t       = int8_t;
     using vec_t       = bio::ranges::concatenated_sequences<std::vector<int_t>>;
-    constexpr auto mv = bio::io::var_io::missing_value<int_t>;
+    constexpr auto mv = bio::io::var::missing_value<int_t>;
 
     std::vector<record_t> recs;
 

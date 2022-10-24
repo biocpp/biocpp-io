@@ -26,8 +26,8 @@ namespace bio::io
  *
  * \details
  *
- * This is the FastA format tag. If you want to read FastA files, use bio::io::seq_io::reader, and if you want
- * to write FastA files, use bio::io::seq_io::writer.
+ * This is the FastA format tag. If you want to read FastA files, use bio::io::seq::reader, and if you want
+ * to write FastA files, use bio::io::seq::writer.
  *
  * ### Introduction
  *

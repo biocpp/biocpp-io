@@ -107,7 +107,7 @@ inline constexpr bool is_fields_tag<meta::vtag_t<vs...>> = true;
  *
  * In addition to the get()-interfaces, member accessors are provided with the same name as the fields.
  *
- * See bio::io::seq_io::reader for how this data structure is used in practice.
+ * See bio::io::seq::reader for how this data structure is used in practice.
  *
  * See #make_tuple_record() and #tie_tuple_record() for easy ways to create stand-alone tuple_record variables.
  *

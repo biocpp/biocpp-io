@@ -26,7 +26,7 @@ using std::literals::string_view_literals::operator""sv;
 
 struct read : public ::testing::Test
 {
-    using default_rec_t = bio::io::seq_io::record_dna_shallow;
+    using default_rec_t = bio::io::seq::record_dna_shallow;
 
     std::string default_input =
       R"raw(@ID1
@@ -68,7 +68,7 @@ ACGTTTA
 
         bio::io::format_input_handler<bio::io::fastq> input_handler{istream};
 
-        bio::io::seq_io::record<id_t, seq_t, qual_t> rec;
+        bio::io::seq::record<id_t, seq_t, qual_t> rec;
 
         for (unsigned i = 0; i < 3; ++i)
         {
@@ -300,7 +300,7 @@ TEST_F(read, fail_illegal_alphabet)
 
     std::istringstream                            istream{input};
     bio::io::format_input_handler<bio::io::fastq> input_handler{istream};
-    using rec_t = bio::io::seq_io::record<std::string_view, std::vector<bio::alphabet::dna5>>;
+    using rec_t = bio::io::seq::record<std::string_view, std::vector<bio::alphabet::dna5>>;
 
     rec_t rec;
 

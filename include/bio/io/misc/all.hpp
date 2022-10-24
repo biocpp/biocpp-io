@@ -15,7 +15,7 @@
 
 // TODO
 
-/*!\defgroup io_misc Misc
+/*!\defgroup io_misc misc
  * \ingroup io
  * \brief Miscellaneous data structure and utilities.
  */

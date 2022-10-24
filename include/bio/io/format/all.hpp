@@ -15,7 +15,7 @@
 
 // TODO
 
-/*!\defgroup format Format
+/*!\defgroup format format
  * \ingroup io
  * \brief File format implementations. Note that most users should read/write formats through readers/writers instead.
  */

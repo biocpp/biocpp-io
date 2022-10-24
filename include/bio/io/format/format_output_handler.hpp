@@ -34,7 +34,7 @@ namespace bio::io
  * ```cpp
  * void write_record(record_type && record)
  * ```
- * It must accept the domain's record type (e.g. bio::io::seq_io::record) and write that record's fields
+ * It must accept the domain's record type (e.g. bio::io::seq::record) and write that record's fields
  * to the file.
  *
  * This template may be specialised with a user-provided type, however the process is non-trivial. Documentation

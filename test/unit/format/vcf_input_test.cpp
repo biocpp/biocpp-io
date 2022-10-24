@@ -11,7 +11,7 @@
 #include <bio/test/expect_range_eq.hpp>
 
 #include <bio/io/format/vcf_input_handler.hpp>
-#include <bio/io/var_io/record.hpp>
+#include <bio/io/var/record.hpp>
 
 #include "vcf_data.hpp"
 
@@ -27,17 +27,16 @@ void field_types()
 {
     std::istringstream istr{std::string{example_from_spec}};
 
-    bio::io::format_input_handler<bio::io::vcf> handler{istr, bio::io::var_io::reader_options{}};
+    bio::io::format_input_handler<bio::io::vcf> handler{istr, bio::io::var::reader_options{}};
 
-    bio::io::var_io::record_private_data priv{&handler.get_header()};
+    bio::io::var::record_private_data priv{&handler.get_header()};
 
-    using record_t = std::conditional_t<s == style::def,
-                                        std::conditional_t<own == bio::io::ownership::deep,
-                                                           bio::io::var_io::record_default,
-                                                           bio::io::var_io::record_default_shallow>,
-                                        std::conditional_t<own == bio::io::ownership::deep,
-                                                           bio::io::var_io::record_idx,
-                                                           bio::io::var_io::record_idx_shallow>>;
+    using record_t = std::conditional_t<
+      s == style::def,
+      std::conditional_t<own == bio::io::ownership::deep,
+                         bio::io::var::record_default,
+                         bio::io::var::record_default_shallow>,
+      std::conditional_t<own == bio::io::ownership::deep, bio::io::var::record_idx, bio::io::var::record_idx_shallow>>;
 
     std::vector<record_t> recs;
 
@@ -105,13 +104,13 @@ TEST(vcf, incomplete_header)
 
     std::istringstream istr{incomplete_header_before + example_from_spec_records};
 
-    using record_t = bio::io::var_io::record_default_shallow;
+    using record_t = bio::io::var::record_default_shallow;
 
-    bio::io::format_input_handler<bio::io::vcf> handler{istr, bio::io::var_io::reader_options{.print_warnings = false}};
+    bio::io::format_input_handler<bio::io::vcf> handler{istr, bio::io::var::reader_options{.print_warnings = false}};
 
-    bio::io::var_io::record_private_data priv{&handler.get_header()};
+    bio::io::var::record_private_data priv{&handler.get_header()};
 
-    bio::io::var_io::header const & hdr = handler.get_header();
+    bio::io::var::header const & hdr = handler.get_header();
 
     auto recs = example_records_default_style<bio::io::ownership::shallow>();
 
@@ -120,10 +119,10 @@ TEST(vcf, incomplete_header)
 
     EXPECT_EQ(hdr.to_plaintext(), incomplete_header_before);
 
-    bio::io::var_io::header::filter_t filter_compare;
-    bio::io::var_io::header::info_t   info_compare;
-    bio::io::var_io::header::format_t format_compare;
-    record_t                          rec;
+    bio::io::var::header::filter_t filter_compare;
+    bio::io::var::header::info_t   info_compare;
+    bio::io::var::header::format_t format_compare;
+    record_t                       rec;
 
     /* FIRST RECORD */
     ASSERT_EQ(hdr.contigs.size(), 0ull);
@@ -140,31 +139,31 @@ TEST(vcf, incomplete_header)
     EXPECT_EQ(hdr.contigs[0].id, "20");
     EXPECT_EQ(hdr.contigs[0].idx, 0);
 
-    info_compare     = bio::io::var_io::reserved_infos.at("DP");
+    info_compare     = bio::io::var::reserved_infos.at("DP");
     info_compare.idx = 3;
     EXPECT_TRUE(hdr.infos[1] == info_compare);
 
-    info_compare     = bio::io::var_io::reserved_infos.at("AF");
+    info_compare     = bio::io::var::reserved_infos.at("AF");
     info_compare.idx = 4;
     EXPECT_TRUE(hdr.infos[2] == info_compare);
 
-    info_compare     = bio::io::var_io::reserved_infos.at("DB");
+    info_compare     = bio::io::var::reserved_infos.at("DB");
     info_compare.idx = 5;
     EXPECT_TRUE(hdr.infos[3] == info_compare);
 
-    info_compare     = bio::io::var_io::reserved_infos.at("H2");
+    info_compare     = bio::io::var::reserved_infos.at("H2");
     info_compare.idx = 6;
     EXPECT_TRUE(hdr.infos[4] == info_compare);
 
-    format_compare     = bio::io::var_io::reserved_formats.at("GQ");
+    format_compare     = bio::io::var::reserved_formats.at("GQ");
     format_compare.idx = 7;
     EXPECT_TRUE(hdr.formats[1] == format_compare);
 
-    format_compare     = bio::io::var_io::reserved_formats.at("DP");
+    format_compare     = bio::io::var::reserved_formats.at("DP");
     format_compare.idx = 3;
     EXPECT_TRUE(hdr.formats[2] == format_compare);
 
-    format_compare     = bio::io::var_io::reserved_formats.at("HQ");
+    format_compare     = bio::io::var::reserved_formats.at("HQ");
     format_compare.idx = 8;
     EXPECT_TRUE(hdr.formats[3] == format_compare);
 
@@ -187,7 +186,7 @@ TEST(vcf, incomplete_header)
 
     ASSERT_EQ(hdr.infos.size(), 6ull);
 
-    info_compare     = bio::io::var_io::reserved_infos.at("AA");
+    info_compare     = bio::io::var::reserved_infos.at("AA");
     info_compare.idx = 10;
     EXPECT_TRUE(hdr.infos[5] == info_compare);
 

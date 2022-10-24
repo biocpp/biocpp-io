@@ -29,11 +29,11 @@
 #include <bio/io/detail/magic_get.hpp>
 #include <bio/io/format/format_input_handler.hpp>
 #include <bio/io/format/vcf.hpp>
-#include <bio/io/plain_io/reader.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
-#include <bio/io/var_io/header.hpp>
-#include <bio/io/var_io/misc.hpp>
-#include <bio/io/var_io/reader_options.hpp>
+#include <bio/io/txt/reader.hpp>
+#include <bio/io/var/header.hpp>
+#include <bio/io/var/misc.hpp>
+#include <bio/io/var/reader_options.hpp>
 
 namespace bio::io
 {
@@ -63,7 +63,7 @@ namespace bio::io
 template <>
 class format_input_handler<vcf> :
   public format_input_handler_base<format_input_handler<vcf>>,
-  public var_io::format_handler_mixin
+  public var::format_handler_mixin
 {
 private:
     /*!\name CRTP related entities
@@ -96,20 +96,20 @@ private:
      * \{
      */
     //!\brief The fields that this format supports [the base class accesses this type].
-    using format_fields   = decltype(var_io::detail::field_ids);
+    using format_fields   = decltype(var::detail::field_ids);
     //!\brief Type of the raw record.
     using raw_record_type = io::detail::tuple_record<
       format_fields,
       meta::list_traits::concat<meta::list_traits::repeat<format_fields::size - 1, std::string_view>,
-                                meta::type_list<var_io::record_private_data>>>;
+                                meta::type_list<var::record_private_data>>>;
 
     //!\brief Type of the low-level iterator.
-    using lowlevel_iterator = plain_io::detail::input_iterator<plain_io::record_kind::line_and_fields>;
+    using lowlevel_iterator = txt::detail::input_iterator<txt::record_kind::line_and_fields>;
 
     //!\brief The raw record.
     raw_record_type   raw_record;
     //!\brief The header.
-    var_io::header    header;
+    var::header       header;
     //!\brief Lowlevel stream iterator.
     lowlevel_iterator file_it;
     //!\brief Cache of the chromosome string.
@@ -159,17 +159,17 @@ private:
     // implementation after class
     template <typename t>
         //!\cond REQ
-        requires(var_io::detail::is_info_element_value_type<t> || var_io::detail::is_genotype_element_value_type<t>)
+        requires(var::detail::is_info_element_value_type<t> || var::detail::is_genotype_element_value_type<t>)
     //!\endcond
-    static void init_element_value_type(var_io::value_type_id const id, t & output);
+    static void init_element_value_type(var::value_type_id const id, t & output);
 
     // implementation after class
     struct parse_element_value_type_fn;
 
     // implementation after class
-    static size_t parse_element_value_type(var_io::value_type_id const                       id,
-                                           std::string_view const                            input_string,
-                                           var_io::detail::is_info_element_value_type auto & output);
+    static size_t parse_element_value_type(var::value_type_id const                       id,
+                                           std::string_view const                         input_string,
+                                           var::detail::is_info_element_value_type auto & output);
 
     //!\brief Parse the CHROM field. Reading chrom as number means getting the index (not converting string to number).
     void parse_field(meta::vtag_t<detail::field::chrom> const & /**/, auto & parsed_field)
@@ -189,7 +189,7 @@ private:
 
                 if (print_warnings)
                 {
-                    std::cerr << "[bio::io::var_io::warning] The contig name \"" << raw_field << "\" found on line "
+                    std::cerr << "[bio::io::var::warning] The contig name \"" << raw_field << "\" found on line "
                               << line << " is not present in the header.\n";
                 }
             }
@@ -238,7 +238,7 @@ private:
 
         if (raw_field == ".")
         {
-            parsed_field = var_io::missing_value<std::remove_cvref_t<decltype(parsed_field)>>;
+            parsed_field = var::missing_value<std::remove_cvref_t<decltype(parsed_field)>>;
         }
         else
         {
@@ -271,8 +271,8 @@ private:
 
                 if (print_warnings)
                 {
-                    std::cerr << "[bio::io::var_io::warning] The filter name \"" << subfield << "\" found on line "
-                              << line << " was not present in the header.\n";
+                    std::cerr << "[bio::io::var::warning] The filter name \"" << subfield << "\" found on line " << line
+                              << " was not present in the header.\n";
                 }
             }
             else
@@ -292,36 +292,36 @@ private:
     {
         if (print_warnings)
         {
-            std::cerr << "[bio::io::var_io::warning] The INFO name \"" << info_name << "\" found on line " << line
+            std::cerr << "[bio::io::var::warning] The INFO name \"" << info_name << "\" found on line " << line
                       << " was not present in the header.\n";
         }
 
-        if (var_io::reserved_infos.contains(info_name))
+        if (var::reserved_infos.contains(info_name))
         {
-            header.infos.push_back(var_io::reserved_infos.at(info_name));
+            header.infos.push_back(var::reserved_infos.at(info_name));
         }
         else
         {
-            var_io::header::info_t info;
+            var::header::info_t info;
             info.id          = info_name;
             info.description = "\"Automatically added by BioC++.\"";
 
             if (info_value.empty()) // no "=" → flag
             {
                 info.type    = "Flag";
-                info.type_id = var_io::value_type_id::flag;
+                info.type_id = var::value_type_id::flag;
                 info.number  = 0;
             }
             else if (info_value.find(',') != std::string_view::npos) // found comma → assume vector-of-strings
             {
                 info.type    = "String";
-                info.type_id = var_io::value_type_id::vector_of_string;
-                info.number  = var_io::header_number::dot;
+                info.type_id = var::value_type_id::vector_of_string;
+                info.number  = var::header_number::dot;
             }
             else // assume string as type
             {
                 info.type    = "String";
-                info.type_id = var_io::value_type_id::string;
+                info.type_id = var::value_type_id::string;
                 info.number  = 1;
             }
 
@@ -334,7 +334,7 @@ private:
 
     //!\brief Overload for parsing INFO.
     template <ranges::back_insertable parsed_field_t>
-        requires var_io::detail::info_element_reader_concept<std::ranges::range_reference_t<parsed_field_t>>
+        requires var::detail::info_element_reader_concept<std::ranges::range_reference_t<parsed_field_t>>
     void parse_field(meta::vtag_t<detail::field::info> const & /**/, parsed_field_t & parsed_field)
     {
         using key_t   = detail::first_elem_t<std::ranges::range_reference_t<parsed_field_t>>;
@@ -383,9 +383,9 @@ private:
             /* PARSE VALUE */
             if (val.empty()) // no "=" → flag
             {
-                if constexpr (var_io::detail::is_info_element_value_type<value_t>)
+                if constexpr (var::detail::is_info_element_value_type<value_t>)
                 {
-                    if (header.infos[info_pos].type_id != var_io::value_type_id::flag ||
+                    if (header.infos[info_pos].type_id != var::value_type_id::flag ||
                         header.infos[info_pos].number != 0)
                     {
                         error("INFO field \"", key, "\" is not a flag and should come with a value -- but does not.");
@@ -397,13 +397,13 @@ private:
             }
             else // any other type than flag
             {
-                if constexpr (var_io::detail::is_info_element_value_type<value_t>)
+                if constexpr (var::detail::is_info_element_value_type<value_t>)
                 {
                     int32_t num_val = parse_element_value_type(header.infos[info_pos].type_id, val, parsed_value);
                     if (int32_t exp_val = header.infos[info_pos].number;
                         print_warnings && num_val != exp_val && exp_val >= 0)
                     {
-                        std::cerr << "[bio::io::var_io::warning] Expected to find " << exp_val
+                        std::cerr << "[bio::io::var::warning] Expected to find " << exp_val
                                   << " values for the INFO field " << key << " but found: " << num_val << "\n";
                     }
                 }
@@ -422,22 +422,22 @@ private:
     {
         if (print_warnings)
         {
-            std::cerr << "[bio::io::var_io::warning] The FORMAT name \"" << format_name << "\" found on line " << line
+            std::cerr << "[bio::io::var::warning] The FORMAT name \"" << format_name << "\" found on line " << line
                       << " was not present in the header.\n";
         }
 
-        if (var_io::reserved_formats.contains(format_name))
+        if (var::reserved_formats.contains(format_name))
         {
-            header.formats.push_back(var_io::reserved_formats.at(format_name));
+            header.formats.push_back(var::reserved_formats.at(format_name));
         }
         else
         {
-            var_io::header::format_t format;
+            var::header::format_t format;
 
             format.id          = format_name;
             format.number      = 1;
             format.type        = "String";
-            format.type_id     = var_io::value_type_id::string;
+            format.type_id     = var::value_type_id::string;
             format.description = "\"Automatically added by BioC++.\"";
 
             // create a new header with new format and replace current one
@@ -450,12 +450,12 @@ private:
     //!\brief Overload for parsing GENOTYPES.
     template <ranges::back_insertable field_t>
         //!\cond REQ
-        requires var_io::detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
+        requires var::detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
     //!\endcond
     void parse_field(meta::vtag_t<detail::field::genotypes> const & /**/, field_t & parsed_field);
 
     //!\brief Overload for parsing the private data.
-    void parse_field(meta::vtag_t<detail::field::_private> const & /**/, var_io::record_private_data & parsed_field)
+    void parse_field(meta::vtag_t<detail::field::_private> const & /**/, var::record_private_data & parsed_field)
     {
         parsed_field.header_ptr  = &header;
         parsed_field.raw_record  = nullptr;
@@ -479,7 +479,7 @@ public:
      * \param[in] options An object with options for the input handler.
      * \details
      *
-     * The options argument is typically bio::io::var_io::reader_options, but any object with a subset of similarly
+     * The options argument is typically bio::io::var::reader_options, but any object with a subset of similarly
      * named members is also accepted. See bio::io::format_input_handler<vcf> for the supported options and defaults.
      */
     template <typename options_t>
@@ -500,7 +500,7 @@ public:
             header_string += file_it->line;
             header_string += "\n";
         }
-        header = var_io::header{std::move(header_string)};
+        header = var::header{std::move(header_string)};
     }
 
     //!\brief Construct with only an input stream.
@@ -508,7 +508,7 @@ public:
     //!\}
 
     //!\brief Return a reference to the header contained in the input handler.
-    var_io::header const & get_header() const { return header; }
+    var::header const & get_header() const { return header; }
 
     //!\brief This resets the stream iterator after region-seek.
     void reset_stream() { file_it = lowlevel_iterator{*stream, false}; }
@@ -525,87 +525,87 @@ public:
  */
 template <typename t>
     //!\cond REQ
-    requires(var_io::detail::is_info_element_value_type<t> || var_io::detail::is_genotype_element_value_type<t>)
+    requires(var::detail::is_info_element_value_type<t> || var::detail::is_genotype_element_value_type<t>)
 //!\endcond
-inline void format_input_handler<vcf>::init_element_value_type(var_io::value_type_id const id, t & output)
+inline void format_input_handler<vcf>::init_element_value_type(var::value_type_id const id, t & output)
 {
     switch (id)
     {
-        case var_io::value_type_id::char8:
+        case var::value_type_id::char8:
             {
-                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::char8);
+                constexpr size_t id = static_cast<size_t>(var::value_type_id::char8);
                 output.template emplace<id>();
                 return;
             }
-        case var_io::value_type_id::int8:
+        case var::value_type_id::int8:
             {
-                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::int8);
+                constexpr size_t id = static_cast<size_t>(var::value_type_id::int8);
                 output.template emplace<id>();
                 return;
             }
-        case var_io::value_type_id::int16:
+        case var::value_type_id::int16:
             {
-                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::int16);
+                constexpr size_t id = static_cast<size_t>(var::value_type_id::int16);
                 output.template emplace<id>();
                 return;
             }
-        case var_io::value_type_id::int32:
+        case var::value_type_id::int32:
             {
-                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::int32);
+                constexpr size_t id = static_cast<size_t>(var::value_type_id::int32);
                 output.template emplace<id>();
                 return;
             }
-        case var_io::value_type_id::float32:
+        case var::value_type_id::float32:
             {
-                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::float32);
+                constexpr size_t id = static_cast<size_t>(var::value_type_id::float32);
                 output.template emplace<id>();
                 return;
             }
-        case var_io::value_type_id::string:
+        case var::value_type_id::string:
             {
-                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::string);
+                constexpr size_t id = static_cast<size_t>(var::value_type_id::string);
                 output.template emplace<id>();
                 return;
             }
-        case var_io::value_type_id::vector_of_int8:
+        case var::value_type_id::vector_of_int8:
             {
-                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::vector_of_int8);
+                constexpr size_t id = static_cast<size_t>(var::value_type_id::vector_of_int8);
                 output.template emplace<id>();
                 return;
             }
-        case var_io::value_type_id::vector_of_int16:
+        case var::value_type_id::vector_of_int16:
             {
-                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::vector_of_int16);
+                constexpr size_t id = static_cast<size_t>(var::value_type_id::vector_of_int16);
                 output.template emplace<id>();
                 return;
             }
-        case var_io::value_type_id::vector_of_int32:
+        case var::value_type_id::vector_of_int32:
             {
-                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::vector_of_int32);
+                constexpr size_t id = static_cast<size_t>(var::value_type_id::vector_of_int32);
                 output.template emplace<id>();
                 return;
             }
-        case var_io::value_type_id::vector_of_float32:
+        case var::value_type_id::vector_of_float32:
             {
-                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::vector_of_float32);
+                constexpr size_t id = static_cast<size_t>(var::value_type_id::vector_of_float32);
                 output.template emplace<id>();
                 return;
             }
-        case var_io::value_type_id::vector_of_string:
+        case var::value_type_id::vector_of_string:
             {
-                constexpr size_t id = static_cast<size_t>(var_io::value_type_id::vector_of_string);
+                constexpr size_t id = static_cast<size_t>(var::value_type_id::vector_of_string);
                 output.template emplace<id>();
                 return;
             }
-        case var_io::value_type_id::flag:
+        case var::value_type_id::flag:
             {
-                if constexpr (var_io::detail::is_genotype_element_value_type<t>)
+                if constexpr (var::detail::is_genotype_element_value_type<t>)
                 {
                     throw unreachable_code{__FILE__, ':', __LINE__, '\n', __PRETTY_FUNCTION__};
                 }
                 else
                 {
-                    constexpr size_t id = static_cast<size_t>(var_io::value_type_id::flag);
+                    constexpr size_t id = static_cast<size_t>(var::value_type_id::flag);
                     output.template emplace<id>();
                 }
                 return;
@@ -648,7 +648,7 @@ struct format_input_handler<vcf>::parse_element_value_type_fn
     inline size_t operator()(arith_t & output) const
     {
         if (input == missing)
-            output = var_io::missing_value<arith_t>;
+            output = var::missing_value<arith_t>;
         else
             detail::string_to_number(input, output);
         return 1;
@@ -686,15 +686,15 @@ struct format_input_handler<vcf>::parse_element_value_type_fn
     }
 };
 
-/*!\brief Parse text input into a bio::io::var_io::info_element_value_type /
- * bio::io::var_io::genotype_element_value_type. \param[in]  id           ID of the type that shall be read. \param[in]
+/*!\brief Parse text input into a bio::io::var::info_element_value_type /
+ * bio::io::var::genotype_element_value_type. \param[in]  id           ID of the type that shall be read. \param[in]
  * input_string The string data to read from. \param[out] output       The object to store the result into. \returns The
  * number of elements stored in the output in case ID is one of the "vector_of_"-types; 1 otherwise.
  */
-template <var_io::detail::is_info_element_value_type output_t>
-inline size_t format_input_handler<vcf>::parse_element_value_type(var_io::value_type_id const id,
-                                                                  std::string_view const      input_string,
-                                                                  output_t &                  output)
+template <var::detail::is_info_element_value_type output_t>
+inline size_t format_input_handler<vcf>::parse_element_value_type(var::value_type_id const id,
+                                                                  std::string_view const   input_string,
+                                                                  output_t &               output)
 {
     init_element_value_type(id, output);
     return std::visit(parse_element_value_type_fn{input_string}, output);
@@ -702,7 +702,7 @@ inline size_t format_input_handler<vcf>::parse_element_value_type(var_io::value_
 
 //!\brief Overload for reading the GENOTYPE field.
 template <ranges::back_insertable field_t>
-    requires var_io::detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
+    requires var::detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
 inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::genotypes> const & /**/,
                                                    field_t & parsed_field)
 {
@@ -756,16 +756,16 @@ inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::g
 
               switch (format.number)
               {
-                  case bio::io::var_io::header_number::A:
+                  case bio::io::var::header_number::A:
                       concat_capacity = n_samples * n_alts;
                       break;
-                  case bio::io::var_io::header_number::R:
+                  case bio::io::var::header_number::R:
                       concat_capacity = n_samples * (n_alts + 1);
                       break;
-                  case bio::io::var_io::header_number::G:
-                      concat_capacity = n_samples * (var_io::detail::vcf_gt_formula(n_alts, n_alts) + 1);
+                  case bio::io::var::header_number::G:
+                      concat_capacity = n_samples * (var::detail::vcf_gt_formula(n_alts, n_alts) + 1);
                       break;
-                  case bio::io::var_io::header_number::dot:
+                  case bio::io::var::header_number::dot:
                       // assume 1 value per sample if nothing else is known
                       concat_capacity = n_samples;
                       break;

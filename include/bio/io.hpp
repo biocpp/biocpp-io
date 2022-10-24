@@ -118,53 +118,53 @@ namespace bio::io
 namespace bio::io::detail
 {}
 
-/*!\namespace bio::io::plain_io
+/*!\namespace bio::io::txt
  * \brief Namespace for the Plain I/O submodule.
  */
-namespace bio::io::plain_io
+namespace bio::io::txt
 {}
 
 /*!\if DEV
- * \namespace bio::io::plain_io::detail
- * \brief The plain_io internal namespace.
+ * \namespace bio::io::txt::detail
+ * \brief The txt internal namespace.
  * \details
  * The contents of this namespace are not visible to consumers of the library and the documentation is
  * only generated for developers.
  * \endif
  */
-namespace bio::io::plain_io::detail
+namespace bio::io::txt::detail
 {}
 
-/*!\namespace bio::io::seq_io
+/*!\namespace bio::io::seq
  * \brief Namespace for the Seq I/O submodule.
  */
-namespace bio::io::seq_io
+namespace bio::io::seq
 {}
 
 /*!\if DEV
- * \namespace bio::io::seq_io::detail
- * \brief The seq_io internal namespace.
+ * \namespace bio::io::seq::detail
+ * \brief The seq internal namespace.
  * \details
  * The contents of this namespace are not visible to consumers of the library and the documentation is
  * only generated for developers.
  * \endif
  */
-namespace bio::io::seq_io::detail
+namespace bio::io::seq::detail
 {}
 
-/*!\namespace bio::io::var_io
+/*!\namespace bio::io::var
  * \brief Namespace for the Var I/O module.
  */
-namespace bio::io::var_io
+namespace bio::io::var
 {}
 
 /*!\if DEV
- * \namespace bio::io::var_io::detail
- * \brief The var_io internal namespace.
+ * \namespace bio::io::var::detail
+ * \brief The var internal namespace.
  * \details
  * The contents of this namespace are not visible to consumers of the library and the documentation is
  * only generated for developers.
  * \endif
  */
-namespace bio::io::var_io::detail
+namespace bio::io::var::detail
 {}
