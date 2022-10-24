@@ -19,7 +19,3 @@
  * \ingroup io
  * \brief Reader and writer for plaintext and CSV/TSV files.
  */
-
-/*!\namespace bio::io::plain_io
- * \brief Namespace for the Plain I/O submodule.
- */

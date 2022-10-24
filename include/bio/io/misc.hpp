@@ -16,7 +16,7 @@
 #include <bio/meta/type_list/type_list.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
 
-#include <bio/io/platform.hpp>
+#include <bio/io.hpp>
 
 /*!\file
  * \brief Provides various minor utilities.

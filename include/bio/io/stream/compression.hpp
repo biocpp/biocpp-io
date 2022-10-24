@@ -18,8 +18,8 @@
 #include <string_view>
 #include <vector>
 
+#include <bio/io.hpp>
 #include <bio/io/detail/to_little_endian.hpp>
-#include <bio/io/platform.hpp>
 
 namespace bio::io
 {
