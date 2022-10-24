@@ -76,7 +76,7 @@ namespace bio::io::seq_io
  *
  * \snippet test/snippet/seq_io/seq_io_reader.cpp decomposed
  *
- * Note that the order of the fields is defined by bio::io::seq_io::default_field_ids and independent
+ * Note that the order of the fields is defined by the members of bio::io::seq_io::record and independent
  * of the names you give to the bindings.
  *
  * ### Views on files
@@ -111,7 +111,7 @@ private:
     friend base_t;
     //!\cond
     // Doxygen is confused by this for some reason
-    friend detail::in_file_iterator<reader>;
+    friend io::detail::in_file_iterator<reader>;
     //!\endcond
 
     //!\brief Expose the options type to the base-class.

@@ -23,19 +23,19 @@
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
 #include <bio/io/stream/transparent_istream.hpp>
 
-namespace bio::io::detail
+namespace bio::io::plain_io::detail
 {
 
 /*!\brief An input iterator that parses files line-wise and exposes string_views into the read buffer.
  * \ingroup plain_io
  * \tparam record_kind_ Whether to read lines or lines+fields.
  */
-template <plain_io::record_kind record_kind_ = plain_io::record_kind::line>
-class plaintext_input_iterator
+template <record_kind record_kind_ = record_kind::line>
+class input_iterator
 {
 private:
     //!\brief Down-cast pointer to the stream-buffer.
-    bio::io::detail::stream_buffer_exposer<char> * stream_buf = nullptr;
+    io::detail::stream_buffer_exposer<char> * stream_buf = nullptr;
 
     //!\brief Place to store lines that overlap buffer boundaries.
     std::string         overflow_buffer;
@@ -43,7 +43,7 @@ private:
     std::vector<size_t> field_end_positions;
 
     //!\brief The record.
-    plain_io::record record_;
+    record record_;
 
     //!\brief Whether iterator is at end.
     bool at_end     = false;
@@ -72,13 +72,11 @@ public:
     /*!\name Associated types
      * \{
      */
-    using difference_type = ptrdiff_t; //!< Defaults to ptrdiff_t.
+    using difference_type   = ptrdiff_t; //!< Defaults to ptrdiff_t.
     //!\brief The record type.
-    using value_type =
-      std::conditional_t<record_kind_ == plain_io::record_kind::line, std::string_view, plain_io::record>;
+    using value_type        = std::conditional_t<record_kind_ == record_kind::line, std::string_view, record>;
     //!\brief A reference to the record type.
-    using reference =
-      std::conditional_t<record_kind_ == plain_io::record_kind::line, std::string_view, plain_io::record &>;
+    using reference         = std::conditional_t<record_kind_ == record_kind::line, std::string_view, record &>;
     using pointer           = value_type *;            //!< Has no pointer type.
     using iterator_category = std::input_iterator_tag; //!< Pure input iterator.
     //!\}
@@ -86,43 +84,43 @@ public:
     /*!\name Constructors, destructor and assignment
      * \{
      */
-    plaintext_input_iterator() noexcept                                             = default; //!< Defaulted.
-    plaintext_input_iterator(plaintext_input_iterator const &) noexcept             = default; //!< Defaulted.
-    plaintext_input_iterator(plaintext_input_iterator &&) noexcept                  = default; //!< Defaulted.
-    plaintext_input_iterator & operator=(plaintext_input_iterator const &) noexcept = default; //!< Defaulted.
-    plaintext_input_iterator & operator=(plaintext_input_iterator &&) noexcept      = default; //!< Defaulted.
-    ~plaintext_input_iterator() noexcept                                            = default; //!< Defaulted.
+    input_iterator() noexcept                                   = default; //!< Defaulted.
+    input_iterator(input_iterator const &) noexcept             = default; //!< Defaulted.
+    input_iterator(input_iterator &&) noexcept                  = default; //!< Defaulted.
+    input_iterator & operator=(input_iterator const &) noexcept = default; //!< Defaulted.
+    input_iterator & operator=(input_iterator &&) noexcept      = default; //!< Defaulted.
+    ~input_iterator() noexcept                                  = default; //!< Defaulted.
 
     //!\brief Construct from a stream buffer.
-    explicit plaintext_input_iterator(std::basic_streambuf<char> & ibuf, bool const read_first_record = true) :
-      stream_buf{reinterpret_cast<bio::io::detail::stream_buffer_exposer<char> *>(&ibuf)}
+    explicit input_iterator(std::basic_streambuf<char> & ibuf, bool const read_first_record = true) :
+      stream_buf{reinterpret_cast<io::detail::stream_buffer_exposer<char> *>(&ibuf)}
     {
         init(read_first_record);
     }
 
     //!\overload
-    plaintext_input_iterator(std::basic_streambuf<char> & ibuf, char const sep, bool const read_first_record = true)
+    input_iterator(std::basic_streambuf<char> & ibuf, char const sep, bool const read_first_record = true)
       //!\cond REQ
-      requires(record_kind_ == plain_io::record_kind::line_and_fields)
+      requires(record_kind_ == record_kind::line_and_fields)
       //!\endcond
       :
-      stream_buf{reinterpret_cast<bio::io::detail::stream_buffer_exposer<char> *>(&ibuf)}, field_sep{sep}
+      stream_buf{reinterpret_cast<io::detail::stream_buffer_exposer<char> *>(&ibuf)}, field_sep{sep}
     {
         init(read_first_record);
     }
 
     //!\brief Construct from a stream.
-    explicit plaintext_input_iterator(std::istream & istr, bool const read_first_record = true) :
-      plaintext_input_iterator{*istr.rdbuf(), read_first_record}
+    explicit input_iterator(std::istream & istr, bool const read_first_record = true) :
+      input_iterator{*istr.rdbuf(), read_first_record}
     {}
 
     //!\overload
-    plaintext_input_iterator(std::istream & istr, char const sep, bool const read_first_record = true)
+    input_iterator(std::istream & istr, char const sep, bool const read_first_record = true)
       //!\cond REQ
-      requires(record_kind_ == plain_io::record_kind::line_and_fields)
+      requires(record_kind_ == record_kind::line_and_fields)
       //!\endcond
       :
-      plaintext_input_iterator{*istr.rdbuf(), sep, read_first_record}
+      input_iterator{*istr.rdbuf(), sep, read_first_record}
     {}
 
     //!\}
@@ -131,7 +129,7 @@ public:
      * \{
      */
     //!\brief Advance by one line and rebuffer if necessary (vtable lookup iff rebuffering).
-    plaintext_input_iterator & operator++()
+    input_iterator & operator++()
     {
         assert(stream_buf != nullptr);
 
@@ -149,7 +147,7 @@ public:
         }
 
         overflow_buffer.clear();
-        if constexpr (record_kind_ == plain_io::record_kind::line_and_fields)
+        if constexpr (record_kind_ == record_kind::line_and_fields)
             field_end_positions.clear();
 
         bool   rec_end_found  = false;
@@ -169,7 +167,7 @@ public:
                 }
                 else
                 {
-                    if constexpr (record_kind_ == plain_io::record_kind::line_and_fields)
+                    if constexpr (record_kind_ == record_kind::line_and_fields)
                         if (stream_buf->gptr()[count] == field_sep)
                             field_end_positions.push_back(old_count + count);
                 }
@@ -215,7 +213,7 @@ public:
 
         /* create the record */
         record_.line = std::string_view{data_begin, end_of_record};
-        if constexpr (record_kind_ == plain_io::record_kind::line_and_fields)
+        if constexpr (record_kind_ == record_kind::line_and_fields)
         {
             // add last end position
             field_end_positions.push_back(end_of_record);
@@ -250,7 +248,7 @@ public:
     //!\brief Read current value from buffer (no vtable lookup, safe even at end).
     reference operator*()
     {
-        if constexpr (record_kind_ == plain_io::record_kind::line_and_fields)
+        if constexpr (record_kind_ == record_kind::line_and_fields)
             return record_;
         else
             return record_.line;
@@ -258,7 +256,7 @@ public:
     //!\brief Arrow operator.
     pointer operator->()
     {
-        if constexpr (record_kind_ == plain_io::record_kind::line_and_fields)
+        if constexpr (record_kind_ == record_kind::line_and_fields)
             return &record_;
         else
             return &record_.line;
@@ -289,32 +287,29 @@ public:
      * \{
      */
     //!\brief True if the read buffer is not empty; involves no vtable lookup.
-    friend bool operator==(plaintext_input_iterator const & lhs, std::default_sentinel_t const &) noexcept
-    {
-        return lhs.at_end;
-    }
+    friend bool operator==(input_iterator const & lhs, std::default_sentinel_t const &) noexcept { return lhs.at_end; }
 
     //!\brief True if the read buffer is empty; involves no vtable lookup.
-    friend bool operator!=(plaintext_input_iterator const & lhs, std::default_sentinel_t const &) noexcept
+    friend bool operator!=(input_iterator const & lhs, std::default_sentinel_t const &) noexcept
     {
         return !(lhs == std::default_sentinel);
     }
 
     //!\brief True if the read buffer is not empty; involves no vtable lookup.
-    friend bool operator==(std::default_sentinel_t const &, plaintext_input_iterator const & rhs) noexcept
+    friend bool operator==(std::default_sentinel_t const &, input_iterator const & rhs) noexcept
     {
         return rhs == std::default_sentinel;
     }
 
     //!\brief True if the read buffer is empty; involves no vtable lookup.
-    friend bool operator!=(std::default_sentinel_t const &, plaintext_input_iterator const & rhs) noexcept
+    friend bool operator!=(std::default_sentinel_t const &, input_iterator const & rhs) noexcept
     {
         return !(rhs == std::default_sentinel);
     }
     //!\}
 };
 
-} // namespace bio::io::detail
+} // namespace bio::io::plain_io::detail
 
 namespace bio::io::plain_io
 {
@@ -377,7 +372,7 @@ public:
      * \{
      */
     //!\brief The iterator type of this view (an input iterator).
-    using iterator       = detail::plaintext_input_iterator<record_kind_>;
+    using iterator       = detail::input_iterator<record_kind_>;
     //!\brief The const iterator type is void, because files are not const-iterable.
     using const_iterator = void;
     //!\brief The type returned by end().

@@ -103,7 +103,7 @@ private:
     using raw_record_type =
       io::detail::tuple_record<format_fields, meta::type_list<std::string_view, std::string_view>>;
     //!\brief Type of the low-level iterator.
-    using lowlevel_iterator = detail::plaintext_input_iterator<plain_io::record_kind::line>;
+    using lowlevel_iterator = plain_io::detail::input_iterator<plain_io::record_kind::line>;
 
     //!\brief The raw record.
     raw_record_type raw_record;

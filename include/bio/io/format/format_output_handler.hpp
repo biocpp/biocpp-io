@@ -108,7 +108,7 @@ private:
     }
 
     //!\brief Write numbers.
-    void write_field_aux(ignore_t) {}
+    void write_field_aux(meta::ignore_t) {}
     //!\}
 
     /*!\name Writing individual fields (step 2)

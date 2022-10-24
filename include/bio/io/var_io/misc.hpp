@@ -29,8 +29,8 @@
 #include <bio/io/detail/tuple_record.hpp>
 #include <bio/io/misc.hpp>
 
-namespace bio::io::detail
-{} // namespace bio::io::detail
+namespace bio::io::var_io::detail
+{} // namespace bio::io::var_io::detail
 
 //-----------------------------------------------------------------------------
 // missing_value
@@ -80,7 +80,7 @@ inline float missing_value<float> = []()
 // end_of_vector
 //-----------------------------------------------------------------------------
 
-namespace bio::io::detail
+namespace bio::io::var_io::detail
 {
 /*!\addtogroup var_io
  * \{
@@ -117,7 +117,7 @@ inline float end_of_vector<float> = []()
 }();
 //!\}
 //!\}
-} // namespace bio::io::detail
+} // namespace bio::io::var_io::detail
 
 namespace bio::io::var_io
 {
@@ -146,7 +146,7 @@ enum class value_type_id : size_t
 
 } // namespace bio::io::var_io
 
-namespace bio::io::detail
+namespace bio::io::var_io::detail
 {
 
 //!\brief int* and vector_of_int* are each "compatible" with each other; the rest only with self.
@@ -362,7 +362,7 @@ inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<double> = bcf_ty
 template <>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<char> = bcf_type_descriptor::char8;
 //!\brief Specialisation for seqan3 alphabets.
-template <detail::deliberate_alphabet t>
+template <io::detail::deliberate_alphabet t>
 inline constexpr bcf_type_descriptor type_2_bcf_type_descriptor<t> = bcf_type_descriptor::char8;
 
 //!\brief Specialisation for cstring.
@@ -386,18 +386,18 @@ constexpr size_t vcf_gt_formula(size_t const a, size_t const b)
 
 //!\brief The field_ids used in this domain.
 //!\ingroup var_io
-static constexpr auto field_ids = meta::vtag<detail::field::chrom,
-                                             detail::field::pos,
-                                             detail::field::id,
-                                             detail::field::ref,
-                                             detail::field::alt,
-                                             detail::field::qual,
-                                             detail::field::filter,
-                                             detail::field::info,
-                                             detail::field::genotypes,
-                                             detail::field::_private>;
+static constexpr auto field_ids = meta::vtag<io::detail::field::chrom,
+                                             io::detail::field::pos,
+                                             io::detail::field::id,
+                                             io::detail::field::ref,
+                                             io::detail::field::alt,
+                                             io::detail::field::qual,
+                                             io::detail::field::filter,
+                                             io::detail::field::info,
+                                             io::detail::field::genotypes,
+                                             io::detail::field::_private>;
 
-} // namespace bio::io::detail
+} // namespace bio::io::var_io::detail
 
 namespace bio::io::var_io
 {

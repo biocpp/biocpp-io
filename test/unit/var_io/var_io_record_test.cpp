@@ -28,5 +28,10 @@ TYPED_TEST_SUITE(var_io_record, var_io_record_types, );
 
 TYPED_TEST(var_io_record, reader_requirements)
 {
-    EXPECT_TRUE(bio::io::detail::record_read_concept_checker(std::type_identity<TypeParam>{}));
+    EXPECT_TRUE(bio::io::var_io::detail::record_read_concept_checker(std::type_identity<TypeParam>{}));
+}
+
+TYPED_TEST(var_io_record, writer_requirements)
+{
+    EXPECT_TRUE(bio::io::var_io::detail::record_write_concept_checker(std::type_identity<TypeParam>{}));
 }
