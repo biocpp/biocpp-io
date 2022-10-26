@@ -37,6 +37,10 @@
 namespace bio::io::seq
 {
 
+//-----------------------------------------------------------------------------
+// the record
+//-----------------------------------------------------------------------------
+
 /*!\brief Record type for sequence I/O.
  * \ingroup seq
  * \tparam id_t     Type of the ID member. See the member for type requirements.
@@ -49,11 +53,15 @@ namespace bio::io::seq
  *
  * See the \ref record_faq for more information on record-based reading.
  */
-template <typename id_t   = std::string,
-          typename seq_t  = std::vector<alphabet::dna5>,
-          typename qual_t = std::vector<alphabet::phred42>>
+template <typename _id_t   = std::string,
+          typename _seq_t  = std::vector<alphabet::dna5>,
+          typename _qual_t = std::vector<alphabet::phred42>>
 struct record
 {
+    using id_t   = _id_t;   //!< The type of the ID member.
+    using seq_t  = _seq_t;  //!< The type of the SEQ member.
+    using qual_t = _qual_t; //!< The type of the QUAL member.
+
     /*!\brief The ID.
      * \details
      *
@@ -74,7 +82,7 @@ struct record
      *
      * When writing (bio::io::seq::writer), the type can be one of the following:
      *
-     * 1. any std::ranges::forward_range over an alphabet that is convertible to `char`.
+     * 1. any std::ranges::forward_range over `char`.
      *
      * The default and all pre-defined aliases satisfy the requirements for reading and writing.
      *
@@ -97,9 +105,9 @@ struct record
      *   4. a std::ranges::transform_view defined on a std::string_view (**shallow**, converted elements)
      *   5. bio::meta::meta::ignore_t (**ignored**)
      *
-     * ### Type requirements when writing
-     *
      * See \ref shallow_vs_deep for more details on what "deep" and "shallow" mean here.
+     *
+     * ### Type requirements when writing
      *
      * When writing (bio::io::seq::writer), the type can be one of the following:
      *
@@ -126,18 +134,48 @@ struct record
      *   4. a std::ranges::transform_view defined on a std::string_view (**shallow**, converted elements)
      *   5. bio::meta::meta::ignore_t (**ignored**)
      *
-     * ### Type requirements when writing
-     *
      * See \ref shallow_vs_deep for more details on what "deep" and "shallow" mean here.
+     *
+     * ### Type requirements when writing
      *
      * When writing (bio::io::seq::writer), the type can be one of the following:
      *
-     * 1. any std::ranges::forward_range over an bio::alphabet::alphabet.
+     * 1. any std::ranges::forward_range over `char` or a bio::alphabet::quality_alphabet.
      *
      * The default and all pre-defined aliases satisfy the requirements for reading and writing.
      */
     qual_t qual{};
 };
+
+//-----------------------------------------------------------------------------
+// tie_record()
+//-----------------------------------------------------------------------------
+
+/*!\brief Helper function for easily creating a record of references.
+ * \ingroup var
+ * \tparam id_t         Type of the ID parameter.
+ * \tparam seq_t        Type of the SEQ parameter.
+ * \tparam qual_t       Type of the QUAL parameter.
+ * \param[in,out] id    The ID parameter.
+ * \param[in,out] seq   The SEQ parameter.
+ * \param[in,out] qual  The QUAL parameter.
+ * \returns A bio::io::seq::record where all the members are references to this function's parameters.
+ * \details
+ *
+ * ### Example
+ *
+ * TODO
+ */
+template <typename id_t, typename seq_t, typename qual_t>
+auto tie_record(id_t & id, seq_t & seq, qual_t & qual)
+
+{
+    return record<id_t &, seq_t &, qual_t &>{id, seq, qual};
+}
+
+//-----------------------------------------------------------------------------
+// Aliases
+//-----------------------------------------------------------------------------
 
 /*!\name Pre-defined record aliases
  * \ingroup seq
@@ -177,6 +215,10 @@ using record_protein_shallow = record<std::string_view, views::char_conversion_v
 
 } // namespace bio::io::seq
 
+//-----------------------------------------------------------------------------
+// requirement checkers
+//-----------------------------------------------------------------------------
+
 namespace bio::io::seq::detail
 {
 
@@ -201,6 +243,32 @@ constexpr bool record_read_concept_checker(std::type_identity<seq::record<id_t, 
                   "bio::io::seq::record.");
     return true;
 }
+
+//!\brief Validates the concepts that the record type needs to satisfy when being passed to a reader.
+template <typename id_t, typename seq_t, typename qual_t>
+constexpr bool record_write_concept_checker(std::type_identity<seq::record<id_t, seq_t, qual_t>>)
+{
+    // TODO(GCC11): once GCC10 is dropped, remove the "<typename t = seq_t>"
+    static_assert(io::detail::char_range<id_t>,
+                  "Requirements for the type of the ID-field not met. See documentation for bio::io::seq::record.");
+    static_assert(io::detail::lazy_concept_checker([]<typename t = seq_t>(auto) requires(
+                    std::ranges::forward_range<t> && alphabet::alphabet<std::ranges::range_reference_t<t>>) {
+                      return std::true_type{};
+                  }),
+                  "Requirements for the type of the SEQ-field not met. See documentation for bio::io::seq::record.");
+    static_assert(io::detail::lazy_concept_checker([]<typename t = qual_t>(auto) requires(
+                    std::ranges::forward_range<t> && (alphabet::quality_alphabet<std::ranges::range_reference_t<t>> ||
+                                                      std::same_as<char, std::ranges::range_value_t<t>>)) {
+                      return std::true_type{};
+                  }),
+                  "Requirements for the type of the QUAL-field not met. See documentation for "
+                  "bio::io::seq::record.");
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+// format_handler_mixin
+//-----------------------------------------------------------------------------
 
 //!\brief The field_ids used in this domain.
 //!\ingroup seq
