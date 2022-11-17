@@ -10,8 +10,10 @@
 
 #include <cassert>
 #include <limits>
+#include <string>
+#include <tuple>
 
-#include <bio/io/misc.hpp>
+#include <bio/io.hpp>
 
 /*!\file
  * \brief Provides bio::io::genomic_region.
@@ -37,27 +39,27 @@ namespace bio::io
  * places 1-based, closed intervals (`[beg, end]`) may be represented in this data structure. They will be explicitly
  * noted as such.
  */
-template <ownership own = ownership::deep>
 struct genomic_region
 {
-    //!\brief Type of the #chrom member.
-    using string_t = std::conditional_t<own == ownership::deep, std::string, std::string_view>;
-
-    //!\brief The chromosome or contig identifier .
-    string_t chrom;
+    //!\brief The chromosome or contig identifier.
+    std::string chrom;
     //!\brief Beginning of the interval.
-    int64_t  beg = 0;
+    int64_t     beg = 0;
     //!\brief End of the interval; must be >= #beg.
-    int64_t  end = std::numeric_limits<int64_t>::max();
+    int64_t     end = std::numeric_limits<int64_t>::max();
 
     //!\brief Defaulted comparison operators.
     friend bool operator==(genomic_region const &, genomic_region const &)  = default;
     //!\brief Defaulted comparison operators.
     friend auto operator<=>(genomic_region const &, genomic_region const &) = default;
 
-    /*!\brief Checks whether this region lies before, over or beyond the given point.
-     * \param chrom The contig/chromosome string for the query position.
-     * \param pos   The query position.
+    /*!\brief Checks whether the given region lies before, on or beyond the given point.
+     * \param lchrom The contig/chromosome string for the query region.
+     * \param lbeg   The query region begin position.
+     * \param lend   The query region end position.
+     * \param rchrom The contig/chromosome string for the point.
+     * \param rpos   The position of the point.
+     *
      * \returns std::weak_ordering denoting the relative position of the point.
      * \details
      *
@@ -67,18 +69,35 @@ struct genomic_region
      *   * std::weak_ordering::equivalent if the point is inside the region.
      *   * std::weak_ordering::greater if this region begins beyond the point.
      *
-     * The strings are compared lexicographically. The interval is assumed to be half-open, i.e. \p pos == #end will
+     * The strings are compared lexicographically. The interval is assumed to be half-open, i.e. \p rpos == \p lend will
      * result in std::weak_ordering::greater.
      */
-    std::weak_ordering relative_to(std::string_view const chrom, int64_t const pos) const
+    static constexpr std::weak_ordering relative_to(std::string_view const lchrom,
+                                                    int64_t const          lbeg,
+                                                    int64_t const          lend,
+                                                    std::string_view const rchrom,
+                                                    int64_t const          rpos)
     {
-        assert(beg <= end);
-        return std::tuple{std::string_view{this->chrom}, (pos < end)} <=> std::tuple{chrom, (pos >= beg)};
+        assert(lbeg <= lend);
+        return std::tuple{lchrom, (rpos < lend)} <=> std::tuple{rchrom, (rpos >= lbeg)};
     }
 
-    /*!\brief Checks whether this region lies before or beyond the given region or whether they overlap.
-     * \param rhs The region to compare.
-     * \returns std::weak_ordering denoting the relative position of the this region compared to rhs.
+    //!\overload
+    static inline std::weak_ordering relative_to(genomic_region const & lhs,
+                                                 std::string_view const rchrom,
+                                                 int64_t const          rpos)
+    {
+        return relative_to(lhs.chrom, lhs.beg, lhs.end, rchrom, rpos);
+    }
+
+    /*!\brief Checks whether the first region lies before or beyond the second region or whether they overlap.
+     * \param lchrom The contig/chromosome string for the left region.
+     * \param lbeg   The left region's begin position.
+     * \param lend   The left region's end position.
+     * \param rchrom The contig/chromosome string for the right region.
+     * \param rbeg   The right region's begin position.
+     * \param rend   The right region's end position.
+     * \returns std::weak_ordering denoting the relative position of the left region compared to right region.
      * \details
      *
      * Returns:
@@ -89,17 +108,31 @@ struct genomic_region
      *
      * The strings are compared lexicographically. The interval is assumed to be half-open.
      */
-    template <ownership own_ = ownership::deep>
-    std::weak_ordering relative_to(genomic_region<own_> const & rhs) const
+    static constexpr std::weak_ordering relative_to(std::string_view const lchrom,
+                                                    int64_t const          lbeg,
+                                                    int64_t const          lend,
+                                                    std::string_view const rchrom,
+                                                    int64_t const          rbeg,
+                                                    int64_t const          rend)
     {
-        assert(beg <= end);
-        assert(rhs.beg <= rhs.end);
-        return std::tuple{std::string_view{chrom}, (end > rhs.beg)} <=>
-               std::tuple{std::string_view{rhs.chrom}, (beg < rhs.end)};
+        assert(lbeg <= lend);
+        assert(rbeg <= rend);
+        return std::tuple{lchrom, (lend > rbeg)} <=> std::tuple{rchrom, (lbeg < rend)};
+    }
+
+    //!\overload
+    static inline std::weak_ordering relative_to(genomic_region const & lhs, genomic_region const & rhs)
+    {
+        return relative_to(lhs.chrom, lhs.beg, lhs.end, rhs.chrom, rhs.beg, rhs.end);
     }
 
     /*!\brief Computes the distance/overlap of two regions.
-     * \param rhs The region to compare with.
+     * \param lchrom The contig/chromosome string for the left region.
+     * \param lbeg   The left region's begin position.
+     * \param lend   The left region's end position.
+     * \param rchrom The contig/chromosome string for the right region.
+     * \param rbeg   The right region's begin position.
+     * \param rend   The right region's end position.
      * \returns See below.
      * \details
      *
@@ -111,13 +144,22 @@ struct genomic_region
      *
      * The strings are compared lexicographically for identity. The interval is assumed to be half-open.
      */
-    template <ownership own_ = ownership::deep>
-    int64_t distance(genomic_region<own_> const & rhs) const
+    static constexpr int64_t distance(std::string_view const lchrom,
+                                      int64_t const          lbeg,
+                                      int64_t const          lend,
+                                      std::string_view const rchrom,
+                                      int64_t const          rbeg,
+                                      int64_t const          rend)
     {
-        assert(beg <= end);
-        assert(rhs.beg <= rhs.end);
-        return chrom == rhs.chrom ? std::max(beg, rhs.beg) - std::min(end, rhs.end)
-                                  : std::numeric_limits<int64_t>::max();
+        assert(lbeg <= lend);
+        assert(rbeg <= rend);
+        return lchrom == rchrom ? std::max(lbeg, rbeg) - std::min(lend, rend) : std::numeric_limits<int64_t>::max();
+    }
+
+    //!\overload
+    static inline int64_t distance(genomic_region const & lhs, genomic_region const & rhs)
+    {
+        return distance(lhs.chrom, lhs.beg, lhs.end, rhs.chrom, rhs.beg, rhs.end);
     }
 };
 

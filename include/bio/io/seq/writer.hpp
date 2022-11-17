@@ -184,10 +184,7 @@ public:
      *
      * Basic exception safety.
      */
-    void emplace_back(auto && id, auto && seq, auto && qual)
-    {
-        push_back(tie_record(id, seq, qual));
-    }
+    void emplace_back(auto && id, auto && seq, auto && qual) { push_back(tie_record(id, seq, qual)); }
 
     /*!\brief Write a record to the file.
      * \tparam field_types Types of the fields in the record.
