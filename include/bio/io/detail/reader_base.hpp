@@ -46,9 +46,6 @@ namespace bio::io
  */
 template <typename derived_t, typename options_t>
 class reader_base
-#if !BIOCPP_IO_NO_VIEWBASE
-  : public std::ranges::view_base
-#endif
 {
 private:
     /*!\name CRTP related entities
