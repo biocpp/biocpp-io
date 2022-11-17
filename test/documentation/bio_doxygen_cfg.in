@@ -51,7 +51,7 @@ EXTRA_PACKAGES         = {amsfonts}
 PREDEFINED             = "BIOCPP_DOXYGEN_ONLY(x)= x" \
                          "${BIOCPP_IO_DOXYGEN_PREDEFINED_NDEBUG}"
 
-EXPAND_AS_DEFINED      = BIOCPP_IO_RECORD_MEMBER BIOCPP_IO_NO_VIEWBASE
+EXPAND_AS_DEFINED      = BIOCPP_IO_RECORD_MEMBER
 
 TAGFILES               += "${BIOCPP_IO_DOXYGEN_STD_TAGFILE}=https://en.cppreference.com/w/"
 

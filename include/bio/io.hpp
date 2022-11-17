@@ -87,16 +87,6 @@ constexpr std::string_view bio_version_cstring = BIOCPP_IO_VERSION_CSTRING;
 //  WORKAROUNDS
 // ============================================================================
 
-//!\brief Bugs in GCC lead to our "readers" not working when declared as views.
-#ifndef BIOCPP_IO_NO_VIEWBASE
-#    if defined(__GNUC__) && ((__GNUC__ == 10 && __GNUC_MINOR__ == 4) || (__GNUC__ == 11 && __GNUC_MINOR__ < 4) ||     \
-                              (__GNUC__ == 12 && __GNUC_MINOR__ < 2))
-#        define BIOCPP_IO_NO_VIEWBASE 1
-#    else
-#        define BIOCPP_IO_NO_VIEWBASE 0
-#    endif
-#endif
-
 // ============================================================================
 //  NAMESPACES
 // ============================================================================

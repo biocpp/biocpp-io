@@ -6,15 +6,29 @@
 // shipped with this file and also available at: https://github.com/seqan/seqan3/blob/master/LICENSE.md
 // -----------------------------------------------------------------------------------------------------
 
+#include <algorithm>
 #include <ranges>
+#include <sstream>
 #include <string>
 
+#include <gtest/gtest.h>
+
 #include <bio/alphabet/custom/char.hpp>
+#include <bio/alphabet/nucleotide/dna5.hpp>
+#include <bio/alphabet/quality/phred42.hpp>
+#include <bio/meta/tag/vtag.hpp>
 #include <bio/ranges/to.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
+#include <bio/test/expect_range_eq.hpp>
+#include <bio/test/expect_same_type.hpp>
 
 #include <bio/io/detail/magic_get.hpp>
+#include <bio/io/format/format_output_handler.hpp>
 #include <bio/io/seq/record.hpp>
+
+using namespace bio::alphabet::literals;
+using namespace bio::meta::literals;
+using std::literals::string_view_literals::operator""sv;
 
 struct writer_options
 {
@@ -23,49 +37,16 @@ struct writer_options
     bool   windows_eol         = false;
 };
 
-inline std::string_view fastq_default_output = R"(@ID1
-ACGTTTTTTTTTTTTTTT
-+
-!##$%&'()*+,-./++-
-@ID2
-ACGTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
-+
-!##$&'()*+,-./+)*+,-)*+,-)*+,-)*+,BDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDE
-@ID3 lala
-ACGTTTA
-+
-!!!!!!!
-)";
-
-inline std::string_view fastq_default_output_double_id = R"(@ID1
-ACGTTTTTTTTTTTTTTT
-+ID1
-!##$%&'()*+,-./++-
-@ID2
-ACGTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
-+ID2
-!##$&'()*+,-./+)*+,-)*+,-)*+,-)*+,BDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDE
-@ID3 lala
-ACGTTTA
-+ID3 lala
-!!!!!!!
-)";
-
 inline std::vector<std::string_view> ids   = {"ID1", "ID2", "ID3 lala"};
 inline std::vector<std::string_view> seqs  = {"ACGTTTTTTTTTTTTTTT",
-                                              "ACGTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
-                                               "TTTTTTTTT",
+                                              "ACGTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+                                               "TTTTTTTTTT",
                                               "ACGTTTA"};
 inline std::vector<std::string_view> quals = {"!##$%&'()*+,-./++-",
-                                              "!##$&'()*+,-./"
-                                              "+)*+,-)*+,-)*+,-)*+,BDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDE",
+                                              "!##$&'()*+,-./+)*+,-)*+,-)*+,-)*+,BDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBDEBD"
+                                              "EBDEBDEBDE",
                                               "!!!!!!!"};
 
-//=============================================================================
-// records
-//=============================================================================
-
-/* auxiliary stuff */
 template <typename t>
 constexpr bool operator==(bio::views::char_conversion_view_t<t> const & lhs,
                           bio::views::char_conversion_view_t<t> const & rhs)
@@ -109,3 +90,24 @@ auto example_records()
         return recs;
     }
 }
+
+template <typename format_t, bool deep, typename salph_t, typename qalph_t>
+std::string do_test(writer_options opt)
+{
+    std::ostringstream ostr{};
+
+    {
+        bio::io::format_output_handler<format_t> handler{ostr, opt};
+
+        auto recs = example_records<deep, salph_t, qalph_t>();
+
+        for (auto & rec : recs)
+            handler.write_record(rec);
+    }
+
+    return ostr.str();
+}
+
+using salphs  = bio::meta::type_list<char, bio::alphabet::dna5>;
+using qalphs  = bio::meta::type_list<char, bio::alphabet::phred42>;
+using numbers = ::testing::Types<bio::meta::vtag_t<0>, bio::meta::vtag_t<1>>;
