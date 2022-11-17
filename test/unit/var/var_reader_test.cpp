@@ -261,7 +261,7 @@ TEST(var_reader, decompression_stream)
 
 TEST(var_reader, region_filter)
 {
-    bio::io::genomic_region<>    region{.chrom = "20", .beg = 17000, .end = 1230300};
+    bio::io::genomic_region      region{.chrom = "20", .beg = 17000, .end = 1230300};
     bio::io::var::reader_options options{.region = region};
 
     bio::test::tmp_directory dir{};
@@ -298,7 +298,7 @@ TEST(var_reader, region_filter)
 
 TEST(var_reader, region_filter_linear)
 {
-    bio::io::genomic_region<>    region{.chrom = "20", .beg = 17000, .end = 1230300};
+    bio::io::genomic_region      region{.chrom = "20", .beg = 17000, .end = 1230300};
     bio::io::var::reader_options options{.region = region, .region_index_optional = true};
 
     {

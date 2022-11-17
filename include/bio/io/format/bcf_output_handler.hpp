@@ -1158,7 +1158,7 @@ public:
         it = detail::fast_ostreambuf_iterator<char>{buffer_stream};
         // rhs.it does not have to be handled
 
-        moved_from     = false;
+        moved_from     = rhs.moved_from;
         rhs.moved_from = true;
     }
 

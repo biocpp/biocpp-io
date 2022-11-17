@@ -232,11 +232,13 @@ private:
                 std::visit([&](auto & f) { f.parse_next_record_into(temp_record); }, format_handler);
 
                 // TODO undo "- 1" if interval notation gets decided on
-                genomic_region<ownership::shallow> rec_reg{.chrom = temp_record.chrom,
-                                                           .beg   = temp_record.pos - 1,
-                                                           .end   = rec_reg.beg + (int64_t)temp_record.ref.size()};
-
-                std::weak_ordering ordering = rec_reg.relative_to(options.region);
+                std::weak_ordering ordering =
+                  genomic_region::relative_to(temp_record.chrom,
+                                              temp_record.pos - 1,
+                                              temp_record.pos - 1 + (int64_t)temp_record.ref.size(),
+                                              options.region.chrom,
+                                              options.region.beg,
+                                              options.region.end);
                 if (ordering == std::weak_ordering::less) // records lies before the target region → skip
                 {
                     continue;
@@ -316,7 +318,7 @@ public:
      *
      * Note that the header is not parsed again.
      */
-    void reopen(genomic_region<ownership::deep> const & region)
+    void reopen(genomic_region const & region)
     {
         at_end         = false;
         options.region = region;

@@ -111,8 +111,7 @@ struct tabix_index
     }
 
     //!\brief Create the list of chunks that potentially overlap the desired region.
-    template <ownership own>
-    std::vector<std::pair<uint64_t, uint64_t>> reg2chunks(genomic_region<own> const & reg);
+    std::vector<std::pair<uint64_t, uint64_t>> reg2chunks(genomic_region const & reg);
 };
 
 inline void tabix_index::read(std::filesystem::path const & path)
@@ -225,8 +224,7 @@ inline void tabix_index::write(std::filesystem::path const & path)
         it.write_as_binary(*n_no_coor);
 }
 
-template <ownership own>
-inline std::vector<std::pair<uint64_t, uint64_t>> tabix_index::reg2chunks(genomic_region<own> const & reg)
+inline std::vector<std::pair<uint64_t, uint64_t>> tabix_index::reg2chunks(genomic_region const & reg)
 {
     std::vector<std::pair<uint64_t, uint64_t>> ret;
 

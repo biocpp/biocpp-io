@@ -103,7 +103,7 @@ struct reader_options
      * index file is found. To allow region filtering without an index, set #region_index_optional to
      * `true`.
      */
-    genomic_region<ownership::deep> region{};
+    genomic_region region{};
 
     /*!\brief Path to the index file [optional, auto-detected if not specified].
      * \details
