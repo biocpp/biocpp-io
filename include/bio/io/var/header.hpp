@@ -998,22 +998,26 @@ inline std::unordered_map<std::string_view, header::info_t> const reserved_infos
 //!\brief A table of reserved FORMAT entries.
 inline std::unordered_map<std::string_view, header::format_t> const reserved_formats =
 {
-    {"AD",  {"AD",  header_number::R, "Integer", value_type_id::vector_of_int32,   "\"Read depth for each allele\""}},
-    {"ADF", {"ADF", header_number::R, "Integer", value_type_id::vector_of_int32,   "\"Read depth for each allele on the forward strand\""}},
-    {"ADR", {"ADR", header_number::R, "Integer", value_type_id::vector_of_int32,   "\"Read depth for each allele on the reverse strand\""}},
-    {"DP",  {"DP",                 1, "Integer", value_type_id::int32,             "\"Read depth\""}},
-    {"EC",  {"EC",  header_number::A, "Integer", value_type_id::vector_of_int32,   "\"Expected alternate allele counts\""}},
-    {"FT",  {"FT",                 1, "String",  value_type_id::string,            "\"Filter indicating if this genotype was “called”\""}},
-    {"GL",  {"GL",  header_number::G, "Float",   value_type_id::vector_of_float32, "\"Genotype likelihoods\""}},
-    {"GP",  {"GP",  header_number::G, "Float",   value_type_id::vector_of_float32, "\"Genotype posterior probabilities\""}},
-    {"GQ",  {"GQ",                 1, "Integer", value_type_id::int32,             "\"Conditional genotype quality\""}},
-    {"GT",  {"GT",                 1, "String",  value_type_id::string,            "\"Genotype\""}},
-    {"HQ",  {"HQ",                 2, "Integer", value_type_id::vector_of_int32,   "\"Haplotype quality\""}},
-    {"MQ",  {"MQ",                 1, "Integer", value_type_id::int32,             "\"RMS mapping quality\""}},
-    {"PL",  {"PL",  header_number::G, "Integer", value_type_id::vector_of_int32,   "\"Phred-scaled genotype likelihoods rounded to the closest integer\""}},
-    {"PP",  {"PP",  header_number::G, "Integer", value_type_id::vector_of_int32,   "\"Phred-scaled genotype posterior probabilities rounded to the closest integer\""}},
-    {"PQ",  {"PQ",                 1, "Integer", value_type_id::int32,             "\"Phasing quality\""}},
-    {"PS",  {"PS",                 1, "Integer", value_type_id::int32,             "\"Phase set\""}}
+    {"AD",  {"AD",    header_number::R, "Integer", value_type_id::vector_of_int32,   "\"Read depth for each allele\""}},
+    {"ADF", {"ADF",   header_number::R, "Integer", value_type_id::vector_of_int32,   "\"Read depth for each allele on the forward strand\""}},
+    {"ADR", {"ADR",   header_number::R, "Integer", value_type_id::vector_of_int32,   "\"Read depth for each allele on the reverse strand\""}},
+    {"DP",  {"DP",                   1, "Integer", value_type_id::int32,             "\"Read depth\""}},
+    {"EC",  {"EC",    header_number::A, "Integer", value_type_id::vector_of_int32,   "\"Expected alternate allele counts\""}},
+    {"FT",  {"FT",                   1, "String",  value_type_id::string,            "\"Filter indicating if this genotype was “called”\""}},
+    {"GL",  {"GL",    header_number::G, "Float",   value_type_id::vector_of_float32, "\"Genotype likelihoods\""}},
+    {"GP",  {"GP",    header_number::G, "Float",   value_type_id::vector_of_float32, "\"Genotype posterior probabilities\""}},
+    {"GQ",  {"GQ",                   1, "Integer", value_type_id::int32,             "\"Conditional genotype quality\""}},
+    {"GT",  {"GT",                   1, "String",  value_type_id::string,            "\"Genotype\""}},
+    {"HQ",  {"HQ",                   2, "Integer", value_type_id::vector_of_int32,   "\"Haplotype quality\""}},
+    {"LAA", {"LAA", header_number::dot, "Integer", value_type_id::vector_of_int32,   "\"Strictly increasing, 1-based indices into ALT, indicating which alternate alleles are relevant (local) for the current sample\""}},
+    {"LAD", {"LAD", header_number::dot, "Integer", value_type_id::vector_of_int32,   "\"Read depth for the reference and each of the local alternate alleles listed in LAA\""}},
+    {"LGT", {"LGT", header_number::dot, "String",  value_type_id::vector_of_string,  "\"Genotype against the local alleles\""}},
+    {"LPL", {"LPL", header_number::dot, "Integer", value_type_id::vector_of_int32,   "\"Phred-scaled genotype likelihoods rounded to the closest integer for genotypes that involve the reference and the local alternative alleles listed in LAA\""}},
+    {"MQ",  {"MQ",                   1, "Integer", value_type_id::int32,             "\"RMS mapping quality\""}},
+    {"PL",  {"PL",    header_number::G, "Integer", value_type_id::vector_of_int32,   "\"Phred-scaled genotype likelihoods rounded to the closest integer\""}},
+    {"PP",  {"PP",    header_number::G, "Integer", value_type_id::vector_of_int32,   "\"Phred-scaled genotype posterior probabilities rounded to the closest integer\""}},
+    {"PQ",  {"PQ",                   1, "Integer", value_type_id::int32,             "\"Phasing quality\""}},
+    {"PS",  {"PS",                   1, "Integer", value_type_id::int32,             "\"Phase set\""}}
 };
 // clang-format on
 
