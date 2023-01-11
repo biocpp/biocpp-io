@@ -107,8 +107,8 @@ public:
     writer_base()                    = delete;
     //!\brief Copy construction is explicitly deleted, because you can't have multiple access to the same file.
     writer_base(writer_base const &) = delete;
-    //!\brief Move construction is defaulted.
-    writer_base(writer_base &&)      = default;
+    //!\brief Move construction.
+    writer_base(writer_base && rhs) noexcept { move_from(std::move(rhs)); }
     //!\brief Destructor which can potentially throw.
     ~writer_base() noexcept(false)
     {
@@ -127,11 +127,12 @@ public:
         auto del = []<typename handler_t>(handler_t & handler) { [[maybe_unused]] handler_t tmp = std::move(handler); };
 
         std::visit(del, format_handler);
+        format_handler = std::monostate{};
     }
     //!\brief Copy assignment is explicitly deleted, because you can't have multiple access to the same file.
     writer_base & operator=(writer_base const &) = delete;
-    //!\brief Move assignment is defaulted.
-    writer_base & operator=(writer_base &&)      = default;
+    //!\brief Move assignment.
+    writer_base & operator=(writer_base && rhs) noexcept { move_from(std::move(rhs)); }
 
     /*!\brief Construct from filename.
      * \param[in] filename  Path to the file you wish to open.
@@ -342,6 +343,20 @@ protected:
     //!\brief Befriend iterator so it can access the buffers.
     friend iterator;
     //!\}
+
+    //!\brief Auxilliary function for move constructor and assignment.
+    void move_from(writer_base && rhs)
+    {
+        init_state     = rhs.init_state;
+        rhs.init_state = true;
+
+        options = std::move(rhs.options);
+        stream  = std::move(rhs.stream);
+        format  = std::move(rhs.format);
+
+        format_handler     = std::move(rhs.format_handler);
+        rhs.format_handler = std::monostate{}; // ← this is the important bit!
+    }
 };
 
 } // namespace bio::io
