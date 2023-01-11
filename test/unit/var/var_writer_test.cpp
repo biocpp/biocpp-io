@@ -385,3 +385,23 @@ TEST(var_writer, biocpp_io_issue_53)
         writer.push_back(record);
     }
 }
+
+TEST(var_writer, get_header)
+{
+    {
+        bio::io::var::writer writer{"var_writer_constructor.vcf"};
+        bio::io::var::header hdr;
+        writer.set_header(std::move(hdr));
+        EXPECT_NO_THROW(writer.header());
+    }
+
+    {
+        bio::io::var::writer writer{"var_writer_constructor.vcf"};
+        bio::io::var::header hdr;
+        writer.set_header(std::move(hdr));
+        {
+            bio::io::var::writer writer2{std::move(writer)};
+        }
+        EXPECT_THROW(writer.header(), bio::io::bio_error); // in moved-from state
+    }
+}

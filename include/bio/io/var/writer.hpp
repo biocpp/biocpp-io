@@ -267,10 +267,17 @@ public:
     }
 
     //!\brief Get the header used by the format.
-    bio::io::var::header const & header()
+    bio::io::var::header const & header() const
     {
-        return std::visit(meta::overloaded{[](std::monostate) {},
-                                           [](auto const & handler) { return handler.get_header(); }},
+        return std::visit(meta::overloaded{[](std::monostate const &) -> bio::io::var::header const &
+                                           {
+                                               throw bio_error{"Cannot call .header() on invalid var::writer."};
+                                               BIOCPP_UNREACHABLE
+                                               std::optional<var::header> dummy; // GCOVR_EXCL_LINE
+                                               return *dummy;                    // GCOVR_EXCL_LINE
+                                           },
+                                           [](auto const & handler) -> bio::io::var::header const &
+                                           { return handler.get_header(); }},
                           format_handler);
     }
 
@@ -282,7 +289,7 @@ public:
         if (!init_state)
             throw bio_error{"You cannot change the header after I/O has happened."};
 
-        std::visit(meta::overloaded{[](std::monostate) {},
+        std::visit(meta::overloaded{[](std::monostate &) { BIOCPP_UNREACHABLE },
                                     [&hdr](auto & handler) { handler.set_header(std::forward<header_t>(hdr)); }},
                    format_handler);
     }
