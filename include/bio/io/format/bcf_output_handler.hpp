@@ -56,7 +56,7 @@ private:
     //!\brief Print an error message with current record number in diagnostic.
     [[noreturn]] void error(auto const &... messages) const
     {
-        std::string message = "[SeqAn3 BCF format error writing record " + detail::to_string(record_no) + "] ";
+        std::string message = "[BCF format error writing record " + detail::to_string(record_no) + "] ";
         ((message += detail::to_string(messages)), ...);
 
         throw format_error{message};

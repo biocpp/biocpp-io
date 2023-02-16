@@ -345,7 +345,7 @@ protected:
     //!\}
 
     //!\brief Auxilliary function for move constructor and assignment.
-    void move_from(writer_base && rhs)
+    void move_from(writer_base && rhs) noexcept
     {
         init_state     = rhs.init_state;
         rhs.init_state = true;
