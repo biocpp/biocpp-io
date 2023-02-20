@@ -82,7 +82,7 @@ private:
     //!\brief Print an error message with current line number in diagnostic.
     [[noreturn]] void error(auto const &... messages) const
     {
-        throw format_error{"[SeqAn3 VCF format error in line ", line, "] ", messages...};
+        throw format_error{"[VCF format error in record ", line, "] ", messages...};
     }
 
     /*!\name Options
@@ -119,7 +119,7 @@ private:
     //!\brief Cache of the number of alleles.
     size_t            n_alts         = -1;
     //!\brief Current line number in file.
-    size_t            line           = 0;
+    size_t            line           = 0; //TODO this should be "record_no" and not "line"
 
     //!\brief Read the raw record [the base class invokes this function].
     void read_raw_record()

@@ -348,7 +348,7 @@ private:
     //!\brief Print an error message with current record number in diagnostic.
     [[noreturn]] void error(auto const &... messages) const
     {
-        throw format_error{"[SeqAn3 BCF format error in record ", record_no, "] ", messages...};
+        throw format_error{"[BCF format error in record ", record_no, "] ", messages...};
     }
 
     /*!\name Options

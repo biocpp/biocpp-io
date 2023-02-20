@@ -305,14 +305,13 @@ private:
      * \{
      */
     //!\brief This overrides default behaviour.
-    template <std::ranges::input_range rng_t>
-        requires(std::convertible_to<std::ranges::range_reference_t<rng_t>, char>)
+    template <std::ranges::forward_range rng_t>
     void write_field_aux(rng_t & range)
     {
         if (std::ranges::empty(range))
             it = '.';
         else
-            it->write_range(range);
+            base_t::write_field_aux(range);
     }
 
     //!\brief This overrides default behaviour.
