@@ -140,7 +140,7 @@ struct record
      *
      * When writing (bio::io::seq::writer), the type can be one of the following:
      *
-     * 1. any std::ranges::forward_range over `char` or a bio::alphabet::quality_alphabet.
+     * 1. any std::ranges::forward_range over `char` or a bio::alphabet::quality.
      *
      * The default and all pre-defined aliases satisfy the requirements for reading and writing.
      */
@@ -257,7 +257,7 @@ constexpr bool record_write_concept_checker(std::type_identity<seq::record<id_t,
                   }),
                   "Requirements for the type of the SEQ-field not met. See documentation for bio::io::seq::record.");
     static_assert(io::detail::lazy_concept_checker([]<typename t = qual_t>(auto) requires(
-                    std::ranges::forward_range<t> && (alphabet::quality_alphabet<std::ranges::range_reference_t<t>> ||
+                    std::ranges::forward_range<t> && (alphabet::quality<std::ranges::range_reference_t<t>> ||
                                                       std::same_as<char, std::ranges::range_value_t<t>>)) {
                       return std::true_type{};
                   }),
