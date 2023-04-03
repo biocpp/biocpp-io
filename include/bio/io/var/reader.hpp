@@ -262,9 +262,23 @@ public:
     //!\brief Inherit the format_type definition.
     using format_type = typename base_t::format_type;
 
-    // clang-format off
-    //!\copydoc bio::io::reader_base::reader_base(std::filesystem::path const & filename, format_type const & fmt, options_t const & opt = options_t{})
-    // clang-format on
+    /*!\brief Construct from filename.
+     * \param[in] filename  Path to the file you wish to open.
+     * \param[in] fmt       The file format given as e.g. `vcf{}` [optional]
+     * \param[in] opt       Reader options (bio::io::var::reader_options). [optional]
+     * \throws bio::io::file_open_error If the file could not be opened, e.g. non-existant, non-readable, unknown
+     * format.
+     *
+     * \details
+     *
+     * In addition to the file name, you may fix the format and/or provide options.
+     *
+     * ### Decompression
+     *
+     * This constructor transparently applies a decompression stream on top of the file stream in case
+     * the file is detected as being compressed.
+     * See the section on compression and decompression (TODO) for more information.
+     */
     reader(std::filesystem::path const &            filename,
            format_type const &                      fmt,
            reader_options<option_args_t...> const & opt = reader_options<option_args_t...>{}) :
@@ -277,9 +291,21 @@ public:
       base_t{filename, opt}
     {}
 
-    // clang-format off
-    //!\copydoc bio::io::reader_base::reader_base(std::istream & str, format_type const & fmt, options_t const & opt = options_t{})
-    // clang-format on
+    /*!\brief Construct from an existing stream and with specified format.
+     * \param[in] str  The stream to operate on.
+     * \param[in] fmt  The file format given as e.g. `vcf{}`. [required]
+     * \param[in] opt  Reader options (bio::io::var::reader_options). [optional]
+     *
+     * \details
+     *
+     * In addition to the stream, you must fix the format and you may optionally provide options.
+     *
+     * ### Decompression
+     *
+     * This constructor transparently applies a decompression stream on top of the stream in case
+     * it is detected as being compressed.
+     * See the section on compression and decompression (TODO) for more information.
+     */
     reader(std::istream &                           str,
            format_type const &                      fmt,
            reader_options<option_args_t...> const & opt = reader_options<option_args_t...>{}) :

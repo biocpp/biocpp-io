@@ -230,7 +230,7 @@ private:
 
 public:
     /*!\name Read and parse record
-     * \brief Most users should not use these interfaces; use bio::io::*::reader instead.
+     * \brief Most users should not use these interfaces; use readers instead.
      * \{
      */
     //!\brief Advance to the next record and update the "raw record".
