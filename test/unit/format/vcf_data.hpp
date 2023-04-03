@@ -223,10 +223,7 @@ template <bio::io::ownership own>
 auto make_ref(std::string_view const str)
 {
     if constexpr (own == bio::io::ownership::shallow)
-        return tf_view{
-          {str, {}},
-          {    }
-        };
+        return tf_view{str, {}};
     else
         return str | bio::views::char_strictly_to<bio::alphabet::dna5> | bio::ranges::to<std::vector>();
 }

@@ -31,8 +31,8 @@
 #    error Could not find the BioC++ core library. Please add its include directory!
 #endif
 
-static_assert(bio::biocpp_core_version_major == 0 && bio::biocpp_core_version_minor == 6,
-              "This version of the BioC++ I/O module requires version 0.6.x of the BioC++ core library.");
+static_assert(bio::biocpp_core_version_major == 0 && bio::biocpp_core_version_minor == 7,
+              "This version of the BioC++ I/O module requires version 0.7.x of the BioC++ core library.");
 
 // ============================================================================
 //  VERSION

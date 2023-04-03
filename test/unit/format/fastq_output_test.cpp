@@ -46,9 +46,9 @@ TYPED_TEST_SUITE(fastq_write, numbers, );
 
 TYPED_TEST(fastq_write, do_it)
 {
-    using salph_t       = bio::meta::list_traits::at<TypeParam::first_value, salphs>;
-    using qalph_t       = bio::meta::list_traits::at<TypeParam::first_value, qalphs>;
-    constexpr bool deep = TypeParam::first_value % 2;
+    using salph_t       = bio::meta::list_traits::at<TypeParam::value, salphs>;
+    using qalph_t       = bio::meta::list_traits::at<TypeParam::value, qalphs>;
+    constexpr bool deep = TypeParam::value % 2;
 
     std::string s = do_test<bio::io::fastq, deep, salph_t, qalph_t>(writer_options{});
 
@@ -57,9 +57,9 @@ TYPED_TEST(fastq_write, do_it)
 
 TYPED_TEST(fastq_write, double_id)
 {
-    using salph_t       = bio::meta::list_traits::at<TypeParam::first_value, salphs>;
-    using qalph_t       = bio::meta::list_traits::at<TypeParam::first_value, qalphs>;
-    constexpr bool deep = TypeParam::first_value % 2;
+    using salph_t       = bio::meta::list_traits::at<TypeParam::value, salphs>;
+    using qalph_t       = bio::meta::list_traits::at<TypeParam::value, qalphs>;
+    constexpr bool deep = TypeParam::value % 2;
 
     std::string s = do_test<bio::io::fastq, deep, salph_t, qalph_t>(writer_options{.double_id = true});
 

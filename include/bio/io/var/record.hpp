@@ -1008,22 +1008,22 @@ constexpr bool record_write_concept_checker(
                   "bio::io::var::record.");
 
     static_assert(io::detail::lazy_concept_checker([]<typename t = ref_t>(auto) requires(
-                    std::ranges::forward_range<t> &&
-                    (alphabet::nucleotide_alphabet<std::ranges::range_reference_t<t>> ||
-                     std::convertible_to<std::ranges::range_reference_t<t>, char>)) { return std::true_type{}; }),
+                    std::ranges::forward_range<t> && (alphabet::nucleotide<std::ranges::range_reference_t<t>> ||
+                                                      std::convertible_to<std::ranges::range_reference_t<t>, char>)) {
+                      return std::true_type{};
+                  }),
                   "Requirements for the field-type of the REF-field not met. See documentation for "
                   "bio::io::var::record.");
 
-    static_assert(
-      io::detail::lazy_concept_checker([]<typename t = alt_t>(auto) requires(
-        meta::decays_to<id_t, meta::ignore_t> ||
-        (std::ranges::forward_range<t> && std::ranges::forward_range<std::ranges::range_reference_t<t>> &&
-         (alphabet::nucleotide_alphabet<std::ranges::range_reference_t<std::ranges::range_reference_t<t>>> ||
-          std::convertible_to<std::ranges::range_reference_t<std::ranges::range_reference_t<t>>, char>))) {
-          return std::true_type{};
-      }),
-      "Requirements for the field-type of the ALT-field not met. See documentation for "
-      "bio::io::var::record.");
+    static_assert(io::detail::lazy_concept_checker([]<typename t = alt_t>(auto) requires(
+                    meta::decays_to<id_t, meta::ignore_t> ||
+                    (std::ranges::forward_range<t> && std::ranges::forward_range<std::ranges::range_reference_t<t>> &&
+                     (alphabet::nucleotide<std::ranges::range_reference_t<std::ranges::range_reference_t<t>>> ||
+                      std::convertible_to<std::ranges::range_reference_t<std::ranges::range_reference_t<t>>, char>))) {
+                      return std::true_type{};
+                  }),
+                  "Requirements for the field-type of the ALT-field not met. See documentation for "
+                  "bio::io::var::record.");
 
     static_assert(meta::arithmetic<std::remove_cvref_t<qual_t>> || meta::decays_to<qual_t, meta::ignore_t>,
                   "Requirements for the field-type of the QUAL-field not met. See documentation for "

@@ -39,9 +39,9 @@ TYPED_TEST_SUITE(fasta_write, numbers, );
 
 TYPED_TEST(fasta_write, do_it)
 {
-    using salph_t       = bio::meta::list_traits::at<TypeParam::first_value, salphs>;
-    using qalph_t       = bio::meta::list_traits::at<TypeParam::first_value, qalphs>;
-    constexpr bool deep = TypeParam::first_value % 2;
+    using salph_t       = bio::meta::list_traits::at<TypeParam::value, salphs>;
+    using qalph_t       = bio::meta::list_traits::at<TypeParam::value, qalphs>;
+    constexpr bool deep = TypeParam::value % 2;
 
     EXPECT_EQ(writer_options{}.max_seq_line_length, 70ull);
 
@@ -52,9 +52,9 @@ TYPED_TEST(fasta_write, do_it)
 
 TYPED_TEST(fasta_write, no_linebreak)
 {
-    using salph_t       = bio::meta::list_traits::at<TypeParam::first_value, salphs>;
-    using qalph_t       = bio::meta::list_traits::at<TypeParam::first_value, qalphs>;
-    constexpr bool deep = TypeParam::first_value % 2;
+    using salph_t       = bio::meta::list_traits::at<TypeParam::value, salphs>;
+    using qalph_t       = bio::meta::list_traits::at<TypeParam::value, qalphs>;
+    constexpr bool deep = TypeParam::value % 2;
 
     std::string s = do_test<bio::io::fasta, deep, salph_t, qalph_t>(writer_options{.max_seq_line_length = 0});
 
