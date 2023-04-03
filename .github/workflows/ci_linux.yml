@@ -62,6 +62,7 @@ jobs:
             cc: "doxygen"
             build: documentation
             build_type: Debug
+            version: 1.9.6
 
           - name: "Clang Format"
             cxx: "clang-format-14"
@@ -133,9 +134,14 @@ jobs:
       - name: Install compiler ${{ matrix.cxx }}
         run: sudo apt-get install --yes ${{ matrix.cxx }}
 
-      - name: Install documentation deps
+      - name: Install doxygen
         if: matrix.build == 'documentation'
-        run: sudo apt-get install --yes texlive-font-utils ghostscript texlive-latex-extra graphviz
+        run: |
+          sudo apt-get install --yes texlive-font-utils ghostscript texlive-latex-extra graphviz
+          mkdir -p /tmp/doxygen-download
+          wget --retry-connrefused --waitretry=30 --read-timeout=30 --timeout=30 --tries=20 --no-clobber --quiet --directory-prefix=/tmp/doxygen-download/ https://github.com/doxygen/doxygen/releases/download/Release_$(echo ${{ matrix.version }} | sed -e 's/\./_/g')/doxygen-${{ matrix.version }}.linux.bin.tar.gz
+          tar -C /tmp/ -zxf /tmp/doxygen-download/doxygen-${{ matrix.version }}.linux.bin.tar.gz
+          echo "/tmp/doxygen-${{ matrix.version }}/bin" >> $GITHUB_PATH # Only available in subsequent steps!
 
       - name: Install gcovr
         if: matrix.build == 'coverage'
