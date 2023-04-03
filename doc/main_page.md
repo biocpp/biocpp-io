@@ -1,4 +1,4 @@
-# Welcome {#mainpage}
+# Welcome {#io_mainpage}
 
 Welcome to the documentation of the BioC++ I/O library.
 This web-site contains the API reference (documentation of our interfaces) and some small Tutorials and HowTos.

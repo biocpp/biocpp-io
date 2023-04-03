@@ -1,0 +1,4 @@
+    <tab type="usergroup" visible="yes" title="Record-based I/O" intro="">
+      <tab type="user" visible="yes" title="Introduction" url="\ref record_based_intro" intro=""/>
+      <tab type="user" visible="yes" title="Record FAQ" url="\ref record_faq" intro=""/>
+    </tab>

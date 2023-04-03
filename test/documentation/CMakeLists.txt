@@ -1,33 +1,35 @@
 # Minimum cmake version
 cmake_minimum_required(VERSION 3.7)
 
-### Get our version and directories
+## Setup I/O library
 include (../../build_system/biocpp_io-config-version.cmake)
-set (BIOCPP_IO_VERSION "${PACKAGE_VERSION}")
 
 project (biocpp_io_doc LANGUAGES NONE VERSION "${BIOCPP_IO_VERSION}")
 
-if (NOT EXISTS "${BIOCPP_IO_INCLUDE_DIR}/bio/io.hpp")
-    message (FATAL_ERROR "Could not find the BioC++ I/O library. Not building documentation.")
+if (NOT IS_DIRECTORY "${BIOCPP_IO_CLONE_DIR}/doc")
+    message (FATAL_ERROR "Could not find BioC++ I/O library. Not building documentation.")
 endif ()
-message (STATUS "Found BioC++ I/O library: ${BIOCPP_IO_INCLUDE_DIR} (${BIOCPP_IO_VERSION})")
+message (STATUS "BioC++ I/O library: ${BIOCPP_IO_CLONE_DIR} (${BIOCPP_IO_VERSION})")
 
-### Get core's version and directories
+### Find core infrastructure which is needed and core content which is optional
 include(../biocpp_require_core_infrastructure.cmake)
-biocpp_require_core_infrastructure(FALSE)
+biocpp_require_core_infrastructure(FALSE) # false means that find_package is not called
 
-set (BIOCPP_IO_DOXYGEN_INPUT_DIR "${CMAKE_SOURCE_DIR}")
-
-#TODO: use the .cmake file from the core repo and remove this one
-#TODO: also just use the doxygen_cfg.in if possible
-include (bio-doxygen.cmake)
-
-enable_testing ()
-
-if (BIOCPP_IO_USER_DOC)
-    add_subdirectory(doc_usr)
+if (NOT IS_DIRECTORY "${BIOCPP_CORE_CLONE_DIR}/doc")
+    message (FATAL_ERROR "Could not find BioC++ Core. Not building documentation.")
 endif ()
+message (STATUS "BioC++ Core library: ${BIOCPP_CORE_CLONE_DIR} (${BIOCPP_CORE_VERSION})")
 
-if (BIOCPP_IO_DEV_DOC)
-    add_subdirectory(doc_dev)
-endif ()
+## Configure documentation build
+option(BIOCPP_DOXY_CORE "Build documentation for core module." ON)
+option(BIOCPP_DOXY_IO "Build documentation for core module." ON)
+
+if (BIOCPP_DOXY_CORE)
+    include (${BIOCPP_CORE_CLONE_DIR}/test/documentation/biocpp-doxygen-module.cmake)
+endif()
+
+if (BIOCPP_DOXY_IO)
+    include (bio-doxygen-module.cmake)
+endif()
+
+include (${BIOCPP_CORE_CLONE_DIR}/test/documentation/biocpp-doxygen.cmake)
