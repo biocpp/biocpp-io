@@ -119,11 +119,11 @@ The record for Sequence I/O is a template:
 
 Instead of providing the template arguments yourself, you can choose one of the predefined aliases:
 
-* bio::io::seq::record_dna
+* bio::io::seq::record_dna_deep
 * bio::io::seq::record_dna_shallow
-* bio::io::seq::record_protein
+* bio::io::seq::record_protein_deep
 * bio::io::seq::record_protein_shallow
-* bio::io::seq::record_char
+* bio::io::seq::record_char_deep
 * bio::io::seq::record_char_shallow
 
 ### Deduce from arguments {#record_type_deduce}

@@ -105,7 +105,7 @@ for (auto & rec : reader)
 using namespace bio::alphabet::literals;
 
 bio::io::seq::reader reader{"example.fasta",
-                            bio::io::seq::reader_options{.record = bio::io::seq::record_dna{}}};
+                            bio::io::seq::reader_options{.record = bio::io::seq::record_dna_deep{}}};
 
 for (auto & rec : reader)
 {

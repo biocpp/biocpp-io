@@ -197,7 +197,7 @@ TEST(seq_reader, empty_stream)
 
 TEST(seq_reader, custom_field_types)
 {
-    bio::io::seq::reader_options opt{.record = bio::io::seq::record_dna{}};
+    bio::io::seq::reader_options opt{.record = bio::io::seq::record_dna_deep{}};
 
     std::istringstream   str{static_cast<std::string>(input)};
     bio::io::seq::reader reader{str, bio::io::fasta{}, opt};

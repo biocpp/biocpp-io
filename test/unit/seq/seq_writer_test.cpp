@@ -31,7 +31,7 @@ ACGTTTA
 
 TEST(seq_writer, concepts)
 {
-    using rec_t = bio::io::seq::record_dna;
+    using rec_t = bio::io::seq::record_dna_deep;
 
     using t = bio::io::seq::writer<>;
     EXPECT_TRUE((std::ranges::output_range<t, rec_t>));

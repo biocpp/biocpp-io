@@ -33,10 +33,10 @@ void field_types()
 
     using record_t = std::conditional_t<
       s == style::def,
+      std::conditional_t<own == bio::io::ownership::deep, bio::io::var::record_deep, bio::io::var::record_shallow>,
       std::conditional_t<own == bio::io::ownership::deep,
-                         bio::io::var::record_default,
-                         bio::io::var::record_default_shallow>,
-      std::conditional_t<own == bio::io::ownership::deep, bio::io::var::record_idx, bio::io::var::record_idx_shallow>>;
+                         bio::io::var::record_idx_deep,
+                         bio::io::var::record_idx_shallow>>;
 
     std::vector<record_t> recs;
 
@@ -104,7 +104,7 @@ TEST(vcf, incomplete_header)
 
     std::istringstream istr{incomplete_header_before + example_from_spec_records};
 
-    using record_t = bio::io::var::record_default_shallow;
+    using record_t = bio::io::var::record_shallow;
 
     bio::io::format_input_handler<bio::io::vcf> handler{istr, bio::io::var::reader_options{.print_warnings = false}};
 

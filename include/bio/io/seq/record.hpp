@@ -203,7 +203,7 @@ auto tie_record(id_t & id, seq_t & seq, qual_t & qual)
  */
 //!\brief Record type that can hold any kind of sequence (generic `char` alphabet).
 //!\ingroup seq
-using record_char = record<std::string, std::string, std::string>;
+using record_char_deep = record<std::string, std::string, std::string>;
 
 //!\brief Record type that can hold any kind of sequence (generic `char` alphabet); shallow version.
 //!\ingroup seq
@@ -212,7 +212,7 @@ using record_char_shallow = record<std::string_view, std::string_view, std::stri
 //!\brief Record type that reads DNA sequences (bio::alphabet::dna5)
 // and corresponding qualities ( bio::alphabet::phred42).
 //!\ingroup seq
-using record_dna = record<std::string, std::vector<alphabet::dna5>, std::vector<alphabet::phred42>>;
+using record_dna_deep = record<std::string, std::vector<alphabet::dna5>, std::vector<alphabet::phred42>>;
 
 //!\brief Record type that reads DNA sequences (bio::alphabet::dna5)
 // and corresponding qualities ( bio::alphabet::phred42); shallow version.
@@ -221,11 +221,11 @@ using record_dna_shallow = record<std::string_view,
                                   views::char_conversion_view_t<alphabet::dna5>,
                                   views::char_conversion_view_t<alphabet::phred42>>;
 
-//!\brief Record type that reads DNA sequences (bio::alphabet::aa27) and ignores qualities.
+//!\brief Record type that reads Protein sequences (bio::alphabet::aa27) and ignores qualities.
 //!\ingroup seq
-using record_protein = record<std::string, std::vector<alphabet::aa27>, meta::ignore_t>;
+using record_protein_deep = record<std::string, std::vector<alphabet::aa27>, meta::ignore_t>;
 
-//!\brief Record type that reads DNA sequences (bio::alphabet::aa27) and ignores qualities; shallow version.
+//!\brief Record type that reads Protein sequences (bio::alphabet::aa27) and ignores qualities; shallow version.
 //!\ingroup seq
 using record_protein_shallow = record<std::string_view, views::char_conversion_view_t<alphabet::aa27>, meta::ignore_t>;
 

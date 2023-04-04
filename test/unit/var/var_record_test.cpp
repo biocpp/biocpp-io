@@ -19,9 +19,9 @@ template <typename T>
 class var_record : public ::testing::Test
 {};
 
-using var_record_types = ::testing::Types<bio::io::var::record_default,
-                                          bio::io::var::record_default_shallow,
-                                          bio::io::var::record_idx,
+using var_record_types = ::testing::Types<bio::io::var::record_deep,
+                                          bio::io::var::record_shallow,
+                                          bio::io::var::record_idx_deep,
                                           bio::io::var::record_idx_shallow>;
 
 TYPED_TEST_SUITE(var_record, var_record_types, );

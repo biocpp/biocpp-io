@@ -34,7 +34,7 @@ writer.set_header(header);
 //![simple_usage_file]
 /* construction of writer as defined above */
 
-bio::io::var::record_default rec;
+bio::io::var::record_deep rec;
 rec.chrom     = "20";
 rec.pos       = 14370;
 rec.id        = "my_var";

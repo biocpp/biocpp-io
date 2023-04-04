@@ -115,10 +115,10 @@ void field_types()
 
     using record_t = std::conditional_t<
       s == style::def,
+      std::conditional_t<own == bio::io::ownership::deep, bio::io::var::record_deep, bio::io::var::record_shallow>,
       std::conditional_t<own == bio::io::ownership::deep,
-                         bio::io::var::record_default,
-                         bio::io::var::record_default_shallow>,
-      std::conditional_t<own == bio::io::ownership::deep, bio::io::var::record_idx, bio::io::var::record_idx_shallow>>;
+                         bio::io::var::record_idx_deep,
+                         bio::io::var::record_idx_shallow>>;
 
     using int_t       = int8_t;
     using vec_t       = bio::ranges::concatenated_sequences<std::vector<int_t>>;

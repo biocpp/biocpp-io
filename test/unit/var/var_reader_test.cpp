@@ -63,8 +63,9 @@ TEST(var_reader, constructor1_just_filename)
 
 TEST(var_reader, constructor1_with_opts)
 {
-    bio::io::var::reader_options opt{.record = bio::io::var::record_idx{}};
-    using control_t = bio::io::var::reader<bio::meta::type_list<bio::io::vcf, bio::io::bcf>, bio::io::var::record_idx>;
+    bio::io::var::reader_options opt{.record = bio::io::var::record_idx_deep{}};
+    using control_t =
+      bio::io::var::reader<bio::meta::type_list<bio::io::vcf, bio::io::bcf>, bio::io::var::record_idx_deep>;
 
     var_reader_filename_constructor(true, std::move(opt));
     EXPECT_SAME_TYPE((decltype(bio::io::var::reader{"", opt})), control_t);
@@ -78,8 +79,9 @@ TEST(var_reader, constructor2_just_filename_direct_format)
 
 TEST(var_reader, constructor2_with_opts_direct_format)
 {
-    bio::io::var::reader_options opt{.record = bio::io::var::record_idx{}};
-    using control_t = bio::io::var::reader<bio::meta::type_list<bio::io::vcf, bio::io::bcf>, bio::io::var::record_idx>;
+    bio::io::var::reader_options opt{.record = bio::io::var::record_idx_deep{}};
+    using control_t =
+      bio::io::var::reader<bio::meta::type_list<bio::io::vcf, bio::io::bcf>, bio::io::var::record_idx_deep>;
 
     var_reader_filename_constructor(false, bio::io::vcf{}, std::move(opt));
     EXPECT_SAME_TYPE((decltype(bio::io::var::reader{"", bio::io::vcf{}, opt})), control_t);
@@ -96,8 +98,9 @@ TEST(var_reader, constructor2_just_filename_format_variant)
 TEST(var_reader, constructor2_with_opts_format_variant)
 {
     std::variant<bio::io::vcf, bio::io::bcf> var{};
-    bio::io::var::reader_options             opt{.record = bio::io::var::record_idx{}};
-    using control_t = bio::io::var::reader<bio::meta::type_list<bio::io::vcf, bio::io::bcf>, bio::io::var::record_idx>;
+    bio::io::var::reader_options             opt{.record = bio::io::var::record_idx_deep{}};
+    using control_t =
+      bio::io::var::reader<bio::meta::type_list<bio::io::vcf, bio::io::bcf>, bio::io::var::record_idx_deep>;
 
     var_reader_filename_constructor(false, var, std::move(opt));
     EXPECT_SAME_TYPE((decltype(bio::io::var::reader{"", var, std::move(opt)})), control_t);
@@ -114,8 +117,9 @@ TEST(var_reader, constructor3)
 TEST(var_reader, constructor3_with_opts)
 {
     std::istringstream           str;
-    bio::io::var::reader_options opt{.record = bio::io::var::record_idx{}};
-    using control_t = bio::io::var::reader<bio::meta::type_list<bio::io::vcf, bio::io::bcf>, bio::io::var::record_idx>;
+    bio::io::var::reader_options opt{.record = bio::io::var::record_idx_deep{}};
+    using control_t =
+      bio::io::var::reader<bio::meta::type_list<bio::io::vcf, bio::io::bcf>, bio::io::var::record_idx_deep>;
 
     EXPECT_NO_THROW((bio::io::var::reader{str, bio::io::vcf{}, opt}));
     EXPECT_SAME_TYPE((decltype(bio::io::var::reader{str, bio::io::vcf{}, opt})), control_t);
@@ -132,8 +136,9 @@ TEST(var_reader, constructor4)
 TEST(var_reader, constructor4_with_opts)
 {
     std::istringstream           str;
-    bio::io::var::reader_options opt{.record = bio::io::var::record_idx{}};
-    using control_t = bio::io::var::reader<bio::meta::type_list<bio::io::vcf, bio::io::bcf>, bio::io::var::record_idx>;
+    bio::io::var::reader_options opt{.record = bio::io::var::record_idx_deep{}};
+    using control_t =
+      bio::io::var::reader<bio::meta::type_list<bio::io::vcf, bio::io::bcf>, bio::io::var::record_idx_deep>;
 
     EXPECT_NO_THROW((bio::io::var::reader{std::move(str), bio::io::vcf{}, opt}));
     EXPECT_SAME_TYPE((decltype(bio::io::var::reader{std::move(str), bio::io::vcf{}, opt})), control_t);
@@ -213,12 +218,12 @@ TEST(var_reader, get_header)
 
 TEST(var_reader, custom_field_types)
 {
-    bio::io::var::reader_options opt{.record = bio::io::var::record_idx{}};
+    bio::io::var::reader_options opt{.record = bio::io::var::record_idx_deep{}};
 
     std::istringstream   str{static_cast<std::string>(example_from_spec)};
     bio::io::var::reader reader{str, bio::io::vcf{}, opt};
 
-    EXPECT_SAME_TYPE(std::ranges::range_value_t<decltype(reader)>, bio::io::var::record_idx);
+    EXPECT_SAME_TYPE(std::ranges::range_value_t<decltype(reader)>, bio::io::var::record_idx_deep);
 }
 
 TEST(var_reader, decompression_filename)

@@ -231,9 +231,8 @@ auto make_ref(std::string_view const str)
 template <bio::io::ownership own, typename int_t = int32_t>
 auto example_records_default_style()
 {
-    using record_t = std::conditional_t<own == bio::io::ownership::shallow,
-                                        bio::io::var::record_default_shallow,
-                                        bio::io::var::record_default>;
+    using record_t =
+      std::conditional_t<own == bio::io::ownership::shallow, bio::io::var::record_shallow, bio::io::var::record_deep>;
 
     bio::io::var::record_private_data priv{};
     constexpr int_t                   mv = bio::io::var::missing_value<int_t>;
@@ -259,8 +258,9 @@ auto example_records_default_style()
 template <bio::io::ownership own, typename int_t = int32_t>
 auto example_records_bcf_style()
 {
-    using record_t = std::
-      conditional_t<own == bio::io::ownership::shallow, bio::io::var::record_idx_shallow, bio::io::var::record_idx>;
+    using record_t = std::conditional_t<own == bio::io::ownership::shallow,
+                                        bio::io::var::record_idx_shallow,
+                                        bio::io::var::record_idx_deep>;
 
     bio::io::var::record_private_data priv{};
     constexpr int_t                   mv = bio::io::var::missing_value<int_t>;
