@@ -52,6 +52,24 @@ namespace bio::io::seq
  * This is the record template for sequence I/O. It encompasses three members.
  *
  * See the \ref record_faq for more information on record-based reading.
+ *
+ * ### Example 1
+ *
+ * Simple usage of the record in combination with a reader:
+ *
+ * \snippet test/snippet/seq/seq_reader.cpp simple_usage_file
+ *
+ * Note that the record type is hidden behind `auto & rec`.
+ *
+ * ### Example 2
+ *
+ * When creating record variables from existing data, the template
+ * arguments can be deduced:
+ *
+ * \snippet test/snippet/seq/seq_record.cpp make_record
+ *
+ * To avoid copying existing data, you may want to use
+ * bio::io::seq::tie_record() instead.
  */
 template <typename _id_t   = std::string,
           typename _seq_t  = std::vector<alphabet::dna5>,
@@ -164,7 +182,7 @@ struct record
  *
  * ### Example
  *
- * TODO
+ * \snippet test/snippet/seq/seq_record.cpp tie_record
  */
 template <typename id_t, typename seq_t, typename qual_t>
 auto tie_record(id_t & id, seq_t & seq, qual_t & qual)

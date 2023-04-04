@@ -4,6 +4,7 @@
 #include <bio/io/seq/reader.hpp>
 
 #include "../../unit/seq/data.hpp"
+#include "bio/io/seq/record.hpp"
 
 int main()
 {

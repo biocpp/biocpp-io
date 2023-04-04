@@ -379,8 +379,6 @@ auto const && get(tuple_record<field_ids, field_types> const && r)
  *
  * The tuple_record will contain copies of the arguments.
  *
- * For more information, see \ref record_type and \ref record_make_tie
- *
  * ### Example
  *
  * \snippet test/snippet/detail/tuple_record.cpp make_and_tie_record
@@ -404,7 +402,6 @@ constexpr auto make_tuple_record(meta::vtag_t<field_ids...> BIOCPP_DOXYGEN_ONLY(
  *
  * The tuple_record will contain references to the arguments.
  *
- * For more information, see \ref record_type and \ref record_make_tie
  *
  * ### Example
  *

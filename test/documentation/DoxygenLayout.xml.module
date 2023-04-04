@@ -1,4 +1,5 @@
-    <tab type="usergroup" visible="yes" title="Record-based I/O" intro="">
-      <tab type="user" visible="yes" title="Introduction" url="\ref record_based_intro" intro=""/>
+    <tab type="usergroup" visible="yes" title="I/O library" intro="">
+      <tab type="user" visible="yes" title="Overview" url="\ref io_overview" intro=""/>
+      <tab type="user" visible="yes" title="Changelog" url="\ref io_changelog" intro=""/>
       <tab type="user" visible="yes" title="Record FAQ" url="\ref record_faq" intro=""/>
     </tab>
