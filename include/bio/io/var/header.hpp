@@ -13,11 +13,15 @@
 
 #pragma once
 
+#include <algorithm>
 #include <map>
-#include <regex>
 #include <string>
 #include <string_view>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
+
+#include <bio/ranges/container/dictionary.hpp>
 
 #include <bio/io/detail/charconv.hpp>
 #include <bio/io/detail/views_eager_split.hpp>
@@ -78,7 +82,7 @@ struct header_number
 class header
 {
 public:
-    // TODO we definitely want transparent hashing for these so we can search string_views efficiently
+    // TODO Change the following into a ranges::dictionary, as well
     //!\brief The dictionary for the non-standard fields in a header entry.
     using other_fields_t = std::map<std::string, std::string, std::ranges::less>;
 
@@ -132,7 +136,7 @@ public:
      * \{
      */
     //!\brief Default construction.
-    header() { init(); }
+    header() { add_pass_entry(); }
     header(header const &)             = default; //!< Defaulted.
     header(header &&)                  = default; //!< Defaulted.
     ~header()                          = default; //!< Defaulted.
@@ -142,7 +146,7 @@ public:
     //!\brief Construct from a header given as plaintext.
     explicit header(std::string_view plaintext_header)
     {
-        init();
+        add_pass_entry();
 
         if (plaintext_header.ends_with("\r\n"))
             plaintext_header = plaintext_header.substr(0, plaintext_header.size() - 2);
@@ -152,7 +156,7 @@ public:
         for (std::string_view const line : plaintext_header | io::detail::eager_split('\n'))
             parse_line(line);
 
-        add_missing();
+        //TODO do we want to validate?
     }
     //!\}
 
@@ -163,58 +167,31 @@ public:
      * \brief You can directly edit these member variables.
      * \{
      */
-    std::string              file_format = "VCFv4.3"; //!< The file format version.
-    std::vector<filter_t>    filters;                 //!< Header lines describing FILTER fields.
-    std::vector<info_t>      infos;                   //!< Header lines describing INFO fields.
-    std::vector<format_t>    formats;                 //!< Header lines describing FORMAT fields.
-    std::vector<contig_t>    contigs;                 //!< Header lines describing contigs.
-    std::vector<std::string> other_lines;             //!< Any other lines in the header.
-    std::vector<std::string> column_labels;           //!< Standard column labels and sample names.
+    std::string                               file_format = "VCFv4.3"; //!< The file format version.
+    ranges::dictionary<std::string, filter_t> filters;                 //!< Header lines describing FILTER fields.
+    ranges::dictionary<std::string, info_t>   infos;                   //!< Header lines describing INFO fields.
+    ranges::dictionary<std::string, format_t> formats;                 //!< Header lines describing FORMAT fields.
+    ranges::dictionary<std::string, contig_t> contigs;                 //!< Header lines describing contigs.
+    std::vector<std::string>                  other_lines;             //!< Any other lines in the header.
+    std::vector<std::string>                  column_labels;           //!< Standard column labels and sample names.
     //!\}
 
-    /*!\name Hash maps
+    /*!\name IDX maps
      * \{
      */
-
-    //!\brief Hash map of a string-view to a position (in vector).
-    using string_to_pos_t = std::unordered_map<std::string_view, size_t>;
-    //!\brief Hash map of IDX to position (in vector).
-    using idx_to_pos_t    = std::unordered_map<int32_t, size_t>;
-    //!\brief Hash map of a string to a an IDX (this hash-map owns the strings).
-    using string_to_idx_t = std::unordered_map<std::string, int32_t>;
-
-    //!\brief ID-string to position in #filters.
-    string_to_pos_t const & string_to_filter_pos() const { return string_to_filter_pos_; }
-    //!\brief IDX to position in #filters.
-    idx_to_pos_t const &    idx_to_filter_pos() const { return idx_to_filter_pos_; }
-    //!\brief ID-string to position in #infos.
-    string_to_pos_t const & string_to_info_pos() const { return string_to_info_pos_; }
-    //!\brief IDX to position in #infos.
-    idx_to_pos_t const &    idx_to_info_pos() const { return idx_to_info_pos_; }
-    //!\brief ID-string to position in #formats.
-    string_to_pos_t const & string_to_format_pos() const { return string_to_format_pos_; }
-    //!\brief IDX to position in #formats.
-    idx_to_pos_t const &    idx_to_format_pos() const { return idx_to_format_pos_; }
-    //!\brief ID-string to position in #contigs.
-    string_to_pos_t const & string_to_contig_pos() const { return string_to_contig_pos_; }
-    //!\brief IDX to position in #contigs.
-    idx_to_pos_t const &    idx_to_contig_pos() const { return idx_to_contig_pos_; }
+    //!\brief Hash map of IDX to string.
+    using idx_to_string_map_t = std::unordered_map<int32_t, std::string>;
 
     //!\brief Global string to IDX mapping (filter, info, format).
-    string_to_idx_t const & string_to_idx() const { return string_to_idx_; }
+    idx_to_string_map_t const & idx_to_string_map() const { return idx_to_string_map_; }
     //!\brief Global string to IDX mapping (contig).
-    string_to_idx_t const & contig_string_to_idx() const { return contig_string_to_idx_; }
+    idx_to_string_map_t const & contig_idx_to_string_map() const { return contig_idx_to_string_map_; }
 
     //!\brief The largest IDX value used (filter, info, format).
     int32_t max_idx() const { return max_other_idx_; }
     //!\brief The largest IDX value used (contig).
     int32_t max_contig_idx() const { return max_contig_idx_; }
 
-    //!\}
-
-    /*!\name Update, reset and inspect
-     * \{
-     */
     /*!\brief Add missing IDX fields to header entries and ensure that everything has proper hash-entries.
      *
      * \details
@@ -223,96 +200,73 @@ public:
      *
      *   1. ensure that "PASS" filter entry is present as first filter entry.
      *   2. assign a valid IDX value to all header entries that currently have IDX of -1.
-     *   3. generate correct hash-table mapping for all header entries.
+     *   3. generate new idx-to-string maps.
      *
      * It does not:
      *
-     *   * remove obsolete hash table entries; call #reset_hash() before to achieve this.
      *   * change existing IDX values of header entries (that are not -1).
-     *   * re-use obsolete IDX values; call #reset_idx() before to achieve this.
+     *   * re-use obsolete IDX values; call #idx_clear() before to achieve this.
      *
-     * If you only add new entries to the header or change members other than `.id` and `.idx`, it is sufficient to
-     * call this function.
-     *
-     * If you delete header entries, change their order, or change the `.id` / `.idx` members, you need to call
-     * #reset_hash() before calling #add_missing(). If you want to start with new IDX numbering, calls #reset_idx().
+     * If you want to start with new IDX numbering, calls #idx_clear().
      */
-    void add_missing()
+    void idx_update()
     {
+        idx_to_string_map_.clear();
+        contig_idx_to_string_map_.clear();
+
         bool has_pass = false;
-        for (size_t count = 0; count < filters.size(); ++count)
+        for (auto && [id, filter] : filters)
         {
-            if (filters[count].id == "PASS")
+            if (id == "PASS")
             {
-                has_pass                      = true;
-                filters[count].idx            = 0;
-                string_to_idx_["PASS"]        = 0;
-                string_to_filter_pos_["PASS"] = count;
-                idx_to_filter_pos_[0]         = count;
+                has_pass              = true;
+                filter.idx            = 0;
+                idx_to_string_map_[0] = "PASS";
             }
             else
             {
-                add_idx_and_hash_entries<entry_kind::filter>(count);
+                fix_idx(filter.idx, id);
             }
         }
 
         if (!has_pass)
-        {
-            filters.push_back({"PASS", "\"All filters passed\"", {}, 0});
-            string_to_idx_["PASS"]        = 0;
-            string_to_filter_pos_["PASS"] = filters.size() - 1;
-            idx_to_filter_pos_[0]         = filters.size() - 1;
-        }
+            add_pass_entry();
 
-        for (size_t count = 0; count < infos.size(); ++count)
-            add_idx_and_hash_entries<entry_kind::info>(count);
+        for (auto && [id, info] : infos)
+            fix_idx(info.idx, id);
 
-        for (size_t count = 0; count < formats.size(); ++count)
-            add_idx_and_hash_entries<entry_kind::format>(count);
+        for (auto && [id, format] : formats)
+            fix_idx(format.idx, id);
 
-        for (size_t count = 0; count < contigs.size(); ++count)
-            add_idx_and_hash_entries<entry_kind::contig>(count);
+        for (auto && [id, contig] : contigs)
+            fix_contig_idx(contig.idx, id);
     }
 
-    //!\brief Clear the IDX values from all header entries (sets them to -1); implicitly calls #reset_hash().
-    void reset_idx()
+    //!\brief Clear the IDX values from all header entries (sets them to -1).
+    void idx_clear()
     {
+        idx_to_string_map_.clear();
+        contig_idx_to_string_map_.clear();
+
         max_contig_idx_ = -1;
         max_other_idx_  = 0;
 
-        for (filter_t & filter : filters)
+        for (auto && [id, filter] : filters)
         {
-            if (filter.id == "PASS")
+            if (id == "PASS")
                 filter.idx = 0;
             else
                 filter.idx = -1;
         }
 
-        for (info_t & info : infos)
+        for (info_t & info : infos | std::views::elements<1>)
             info.idx = -1;
 
-        for (format_t & format : formats)
+        for (format_t & format : formats | std::views::elements<1>)
             format.idx = -1;
 
-        for (contig_t & contig : contigs)
+        for (contig_t & contig : contigs | std::views::elements<1>)
             contig.idx = -1;
-
-        reset_hash();
-    }
-
-    //!\brief Clear all hash-maps.
-    void reset_hash()
-    {
-        string_to_filter_pos_.clear();
-        idx_to_filter_pos_.clear();
-        string_to_info_pos_.clear();
-        idx_to_info_pos_.clear();
-        string_to_format_pos_.clear();
-        idx_to_format_pos_.clear();
-        string_to_contig_pos_.clear();
-        idx_to_contig_pos_.clear();
-        string_to_idx_.clear();
-        contig_string_to_idx_.clear();
     }
 
     /*!\brief Ensure the validity of the header entries.
@@ -325,13 +279,80 @@ public:
      *  * IDX-values that are -1.
      *  * Missing "PASS" entry in filters.
      *  * Strings in "other_lines" that actually should have been parsed.
+     *  * Inconsistencies in the hash tables.
      *
-     * This does **not** find:
-     *  * Any inconsistencies in the hash tables; if in doubt, just call #reset_hash() followed by #add_missing().
      */
-    void validate()
+    void idx_validate() const
     {
-        // TODO
+        auto check_idx = [](int32_t const idx, std::string_view const id, auto const & map)
+        {
+            if (idx == -1)
+            {
+                throw format_error{"VCF Header entry with ID ",
+                                   id,
+                                   " has no IDX value set.\n"
+                                   "Call idx_update() on the header."};
+            }
+
+            if (auto it = map.find(idx); it == map.end())
+            {
+                throw format_error{"VCF Header entry with ID ",
+                                   id,
+                                   " and IDX ",
+                                   idx,
+                                   " does not appear in reverse IDX map.\nCall idx_update() on the header."};
+            }
+            else if (std::string_view const stored_id = std::get<1>(*it); stored_id != id)
+            {
+                throw format_error{"VCF Header entry with ID ",
+                                   id,
+                                   " and IDX ",
+                                   idx,
+                                   " has different reverse ID lookup string: ",
+                                   stored_id,
+                                   "\nCall idx_clear() and "
+                                   "idx_update() on the header."};
+            }
+        };
+
+        bool has_pass = false;
+        for (auto && [id, filter] : filters)
+        {
+            if (id == "PASS")
+                has_pass = true;
+
+            check_idx(filter.idx, id, idx_to_string_map());
+        }
+
+        if (!has_pass)
+            throw format_error{"No VCF Header entry for the PASS-filter.\nCall idx_update() on the header."};
+
+        for (auto && [id, info] : infos)
+            check_idx(info.idx, id, idx_to_string_map());
+
+        for (auto && [id, format] : formats)
+            check_idx(format.idx, id, idx_to_string_map());
+
+        for (auto && [id, contig] : contigs)
+            check_idx(contig.idx, id, contig_idx_to_string_map());
+
+        for (std::string_view const line : other_lines)
+        {
+            auto check = [line](std::string_view const keyword)
+            {
+                if (line.starts_with(keyword))
+                {
+                    throw format_error{"other_line in VCF Header entry is actually a ",
+                                       keyword.substr(0, keyword.size() - 1), // remove "="
+                                       "line.\nAdd data to the respective member instead."};
+                }
+            };
+
+            check("FILTER=");
+            check("INFO=");
+            check("FORMAT=");
+            check("contig=");
+        }
     }
     //!\}
 
@@ -345,109 +366,78 @@ public:
     //!\}
 
 private:
-    //!\brief An enum denoting the different kinds of header entries.
-    enum class entry_kind
-    {
-        contig,
-        filter,
-        format,
-        info
-    };
-
     //!\brief Whether the first line was read successfully.
     bool file_format_read = false;
 
     //!\brief Add implicit PASS filter.
-    void init()
+    void add_pass_entry()
     {
-        filters.push_back({"PASS", "\"All filters passed\"", {}, 0});
-        string_to_idx_["PASS"]        = 0;
-        string_to_filter_pos_["PASS"] = 0;
-        idx_to_filter_pos_[0]         = 0;
+        filters.emplace_back("PASS", filter_t{"PASS", "\"All filters passed\"", {}, 0});
+        idx_to_string_map_[0] = "PASS";
     }
 
-    /*!\brief Set the correct IDX on an entry and updates the corresponding hash tables.
-     * \tparam k           Pass #filters, #infos, #formats or #contigs.
-     * \param[in] entry_no The position to update in the entries.
-     *
+    /*!\brief Set the correct IDX on an entry and updates the corresponding hash table.
+     * \param[in,out] idx  The IDX value.
+     * \param[in] id       The string ID.
      */
-    template <entry_kind k>
-    void add_idx_and_hash_entries(size_t const entry_no)
+    void fix_idx(int32_t & idx, std::string const & id)
     {
-        auto & entries = [this]() -> auto &
+        if (idx == -1)
         {
-            if constexpr (k == entry_kind::contig)
-                return contigs;
-            else if constexpr (k == entry_kind::filter)
-                return filters;
-            else if constexpr (k == entry_kind::format)
-                return formats;
+            // reverse lookup
+            if (auto it =
+                  std::ranges::find_if(idx_to_string_map_, [&](auto const & val) { return std::get<1>(val) == id; });
+                it == idx_to_string_map_.end())
+            {
+                ++max_other_idx_;
+                idx = max_other_idx_;
+            }
             else
-                return infos;
+            {
+                idx = std::get<0>(*it);
+            }
         }
-        ();
 
-        string_to_idx_t & string_to_idx = k == entry_kind::contig ? contig_string_to_idx_ : string_to_idx_;
-        int32_t &         max_idx       = k == entry_kind::contig ? max_contig_idx_ : max_other_idx_;
+        if (auto it = idx_to_string_map_.find(idx); it == idx_to_string_map_.end())
+            idx_to_string_map_[idx] = id;
+        else if (std::string_view id_ = std::get<1>(*it); id_ != id)
+            throw format_error{"Couldn't map IDX ", idx, " to ID ", id, ", because already mapped to ", id_, "."};
+    }
 
-        string_to_pos_t & string_to_pos = k == entry_kind::contig   ? string_to_contig_pos_
-                                          : k == entry_kind::filter ? string_to_filter_pos_
-                                          : k == entry_kind::format ? string_to_format_pos_
-                                                                    : string_to_info_pos_;
-        idx_to_pos_t &    idx_to_pos    = k == entry_kind::contig   ? idx_to_contig_pos_
-                                          : k == entry_kind::filter ? idx_to_filter_pos_
-                                          : k == entry_kind::format ? idx_to_format_pos_
-                                                                    : idx_to_info_pos_;
-        auto &            entry         = entries[entry_no];
-
-        std::string_view stable_string_ref{};
-
-        if (auto it = string_to_idx.find(entry.id); it != string_to_idx.end())
+    /*!\brief Set the correct IDX on a contig entry and updates the corresponding hash table.
+     * \param[in,out] idx  The IDX value.
+     * \param[in] id       The string ID.
+     */
+    void fix_contig_idx(int32_t & idx, std::string const & id)
+    {
+        if (idx == -1)
         {
-            stable_string_ref = it->first;
-            int32_t idx       = it->second;
-
-            if (entry.idx == -1)
-                entry.idx = idx;
-            else if (idx != entry.idx)
-                throw std::runtime_error{"Mismatching IDX values in header entry and hash-table. Call reset_hash()."};
-        }
-        else
-        {
-            if (entry.idx == -1)
-                entry.idx = ++max_idx;
-
-            auto [it2, insert_successful] = string_to_idx.emplace(entry.id, entry.idx);
-            assert(insert_successful);
-            stable_string_ref = it2->first;
+            // reverse lookup
+            if (auto it = std::ranges::find_if(contig_idx_to_string_map_,
+                                               [&](auto const & val) { return std::get<1>(val) == id; });
+                it == contig_idx_to_string_map_.end())
+            {
+                ++max_contig_idx_;
+                idx = max_contig_idx_;
+            }
+            else
+            {
+                idx = std::get<0>(*it);
+            }
         }
 
-        /* string_to_pos has views as keys, so we cannot pass entry.id here, because
-         * subsequent growing of e.g. std::vector<info_t> will invalidate that string.
-         * This is because std::string has SSO which means string might be on stack.
-         *
-         * The strings in string_to_idx are stable with regards to growth of elements.
-         */
-        string_to_pos[stable_string_ref] = entry_no;
-        idx_to_pos[entry.idx]            = entry_no;
+        if (auto it = contig_idx_to_string_map_.find(idx); it == contig_idx_to_string_map_.end())
+            contig_idx_to_string_map_[idx] = id;
+        else if (std::string_view id_ = std::get<1>(*it); id_ != id)
+            throw format_error{"Couldn't map IDX ", idx, " to ID ", id, ", because already mapped to ", id_, "."};
     }
 
     /*!\name Advanced data fields
      * \brief You don't have to set these manually when creating a bio::io::var::header.
      * \{
      */
-    string_to_pos_t string_to_filter_pos_; //!< ID-string to position in #filters.
-    idx_to_pos_t    idx_to_filter_pos_;    //!< IDX to position in #filters.
-    string_to_pos_t string_to_info_pos_;   //!< ID-string to position in #infos.
-    idx_to_pos_t    idx_to_info_pos_;      //!< IDX to position in #infos.
-    string_to_pos_t string_to_format_pos_; //!< ID-string to position in #formats.
-    idx_to_pos_t    idx_to_format_pos_;    //!< IDX to position in #formats.
-    string_to_pos_t string_to_contig_pos_; //!< ID-string to position in #contigs.
-    idx_to_pos_t    idx_to_contig_pos_;    //!< IDX to position in #contigs.
-
-    // TODO possibly store strings for these dictionaries in extra concatenated_container for cache-efficiency
-    string_to_idx_t string_to_idx_;        //!< Global string to IDX mapping (filter, info, format).
-    string_to_idx_t contig_string_to_idx_; //!< Global string to IDX mapping (contig).
+    idx_to_string_map_t idx_to_string_map_;        //!< Global IDX to string mapping (filter, info, format).
+    idx_to_string_map_t contig_idx_to_string_map_; //!< Global IDX to string mapping (contig).
 
     int32_t max_other_idx_  = 0;  //!< The highest IDX value in use (defaults to 0, because PASS is used).
     int32_t max_contig_idx_ = -1; //!< The highest contig IDX value in use (defaults to -1, because none is used).
@@ -480,7 +470,7 @@ private:
         ((raw_data += "##fileformat=") += file_format) += "\n";
 
         // filters
-        for (auto const & filter : filters)
+        for (auto const & filter : filters | std::views::elements<1>)
         {
             (raw_data += "##FILTER=<ID=") += filter.id;
             (raw_data += ",Description=") += quote_wrap(static_cast<std::string>(filter.description));
@@ -496,7 +486,7 @@ private:
 
         // TODO: think about if/which other_fields-value to quote_wrap
         //  infos
-        for (auto const & info : infos)
+        for (auto const & info : infos | std::views::elements<1>)
         {
             (raw_data += "##INFO=<ID=") += info.id;
             (raw_data += ",Number=") += header_number::to_string(info.number);
@@ -513,7 +503,7 @@ private:
         }
 
         // formats
-        for (auto const & format : formats)
+        for (auto const & format : formats | std::views::elements<1>)
         {
             (raw_data += "##FORMAT=<ID=") += format.id;
             (raw_data += ",Number=") += header_number::to_string(format.number);
@@ -530,7 +520,7 @@ private:
         }
 
         // contigs
-        for (auto const & contig : contigs)
+        for (auto const & contig : contigs | std::views::elements<1>)
         {
             (raw_data += "##contig=<ID=") += contig.id;
             if (contig.length != -1)
@@ -562,7 +552,6 @@ private:
     //!\brief Turn bio::io::value_type_id into string.
     static std::string_view unparse_type(std::string_view const type, value_type_id const type_id)
     {
-        // TODO replace with string_view
         std::string_view ret;
 
         switch (type_id)
@@ -746,22 +735,23 @@ private:
         if (!idx.empty())
             io::detail::string_to_number(idx.mapped(), new_entry.idx);
         max_other_idx_ = std::max(max_other_idx_, new_entry.idx);
+        fix_idx(new_entry.idx, new_entry.id);
 
         if (is_info)
         {
-            if (string_to_info_pos_.contains(new_entry.id))
+            if (infos.contains(new_entry.id))
                 throw format_error{"Duplicate INFO ID \"", new_entry.id, "\" in HEADER."};
 
-            infos.push_back(std::move(new_entry));
-            add_idx_and_hash_entries<entry_kind::info>(infos.size() - 1);
+            std::string tmp = new_entry.id;
+            infos.emplace_back(std::move(tmp), std::move(new_entry));
         }
         else
         {
-            if (string_to_format_pos_.contains(new_entry.id))
+            if (formats.contains(new_entry.id))
                 throw format_error{"Duplicate FORMAT ID \"", new_entry.id, "\" in HEADER."};
 
-            formats.push_back(std::move(new_entry));
-            add_idx_and_hash_entries<entry_kind::format>(formats.size() - 1);
+            std::string tmp = new_entry.id;
+            formats.emplace_back(std::move(tmp), std::move(new_entry));
         }
     }
 
@@ -790,21 +780,21 @@ private:
         if (!idx.empty())
             io::detail::string_to_number(idx.mapped(), new_entry.idx);
         max_other_idx_ = std::max(max_other_idx_, new_entry.idx);
+        fix_idx(new_entry.idx, new_entry.id);
 
         // PASS line was added by us before and is now swapped with user-provided
-        if (filters.size() > 0 && filters.front().id == "PASS" && new_entry.id == "PASS")
+        if (filters.size() > 0 && get<0>(filters.front()) == "PASS" && new_entry.id == "PASS")
         {
-            std::swap(filters[0], new_entry);
+            get<1>(filters[0]) = new_entry;
         }
         else
         {
-            if (string_to_filter_pos_.contains(new_entry.id))
+            if (filters.contains(new_entry.id))
                 throw format_error{"Duplicate FILTER ID \"", new_entry.id, "\" in HEADER."};
 
-            filters.push_back(std::move(new_entry));
+            std::string tmp = new_entry.id;
+            filters.emplace_back(std::move(tmp), std::move(new_entry));
         }
-
-        add_idx_and_hash_entries<entry_kind::filter>(filters.size() - 1);
     }
 
     //!\brief Parse a CONTIG line.
@@ -832,13 +822,13 @@ private:
         else
             io::detail::string_to_number(idx.mapped(), new_entry.idx);
         max_contig_idx_ = std::max(max_contig_idx_, new_entry.idx);
+        fix_contig_idx(new_entry.idx, new_entry.id);
 
-        if (string_to_contig_pos_.contains(new_entry.id))
+        if (contigs.contains(new_entry.id))
             throw format_error{"Duplicate CONTIG ID \"", new_entry.id, "\" in HEADER."};
 
-        contigs.push_back(std::move(new_entry));
-
-        add_idx_and_hash_entries<entry_kind::contig>(contigs.size() - 1);
+        std::string tmp = new_entry.id;
+        contigs.emplace_back(std::move(tmp), std::move(new_entry));
     }
 
     //!\brief Parse the line with column labels / sample names.
@@ -967,8 +957,9 @@ private:
 };
 
 // clang-format off
+//TODO change these to dictionary once the tuple-constructor is fixed in -core
 //!\brief A table of reserved INFO entries.
-inline std::unordered_map<std::string_view, header::info_t> const reserved_infos =
+inline std::unordered_map<std::string_view, header::info_t> const reserved_infos
 {
     {"AA",       {"AA",                   1, "String",  value_type_id::string,            "\"Ancestral allele\""}},
     {"AC",       {"AC",    header_number::A, "Integer", value_type_id::vector_of_int32,   "\"Allele count in genotypes, for each ALT allele, in the same order as listed\""}},
@@ -996,7 +987,7 @@ inline std::unordered_map<std::string_view, header::info_t> const reserved_infos
 
 // clang-format off
 //!\brief A table of reserved FORMAT entries.
-inline std::unordered_map<std::string_view, header::format_t> const reserved_formats =
+inline std::unordered_map<std::string_view, header::format_t> const reserved_formats
 {
     {"AD",  {"AD",    header_number::R, "Integer", value_type_id::vector_of_int32,   "\"Read depth for each allele\""}},
     {"ADF", {"ADF",   header_number::R, "Integer", value_type_id::vector_of_int32,   "\"Read depth for each allele on the forward strand\""}},

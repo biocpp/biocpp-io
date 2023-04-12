@@ -30,7 +30,7 @@ void field_types()
         bio::io::format_output_handler<bio::io::vcf> handler{ostr, bio::io::var::writer_options{}};
 
         bio::io::var::header hdr{example_from_spec_header};
-        hdr.add_missing();
+        hdr.idx_update();
         handler.set_header(std::move(hdr));
 
         auto recs = []()
@@ -76,7 +76,7 @@ TEST(vcf_output, novariant)
         bio::io::format_output_handler<bio::io::vcf> handler{ostr, bio::io::var::writer_options{}};
 
         bio::io::var::header hdr{example_from_spec_header};
-        hdr.add_missing();
+        hdr.idx_update();
         handler.set_header(std::move(hdr));
 
         auto records = example_records_novariant(); // < records is a tuple here
