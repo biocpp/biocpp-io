@@ -39,9 +39,9 @@ using Y2 = decltype(get_arg_t(reader.begin()->qual).second);
 
 static_assert(std::same_as<decltype(reader)::record_type,
 //![simple_usage_file_type]
-bio::io::seq::record<std::string_view,                                 // type of the ID field
-                        std::ranges::transform_view<X1, X2>,              // type of the SEQ field
-                        std::ranges::transform_view<Y1, Y2>>              // type of the QUAL field
+bio::io::seq::record<std::string_view,                    // type of the ID field
+                     std::ranges::transform_view<X1, X2>, // type of the SEQ field
+                     std::ranges::transform_view<Y1, Y2>> // type of the QUAL field
 //![simple_usage_file_type]
               >);
 
@@ -88,9 +88,9 @@ for (auto & rec : reader | std::views::filter(min_length) | std::views::take(5))
 {
 //![options]
 bio::io::seq::reader reader{"example.fasta",
-                               bio::io::seq::reader_options{
-                                   .record = bio::io::seq::record_protein_shallow{},
-                                   .truncate_ids = true }};
+                            bio::io::seq::reader_options{
+                                .record = bio::io::seq::record_protein_shallow{},
+                                .truncate_ids = true }};
 
 for (auto & rec : reader)
 {
@@ -105,7 +105,7 @@ for (auto & rec : reader)
 using namespace bio::alphabet::literals;
 
 bio::io::seq::reader reader{"example.fasta",
-                               bio::io::seq::reader_options{.record = bio::io::seq::record_dna{}}};
+                            bio::io::seq::reader_options{.record = bio::io::seq::record_dna_deep{}}};
 
 for (auto & rec : reader)
 {
@@ -119,9 +119,9 @@ for (auto & rec : reader)
 
 static_assert(std::same_as<decltype(reader)::record_type,
 //![options2_type]
-bio::io::seq::record<std::string,                            // type of the ID field
-                        std::vector<bio::alphabet::dna5>,       // type of the SEQ field
-                        std::vector<bio::alphabet::phred42>>    // type of the QUAL field
+bio::io::seq::record<std::string,                         // type of the ID field
+                     std::vector<bio::alphabet::dna5>,    // type of the SEQ field
+                     std::vector<bio::alphabet::phred42>> // type of the QUAL field
 //![options2_type]
               >);
 

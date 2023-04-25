@@ -54,7 +54,7 @@ namespace bio::io::seq
  *
  * ### Writing a record
  *
- * Create a record using the bio::io::seq::record_dna and setting the members:
+ * Create a record using the bio::io::seq::record_dna_deep and setting the members:
  *
  * \snippet test/snippet/seq/seq_writer.cpp simple_usage_file
  *

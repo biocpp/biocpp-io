@@ -59,7 +59,7 @@ namespace bio::io::var
  * Reading fewer fields than available may provide a noticeable speed-up since only the
  * requested fields are actually parsed.
  */
-template <typename formats_t = meta::type_list<vcf, bcf>, typename record_t = record_default_shallow>
+template <typename formats_t = meta::type_list<vcf, bcf>, typename record_t = record_shallow>
 struct reader_options
 {
     /*!\brief The formats that input files can take; a bio::meta::ttag over the types.
@@ -73,7 +73,7 @@ struct reader_options
     //!\brief Whether to print non-critical file format warnings.
     bool print_warnings = true;
 
-    //!\brief The record data structure; equals bio::io::var::record_default_shallow by default.
+    //!\brief The record data structure; equals bio::io::var::record_shallow by default.
     record_t record{};
 
     /*!\name Region filtering

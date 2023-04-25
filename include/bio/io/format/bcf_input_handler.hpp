@@ -733,7 +733,7 @@ private:
     //!\overload
     void parse_field(meta::vtag_t<detail::field::chrom> const & /**/, auto & parsed_field)
     {
-        parse_field_aux(header.contigs[header.idx_to_contig_pos().at(record_core->chrom)].id, parsed_field);
+        parse_field_aux(header.contig_idx_to_string_map().at(record_core->chrom), parsed_field);
     }
 
     //!\brief Reading of POS field.
@@ -804,7 +804,7 @@ private:
         for (int32_t const idx : tmp)
         {
             std::ranges::range_value_t<parsed_field_t> out;
-            parse_field_aux(header.filters[header.idx_to_filter_pos().at(idx)].id, out);
+            parse_field_aux(header.idx_to_string_map().at(idx), out);
             parsed_field.push_back(std::move(out));
         }
     }
@@ -832,14 +832,14 @@ private:
 
             size_t real_size = size < 15 ? size : decode_integral(cache_ptr);
 
-            parse_element_value_type(header.infos[header.idx_to_info_pos().at(idx)].type_id,
-                                     desc,
-                                     real_size,
-                                     cache_ptr,
-                                     variant);
+            auto info_it = header.infos.find(header.idx_to_string_map().at(idx));
+            assert(info_it != header.infos.end());
+            auto && [id_string, info] = *info_it;
+
+            parse_element_value_type(info.type_id, desc, real_size, cache_ptr, variant);
 
             if constexpr (detail::out_string<decltype(id)>)
-                detail::string_copy(header.infos[header.idx_to_info_pos().at(idx)].id, id);
+                detail::string_copy(id_string, id);
             else
                 id = idx;
         }
@@ -903,11 +903,13 @@ private:
 
             auto & [id, parsed_variant] = parsed_field.back();
 
-            int32_t                 fmt_key = decode_integral(cache_ptr);
-            var::header::format_t & format  = header.formats[header.idx_to_format_pos().at(fmt_key)];
+            int32_t fmt_key = decode_integral(cache_ptr);
+            auto    fmt_it  = header.formats.find(header.idx_to_string_map().at(fmt_key));
+            assert(fmt_it != header.formats.end());
+            auto && [id_string, format] = *fmt_it;
 
             if constexpr (detail::out_string<decltype(id)>)
-                detail::string_copy(format.id, id);
+                detail::string_copy(id_string, id);
             else
                 id = fmt_key;
 
@@ -917,7 +919,7 @@ private:
             // TODO fmt_size might overflow because it is only uint8_t
             fmt_size = fmt_size < 15 ? fmt_size : decode_integral(cache_ptr);
 
-            if (format.id == "GT") // this needs custom decoding, it is not a string
+            if (id_string == "GT") // this needs custom decoding, it is not a string
             {
                 /* we explicitly parse into integer format for now: */
                 parse_element_value_type(var::value_type_id::vector_of_int32,
@@ -1031,8 +1033,7 @@ public:
         header = var::header{std::move(text_tmp)};
 
         /* checks on header */
-        if (header.string_to_format_pos().contains("GT") &&
-            header.formats[header.string_to_format_pos().at("GT")].type_id != var::value_type_id::string)
+        if (header.formats.contains("GT") && header.formats["GT"].type_id != var::value_type_id::string)
         {
             error("The \"GT\" field must always be encoded as a string.");
         }

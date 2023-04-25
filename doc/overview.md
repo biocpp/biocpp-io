@@ -1,17 +1,9 @@
-# Welcome {#io_mainpage}
-
-Welcome to the documentation of the BioC++ I/O library.
-This web-site contains the API reference (documentation of our interfaces) and some small Tutorials and HowTos.
-
-The I/O library requires the BioC++ core library, and it is recommended to have a look at its documentation first.
-
-
-## Overview
+# Overview {#io_overview}
 
 This section contains a very short overview of the most important parts of the library.
 
 
-### General IO Utilities
+## General IO Utilities
 
 |                               |    Description                                                              |
 |-------------------------------|-----------------------------------------------------------------------------|
@@ -23,13 +15,13 @@ The transparent streams can be used in place of the standard library streams. Th
 compressions such as GZip, BZip2 and BGZip.
 
 
-### Record-based I/O
+## Record-based I/O
 
 
 | Reader                    | Writer                    |    Description                                |
 |---------------------------|---------------------------|-----------------------------------------------|
 | bio::io::txt::reader      | bio::io::txt::writer      | Plaintext files, CSV, TSV; simple VCF or SAM  |
-| bio::io::seq::reader      | TODO                      | FastA and FastQ files                         |
+| bio::io::seq::reader      | bio::io::seq::writer      | FastA and FastQ files                         |
 | bio::io::var::reader      | bio::io::var::writer      | VCF and BCF                                   |
 
 

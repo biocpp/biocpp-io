@@ -52,6 +52,24 @@ namespace bio::io::seq
  * This is the record template for sequence I/O. It encompasses three members.
  *
  * See the \ref record_faq for more information on record-based reading.
+ *
+ * ### Example 1
+ *
+ * Simple usage of the record in combination with a reader:
+ *
+ * \snippet test/snippet/seq/seq_reader.cpp simple_usage_file
+ *
+ * Note that the record type is hidden behind `auto & rec`.
+ *
+ * ### Example 2
+ *
+ * When creating record variables from existing data, the template
+ * arguments can be deduced:
+ *
+ * \snippet test/snippet/seq/seq_record.cpp make_record
+ *
+ * To avoid copying existing data, you may want to use
+ * bio::io::seq::tie_record() instead.
  */
 template <typename _id_t   = std::string,
           typename _seq_t  = std::vector<alphabet::dna5>,
@@ -164,7 +182,7 @@ struct record
  *
  * ### Example
  *
- * TODO
+ * \snippet test/snippet/seq/seq_record.cpp tie_record
  */
 template <typename id_t, typename seq_t, typename qual_t>
 auto tie_record(id_t & id, seq_t & seq, qual_t & qual)
@@ -185,7 +203,7 @@ auto tie_record(id_t & id, seq_t & seq, qual_t & qual)
  */
 //!\brief Record type that can hold any kind of sequence (generic `char` alphabet).
 //!\ingroup seq
-using record_char = record<std::string, std::string, std::string>;
+using record_char_deep = record<std::string, std::string, std::string>;
 
 //!\brief Record type that can hold any kind of sequence (generic `char` alphabet); shallow version.
 //!\ingroup seq
@@ -194,7 +212,7 @@ using record_char_shallow = record<std::string_view, std::string_view, std::stri
 //!\brief Record type that reads DNA sequences (bio::alphabet::dna5)
 // and corresponding qualities ( bio::alphabet::phred42).
 //!\ingroup seq
-using record_dna = record<std::string, std::vector<alphabet::dna5>, std::vector<alphabet::phred42>>;
+using record_dna_deep = record<std::string, std::vector<alphabet::dna5>, std::vector<alphabet::phred42>>;
 
 //!\brief Record type that reads DNA sequences (bio::alphabet::dna5)
 // and corresponding qualities ( bio::alphabet::phred42); shallow version.
@@ -203,11 +221,11 @@ using record_dna_shallow = record<std::string_view,
                                   views::char_conversion_view_t<alphabet::dna5>,
                                   views::char_conversion_view_t<alphabet::phred42>>;
 
-//!\brief Record type that reads DNA sequences (bio::alphabet::aa27) and ignores qualities.
+//!\brief Record type that reads Protein sequences (bio::alphabet::aa27) and ignores qualities.
 //!\ingroup seq
-using record_protein = record<std::string, std::vector<alphabet::aa27>, meta::ignore_t>;
+using record_protein_deep = record<std::string, std::vector<alphabet::aa27>, meta::ignore_t>;
 
-//!\brief Record type that reads DNA sequences (bio::alphabet::aa27) and ignores qualities; shallow version.
+//!\brief Record type that reads Protein sequences (bio::alphabet::aa27) and ignores qualities; shallow version.
 //!\ingroup seq
 using record_protein_shallow = record<std::string_view, views::char_conversion_view_t<alphabet::aa27>, meta::ignore_t>;
 

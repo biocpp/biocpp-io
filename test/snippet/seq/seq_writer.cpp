@@ -4,6 +4,7 @@
 #include <bio/io/seq/reader.hpp>
 
 #include "../../unit/seq/data.hpp"
+#include "bio/io/seq/record.hpp"
 
 int main()
 {
@@ -21,7 +22,7 @@ using namespace bio::alphabet::literals;
 
 bio::io::seq::writer writer{"example.fastq"};
 
-bio::io::seq::record_dna rec;
+bio::io::seq::record_dna_deep rec;
 rec.id   = "my id";
 rec.seq  = "ACT"_dna5;
 rec.qual = "!!!"_phred42;

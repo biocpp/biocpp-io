@@ -485,13 +485,12 @@ private:
     void set_core_chrom(std::integral auto & field) { record_core.chrom = static_cast<int32_t>(field); }
 
     //!\brief Overload for CHROM and text IDs.
-    void set_core_chrom(detail::char_range_or_cstring auto && field)
+    void set_core_chrom(std::string_view const field)
     {
-        std::string_view const buf = detail::to_string_view(field);
-        if (auto it = header->string_to_contig_pos().find(buf); it == header->string_to_contig_pos().end())
+        if (auto it = header->contigs.find(var::detail::het_string(field)); it == header->contigs.end())
             error("The contig '", field, "' is not present in the header.");
         else
-            record_core.chrom = header->contigs[it->second].idx;
+            record_core.chrom = std::get<1>(*it).idx;
     }
 
     //!\overload
@@ -602,12 +601,12 @@ private:
         {
             auto text_id_to_idx = [this](std::string_view const text_id)
             {
-                auto it = header->string_to_filter_pos().find(text_id);
+                auto it = header->filters.find(var::detail::het_string(text_id));
 
-                if (it == header->string_to_filter_pos().end())
+                if (it == header->filters.end())
                     error("The filter '", text_id, "' is not present in the header.");
 
-                return header->filters[it->second].idx;
+                return std::get<1>(*it).idx;
             };
 
             write_range_impl(range | std::views::transform(text_id_to_idx), idx_desc);
@@ -673,23 +672,26 @@ private:
         using value_t = decltype(value);
 
         /* ID */
-        int32_t idx = 0;
+        typename decltype(header->infos)::const_iterator inf_it;
         if constexpr (std::integral<id_t>)
         {
             assert((int64_t)id <= (int64_t)header->max_idx());
-            idx = id;
+            if (auto it = header->idx_to_string_map().find(id); it == header->idx_to_string_map().end())
+                error("The info with idx '", id, "' is not present in the header.");
+            else
+                inf_it = header->infos.find(std::get<1>(*it));
         }
         else
         {
-            auto it = header->string_to_info_pos().find(id);
-            if (it == header->string_to_info_pos().end())
-                error("The info '", id, "' is not present in the header.");
-
-            idx = header->infos[it->second].idx;
+            inf_it = header->infos.find(var::detail::het_string(id));
         }
-        write_typed_data(idx, idx_desc);
 
-        var::header::info_t const & info = header->infos.at(header->idx_to_info_pos().at(idx));
+        if (inf_it == header->infos.end())
+            error("The info '", id, "' is not present in the header.");
+
+        var::header::info_t const & info = std::get<1>(*inf_it);
+
+        write_typed_data(info.idx, idx_desc);
 
         /* VALUE */
         if constexpr (var::detail::is_info_element_value_type<value_t>)
@@ -772,22 +774,25 @@ private:
         using value_t = decltype(value);
 
         /* ID */
-        int32_t idx = 0;
+        typename decltype(header->formats)::const_iterator gen_it;
         if constexpr (std::integral<id_t>)
         {
             assert((int64_t)id <= (int64_t)header->max_idx());
-            idx = id;
+            if (auto it = header->idx_to_string_map().find(id); it == header->idx_to_string_map().end())
+                error("The genotype with idx '", id, "' is not present in the header.");
+            else
+                gen_it = header->formats.find(std::get<1>(*it));
         }
         else
         {
-            if (auto it = header->string_to_format_pos().find(id); it == header->string_to_format_pos().end())
-                error("The genotype '", id, "' is not present in the header.");
-            else
-                idx = header->formats[it->second].idx;
+            gen_it = header->formats.find(var::detail::het_string(id));
         }
-        write_typed_data(idx, idx_desc);
 
-        var::header::format_t const & format = header->formats.at(header->idx_to_format_pos().at(idx));
+        if (gen_it == header->formats.end())
+            error("The genotype '", id, "' is not present in the header.");
+
+        var::header::format_t const & format = std::get<1>(*gen_it);
+        write_typed_data(format.idx, idx_desc);
 
         /* value */
         auto func = [&](auto & values)
@@ -1215,25 +1220,25 @@ public:
     //!\brief Set the header.
     void set_header(var::header const & hdr)
     {
-        // TODO verify that all header entries have IDX
         header = {&hdr, [](var::header const *) {}};
+        header->idx_validate();
     }
     //!\overload
     void set_header(var::header const && hdr)
     {
-        // TODO verify that all header entries have IDX
         header = {new var::header(std::move(hdr)), [](var::header const * ptr) { delete ptr; }};
+        header->idx_validate();
     }
     //!\overload
     void set_header(var::header & hdr)
     {
-        hdr.add_missing();
+        hdr.idx_update();
         set_header(std::as_const(hdr));
     }
     //!\overload
     void set_header(var::header && hdr)
     {
-        hdr.add_missing();
+        hdr.idx_update();
         set_header(std::move(std::as_const(hdr)));
     }
 

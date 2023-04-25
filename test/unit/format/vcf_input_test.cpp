@@ -33,10 +33,10 @@ void field_types()
 
     using record_t = std::conditional_t<
       s == style::def,
+      std::conditional_t<own == bio::io::ownership::deep, bio::io::var::record_deep, bio::io::var::record_shallow>,
       std::conditional_t<own == bio::io::ownership::deep,
-                         bio::io::var::record_default,
-                         bio::io::var::record_default_shallow>,
-      std::conditional_t<own == bio::io::ownership::deep, bio::io::var::record_idx, bio::io::var::record_idx_shallow>>;
+                         bio::io::var::record_idx_deep,
+                         bio::io::var::record_idx_shallow>>;
 
     std::vector<record_t> recs;
 
@@ -104,7 +104,7 @@ TEST(vcf, incomplete_header)
 
     std::istringstream istr{incomplete_header_before + example_from_spec_records};
 
-    using record_t = bio::io::var::record_default_shallow;
+    using record_t = bio::io::var::record_shallow;
 
     bio::io::format_input_handler<bio::io::vcf> handler{istr, bio::io::var::reader_options{.print_warnings = false}};
 
@@ -136,36 +136,36 @@ TEST(vcf, incomplete_header)
     ASSERT_EQ(hdr.infos.size(), 5ull);
     ASSERT_EQ(hdr.formats.size(), 4ull);
 
-    EXPECT_EQ(hdr.contigs[0].id, "20");
-    EXPECT_EQ(hdr.contigs[0].idx, 0);
+    EXPECT_EQ(std::get<1>(hdr.contigs[0]).id, "20");
+    EXPECT_EQ(std::get<1>(hdr.contigs[0]).idx, 0);
 
     info_compare     = bio::io::var::reserved_infos.at("DP");
     info_compare.idx = 3;
-    EXPECT_TRUE(hdr.infos[1] == info_compare);
+    EXPECT_TRUE(hdr.infos["DP"] == info_compare);
 
     info_compare     = bio::io::var::reserved_infos.at("AF");
     info_compare.idx = 4;
-    EXPECT_TRUE(hdr.infos[2] == info_compare);
+    EXPECT_TRUE(hdr.infos["AF"] == info_compare);
 
     info_compare     = bio::io::var::reserved_infos.at("DB");
     info_compare.idx = 5;
-    EXPECT_TRUE(hdr.infos[3] == info_compare);
+    EXPECT_TRUE(hdr.infos["DB"] == info_compare);
 
     info_compare     = bio::io::var::reserved_infos.at("H2");
     info_compare.idx = 6;
-    EXPECT_TRUE(hdr.infos[4] == info_compare);
+    EXPECT_TRUE(hdr.infos["H2"] == info_compare);
 
     format_compare     = bio::io::var::reserved_formats.at("GQ");
     format_compare.idx = 7;
-    EXPECT_TRUE(hdr.formats[1] == format_compare);
+    EXPECT_TRUE(hdr.formats["GQ"] == format_compare);
 
     format_compare     = bio::io::var::reserved_formats.at("DP");
     format_compare.idx = 3;
-    EXPECT_TRUE(hdr.formats[2] == format_compare);
+    EXPECT_TRUE(hdr.formats["DP"] == format_compare);
 
     format_compare     = bio::io::var::reserved_formats.at("HQ");
     format_compare.idx = 8;
-    EXPECT_TRUE(hdr.formats[3] == format_compare);
+    EXPECT_TRUE(hdr.formats["HQ"] == format_compare);
 
     /* SECOND RECORD */
     ASSERT_EQ(hdr.filters.size(), 1ull);
@@ -174,9 +174,9 @@ TEST(vcf, incomplete_header)
     EXPECT_EQ(rec, recs[1]);
 
     ASSERT_EQ(hdr.filters.size(), 2ull);
-    EXPECT_EQ(hdr.filters[1].id, "q10");
-    EXPECT_EQ(hdr.filters[1].description, "\"Automatically added by SeqAn3.\"");
-    EXPECT_EQ(hdr.filters[1].idx, 9);
+    EXPECT_EQ(std::get<1>(hdr.filters[1]).id, "q10");
+    EXPECT_EQ(std::get<1>(hdr.filters[1]).description, "\"Automatically added by SeqAn3.\"");
+    EXPECT_EQ(std::get<1>(hdr.filters[1]).idx, 9);
 
     /* THIRD RECORD */
     ASSERT_EQ(hdr.infos.size(), 5ull);
@@ -188,7 +188,7 @@ TEST(vcf, incomplete_header)
 
     info_compare     = bio::io::var::reserved_infos.at("AA");
     info_compare.idx = 10;
-    EXPECT_TRUE(hdr.infos[5] == info_compare);
+    EXPECT_TRUE(hdr.infos["AA"] == info_compare);
 
     /* fourth and fifth don't add anything */
 

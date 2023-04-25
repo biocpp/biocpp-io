@@ -103,7 +103,7 @@ private:
     static size_t dyn_vec_size(auto & in)
     {
         if constexpr (var::detail::is_genotype_element_value_type<std::remove_cvref_t<decltype(in)>>)
-            return std::visit([](auto & val) { return std::ranges::size(val); }, in);
+            return std::visit(std::ranges::size, in);
         else
             return std::ranges::size(in);
     }
@@ -253,19 +253,21 @@ private:
     }
 
     //!\brief Implementation for writing the ID field.
-    void write_id(auto const & header_container, var::header::idx_to_pos_t const & idx_to_pos_map, auto const & field)
+    void write_id(auto const &                             header_container,
+                  var::header::idx_to_string_map_t const & idx_to_string_map,
+                  auto const &                             field)
     {
         using field_t = std::remove_cvref_t<decltype(field)>;
         if constexpr (std::integral<field_t>) // field is index
         {
-            size_t pos = idx_to_pos_map.at(field);
-            // TODO I don't think we need the following anymore
-            if (pos >= header_container.size())
+            if (auto it = idx_to_string_map.find(field); it == idx_to_string_map.end())
             {
                 throw format_error{"The given numeric ID has no corresponding entry in the header."};
             }
-
-            write_field_aux(header_container[pos].id);
+            else
+            {
+                write_field_aux(header_container[it->second].id);
+            }
         }
         else // probably string or string_view; write as-is
         {
@@ -281,16 +283,15 @@ private:
 
         auto & [key, val] = pair;
 
-        write_id(header->infos, header->idx_to_info_pos(), key);
-
-        size_t pos = -1;
-
+        std::string_view key_as_str{};
         if constexpr (std::integral<key_t>)
-            pos = header->idx_to_info_pos().at(key);
+            key_as_str = header->idx_to_string_map().at(key);
         else
-            pos = header->string_to_info_pos().at(key);
+            key_as_str = key;
 
-        var::value_type_id type_id = header->infos[pos].type_id;
+        write_field_aux(key_as_str);
+
+        var::value_type_id type_id = header->infos[var::detail::het_string(key_as_str)].type_id;
 
         if (type_id != var::value_type_id::flag) // all fields that aren't flags have second part
         {
@@ -332,7 +333,7 @@ private:
     //!\brief Overload for CHROM and numeric IDs (text IDs are handled by defaults).
     void write_field(meta::vtag_t<detail::field::chrom> /**/, auto & field)
     {
-        write_id(header->contigs, header->idx_to_contig_pos(), field);
+        write_id(header->contigs, header->contig_idx_to_string_map(), field);
     }
 
     // POS, ID, REF all handled by defaults
@@ -348,7 +349,7 @@ private:
     //!\brief Overload for FILTER; single string is handled by default; single-numeric by this overload.
     void write_field(meta::vtag_t<detail::field::filter> /**/, auto & field)
     {
-        write_id(header->filters, header->idx_to_filter_pos(), field);
+        write_id(header->filters, header->idx_to_string_map(), field);
     }
 
     //!\brief Overload for FILTER; handles vector of numeric IDs and vector
@@ -387,7 +388,7 @@ private:
             return;
 
         /* format field */
-        auto func = [this](auto const & field) { write_id(header->formats, header->idx_to_format_pos(), field); };
+        auto func = [this](auto const & field) { write_id(header->formats, header->idx_to_string_map(), field); };
         write_delimited(range | views_get_first, ':', func);
 
         if (header->column_labels.size() <= 9)
@@ -423,7 +424,7 @@ private:
 
         /* format field */
         auto print_format = [&](auto & pair)
-        { write_id(header->formats, header->idx_to_format_pos(), detail::get_first(pair)); };
+        { write_id(header->formats, header->idx_to_string_map(), detail::get_first(pair)); };
         write_delimited(tup, ':', print_format);
 
         if (header->column_labels.size() <= 9)
@@ -609,22 +610,24 @@ public:
     void set_header(var::header const & hdr)
     {
         header = {&hdr, [](var::header const *) {}};
+        header->idx_validate();
     }
     //!\overload
     void set_header(var::header const && hdr)
     {
         header = {new var::header(std::move(hdr)), [](var::header const * ptr) { delete ptr; }};
+        header->idx_validate();
     }
     //!\overload
     void set_header(var::header & hdr)
     {
-        hdr.add_missing();
+        hdr.idx_update();
         set_header(std::as_const(hdr));
     }
     //!\overload
     void set_header(var::header && hdr)
     {
-        hdr.add_missing();
+        hdr.idx_update();
         set_header(std::move(std::as_const(hdr)));
     }
 

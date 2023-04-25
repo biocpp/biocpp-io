@@ -320,10 +320,10 @@ struct record_private_data
  *
  * ### Pre-defined aliases
  *
- * * bio::io::var::record_default:
+ * * bio::io::var::record_deep:
  *   * the record is **deep**
  *   * CHROM, FILTER, INFO element IDs and GENOTYPE element IDs are **strings**
- * * bio::io::var::record_default_shallow:
+ * * bio::io::var::record_shallow:
  *   * the record is **shallow**
  *   * CHROM, FILTER, INFO element IDs and GENOTYPE element IDs are **string_views**
  * * bio::io::var::record_idx:
@@ -742,29 +742,29 @@ auto tie_record(chrom_t &     chrom,
  *!\ingroup var
  * \see bio::io::var::record
  */
-using record_default = record<std::string,                                     // chrom,
-                              int32_t,                                         // pos,
-                              std::string,                                     // id,
-                              std::vector<alphabet::dna5>,                     // ref,
-                              std::vector<std::string>,                        // alt,
-                              float,                                           // qual,
-                              std::vector<std::string>,                        // filter,
-                              std::vector<info_element<ownership::deep>>,      // info,
-                              std::vector<genotype_element<ownership::deep>>>; // genotypes,
+using record_deep = record<std::string,                                     // chrom,
+                           int32_t,                                         // pos,
+                           std::string,                                     // id,
+                           std::vector<alphabet::dna5>,                     // ref,
+                           std::vector<std::string>,                        // alt,
+                           float,                                           // qual,
+                           std::vector<std::string>,                        // filter,
+                           std::vector<info_element<ownership::deep>>,      // info,
+                           std::vector<genotype_element<ownership::deep>>>; // genotypes,
 
 /*!\brief The record type used by bio::io::var::reader by default.
  *!\ingroup var
  * \see bio::io::var::record
  */
-using record_default_shallow = record<std::string_view,                                   // chrom,
-                                      int32_t,                                            // pos,
-                                      std::string_view,                                   // id,
-                                      views::char_conversion_view_t<alphabet::dna5>,      // ref,
-                                      std::vector<std::string_view>,                      // alt,
-                                      float,                                              // qual,
-                                      std::vector<std::string_view>,                      // filter,
-                                      std::vector<info_element<ownership::shallow>>,      // info,
-                                      std::vector<genotype_element<ownership::shallow>>>; // genotypes,
+using record_shallow = record<std::string_view,                                   // chrom,
+                              int32_t,                                            // pos,
+                              std::string_view,                                   // id,
+                              views::char_conversion_view_t<alphabet::dna5>,      // ref,
+                              std::vector<std::string_view>,                      // alt,
+                              float,                                              // qual,
+                              std::vector<std::string_view>,                      // filter,
+                              std::vector<info_element<ownership::shallow>>,      // info,
+                              std::vector<genotype_element<ownership::shallow>>>; // genotypes,
 
 /*!\brief A record type with IDX values (shallow).
  *!\ingroup var
@@ -784,15 +784,15 @@ using record_idx_shallow = record<int32_t,                                      
  *!\ingroup var
  * \see bio::io::var::record
  */
-using record_idx = record<int32_t,                                             // chrom,
-                          int32_t,                                             // pos,
-                          std::string,                                         // id,
-                          std::vector<alphabet::dna5>,                         // ref,
-                          std::vector<std::string>,                            // alt,
-                          float,                                               // qual,
-                          std::vector<int32_t>,                                // filter,
-                          std::vector<info_element_idx<ownership::deep>>,      // info,
-                          std::vector<genotype_element_idx<ownership::deep>>>; // genotypes,
+using record_idx_deep = record<int32_t,                                             // chrom,
+                               int32_t,                                             // pos,
+                               std::string,                                         // id,
+                               std::vector<alphabet::dna5>,                         // ref,
+                               std::vector<std::string>,                            // alt,
+                               float,                                               // qual,
+                               std::vector<int32_t>,                                // filter,
+                               std::vector<info_element_idx<ownership::deep>>,      // info,
+                               std::vector<genotype_element_idx<ownership::deep>>>; // genotypes,
 
 } // namespace bio::io::var
 

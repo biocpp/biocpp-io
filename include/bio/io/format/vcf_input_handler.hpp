@@ -179,13 +179,14 @@ private:
 
         if (raw_field != last_chrom)
         {
-            if (auto it = header.string_to_contig_pos().find(raw_field);
-                it == header.string_to_contig_pos().end()) // contig name was not in header, insert!
+            // contig name was not in header, insert!
+            if (auto it = header.contigs.find(var::detail::het_string(raw_field)); it == header.contigs.end())
             {
-                header.contigs.push_back({.id = static_cast<std::string>(raw_field)});
-                header.add_missing();
+                header.contigs.emplace_back(static_cast<std::string>(raw_field),
+                                            var::header::contig_t{.id = static_cast<std::string>(raw_field)});
+                header.idx_update();
 
-                last_chrom_idx = header.contigs[header.contigs.size() - 1].idx;
+                last_chrom_idx = get<1>(header.contigs.back()).idx;
 
                 if (print_warnings)
                 {
@@ -195,7 +196,7 @@ private:
             }
             else
             {
-                last_chrom_idx = header.contigs[it->second].idx;
+                last_chrom_idx = get<1>(*it).idx;
             }
 
             last_chrom = raw_field;
@@ -259,15 +260,16 @@ private:
         for (std::string_view subfield : raw_field | detail::eager_split(';'))
         {
             int32_t idx = -1;
-            if (auto it = header.string_to_filter_pos().find(subfield);
-                it == header.string_to_filter_pos().end()) // filter name was not in header, insert!
+            // filter name was not in header, insert!
+            if (auto it = header.filters.find(var::detail::het_string(subfield)); it == header.filters.end())
             {
-                header.filters.push_back({.id          = static_cast<std::string>(subfield),
-                                          .description = "\"Automatically added by SeqAn3.\""});
+                header.filters.emplace_back(static_cast<std::string>(subfield),
+                                            var::header::filter_t{.id          = static_cast<std::string>(subfield),
+                                                                  .description = "\"Automatically added by SeqAn3.\""});
 
-                header.add_missing(); // update IDX and hash-tables
+                header.idx_update(); // update IDX and hash-tables
 
-                idx = header.filters.back().idx;
+                idx = get<1>(header.filters.back()).idx;
 
                 if (print_warnings)
                 {
@@ -277,7 +279,7 @@ private:
             }
             else
             {
-                idx = header.filters[it->second].idx;
+                idx = get<1>(*it).idx;
             }
 
             if constexpr (std::integral<elem_t>)
@@ -298,7 +300,7 @@ private:
 
         if (var::reserved_infos.contains(info_name))
         {
-            header.infos.push_back(var::reserved_infos.at(info_name));
+            header.infos.emplace_back(info_name, var::reserved_infos.at(info_name));
         }
         else
         {
@@ -326,10 +328,10 @@ private:
             }
 
             // create a new header with new info and replace current one
-            header.infos.push_back(std::move(info));
+            header.infos.emplace_back(info_name, std::move(info));
         }
 
-        header.add_missing();
+        header.idx_update();
     }
 
     //!\brief Overload for parsing INFO.
@@ -364,19 +366,21 @@ private:
 
             /* PARSE KEY */
             size_t info_pos = -1;
-            if (auto it = header.string_to_info_pos().find(key);
-                it == header.string_to_info_pos().end()) // info name was not in header, insert!
+            // info name was not in header, insert!
+            if (auto it = header.infos.find(var::detail::het_string(key)); it == header.infos.end())
             {
                 add_info_to_header(key, val);
                 info_pos = header.infos.size() - 1;
             }
             else
             {
-                info_pos = it->second;
+                info_pos = it - header.infos.begin();
             }
 
+            var::header::info_t & info = get<1>(header.infos[info_pos]);
+
             if constexpr (std::same_as<key_t, int32_t>)
-                parsed_key = static_cast<key_t>(header.infos[info_pos].idx);
+                parsed_key = static_cast<key_t>(info.idx);
             else // key_t is std::string or std::string_view
                 parsed_key = static_cast<key_t>(key);
 
@@ -385,8 +389,7 @@ private:
             {
                 if constexpr (var::detail::is_info_element_value_type<value_t>)
                 {
-                    if (header.infos[info_pos].type_id != var::value_type_id::flag ||
-                        header.infos[info_pos].number != 0)
+                    if (info.type_id != var::value_type_id::flag || info.number != 0)
                     {
                         error("INFO field \"", key, "\" is not a flag and should come with a value -- but does not.");
                     }
@@ -399,9 +402,8 @@ private:
             {
                 if constexpr (var::detail::is_info_element_value_type<value_t>)
                 {
-                    int32_t num_val = parse_element_value_type(header.infos[info_pos].type_id, val, parsed_value);
-                    if (int32_t exp_val = header.infos[info_pos].number;
-                        print_warnings && num_val != exp_val && exp_val >= 0)
+                    int32_t num_val = parse_element_value_type(info.type_id, val, parsed_value);
+                    if (int32_t exp_val = info.number; print_warnings && num_val != exp_val && exp_val >= 0)
                     {
                         std::cerr << "[bio::io::var::warning] Expected to find " << exp_val
                                   << " values for the INFO field " << key << " but found: " << num_val << "\n";
@@ -428,7 +430,7 @@ private:
 
         if (var::reserved_formats.contains(format_name))
         {
-            header.formats.push_back(var::reserved_formats.at(format_name));
+            header.formats.emplace_back(format_name, var::reserved_formats.at(format_name));
         }
         else
         {
@@ -441,10 +443,10 @@ private:
             format.description = "\"Automatically added by BioC++.\"";
 
             // create a new header with new format and replace current one
-            header.formats.push_back(std::move(format));
+            header.formats.emplace_back(format_name, std::move(format));
         }
 
-        header.add_missing();
+        header.idx_update();
     }
 
     //!\brief Overload for parsing GENOTYPES.
@@ -724,26 +726,26 @@ inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::g
     for (std::string_view format_name : format_names | detail::eager_split(':'))
     {
         size_t format_pos = -1;
-        if (auto it = header.string_to_format_pos().find(format_name);
-            it == header.string_to_format_pos().end()) // format name was not in header, insert!
+        // format name was not in header, insert!
+        if (auto it = header.formats.find(var::detail::het_string(format_name)); it == header.formats.end())
         {
             add_format_to_header(format_name);
             format_pos = header.formats.size() - 1;
         }
         else
         {
-            format_pos = it->second;
+            format_pos = it - header.formats.begin();
         }
 
         parsed_field.push_back({{}, {}});
         auto & [current_id, current_value] = parsed_field.back();
 
         if constexpr (std::same_as<int32_t, detail::first_elem_t<genotype_field_t>>)
-            current_id = header.formats[format_pos].idx;
+            current_id = get<1>(header.formats[format_pos]).idx;
         else
             detail::string_copy(format_name, current_id);
 
-        auto const & format = header.formats[format_pos];
+        auto const & format = get<1>(header.formats[format_pos]);
 
         init_element_value_type(format.type_id, current_value);
         auto reserve = meta::overloaded(

@@ -18,7 +18,7 @@ int main()
 {
 //![read_pair_processing]
 // choose deep records so they can be copied/moved
-bio::io::seq::reader_options options{ .record = bio::io::seq::record_dna{} };
+bio::io::seq::reader_options options{ .record = bio::io::seq::record_dna_deep{} };
 
 // open an interleaved paired-end FastQ file
 bio::io::seq::reader reader{"example.fastq", options};

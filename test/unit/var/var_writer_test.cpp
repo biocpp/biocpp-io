@@ -19,7 +19,7 @@
 
 TEST(var_writer, concepts)
 {
-    using rec_t = bio::io::var::record_idx;
+    using rec_t = bio::io::var::record_idx_deep;
 
     using t = bio::io::var::writer<>;
     EXPECT_TRUE((std::ranges::output_range<t, rec_t>));

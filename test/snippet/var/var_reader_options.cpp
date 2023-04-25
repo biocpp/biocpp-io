@@ -22,7 +22,7 @@ int main()
 {
 //![field_types_deep]
 // this results in the records becoming "copyable"
-bio::io::var::reader_options options{ .record = bio::io::var::record_default{} };
+bio::io::var::reader_options options{ .record = bio::io::var::record_deep{} };
 
 // read the entire file, copy all records into a vector; immediately closes file again
 std::vector records = bio::io::var::reader{"example.vcf", options} | bio::ranges::to<std::vector>();
