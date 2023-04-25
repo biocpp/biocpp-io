@@ -485,10 +485,9 @@ private:
     void set_core_chrom(std::integral auto & field) { record_core.chrom = static_cast<int32_t>(field); }
 
     //!\brief Overload for CHROM and text IDs.
-    void set_core_chrom(detail::char_range_or_cstring auto && field)
+    void set_core_chrom(std::string_view const field)
     {
-        std::string_view const buf = detail::to_string_view(field);
-        if (auto it = header->contigs.find(buf); it == header->contigs.end())
+        if (auto it = header->contigs.find(var::detail::het_string(field)); it == header->contigs.end())
             error("The contig '", field, "' is not present in the header.");
         else
             record_core.chrom = std::get<1>(*it).idx;
@@ -602,7 +601,7 @@ private:
         {
             auto text_id_to_idx = [this](std::string_view const text_id)
             {
-                auto it = header->filters.find(text_id);
+                auto it = header->filters.find(var::detail::het_string(text_id));
 
                 if (it == header->filters.end())
                     error("The filter '", text_id, "' is not present in the header.");
@@ -673,24 +672,24 @@ private:
         using value_t = decltype(value);
 
         /* ID */
-        std::string_view id_str{};
+        typename decltype(header->infos)::const_iterator inf_it;
         if constexpr (std::integral<id_t>)
         {
             assert((int64_t)id <= (int64_t)header->max_idx());
             if (auto it = header->idx_to_string_map().find(id); it == header->idx_to_string_map().end())
                 error("The info with idx '", id, "' is not present in the header.");
             else
-                id_str = std::get<1>(*it);
+                inf_it = header->infos.find(std::get<1>(*it));
         }
         else
         {
-            id_str = id;
+            inf_it = header->infos.find(var::detail::het_string(id));
         }
 
-        if (!header->infos.contains(id_str))
-            error("The info '", id_str, "' is not present in the header.");
+        if (inf_it == header->infos.end())
+            error("The info '", id, "' is not present in the header.");
 
-        var::header::info_t const & info = header->infos[id_str];
+        var::header::info_t const & info = std::get<1>(*inf_it);
 
         write_typed_data(info.idx, idx_desc);
 
@@ -775,26 +774,24 @@ private:
         using value_t = decltype(value);
 
         /* ID */
-        std::string_view id_str{};
+        typename decltype(header->formats)::const_iterator gen_it;
         if constexpr (std::integral<id_t>)
         {
             assert((int64_t)id <= (int64_t)header->max_idx());
             if (auto it = header->idx_to_string_map().find(id); it == header->idx_to_string_map().end())
                 error("The genotype with idx '", id, "' is not present in the header.");
             else
-                id_str = std::get<1>(*it);
+                gen_it = header->formats.find(std::get<1>(*it));
         }
         else
         {
-            id_str = id;
+            gen_it = header->formats.find(var::detail::het_string(id));
         }
 
-        auto it = header->formats.find(id_str);
+        if (gen_it == header->formats.end())
+            error("The genotype '", id, "' is not present in the header.");
 
-        if (it == header->formats.end())
-            error("The genotype '", id_str, "' is not present in the header.");
-
-        var::header::format_t const & format = std::get<1>(*it);
+        var::header::format_t const & format = std::get<1>(*gen_it);
         write_typed_data(format.idx, idx_desc);
 
         /* value */

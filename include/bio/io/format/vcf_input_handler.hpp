@@ -179,8 +179,8 @@ private:
 
         if (raw_field != last_chrom)
         {
-            if (auto it = header.contigs.find(raw_field);
-                it == header.contigs.end()) // contig name was not in header, insert!
+            // contig name was not in header, insert!
+            if (auto it = header.contigs.find(var::detail::het_string(raw_field)); it == header.contigs.end())
             {
                 header.contigs.emplace_back(static_cast<std::string>(raw_field),
                                             var::header::contig_t{.id = static_cast<std::string>(raw_field)});
@@ -260,8 +260,8 @@ private:
         for (std::string_view subfield : raw_field | detail::eager_split(';'))
         {
             int32_t idx = -1;
-            if (auto it = header.filters.find(subfield);
-                it == header.filters.end()) // filter name was not in header, insert!
+            // filter name was not in header, insert!
+            if (auto it = header.filters.find(var::detail::het_string(subfield)); it == header.filters.end())
             {
                 header.filters.emplace_back(static_cast<std::string>(subfield),
                                             var::header::filter_t{.id          = static_cast<std::string>(subfield),
@@ -366,7 +366,8 @@ private:
 
             /* PARSE KEY */
             size_t info_pos = -1;
-            if (auto it = header.infos.find(key); it == header.infos.end()) // info name was not in header, insert!
+            // info name was not in header, insert!
+            if (auto it = header.infos.find(var::detail::het_string(key)); it == header.infos.end())
             {
                 add_info_to_header(key, val);
                 info_pos = header.infos.size() - 1;
@@ -725,8 +726,8 @@ inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::g
     for (std::string_view format_name : format_names | detail::eager_split(':'))
     {
         size_t format_pos = -1;
-        if (auto it = header.formats.find(format_name);
-            it == header.formats.end()) // format name was not in header, insert!
+        // format name was not in header, insert!
+        if (auto it = header.formats.find(var::detail::het_string(format_name)); it == header.formats.end())
         {
             add_format_to_header(format_name);
             format_pos = header.formats.size() - 1;

@@ -291,7 +291,7 @@ private:
 
         write_field_aux(key_as_str);
 
-        var::value_type_id type_id = header->infos[key_as_str].type_id;
+        var::value_type_id type_id = header->infos[var::detail::het_string(key_as_str)].type_id;
 
         if (type_id != var::value_type_id::flag) // all fields that aren't flags have second part
         {
