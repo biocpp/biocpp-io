@@ -182,8 +182,7 @@ private:
             // contig name was not in header, insert!
             if (auto it = header.contigs.find(var::detail::het_string(raw_field)); it == header.contigs.end())
             {
-                header.contigs.emplace_back(static_cast<std::string>(raw_field),
-                                            var::header::contig_t{.id = static_cast<std::string>(raw_field)});
+                header.contigs.emplace_back(static_cast<std::string>(raw_field), var::header::contig_t{});
                 header.idx_update();
 
                 last_chrom_idx = get<1>(header.contigs.back()).idx;
@@ -264,8 +263,7 @@ private:
             if (auto it = header.filters.find(var::detail::het_string(subfield)); it == header.filters.end())
             {
                 header.filters.emplace_back(static_cast<std::string>(subfield),
-                                            var::header::filter_t{.id          = static_cast<std::string>(subfield),
-                                                                  .description = "\"Automatically added by SeqAn3.\""});
+                                            var::header::filter_t{.description = "\"Automatically added by SeqAn3.\""});
 
                 header.idx_update(); // update IDX and hash-tables
 
@@ -305,7 +303,6 @@ private:
         else
         {
             var::header::info_t info;
-            info.id          = info_name;
             info.description = "\"Automatically added by BioC++.\"";
 
             if (info_value.empty()) // no "=" → flag
@@ -436,7 +433,6 @@ private:
         {
             var::header::format_t format;
 
-            format.id          = format_name;
             format.number      = 1;
             format.type        = "String";
             format.type_id     = var::value_type_id::string;

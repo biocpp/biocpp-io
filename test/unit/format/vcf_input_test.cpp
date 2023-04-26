@@ -136,7 +136,7 @@ TEST(vcf, incomplete_header)
     ASSERT_EQ(hdr.infos.size(), 5ull);
     ASSERT_EQ(hdr.formats.size(), 4ull);
 
-    EXPECT_EQ(std::get<1>(hdr.contigs[0]).id, "20");
+    EXPECT_EQ(std::get<0>(hdr.contigs[0]), "20");
     EXPECT_EQ(std::get<1>(hdr.contigs[0]).idx, 0);
 
     info_compare     = bio::io::var::reserved_infos.at("DP");
@@ -174,7 +174,7 @@ TEST(vcf, incomplete_header)
     EXPECT_EQ(rec, recs[1]);
 
     ASSERT_EQ(hdr.filters.size(), 2ull);
-    EXPECT_EQ(std::get<1>(hdr.filters[1]).id, "q10");
+    EXPECT_EQ(std::get<0>(hdr.filters[1]), "q10");
     EXPECT_EQ(std::get<1>(hdr.filters[1]).description, "\"Automatically added by SeqAn3.\"");
     EXPECT_EQ(std::get<1>(hdr.filters[1]).idx, 9);
 

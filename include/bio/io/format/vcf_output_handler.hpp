@@ -253,9 +253,7 @@ private:
     }
 
     //!\brief Implementation for writing the ID field.
-    void write_id(auto const &                             header_container,
-                  var::header::idx_to_string_map_t const & idx_to_string_map,
-                  auto const &                             field)
+    void write_id(var::header::idx_to_string_map_t const & idx_to_string_map, auto const & field)
     {
         using field_t = std::remove_cvref_t<decltype(field)>;
         if constexpr (std::integral<field_t>) // field is index
@@ -266,7 +264,7 @@ private:
             }
             else
             {
-                write_field_aux(header_container[it->second].id);
+                write_field_aux(std::get<1>(*it));
             }
         }
         else // probably string or string_view; write as-is
@@ -333,7 +331,7 @@ private:
     //!\brief Overload for CHROM and numeric IDs (text IDs are handled by defaults).
     void write_field(meta::vtag_t<detail::field::chrom> /**/, auto & field)
     {
-        write_id(header->contigs, header->contig_idx_to_string_map(), field);
+        write_id(header->contig_idx_to_string_map(), field);
     }
 
     // POS, ID, REF all handled by defaults
@@ -349,7 +347,7 @@ private:
     //!\brief Overload for FILTER; single string is handled by default; single-numeric by this overload.
     void write_field(meta::vtag_t<detail::field::filter> /**/, auto & field)
     {
-        write_id(header->filters, header->idx_to_string_map(), field);
+        write_id(header->idx_to_string_map(), field);
     }
 
     //!\brief Overload for FILTER; handles vector of numeric IDs and vector
@@ -388,7 +386,7 @@ private:
             return;
 
         /* format field */
-        auto func = [this](auto const & field) { write_id(header->formats, header->idx_to_string_map(), field); };
+        auto func = [this](auto const & field) { write_id(header->idx_to_string_map(), field); };
         write_delimited(range | views_get_first, ':', func);
 
         if (header->column_labels.size() <= 9)
@@ -423,8 +421,7 @@ private:
             return;
 
         /* format field */
-        auto print_format = [&](auto & pair)
-        { write_id(header->formats, header->idx_to_string_map(), detail::get_first(pair)); };
+        auto print_format = [&](auto & pair) { write_id(header->idx_to_string_map(), detail::get_first(pair)); };
         write_delimited(tup, ':', print_format);
 
         if (header->column_labels.size() <= 9)

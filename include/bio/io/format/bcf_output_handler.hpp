@@ -621,7 +621,9 @@ private:
     }
 
     //!\brief Deduce descriptor from parameter type and optionally compress (integers) and verify with header.
-    var::detail::bcf_type_descriptor get_desc(auto & param, var::header::info_t const & hdr_entry)
+    var::detail::bcf_type_descriptor get_desc(auto &                      param,
+                                              std::string_view const      hdr_entry_id,
+                                              var::header::info_t const & hdr_entry)
     {
         using param_t                                     = std::remove_cvref_t<decltype(param)>;
         constexpr var::detail::bcf_type_descriptor c_desc = var::detail::type_2_bcf_type_descriptor<param_t>;
@@ -654,7 +656,7 @@ private:
                 !var::detail::type_descriptor_is_int(header_desc))
             {
                 error("The type of field ",
-                      hdr_entry.id,
+                      hdr_entry_id,
                       " set in the header is different from the current record's "
                       "data.");
             }
@@ -689,19 +691,20 @@ private:
         if (inf_it == header->infos.end())
             error("The info '", id, "' is not present in the header.");
 
-        var::header::info_t const & info = std::get<1>(*inf_it);
+        std::string_view const      id_str = std::get<0>(*inf_it);
+        var::header::info_t const & info   = std::get<1>(*inf_it);
 
         write_typed_data(info.idx, idx_desc);
 
         /* VALUE */
         if constexpr (var::detail::is_info_element_value_type<value_t>)
         {
-            auto func = [&](auto & param) { write_typed_data(param, get_desc(param, info)); };
+            auto func = [&](auto & param) { write_typed_data(param, get_desc(param, id_str, info)); };
             std::visit(func, value);
         }
         else
         {
-            write_typed_data(value, get_desc(value, info));
+            write_typed_data(value, get_desc(value, id_str, info));
         }
     }
 
@@ -791,6 +794,7 @@ private:
         if (gen_it == header->formats.end())
             error("The genotype '", id, "' is not present in the header.");
 
+        std::string_view const        id_str = std::get<0>(*gen_it);
         var::header::format_t const & format = std::get<1>(*gen_it);
         write_typed_data(format.idx, idx_desc);
 
@@ -807,11 +811,11 @@ private:
                       std::ranges::size(values),
                       " values in the genotype vector "
                       "for field ",
-                      format.id,
+                      id_str,
                       " which is more than the number of samples.");
             }
 
-            var::detail::bcf_type_descriptor desc = get_desc(values, format);
+            var::detail::bcf_type_descriptor desc = get_desc(values, id_str, format);
 
             // if there are no values, we can write the missing field and need no padding values at all
             if (std::ranges::size(values) == 0)
@@ -832,7 +836,7 @@ private:
             else if constexpr (!std::ranges::range<std::ranges::range_reference_t<value_t>>)
             {
                 // this looks like "one-string" but is actually a case with custom encoding
-                if (format.id == "GT")
+                if (id_str == "GT")
                 {
                     if constexpr (detail::char_range_or_cstring<value_t>)
                     {
