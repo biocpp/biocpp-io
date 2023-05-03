@@ -24,14 +24,16 @@
 #include <bio/meta/concept/core_language.hpp>
 #include <bio/meta/tag/ttag.hpp>
 #include <bio/meta/tag/vtag.hpp>
+#include <bio/meta/tuple.hpp>
 #include <bio/ranges/concept.hpp>
 #include <bio/ranges/container/concatenated_sequences.hpp>
+#include <bio/ranges/container/dictionary.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
 
-#include <bio/io/detail/magic_get.hpp>
 #include <bio/io/detail/range.hpp>
 #include <bio/io/detail/tuple_record.hpp>
 #include <bio/io/misc.hpp>
+#include <bio/io/var/header.hpp>
 #include <bio/io/var/misc.hpp>
 
 //-----------------------------------------------------------------------------
@@ -77,179 +79,365 @@ static_assert(sizeof(bcf_record_core) == 24, "Bit alignment problem in declarati
 namespace bio::io::var
 {
 
-/*!\brief Variant to handle "dynamic typing" in Var I/O INFO fields.
+/*!\brief The base type of bio::io::var::info_variant_shallow .
+ * \relates bio::io::var::info_variant_shallow
+ */
+using info_variant_shallow_base_t = std::variant<char,
+                                                 int8_t,
+                                                 int16_t,
+                                                 int32_t,
+                                                 float,
+                                                 std::string_view,
+                                                 std::vector<int8_t>,
+                                                 std::vector<int16_t>,
+                                                 std::vector<int32_t>,
+                                                 std::vector<float>,
+                                                 std::vector<std::string_view>,
+                                                 bool>;
+
+/*!\brief std::variant that stores the value of an INFO field [shallow version].
  * \ingroup var
  * \details
  *
- * This variant can hold values for the INFO field.
- * Since the type of such fields may only be determined at run-time (depends on values in header), variables
- * of this type can be set to different types at run-time.
+ * This is a type for storing the value in an INFO field key-value pair.
+ * Since these values can be of different types, this type is derived of std::variant
+ * which allows storing values of different types ("variant" refers to the C++ type here, not
+ * the biological meaning).
+ * See bio::io::var::info_variant_shallow_base_t for the exact base type.
+ *
+ * To retrieve the contained value from a variable called `val`, use one of the following interfaces:
+ *
+ *   * `get<std::string_view>(val)` returns the contained value as a `std::string_view`.
+ *   * `get<5>(val)` returns the contained value as a `std::string_view`; see
+ * bio::io::var::info_variant_shallow_base_t regarding the order.
+ *   * `get<"AA">(val)` returns the contained value as a `std::string_view`, because bio::io::var::info_key2type_enum associates that type with the key "AA".
+ *
+ * In all cases, an exception of std::bad_variant_access is thrown if the variant currently holds a
+ * value of a different type.
  */
-template <ownership own = ownership::shallow>
-using info_element_value_type =
-  std::variant<char,
-               int8_t,
-               int16_t,
-               int32_t,
-               float,
-               std::conditional_t<own == ownership::shallow, std::string_view, std::string>,
-               std::vector<int8_t>,
-               std::vector<int16_t>,
-               std::vector<int32_t>,
-               std::vector<float>,
-               std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>,
-               bool>;
+struct info_variant_shallow : info_variant_shallow_base_t
+{
+    /*!\name Constructors, destructor and assignment
+     * \{
+     */
+    info_variant_shallow()                                         = default; //!< Defaulted.
+    info_variant_shallow(info_variant_shallow &&)                  = default; //!< Defaulted.
+    info_variant_shallow(info_variant_shallow const &)             = default; //!< Defaulted.
+    info_variant_shallow & operator=(info_variant_shallow &&)      = default; //!< Defaulted.
+    info_variant_shallow & operator=(info_variant_shallow const &) = default; //!< Defaulted.
+
+    //!\brief Inherit base class's constructors.
+    using info_variant_shallow_base_t::info_variant_shallow_base_t;
+    //!\brief Inherit base class's assignment operator.
+    using info_variant_shallow_base_t::operator=;
+    //!\}
+
+    /*!\brief Access the contained value by string.
+     * \tparam key The string (literal).
+     * \tparam me The variant parameter.
+     * \throws std::bad_variant_access If the variant is in a different state.
+     *
+     * The mapping of string to type is defined by bio::io::var::info_key2type_enum.
+     */
+    template <ranges::small_string key>
+    friend decltype(auto) get(meta::decays_to<info_variant_shallow> auto && me)
+    {
+        static_assert(std::same_as<decltype(info_key2type_enum<key>), value_type_id const>,
+                      "No value_type_id found in bio::io::var::info_key2type_enum for this key.");
+
+        return std::get<static_cast<size_t>(info_key2type_enum<key>)>(std::forward<decltype(me)>(me));
+    }
+};
+
+/*!\brief The base type of bio::io::var::info_variant_deep .
+ * \relates bio::io::var::info_variant_deep
+ */
+using info_variant_deep_base_t = std::variant<char,
+                                              int8_t,
+                                              int16_t,
+                                              int32_t,
+                                              float,
+                                              std::string,
+                                              std::vector<int8_t>,
+                                              std::vector<int16_t>,
+                                              std::vector<int32_t>,
+                                              std::vector<float>,
+                                              std::vector<std::string>,
+                                              bool>;
+
+/*!\brief std::variant that stores the value of an INFO field [deep version].
+ * \ingroup var
+ * \details
+ *
+ * This is a type for storing the value in an INFO field key-value pair.
+ * Since these values can be of different types, this type is derived of std::variant
+ * which allows storing values of different types ("variant" refers to the C++ type here, not
+ * the biological meaning).
+ * See bio::io::var::info_variant_shallow_base_t for the exact base type.
+ *
+ * To retrieve the contained value from a variable called `val`, use one of the following interfaces:
+ *
+ *   * `get<std::string>(val)` returns the contained value as a `std::string`.
+ *   * `get<5>(val)` returns the contained value as a `std::string`; see
+ * bio::io::var::info_variant_deep_base_t regarding the order.
+ *   * `get<"AA">(val)` returns the contained value as a `std::string`, because bio::io::var::info_key2type_enum associates that type with the key "AA".
+ *
+ * In all cases, an exception of std::bad_variant_access is thrown if the variant currently holds a
+ * value of a different type.
+ */
+
+struct info_variant_deep : info_variant_deep_base_t
+{
+    /*!\name Constructors, destructor and assignment
+     * \{
+     */
+    info_variant_deep()                                      = default; //!< Defaulted.
+    info_variant_deep(info_variant_deep &&)                  = default; //!< Defaulted.
+    info_variant_deep(info_variant_deep const &)             = default; //!< Defaulted.
+    info_variant_deep & operator=(info_variant_deep &&)      = default; //!< Defaulted.
+    info_variant_deep & operator=(info_variant_deep const &) = default; //!< Defaulted.
+
+    //!\brief Inherit base class's constructors.
+    using info_variant_deep_base_t::info_variant_deep_base_t;
+    //!\brief Inherit base class's assignment operator.
+    using info_variant_deep_base_t::operator=;
+    //!\}
+
+    /*!\brief Access the contained value by key string.
+     * \tparam key The string (literal).
+     * \tparam me The variant parameter.
+     * \throws std::bad_variant_access If the variant is in a different state.
+     *
+     * The mapping of string to type is defined by bio::io::var::info_key2type_enum.
+     */
+    template <ranges::small_string key>
+    friend decltype(auto) get(meta::decays_to<info_variant_deep> auto && me)
+    {
+        static_assert(std::same_as<decltype(info_key2type_enum<key>), value_type_id const>,
+                      "No value_type_id found in bio::io::var::info_key2type_enum for this key.");
+
+        return std::get<static_cast<size_t>(info_key2type_enum<key>)>(std::forward<decltype(me)>(me));
+    }
+};
 
 } // namespace bio::io::var
 
+namespace std
+{
+
+//!\cond
+template <>
+struct variant_size<bio::io::var::info_variant_shallow> : variant_size<bio::io::var::info_variant_shallow_base_t>
+{};
+
+template <>
+struct variant_size<bio::io::var::info_variant_deep> : variant_size<bio::io::var::info_variant_deep_base_t>
+{};
+//!\endcond
+} // namespace std
+
 namespace bio::io::var::detail
 {
-//!\brief Auxilliary concept that encompasses bio::io::var::info_element_value_type.
+//!\brief Auxilliary concept that encompasses bio::io::var::info_variant.
 //!\ingroup var
 template <typename t>
-concept is_info_element_value_type =
-  meta::one_of<t, var::info_element_value_type<ownership::shallow>, var::info_element_value_type<ownership::deep>>;
+concept is_info_variant = meta::one_of<t, var::info_variant_shallow, var::info_variant_deep>;
 
 } // namespace bio::io::var::detail
 
 namespace bio::io::var
 {
-
-/*!\brief The type of elements in an INFO field. [default]
- * \ingroup var
- * \tparam own Ownership of the type; see bio::io::ownership.
- */
-template <ownership own = ownership::shallow>
-struct info_element
-{
-    //!\brief Type of the ID.
-    using string_t = std::conditional_t<own == ownership::shallow, std::string_view, std::string>;
-
-    //!\brief The ID of the element (as a string or string_view).
-    string_t                     id;
-    //!\brief The value of the element.
-    info_element_value_type<own> value;
-
-    //!\brief Defaulted three-way comparisons.
-    auto operator<=>(info_element const &) const = default;
-};
-
-/*!\brief The type of elements in an INFO field. [full BCF-style]
- * \ingroup var
- * \tparam own Ownership of the type; see bio::io::ownership.
- */
-template <ownership own = ownership::shallow>
-struct info_element_idx
-{
-    //!\brief The IDX of the element (index of that descriptor in the header).
-    int32_t                      idx;
-    //!\brief The value of the element.
-    info_element_value_type<own> value;
-
-    //!\brief Defaulted three-way comparisons.
-    auto operator<=>(info_element_idx const &) const = default;
-};
 
 //-----------------------------------------------------------------------------
 // The genotype element
 //-----------------------------------------------------------------------------
 
-/*!\brief Variant to handle "dynamic typing" in Var I/O GENOTYPE fields.
+/*!\brief The base type of bio::io::var::genotype_variant_shallow.
+ * \relates bio::io::var::genotype_variant_shallow
+ */
+using genotype_variant_shallow_base_t = std::variant<std::vector<char>,
+                                                     std::vector<int8_t>,
+                                                     std::vector<int16_t>,
+                                                     std::vector<int32_t>,
+                                                     std::vector<float>,
+                                                     std::vector<std::string_view>,
+                                                     ranges::concatenated_sequences<std::vector<int8_t>>,
+                                                     ranges::concatenated_sequences<std::vector<int16_t>>,
+                                                     ranges::concatenated_sequences<std::vector<int32_t>>,
+                                                     ranges::concatenated_sequences<std::vector<float>>,
+                                                     std::vector<std::vector<std::string>>
+                                                     /* no flag here */>;
+
+/*!\brief std::variant that stores the value of a GENOTYPE field [shallow version].
  * \ingroup var
  * \details
  *
- * This type is similar to bio::io::var::info_element_value_type except that it encodes a range of the respective
- * value.
+ * This is a type for storing the value in a GENOTYPE field key-value pair.
+ * Since the value in such field can have different types (depending on the field),
+ * this type is derived of std::variant
+ * which allows storing values of different types ("variant" refers to the C++ type here, not
+ * the biological meaning).
+ * See bio::io::var::genotype_variant_shallow for the exact base type.
  *
- * It does not contain an entry for bio::io::var::value_type_id::flag, because flags cannot appear in
- * the genotype field.
+ * Note that this follows the BCF representation where data is grouped "by-field" and not "by-sample",
+ * e.g. the "GT" values of all samples are in one vector.
+ * This also means that a bio::io::var::value_type_id::string implies a vector-of-strings and
+ * bio::io::var::value_type_id::vector_of_string implies a vector-of-vector-of-strings.
+ * **All possible types for this variant are a container** that is either the same size as the number of
+ * samples or empty.
+ *
+ * To retrieve the contained value from a variable called `val`, use one of the following interfaces:
+ *
+ *   * `get<std::vector<std::string_view>>(val)` returns the contained value as a `std::vector<std::string_view>`.
+ *   * `get<5>(val)` returns the contained value as a `std::vector<std::string_view>`; see
+ * bio::io::var::genotype_variant_shallow regarding the order.
+ *   * `get<"GT">(val)` returns the contained value as a `std::vector<std::string_view>`, because bio::io::var::info_key2type_enum associates that type with the key "AA".
+ *
+ * In all cases, an exception of std::bad_variant_access is thrown if the variant currently holds a
+ * value of a different type.
  */
-template <ownership own = ownership::shallow>
-using genotype_element_value_type =
-  std::variant<std::vector<char>,
-               std::vector<int8_t>,
-               std::vector<int16_t>,
-               std::vector<int32_t>,
-               std::vector<float>,
-               std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>,
-               ranges::concatenated_sequences<std::vector<int8_t>>,
-               ranges::concatenated_sequences<std::vector<int16_t>>,
-               ranges::concatenated_sequences<std::vector<int32_t>>,
-               ranges::concatenated_sequences<std::vector<float>>,
-               std::vector<std::vector<std::conditional_t<own == ownership::shallow, std::string_view, std::string>>>
-               /* no flag here */>;
+struct genotype_variant_shallow : genotype_variant_shallow_base_t
+{
+    /*!\name Constructors, destructor and assignment
+     * \{
+     */
+    genotype_variant_shallow()                                             = default; //!< Defaulted.
+    genotype_variant_shallow(genotype_variant_shallow &&)                  = default; //!< Defaulted.
+    genotype_variant_shallow(genotype_variant_shallow const &)             = default; //!< Defaulted.
+    genotype_variant_shallow & operator=(genotype_variant_shallow &&)      = default; //!< Defaulted.
+    genotype_variant_shallow & operator=(genotype_variant_shallow const &) = default; //!< Defaulted.
+
+    //!\brief Inherit base class's constructors.
+    using genotype_variant_shallow_base_t::genotype_variant_shallow_base_t;
+    //!\brief Inherit base class's assignment operator.
+    using genotype_variant_shallow_base_t::operator=;
+    //!\}
+
+    /*!\brief Access the contained value by key string.
+     * \tparam key The string (literal).
+     * \tparam me The variant parameter.
+     * \throws std::bad_variant_access If the variant is in a different state.
+     *
+     * The mapping of string to type is defined by bio::io::var::genotype_key2type_enum.
+     */
+    template <ranges::small_string key>
+    friend decltype(auto) get(meta::decays_to<genotype_variant_shallow> auto && me)
+    {
+        static_assert(std::same_as<decltype(format_key2type_enum<key>), value_type_id const>,
+                      "No value_type_id found in bio::io::var::format_key2type_enum for this key.");
+
+        return std::get<static_cast<size_t>(format_key2type_enum<key>)>(std::forward<decltype(me)>(me));
+    }
+};
+
+/*!\brief The base type of bio::io::var::genotype_variant_deep.
+ * \relates bio::io::var::genotype_variant_deep
+ */
+using genotype_variant_deep_base_t = std::variant<std::vector<char>,
+                                                  std::vector<int8_t>,
+                                                  std::vector<int16_t>,
+                                                  std::vector<int32_t>,
+                                                  std::vector<float>,
+                                                  std::vector<std::string>,
+                                                  ranges::concatenated_sequences<std::vector<int8_t>>,
+                                                  ranges::concatenated_sequences<std::vector<int16_t>>,
+                                                  ranges::concatenated_sequences<std::vector<int32_t>>,
+                                                  ranges::concatenated_sequences<std::vector<float>>,
+                                                  std::vector<std::vector<std::string>>
+                                                  /* no flag here */>;
+
+/*!\brief std::variant that stores the value of a GENOTYPE field [deep version].
+ * \ingroup var
+ * \details
+ *
+ * This is a type for storing the value in a GENOTYPE field key-value pair.
+ * Since the value in such field can have different types (depending on the field),
+ * this type is derived of std::variant
+ * which allows storing values of different types ("variant" refers to the C++ type here, not
+ * the biological meaning).
+ * See bio::io::var::genotype_variant_deep for the exact base type.
+ *
+ * Note that this follows the BCF representation where data is grouped "by-field" and not "by-sample",
+ * e.g. the "GT" values of all samples are in one vector.
+ * This also means that a bio::io::var::value_type_id::string implies a vector-of-strings and
+ * bio::io::var::value_type_id::vector_of_string implies a vector-of-vector-of-strings.
+ * **All possible types for this variant are a container** that is either the same size as the number of
+ * samples or empty.
+ *
+ * To retrieve the contained value from a variable called `val`, use one of the following interfaces:
+ *
+ *   * `get<std::vector<std::string>>(val)` returns the contained value as a `std::vector<std::string>`.
+ *   * `get<5>(val)` returns the contained value as a `std::vector<std::string>`; see
+ * bio::io::var::genotype_variant_deep regarding the order.
+ *   * `get<"GT">(val)` returns the contained value as a `std::vector<std::string>`, because bio::io::var::info_key2type_enum associates that type with the key "AA".
+ *
+ * In all cases, an exception of std::bad_variant_access is thrown if the variant currently holds a
+ * value of a different type.
+ */
+struct genotype_variant_deep : genotype_variant_deep_base_t
+{
+    /*!\name Constructors, destructor and assignment
+     * \{
+     */
+    genotype_variant_deep()                                          = default; //!< Defaulted.
+    genotype_variant_deep(genotype_variant_deep &&)                  = default; //!< Defaulted.
+    genotype_variant_deep(genotype_variant_deep const &)             = default; //!< Defaulted.
+    genotype_variant_deep & operator=(genotype_variant_deep &&)      = default; //!< Defaulted.
+    genotype_variant_deep & operator=(genotype_variant_deep const &) = default; //!< Defaulted.
+
+    //!\brief Inherit base class's constructors.
+    using genotype_variant_deep_base_t::genotype_variant_deep_base_t;
+    //!\brief Inherit base class's assignment operator.
+    using genotype_variant_deep_base_t::operator=;
+    //!\}
+
+    /*!\brief Access the contained value by key string.
+     * \tparam key The string (literal).
+     * \tparam me The variant parameter.
+     * \throws std::bad_variant_access If the variant is in a different state.
+     *
+     * The mapping of string to type is defined by bio::io::var::genotype_key2type_enum.
+     */
+    template <ranges::small_string key>
+    friend decltype(auto) get(meta::decays_to<genotype_variant_deep> auto && me)
+    {
+        static_assert(std::same_as<decltype(format_key2type_enum<key>), value_type_id const>,
+                      "No value_type_id found in bio::io::var::format_key2type_enum for this key.");
+
+        return std::get<static_cast<size_t>(format_key2type_enum<key>)>(std::forward<decltype(me)>(me));
+    }
+};
 
 } // namespace bio::io::var
+
+namespace std
+{
+
+//!\cond
+template <>
+struct variant_size<bio::io::var::genotype_variant_shallow> :
+  variant_size<bio::io::var::genotype_variant_shallow_base_t>
+{};
+
+template <>
+struct variant_size<bio::io::var::genotype_variant_deep> : variant_size<bio::io::var::genotype_variant_deep_base_t>
+{};
+//!\endcond
+
+} // namespace std
 
 namespace bio::io::var::detail
 {
 
-//!\brief Auxilliary concept that encompasses bio::io::var::genotype_element_value_type.
+//!\brief Auxilliary concept that encompasses bio::io::var::genotype_variant.
 //!\ingroup var
 template <typename t>
-concept is_genotype_element_value_type = meta::
-  one_of<t, var::genotype_element_value_type<ownership::shallow>, var::genotype_element_value_type<ownership::deep>>;
+concept is_genotype_variant = meta::one_of<t, var::genotype_variant_shallow, var::genotype_variant_deep>;
 
 } // namespace bio::io::var::detail
 
 namespace bio::io::var
 {
-
-/*!\brief A type representing an element in the GENOTYPES field.
- * \ingroup var
- *
- * \details
- *
- * Genotypes are represented as decribed in the BCF specification by default, i.e. information is grouped by
- * FORMAT identifier, not by sample.
- *
- * This element consists of the FORMAT ID given as a string and a vector of values inside a variant.
- * The size of the vector is:
- *
- *   * equal to the number of samples; or
- *   * 0 -- if the field is missing from all samples.
- *
- * The variant vector is guaranteed to be over the type defined in the header. Note that this is a vector over such
- * types (one element per sample!), so bio::io::var::value_type_id::vector_of_int32 corresponds to
- * std::vector<std::vector<int32_t>>. See bio::io::var::genotype_element_value_type for more details.
- *
- * If fields are missing from some samples but not others, the vector will have full size but the respective values
- * will be set to the missing value (see bio::io::var::missing_value) or be the empty vector (in case the element
- * type is a vector).
- */
-template <ownership own = ownership::shallow>
-struct genotype_element
-{
-    //!\brief Type of the ID.
-    using string_t = std::conditional_t<own == ownership::shallow, std::string_view, std::string>;
-
-    //!\brief The ID of the element (as a string or string_view).
-    string_t                         id;
-    //!\brief The value of the element.
-    genotype_element_value_type<own> value;
-
-    //!\brief Defaulted three-way comparisons.
-    auto operator<=>(genotype_element const &) const = default;
-};
-
-/*!\brief A type representing an element in the GENOTYPES field. [full BCF-style]
- * \ingroup var
- *
- * \details
- *
- * The same as bio::io::var::genotype_element except that a numeric IDX is used instead of the ID string.
- */
-template <ownership own = ownership::shallow>
-struct genotype_element_idx
-{
-    //!\brief The IDX of the element (index of that descriptor in the header).
-    int32_t                          idx;
-    //!\brief The value of the element.
-    genotype_element_value_type<own> value;
-
-    //!\brief Defaulted three-way comparisons.
-    auto operator<=>(genotype_element_idx const &) const = default;
-};
 
 //-----------------------------------------------------------------------------
 // record_private_data
@@ -363,8 +551,8 @@ template <typename _chrom_t     = std::string,
           typename _alt_t       = std::vector<std::string>,
           typename _qual_t      = float,
           typename _filter_t    = std::vector<std::string>,
-          typename _info_t      = std::vector<info_element<ownership::deep>>,
-          typename _genotypes_t = std::vector<genotype_element<ownership::deep>>>
+          typename _info_t      = ranges::dictionary<std::string, info_variant_deep>,
+          typename _genotypes_t = ranges::dictionary<std::string, genotype_variant_deep>>
 struct record
 {
     using chrom_t     = _chrom_t;     //!< Type of the chrom member.
@@ -560,7 +748,7 @@ struct record
      *
      * When reading (bio::io::seq::reader) the type can be one of the following:
      *
-     *   1. any back-insertable range over a back-insertable of `char` (**deep**, string)
+     *   1. any back-insertable range over a back-insertable range of `char` (**deep**, string)
      *   2. any back-insertable range over std::string_view (**shallow**, string)
      *   3. any back-insertable range over int32_t (IDX values)
      *   4. bio::meta::ignore_t (**ignored**)
@@ -587,19 +775,19 @@ struct record
      * If there are no information values given in the file (denoted by a single '.'), this
      * range will be empty.
      *
-     * "Info elements" can contain string identifiers or IDX values.
-     * It is possible to use tuples instead of bio::io::var::info_element,
-     * but this is not recommended.
+     * "Info elements" are a pair/tuple of size 2, where the first element is a key (e.g. "AD") and
+     * the second element is a value (e.g. "20,3").
+     * Since fields have values of different types, the value is usually encoded in a std::variant-like
+     * type: bio::io::var::info_variant_deep or bio::io::var::info_variant_shallow.
      *
      * ### Type requirements when reading
      *
      * When reading (bio::io::seq::reader) the type can be one of the following:
      *
-     *   1. any back-insertable range over a bio::io::var::info_element
-     * (deep/shallow depends on template paremeter, string)
-     *   2. any back-insertable range over a bio::io::var::info_element_idx
-     * (deep/shallow depends on template paremeter, IDX)
-     *   3. bio::meta::ignore_t (**ignored**)
+     *   1. any back-insertable range over a bio::meta::tuple (or std::tuple or std::pair) of
+     *      1. std::string (**deep**) or std::string_view (**shallow**) or int32_t (IDX value)
+     *      2. bio::io::var::info_variant_deep or bio::io::var::info_variant_shallow
+     *   2. bio::meta::ignore_t (**ignored**)
      *
      * See \ref shallow_vs_deep for more details on what "deep" and "shallow" mean here.
      *
@@ -607,9 +795,10 @@ struct record
      *
      * When writing (bio::io::seq::writer), the type can be one of the following:
      *
-     *   1. any std::ranges::forward_range over a bio::io::var::info_element
-     *   2. any std::ranges::forward_range over a bio::io::var::info_element_idx
-     *   3. bio::meta::ignore_t (**ignored**)
+     *   1. any std::ranges::forward_range over a bio::meta::tuple (or std::tuple or std::pair) of
+     *      1. std::string (**deep**) or std::string_view (**shallow**) or int32_t (IDX value)
+     *      2. bio::io::var::info_variant_deep or bio::io::var::info_variant_shallow
+     *   2. bio::meta::ignore_t (**ignored**)
      *
      * The default and all pre-defined aliases satisfy the requirements for reading and writing.
      *
@@ -628,19 +817,19 @@ struct record
      * Every element represents one piece of genotyping information (e.g. GT or
      * AD), and contains a vector of values for each sample.
      *
-     * "Genotype elements" can contain string identifiers or IDX values.
-     * It is possible to use tuples instead of bio::io::var::genotype_element,
-     * but this is not recommended.
+     * "Genotype elements" are a pair/tuple size of 2, where the first element is a key (e.g. "GT") and
+     * the second element is a value (e.g. "0/1;1/1;0/1;...").
+     * Since fields have values of different types, the value is usually encoded in a std::variant-like
+     * type: bio::io::var::genotype_variant_deep or bio::io::var::genotype_variant_shallow.
      *
      * ### Type requirements when reading
      *
      * When reading (bio::io::seq::reader) the type can be one of the following:
      *
-     *   1. any back-insertable range over a bio::io::var::genotype_element
-     * (deep/shallow depends on template paremeter, string)
-     *   2. any back-insertable range over a bio::io::var::genotype_element_idx
-     * (deep/shallow depends on template paremeter, IDX)
-     *   3. bio::meta::ignore_t (**ignored**)
+     *   1. any back-insertable range over a bio::meta::tuple (or std::tuple or std::pair) of
+     *      1. std::string (**deep**) or std::string_view (**shallow**) or int32_t (IDX value)
+     *      2. bio::io::var::genotype_variant_deep or bio::io::var::genotype_variant_shallow
+     *   2. bio::meta::ignore_t (**ignored**)
      *
      * See \ref shallow_vs_deep for more details on what "deep" and "shallow" mean here.
      *
@@ -648,9 +837,10 @@ struct record
      *
      * When writing (bio::io::seq::writer), the type can be one of the following:
      *
-     *   1. any std::ranges::forward_range over a bio::io::var::genotype_element
-     *   2. any std::ranges::forward_range over a bio::io::var::genotype_element_idx
-     *   3. bio::meta::ignore_t (**ignored**)
+     *   1. any std::ranges::forward_range over a bio::meta::tuple (or std::tuple or std::pair) of
+     *      1. std::string (**deep**) or std::string_view (**shallow**) or int32_t (IDX value)
+     *      2. bio::io::var::genotype_variant_deep or bio::io::var::genotype_variant_shallow
+     *   2. bio::meta::ignore_t (**ignored**)
      *
      * The default and all pre-defined aliases satisfy the requirements for reading and writing.
      *
@@ -742,76 +932,87 @@ auto tie_record(chrom_t &     chrom,
  *!\ingroup var
  * \see bio::io::var::record
  */
-using record_deep = record<std::string,                                     // chrom,
-                           int32_t,                                         // pos,
-                           std::string,                                     // id,
-                           std::vector<alphabet::dna5>,                     // ref,
-                           std::vector<std::string>,                        // alt,
-                           float,                                           // qual,
-                           std::vector<std::string>,                        // filter,
-                           std::vector<info_element<ownership::deep>>,      // info,
-                           std::vector<genotype_element<ownership::deep>>>; // genotypes,
+using record_deep = record<std::string,                                             // chrom,
+                           int32_t,                                                 // pos,
+                           std::string,                                             // id,
+                           std::vector<alphabet::dna5>,                             // ref,
+                           std::vector<std::string>,                                // alt,
+                           float,                                                   // qual,
+                           std::vector<std::string>,                                // filter,
+                           ranges::dictionary<std::string, info_variant_deep>,      // info,
+                           ranges::dictionary<std::string, genotype_variant_deep>>; // genotypes,
 
 /*!\brief The record type used by bio::io::var::reader by default.
  *!\ingroup var
  * \see bio::io::var::record
  */
-using record_shallow = record<std::string_view,                                   // chrom,
-                              int32_t,                                            // pos,
-                              std::string_view,                                   // id,
-                              views::char_conversion_view_t<alphabet::dna5>,      // ref,
-                              std::vector<std::string_view>,                      // alt,
-                              float,                                              // qual,
-                              std::vector<std::string_view>,                      // filter,
-                              std::vector<info_element<ownership::shallow>>,      // info,
-                              std::vector<genotype_element<ownership::shallow>>>; // genotypes,
+using record_shallow = record<std::string_view,                                                // chrom,
+                              int32_t,                                                         // pos,
+                              std::string_view,                                                // id,
+                              views::char_conversion_view_t<alphabet::dna5>,                   // ref,
+                              std::vector<std::string_view>,                                   // alt,
+                              float,                                                           // qual,
+                              std::vector<std::string_view>,                                   // filter,
+                              ranges::dictionary<std::string_view, info_variant_shallow>,      // info,
+                              ranges::dictionary<std::string_view, genotype_variant_shallow>>; // genotypes,
 
 /*!\brief A record type with IDX values (shallow).
  *!\ingroup var
  * \see bio::io::var::record
  */
-using record_idx_shallow = record<int32_t,                                                // chrom,
-                                  int32_t,                                                // pos,
-                                  std::string_view,                                       // id,
-                                  views::char_conversion_view_t<alphabet::dna5>,          // ref,
-                                  std::vector<std::string_view>,                          // alt,
-                                  float,                                                  // qual,
-                                  std::vector<int32_t>,                                   // filter,
-                                  std::vector<info_element_idx<ownership::shallow>>,      // info,
-                                  std::vector<genotype_element_idx<ownership::shallow>>>; // genotypes,
+using record_idx_shallow = record<int32_t,                                                    // chrom,
+                                  int32_t,                                                    // pos,
+                                  std::string_view,                                           // id,
+                                  views::char_conversion_view_t<alphabet::dna5>,              // ref,
+                                  std::vector<std::string_view>,                              // alt,
+                                  float,                                                      // qual,
+                                  std::vector<int32_t>,                                       // filter,
+                                  std::vector<std::pair<int32_t, info_variant_shallow>>,      // info,
+                                  std::vector<std::pair<int32_t, genotype_variant_shallow>>>; // genotypes,
 
 /*!\brief A record type with IDX values (deep).
  *!\ingroup var
  * \see bio::io::var::record
  */
-using record_idx_deep = record<int32_t,                                             // chrom,
-                               int32_t,                                             // pos,
-                               std::string,                                         // id,
-                               std::vector<alphabet::dna5>,                         // ref,
-                               std::vector<std::string>,                            // alt,
-                               float,                                               // qual,
-                               std::vector<int32_t>,                                // filter,
-                               std::vector<info_element_idx<ownership::deep>>,      // info,
-                               std::vector<genotype_element_idx<ownership::deep>>>; // genotypes,
+using record_idx_deep = record<int32_t,                                                 // chrom,
+                               int32_t,                                                 // pos,
+                               std::string,                                             // id,
+                               std::vector<alphabet::dna5>,                             // ref,
+                               std::vector<std::string>,                                // alt,
+                               float,                                                   // qual,
+                               std::vector<int32_t>,                                    // filter,
+                               std::vector<std::pair<int32_t, info_variant_deep>>,      // info,
+                               std::vector<std::pair<int32_t, genotype_variant_deep>>>; // genotypes,
 
 } // namespace bio::io::var
 
-namespace bio::io::var::detail // TODO move this to var::detail?
+namespace bio::io::var::detail
 {
 
 //-----------------------------------------------------------------------------
 // Record concept checks for reading
 //-----------------------------------------------------------------------------
 
+template <typename t>
+concept pair_like = requires
+{
+    typename std::tuple_size<t>::type;
+    requires std::tuple_size_v<t>
+    == 2;
+    typename std::tuple_element<0, t>::type;
+    typename std::tuple_element<1, t>::type;
+};
+
 /*!\interface bio::io::detail::info_element_reader_concept <>
  * \tparam t The type to check.
  * \brief Types "similar" to bio::io::var::info_element / bio::io::var::info_element_idx.
  */
 //!\cond CONCEPT_DEF
-template <typename t>
-concept info_element_reader_concept = io::detail::decomposable_into_two<t> &&(
-  io::detail::out_string<io::detail::first_elem_t<t>> ||
-  std::same_as<int32_t, io::detail::first_elem_t<t>>)&&detail::is_info_element_value_type<io::detail::second_elem_t<t>>;
+template <typename t, typename noref_t = std::remove_reference_t<t>>
+concept info_element_reader_concept = pair_like<noref_t> &&
+  (io::detail::out_string<std::tuple_element_t<0, noref_t>> ||
+   std::same_as<int32_t &, std::tuple_element_t<0, noref_t> &>)&&detail::
+    is_info_variant<std::remove_reference_t<std::tuple_element_t<1, noref_t>>>;
 //!\endcond
 
 /*!\interface bio::io::detail::genotype_reader_concept <>
@@ -819,11 +1020,11 @@ concept info_element_reader_concept = io::detail::decomposable_into_two<t> &&(
  * \brief Types "similar" to bio::io::var::genotype_element / bio::io::var::genotype_element_idx.
  */
 //!\cond CONCEPT_DEF
-template <typename t>
-concept genotype_reader_concept = io::detail::decomposable_into_two<t> &&
-  (io::detail::out_string<io::detail::first_elem_t<t>> ||
-   std::same_as<int32_t,
-                io::detail::first_elem_t<t>>)&&detail::is_genotype_element_value_type<io::detail::second_elem_t<t>>;
+template <typename t, typename noref_t = std::remove_reference_t<t>>
+concept genotype_reader_concept = pair_like<noref_t> &&
+  (io::detail::out_string<std::tuple_element_t<0, noref_t>> ||
+   std::same_as<int32_t &, std::tuple_element_t<0, noref_t> &>)&&detail::
+    is_genotype_variant<std::remove_reference_t<std::tuple_element_t<1, noref_t>>>;
 //!\endcond
 
 //!\brief Validates the concepts that the record type needs to satisfy when being passed to a reader.
@@ -893,16 +1094,13 @@ constexpr bool record_read_concept_checker(
     static_assert(io::detail::lazy_concept_checker([]<typename t = info_t>(auto) requires(
                     meta::decays_to<t, meta::ignore_t> ||
                     (ranges::back_insertable<t> &&
-                     detail::info_element_reader_concept<std::remove_reference_t<std::ranges::range_reference_t<t>>>)) {
-                      return std::true_type{};
-                  }),
+                     detail::info_element_reader_concept<std::ranges::range_value_t<t>>)) { return std::true_type{}; }),
                   "Requirements for the field-type of the INFO-field not met. See documentation for "
                   "bio::io::var::record.");
 
     static_assert(io::detail::lazy_concept_checker([]<typename t = genotypes_t>(auto) requires(
                     meta::decays_to<t, meta::ignore_t> ||
-                    (ranges::back_insertable<t> &&
-                     detail::genotype_reader_concept<std::remove_reference_t<std::ranges::range_reference_t<t>>>)) {
+                    (ranges::back_insertable<t> && detail::genotype_reader_concept<std::ranges::range_value_t<t>>)) {
                       return std::true_type{};
                   }),
                   "Requirements for the field-type of the GENOTYPES-field not met. See documentation for "
@@ -922,7 +1120,7 @@ concept legal_type_aux =
 
 /*!\interface bio::io::var::detail::legal_type <>
  * \tparam t The type to check.
- * \brief A type that is similar to one of the alternatives of bio::io::var::info_element_value_type
+ * \brief A type that is similar to one of the alternatives of bio::io::var::info_variant
  */
 //!\cond CONCEPT_DEF
 template <typename t>
@@ -933,7 +1131,7 @@ concept legal_type = legal_type_aux<std::remove_cvref_t<t>> || std::same_as<t co
 
 /*!\interface bio::io::var::detail::legal_vector_type <>
  * \tparam t The type to check.
- * \brief A type that is similar to one of the alternatives of bio::io::var::info_element_value_type
+ * \brief A type that is similar to one of the alternatives of bio::io::var::info_variant
  */
 //!\cond CONCEPT_DEF
 template <typename t>
@@ -943,20 +1141,20 @@ concept legal_vector_type = std::ranges::forward_range<t> && legal_type<std::ran
 
 /*!\interface bio::io::var::detail::legal_or_dynamic <>
  * \tparam t The type to check.
- * \brief A type that is similar to one of the alternatives of bio::io::var::info_element_value_type
+ * \brief A type that is similar to one of the alternatives of bio::io::var::info_variant
  */
 //!\cond CONCEPT_DEF
 template <typename t>
-concept legal_or_dynamic = legal_type<t> || is_info_element_value_type<t>;
+concept legal_or_dynamic = legal_type<t> || is_info_variant<t>;
 //!\endcond
 
 /*!\interface bio::io::var::detail::vector_legal_or_dynamic <>
  * \tparam t The type to check.
- * \brief A type that is similar to one of the alternatives of bio::io::var::info_element_value_type
+ * \brief A type that is similar to one of the alternatives of bio::io::var::info_variant
  */
 //!\cond CONCEPT_DEF
 template <typename t>
-concept vector_legal_or_dynamic = legal_vector_type<t> || is_genotype_element_value_type<t>;
+concept vector_legal_or_dynamic = legal_vector_type<t> || is_genotype_variant<t>;
 //!\endcond
 
 /*!\interface bio::io::var::detail::info_element_writer_concept <>
@@ -964,10 +1162,11 @@ concept vector_legal_or_dynamic = legal_vector_type<t> || is_genotype_element_va
  * \brief Types "similar" to bio::io::var::info_element / bio::io::var::info_element_idx.
  */
 //!\cond CONCEPT_DEF
-template <typename t>
-concept info_element_writer_concept = io::detail::decomposable_into_two<t> &&
-  (io::detail::char_range_or_cstring<io::detail::first_elem_t<t>> ||
-   std::same_as<int32_t, io::detail::first_elem_t<t>>)&&detail::legal_or_dynamic<io::detail::second_elem_t<t>>;
+template <typename t, typename noref_t = std::remove_reference_t<t>>
+concept info_element_writer_concept = pair_like<noref_t> &&
+  (io::detail::char_range_or_cstring<std::remove_cvref_t<std::tuple_element_t<0, noref_t>>> ||
+   std::same_as<int32_t, std::remove_cvref_t<std::tuple_element_t<0, noref_t>>>)&&detail::
+    legal_or_dynamic<std::remove_cvref_t<std::tuple_element_t<1, noref_t>>>;
 //!\endcond
 
 /*!\interface bio::io::var::detail::genotype_writer_concept <>
@@ -975,10 +1174,11 @@ concept info_element_writer_concept = io::detail::decomposable_into_two<t> &&
  * \brief Types "similar" to bio::io::var::genotype_element / bio::io::var::genotype_element_idx.
  */
 //!\cond CONCEPT_DEF
-template <typename t>
-concept genotype_writer_concept = io::detail::decomposable_into_two<t> &&
-  (io::detail::char_range_or_cstring<io::detail::first_elem_t<t>> ||
-   std::same_as<int32_t, io::detail::first_elem_t<t>>)&&detail::vector_legal_or_dynamic<io::detail::second_elem_t<t>>;
+template <typename t, typename noref_t = std::remove_reference_t<t>>
+concept genotype_writer_concept = pair_like<noref_t> &&
+  (io::detail::char_range_or_cstring<std::remove_cvref_t<std::tuple_element_t<0, noref_t>>> ||
+   std::same_as<int32_t, std::remove_cvref_t<std::tuple_element_t<0, noref_t>>>)&&detail::
+    vector_legal_or_dynamic<std::remove_cvref_t<std::tuple_element_t<1, noref_t>>>;
 //!\endcond
 
 //!\brief Validates the concepts that the record type needs to satisfy when being passed to a writer.
@@ -1038,21 +1238,19 @@ constexpr bool record_write_concept_checker(
                   "Requirements for the field-type of the FILTER-field not met. See documentation for "
                   "bio::io::var::record.");
 
-    static_assert(io::detail::lazy_concept_checker([]<typename t = info_t>(auto) requires(
-                    meta::decays_to<t, meta::ignore_t> ||
-                    (std::ranges::forward_range<t> &&
-                     detail::info_element_writer_concept<std::remove_reference_t<std::ranges::range_reference_t<t>>>)) {
-                      return std::true_type{};
-                  }),
-                  "Requirements for the field-type of the INFO-field not met. See documentation for "
-                  "bio::io::var::record.");
+    static_assert(
+      io::detail::lazy_concept_checker([]<typename t = info_t>(auto) requires(
+        meta::decays_to<t, meta::ignore_t> ||
+        (std::ranges::forward_range<t> && detail::info_element_writer_concept<std::ranges::range_reference_t<t>>)) {
+          return std::true_type{};
+      }),
+      "Requirements for the field-type of the INFO-field not met. See documentation for "
+      "bio::io::var::record.");
 
     static_assert(io::detail::lazy_concept_checker([]<typename t = genotypes_t>(auto) requires(
                     meta::decays_to<t, meta::ignore_t> ||
                     (ranges::back_insertable<t> &&
-                     detail::genotype_writer_concept<std::remove_reference_t<std::ranges::range_reference_t<t>>>)) {
-                      return std::true_type{};
-                  }),
+                     detail::genotype_writer_concept<std::ranges::range_reference_t<t>>)) { return std::true_type{}; }),
                   "Requirements for the field-type of the GENOTYPES-field not met. See documentation for "
                   "bio::io::var::record.");
     return true;

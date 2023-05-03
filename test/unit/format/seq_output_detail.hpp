@@ -22,7 +22,6 @@
 #include <bio/test/expect_range_eq.hpp>
 #include <bio/test/expect_same_type.hpp>
 
-#include <bio/io/detail/magic_get.hpp>
 #include <bio/io/format/format_output_handler.hpp>
 #include <bio/io/seq/record.hpp>
 

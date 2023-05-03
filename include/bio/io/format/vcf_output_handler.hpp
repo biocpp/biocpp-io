@@ -15,7 +15,6 @@
 
 #include <bio/meta/tag/vtag.hpp>
 
-#include <bio/io/detail/magic_get.hpp>
 #include <bio/io/format/format_output_handler.hpp>
 #include <bio/io/format/vcf.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
@@ -91,18 +90,10 @@ private:
     /*!\name Arbitrary helpers
      * \{
      */
-    //!\brief A range adaptor that gets the first element in a decomposable type.
-    static constexpr auto views_get_first =
-      std::views::transform([](auto & pair) -> decltype(auto) { return detail::get_first(pair); });
-
-    //!\brief A range adaptor that gets the second element in a decomposable type.
-    static constexpr auto views_get_second =
-      std::views::transform([](auto & pair) -> decltype(auto) { return detail::get_second(pair); });
-
-    //!\brief Get the size of a range or genotype_element_value_type.
+    //!\brief Get the size of a range or genotype_variant.
     static size_t dyn_vec_size(auto & in)
     {
-        if constexpr (var::detail::is_genotype_element_value_type<std::remove_cvref_t<decltype(in)>>)
+        if constexpr (var::detail::is_genotype_variant<std::remove_cvref_t<decltype(in)>>)
             return std::visit(std::ranges::size, in);
         else
             return std::ranges::size(in);
@@ -180,7 +171,7 @@ private:
             }
         };
 
-        if constexpr (var::detail::is_info_element_value_type<std::remove_cvref_t<decltype(var)>>)
+        if constexpr (var::detail::is_info_variant<std::remove_cvref_t<decltype(var)>>)
             std::visit(visitor, var);
         else
             visitor(var);
@@ -189,7 +180,7 @@ private:
     //!\brief Write variant or a type that is given inplace of a variant; possibly verify.
     void write_variant(auto const & var, var::value_type_id const type_id)
     {
-        if constexpr (var::detail::is_info_element_value_type<std::remove_cvref_t<decltype(var)>>)
+        if constexpr (var::detail::is_info_variant<std::remove_cvref_t<decltype(var)>>)
         {
             if (!var::detail::type_id_is_compatible(type_id, var::value_type_id{var.index()}))
                 throw format_error{"The variant was not in the proper state."}; // TODO improve text
@@ -246,7 +237,7 @@ private:
             }
         };
 
-        if constexpr (var::detail::is_genotype_element_value_type<std::remove_cvref_t<decltype(var)>>)
+        if constexpr (var::detail::is_genotype_variant<std::remove_cvref_t<decltype(var)>>)
             std::visit(visitor, var);
         else
             visitor(var);
@@ -276,13 +267,10 @@ private:
     //!\brief Implementation for writing the info field.
     void write_info_pair(auto && pair) // constraints checked in parent
     {
-        using pair_t = decltype(pair);
-        using key_t  = detail::first_elem_t<pair_t>;
-
         auto & [key, val] = pair;
 
         std::string_view key_as_str{};
-        if constexpr (std::integral<key_t>)
+        if constexpr (std::integral<std::remove_cvref_t<decltype(key)>>)
             key_as_str = header->idx_to_string_map().at(key);
         else
             key_as_str = key;
@@ -387,7 +375,7 @@ private:
 
         /* format field */
         auto func = [this](auto const & field) { write_id(header->idx_to_string_map(), field); };
-        write_delimited(range | views_get_first, ':', func);
+        write_delimited(range | std::views::elements<0>, ':', func);
 
         if (header->column_labels.size() <= 9)
             return;
@@ -398,14 +386,14 @@ private:
         size_t n_samples = header->column_labels.size() - 9;
 
         std::vector<size_t> lengths;
-        std::ranges::copy(range | views_get_second |
+        std::ranges::copy(range | std::views::elements<1> |
                             std::views::transform([](auto & var) { return dyn_vec_size(var); }),
                           std::back_insert_iterator{lengths});
 
         for (size_t i_sample = 0; i_sample < n_samples; ++i_sample) // for every sample
         {
             for (size_t i_field = 0; i_field < std::ranges::size(range); ++i_field) // for every field
-                write_vector_variant(detail::get_second(range[i_field]), lengths, i_sample, i_field);
+                write_vector_variant(std::get<1>(range[i_field]), lengths, i_sample, i_field);
 
             if (i_sample < n_samples - 1)
                 it = '\t';
@@ -421,7 +409,7 @@ private:
             return;
 
         /* format field */
-        auto print_format = [&](auto & pair) { write_id(header->idx_to_string_map(), detail::get_first(pair)); };
+        auto print_format = [&](auto & pair) { write_id(header->idx_to_string_map(), std::get<0>(pair)); };
         write_delimited(tup, ':', print_format);
 
         if (header->column_labels.size() <= 9)
@@ -433,15 +421,14 @@ private:
         size_t n_samples = header->column_labels.size() - 9;
 
         std::vector<size_t> lengths;
-        auto                add_sizes = [&](auto const &... pairs)
-        { (lengths.push_back(dyn_vec_size(detail::get_second(pairs))), ...); };
+        auto add_sizes = [&](auto const &... pairs) { (lengths.push_back(dyn_vec_size(std::get<1>(pairs))), ...); };
         std::apply(add_sizes, tup);
 
         for (size_t i_sample = 0; i_sample < n_samples; ++i_sample) // for every sample
         {
             auto write_fields =
               [&]<typename tup_t, size_t... i_field>(tup_t const & tup, std::index_sequence<i_field...>)
-            { (write_vector_variant(detail::get_second(std::get<i_field>(tup)), lengths, i_sample, i_field), ...); };
+            { (write_vector_variant(std::get<1>(std::get<i_field>(tup)), lengths, i_sample, i_field), ...); };
 
             write_fields(tup, std::make_index_sequence<sizeof...(elem_ts)>{});
 

@@ -22,6 +22,7 @@
 #include <vector>
 
 #include <bio/ranges/container/dictionary.hpp>
+#include <bio/ranges/container/small_string.hpp>
 
 #include <bio/io/detail/charconv.hpp>
 #include <bio/io/detail/views_eager_split.hpp>
@@ -31,6 +32,7 @@
 
 namespace bio::io::var
 {
+
 /*!\brief Scoped (but weakly typed) enum for "Number" special values in bio::io::var::header INFO fields.
  * \ingroup var
  * \details
@@ -92,7 +94,6 @@ public:
     //!\brief Type of the contig field header line.
     struct contig_t
     {
-        // std::string    id;             //!< The ID.
         int64_t        length = -1;    //!< Length of the contig (-1 if absent).
         other_fields_t other_fields{}; //!< Other entries.
         int32_t        idx = -1;       //!< The numeric ID.
@@ -104,10 +105,9 @@ public:
     //!\brief Type of a INFO field header line.
     struct info_t
     {
-        // std::string    id;             //!< The ID.
         int32_t        number{};       //!< Number of values, see also bio::io::var::header_number.
         std::string    type{};         //!< Type of the field.
-        value_type_id  type_id{};      //!< Type of the field as vio::var::value_type_id.
+        value_type_id  type_id{};      //!< Type of the field as bio::var::value_type_id.
         std::string    description{};  //!< Description.
         other_fields_t other_fields{}; //!< Other entries.
         int32_t        idx = -1;       //!< The numeric ID.
@@ -119,7 +119,6 @@ public:
     //!\brief Type of a FILTER field header line.
     struct filter_t
     {
-        // std::string    id;             //!< The ID.
         std::string    description{};  //!< Description.
         other_fields_t other_fields{}; //!< Other entries.
         int32_t        idx = -1;       //!< The numeric ID.
@@ -953,9 +952,51 @@ private:
 };
 
 // clang-format off
-//TODO change these to dictionary once the tuple-constructor is fixed in -core
+/*!\brief A compile-time mapping of INFO strings to bio::io::var::value_type_id.
+ *!\ingroup var
+ *
+ * This mapping allows accessing bio::io::var::info_variant_shallow and bio::io::var::info_variant_deep by e.g.
+ * `get<"AA">(variant)` instead of `get<static_cast<size_t>(value_type_id::string)>(variant)`.
+ *
+ * The predefined mappings are as defined in "Table 1" of the
+ * [VCF specifiction](https://samtools.github.io/hts-specs/VCFv4.3.pdf), and also shown in bio::io::var::reserved_infos.
+ *
+ * ### Customisation point
+ *
+ * This variable template is a customisation point, which means that you can specialise it for your own strings.
+ *
+ * TODO add example snippet
+ */
+template <ranges::small_string str>
+inline constexpr meta::ignore_t info_key2type_enum{};
+
+//!\cond
+template <> inline constexpr value_type_id info_key2type_enum<"AA"       > = value_type_id::string;
+template <> inline constexpr value_type_id info_key2type_enum<"AC"       > = value_type_id::vector_of_int32;
+template <> inline constexpr value_type_id info_key2type_enum<"AD"       > = value_type_id::vector_of_int32;
+template <> inline constexpr value_type_id info_key2type_enum<"ADF"      > = value_type_id::vector_of_int32;
+template <> inline constexpr value_type_id info_key2type_enum<"ADR"      > = value_type_id::vector_of_int32;
+template <> inline constexpr value_type_id info_key2type_enum<"AF"       > = value_type_id::vector_of_float32;
+template <> inline constexpr value_type_id info_key2type_enum<"AN"       > = value_type_id::int32;
+template <> inline constexpr value_type_id info_key2type_enum<"BQ"       > = value_type_id::float32;
+template <> inline constexpr value_type_id info_key2type_enum<"CIGAR"    > = value_type_id::vector_of_string;
+template <> inline constexpr value_type_id info_key2type_enum<"DB"       > = value_type_id::flag;
+template <> inline constexpr value_type_id info_key2type_enum<"DP"       > = value_type_id::int32;
+template <> inline constexpr value_type_id info_key2type_enum<"END"      > = value_type_id::int32;
+template <> inline constexpr value_type_id info_key2type_enum<"H2"       > = value_type_id::flag;
+template <> inline constexpr value_type_id info_key2type_enum<"H3"       > = value_type_id::flag;
+template <> inline constexpr value_type_id info_key2type_enum<"MQ"       > = value_type_id::float32;
+template <> inline constexpr value_type_id info_key2type_enum<"MQ0"      > = value_type_id::int32;
+template <> inline constexpr value_type_id info_key2type_enum<"NS"       > = value_type_id::int32;
+template <> inline constexpr value_type_id info_key2type_enum<"SB"       > = value_type_id::vector_of_int32;
+template <> inline constexpr value_type_id info_key2type_enum<"SOMATIC"  > = value_type_id::flag;
+template <> inline constexpr value_type_id info_key2type_enum<"VALIDATED"> = value_type_id::flag;
+template <> inline constexpr value_type_id info_key2type_enum<"1000G"    > = value_type_id::flag;
+//!\endcond
+
 //!\brief A table of reserved INFO entries.
-inline std::unordered_map<std::string_view, header::info_t> const reserved_infos
+//!\ingroup var
+inline ranges::dictionary<std::string_view, header::info_t> const reserved_infos
 {
     {"AA",       {               1, "String",  value_type_id::string,            "\"Ancestral allele\""}},
     {"AC",       {header_number::A, "Integer", value_type_id::vector_of_int32,   "\"Allele count in genotypes, for each ALT allele, in the same order as listed\""}},
@@ -979,11 +1020,52 @@ inline std::unordered_map<std::string_view, header::info_t> const reserved_infos
     {"VALIDATED",{               0, "Flag",    value_type_id::flag,              "\"Validated by follow-up experiment\""}},
     {"1000G",    {               0, "Flag",    value_type_id::flag,              "\"1000 Genomes membership\""}}
 };
-// clang-format on
 
-// clang-format off
+/*!\brief A compile-time mapping of FORMAT strings to bio::io::var::value_type_id.
+ *!\ingroup var
+ *
+ * This mapping allows accessing bio::io::var::genotype_variant_shallow and bio::io::var::genotype_variant_deep by e.g.
+ * `get<"GT">(variant)` instead of `get<static_cast<size_t>(value_type_id::string)>(variant)`.
+ *
+ * The predefined mappings are as defined in "Table 2" of the
+ * [VCF specifiction](https://samtools.github.io/hts-specs/VCFv4.3.pdf), and also shown in
+ * bio::io::var::reserved_formats.
+ *
+ * ### Customisation point
+ *
+ * This variable template is a customisation point, which means that you can specialise it for your own strings.
+ *
+ * TODO add example snippet
+ */
+template <ranges::small_string str>
+inline constexpr meta::ignore_t format_key2type_enum{};
+
+//!\cond
+template <> inline constexpr value_type_id format_key2type_enum<"AD">  = value_type_id::vector_of_int32;
+template <> inline constexpr value_type_id format_key2type_enum<"ADF"> = value_type_id::vector_of_int32;
+template <> inline constexpr value_type_id format_key2type_enum<"ADR"> = value_type_id::vector_of_int32;
+template <> inline constexpr value_type_id format_key2type_enum<"DP">  = value_type_id::int32;
+template <> inline constexpr value_type_id format_key2type_enum<"EC">  = value_type_id::vector_of_int32;
+template <> inline constexpr value_type_id format_key2type_enum<"FT">  = value_type_id::string;
+template <> inline constexpr value_type_id format_key2type_enum<"GL">  = value_type_id::vector_of_float32;
+template <> inline constexpr value_type_id format_key2type_enum<"GP">  = value_type_id::vector_of_float32;
+template <> inline constexpr value_type_id format_key2type_enum<"GQ">  = value_type_id::int32;
+template <> inline constexpr value_type_id format_key2type_enum<"GT">  = value_type_id::string;
+template <> inline constexpr value_type_id format_key2type_enum<"HQ">  = value_type_id::vector_of_int32;
+template <> inline constexpr value_type_id format_key2type_enum<"LAA"> = value_type_id::vector_of_int32;
+template <> inline constexpr value_type_id format_key2type_enum<"LAD"> = value_type_id::vector_of_int32;
+template <> inline constexpr value_type_id format_key2type_enum<"LGT"> = value_type_id::vector_of_string;
+template <> inline constexpr value_type_id format_key2type_enum<"LPL"> = value_type_id::vector_of_int32;
+template <> inline constexpr value_type_id format_key2type_enum<"MQ">  = value_type_id::int32;
+template <> inline constexpr value_type_id format_key2type_enum<"PL">  = value_type_id::vector_of_int32;
+template <> inline constexpr value_type_id format_key2type_enum<"PP">  = value_type_id::vector_of_int32;
+template <> inline constexpr value_type_id format_key2type_enum<"PQ">  = value_type_id::int32;
+template <> inline constexpr value_type_id format_key2type_enum<"PS">  = value_type_id::int32;
+//!\endcond
+
 //!\brief A table of reserved FORMAT entries.
-inline std::unordered_map<std::string_view, header::format_t> const reserved_formats
+//!\ingroup var
+inline ranges::dictionary<std::string_view, header::format_t> const reserved_formats
 {
     {"AD",  {  header_number::R, "Integer", value_type_id::vector_of_int32,   "\"Read depth for each allele\""}},
     {"ADF", {  header_number::R, "Integer", value_type_id::vector_of_int32,   "\"Read depth for each allele on the forward strand\""}},

@@ -15,6 +15,8 @@
 
 #include <bio/io/var/record.hpp>
 
+#include "../format/vcf_data.hpp"
+
 template <typename T>
 class var_record : public ::testing::Test
 {};
@@ -34,4 +36,22 @@ TYPED_TEST(var_record, reader_requirements)
 TYPED_TEST(var_record, writer_requirements)
 {
     EXPECT_TRUE(bio::io::var::detail::record_write_concept_checker(std::type_identity<TypeParam>{}));
+}
+
+TEST(var_record_dictionary, heterogeneous_access)
+{
+    using namespace bio::meta::literals;
+
+    auto records = example_records_default_style<bio::io::ownership::deep>();
+
+    auto & record1 = records[0];
+
+    auto & af = record1.info["AF"];
+    EXPECT_SAME_TYPE(decltype(af), bio::io::var::info_variant_deep &);
+
+    auto & af_get = get<"AF">(af);
+    EXPECT_SAME_TYPE(decltype(af_get), std::vector<float> &);
+
+    auto & af_het = record1.info["AF"_vtag];
+    EXPECT_SAME_TYPE(decltype(af_het), std::vector<float> &);
 }

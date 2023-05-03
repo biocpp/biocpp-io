@@ -25,7 +25,6 @@
 #include <bio/ranges/container/concatenated_sequences.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
 
-#include <bio/io/detail/magic_get.hpp>
 #include <bio/io/detail/range.hpp>
 #include <bio/io/detail/tuple_record.hpp>
 #include <bio/io/misc.hpp>

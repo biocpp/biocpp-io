@@ -26,7 +26,6 @@
 #include <bio/ranges/concept.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
 
-#include <bio/io/detail/magic_get.hpp>
 #include <bio/io/format/format_input_handler.hpp>
 #include <bio/io/format/vcf.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
@@ -159,7 +158,7 @@ private:
     // implementation after class
     template <typename t>
         //!\cond REQ
-        requires(var::detail::is_info_element_value_type<t> || var::detail::is_genotype_element_value_type<t>)
+        requires(var::detail::is_info_variant<t> || var::detail::is_genotype_variant<t>)
     //!\endcond
     static void init_element_value_type(var::value_type_id const id, t & output);
 
@@ -167,9 +166,9 @@ private:
     struct parse_element_value_type_fn;
 
     // implementation after class
-    static size_t parse_element_value_type(var::value_type_id const                       id,
-                                           std::string_view const                         input_string,
-                                           var::detail::is_info_element_value_type auto & output);
+    static size_t parse_element_value_type(var::value_type_id const            id,
+                                           std::string_view const              input_string,
+                                           var::detail::is_info_variant auto & output);
 
     //!\brief Parse the CHROM field. Reading chrom as number means getting the index (not converting string to number).
     void parse_field(meta::vtag_t<detail::field::chrom> const & /**/, auto & parsed_field)
@@ -333,11 +332,13 @@ private:
 
     //!\brief Overload for parsing INFO.
     template <ranges::back_insertable parsed_field_t>
-        requires var::detail::info_element_reader_concept<std::ranges::range_reference_t<parsed_field_t>>
+        requires var::detail::info_element_reader_concept<std::ranges::range_value_t<parsed_field_t>>
     void parse_field(meta::vtag_t<detail::field::info> const & /**/, parsed_field_t & parsed_field)
     {
-        using key_t   = detail::first_elem_t<std::ranges::range_reference_t<parsed_field_t>>;
-        using value_t = detail::second_elem_t<std::ranges::range_reference_t<parsed_field_t>>;
+        using key_t = std::remove_cvref_t<
+          std::tuple_element_t<0, std::remove_reference_t<std::ranges::range_value_t<parsed_field_t>>>>;
+        using value_t = std::remove_cvref_t<
+          std::tuple_element_t<1, std::remove_reference_t<std::ranges::range_value_t<parsed_field_t>>>>;
         // TODO this function handles value_t being string or string_view but the concept currently disallows this
 
         std::string_view raw_field = get<detail::field::info>(raw_record);
@@ -384,7 +385,7 @@ private:
             /* PARSE VALUE */
             if (val.empty()) // no "=" → flag
             {
-                if constexpr (var::detail::is_info_element_value_type<value_t>)
+                if constexpr (var::detail::is_info_variant<value_t>)
                 {
                     if (info.type_id != var::value_type_id::flag || info.number != 0)
                     {
@@ -397,7 +398,7 @@ private:
             }
             else // any other type than flag
             {
-                if constexpr (var::detail::is_info_element_value_type<value_t>)
+                if constexpr (var::detail::is_info_variant<value_t>)
                 {
                     int32_t num_val = parse_element_value_type(info.type_id, val, parsed_value);
                     if (int32_t exp_val = info.number; print_warnings && num_val != exp_val && exp_val >= 0)
@@ -448,7 +449,7 @@ private:
     //!\brief Overload for parsing GENOTYPES.
     template <ranges::back_insertable field_t>
         //!\cond REQ
-        requires var::detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
+        requires var::detail::genotype_reader_concept<std::ranges::range_value_t<field_t>>
     //!\endcond
     void parse_field(meta::vtag_t<detail::field::genotypes> const & /**/, field_t & parsed_field);
 
@@ -523,7 +524,7 @@ public:
  */
 template <typename t>
     //!\cond REQ
-    requires(var::detail::is_info_element_value_type<t> || var::detail::is_genotype_element_value_type<t>)
+    requires(var::detail::is_info_variant<t> || var::detail::is_genotype_variant<t>)
 //!\endcond
 inline void format_input_handler<vcf>::init_element_value_type(var::value_type_id const id, t & output)
 {
@@ -597,7 +598,7 @@ inline void format_input_handler<vcf>::init_element_value_type(var::value_type_i
             }
         case var::value_type_id::flag:
             {
-                if constexpr (var::detail::is_genotype_element_value_type<t>)
+                if constexpr (var::detail::is_genotype_variant<t>)
                 {
                     throw unreachable_code{__FILE__, ':', __LINE__, '\n', __PRETTY_FUNCTION__};
                 }
@@ -685,11 +686,11 @@ struct format_input_handler<vcf>::parse_element_value_type_fn
 };
 
 /*!\brief Parse text input into a bio::io::var::info_element_value_type /
- * bio::io::var::genotype_element_value_type. \param[in]  id           ID of the type that shall be read. \param[in]
+ * bio::io::var::genotype_variant. \param[in]  id           ID of the type that shall be read. \param[in]
  * input_string The string data to read from. \param[out] output       The object to store the result into. \returns The
  * number of elements stored in the output in case ID is one of the "vector_of_"-types; 1 otherwise.
  */
-template <var::detail::is_info_element_value_type output_t>
+template <var::detail::is_info_variant output_t>
 inline size_t format_input_handler<vcf>::parse_element_value_type(var::value_type_id const id,
                                                                   std::string_view const   input_string,
                                                                   output_t &               output)
@@ -700,11 +701,11 @@ inline size_t format_input_handler<vcf>::parse_element_value_type(var::value_typ
 
 //!\brief Overload for reading the GENOTYPE field.
 template <ranges::back_insertable field_t>
-    requires var::detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
+    requires var::detail::genotype_reader_concept<std::ranges::range_value_t<field_t>>
 inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::genotypes> const & /**/,
                                                    field_t & parsed_field)
 {
-    using genotype_field_t = std::ranges::range_reference_t<field_t>;
+    using genotype_field_t = std::remove_cvref_t<std::ranges::range_value_t<field_t>>;
 
     size_t column_number          = file_it->fields.size();
     size_t expected_column_number = header.column_labels.size();
@@ -733,10 +734,10 @@ inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::g
             format_pos = it - header.formats.begin();
         }
 
-        parsed_field.push_back({{}, {}});
-        auto & [current_id, current_value] = parsed_field.back();
+        std::ranges::range_value_t<field_t> new_element;
+        auto & [current_id, current_value] = new_element;
 
-        if constexpr (std::same_as<int32_t, detail::first_elem_t<genotype_field_t>>)
+        if constexpr (std::same_as<int32_t &, std::tuple_element_t<0, genotype_field_t> &>)
             current_id = get<1>(header.formats[format_pos]).idx;
         else
             detail::string_copy(format_name, current_id);
@@ -781,6 +782,8 @@ inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::g
         std::visit(reserve, current_value);
 
         ++formats;
+
+        parsed_field.push_back(std::move(new_element));
     }
 
     /* parse values/samples */
@@ -820,7 +823,7 @@ inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::g
                       parse_element_value_type_fn{field}(seqs.back());
                   });
 
-                auto & [current_id, current_value] = parsed_field[j];
+                auto && [current_id, current_value] = parsed_field[j];
 
                 std::visit(parse_and_append, current_value);
             }

@@ -18,7 +18,6 @@
 
 #include <bio/meta/tag/vtag.hpp>
 
-#include <bio/io/detail/magic_get.hpp>
 #include <bio/io/detail/misc.hpp>
 #include <bio/io/format/bcf.hpp>
 #include <bio/io/format/format_output_handler.hpp>
@@ -26,7 +25,9 @@
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
 #include <bio/io/var/header.hpp>
 #include <bio/io/var/misc.hpp>
+#include <bio/io/var/record.hpp>
 #include <bio/io/var/writer_options.hpp>
+
 
 namespace bio::io
 {
@@ -670,8 +671,8 @@ private:
     {
         auto & [id, value] = info_element;
 
-        using id_t    = decltype(id);
-        using value_t = decltype(value);
+        using id_t    = std::remove_cvref_t<decltype(id)>;
+        using value_t = std::remove_cvref_t<decltype(value)>;
 
         /* ID */
         typename decltype(header->infos)::const_iterator inf_it;
@@ -697,7 +698,7 @@ private:
         write_typed_data(info.idx, idx_desc);
 
         /* VALUE */
-        if constexpr (var::detail::is_info_element_value_type<value_t>)
+        if constexpr (var::detail::is_info_variant<value_t>)
         {
             auto func = [&](auto & param) { write_typed_data(param, get_desc(param, id_str, info)); };
             std::visit(func, value);
@@ -713,7 +714,7 @@ private:
         requires(var::detail::info_element_writer_concept<std::ranges::range_reference_t<rng_t>>)
     void write_field(meta::vtag_t<detail::field::info> /**/, rng_t && range)
     {
-        for (auto & info_element : range)
+        for (auto && info_element : range)
             write_info_element(info_element);
     }
 
@@ -773,8 +774,8 @@ private:
     {
         auto & [id, value] = genotype;
 
-        using id_t    = decltype(id);
-        using value_t = decltype(value);
+        using id_t    = std::remove_cvref_t<decltype(id)>;
+        using value_t = std::remove_cvref_t<decltype(value)>;
 
         /* ID */
         typename decltype(header->formats)::const_iterator gen_it;
@@ -944,7 +945,7 @@ private:
             }
         };
 
-        if constexpr (var::detail::is_genotype_element_value_type<value_t>)
+        if constexpr (var::detail::is_genotype_variant<value_t>)
             std::visit(func, value);
         else
             func(value);
@@ -1091,7 +1092,8 @@ private:
         if constexpr (meta::different_from<typename record_t::info_t, meta::ignore_t>)
             write_field(meta::vtag<detail::field::info>, record.info);
         else
-            write_field(meta::vtag<detail::field::info>, std::span<var::info_element<>>{});
+            write_field(meta::vtag<detail::field::info>,
+                        std::span<std::pair<std::string_view, var::info_variant_shallow>>{});
 
         assert(streambuf_exposer->pptr() - streambuf_exposer->pbase() - this_record_offset > 0);
         //              (position in the buffer                              ) - (where this record starts)
@@ -1102,7 +1104,8 @@ private:
             if constexpr (meta::different_from<typename record_t::genotypes_t, meta::ignore_t>)
                 write_field(meta::vtag<detail::field::genotypes>, record.genotypes);
             else
-                write_field(meta::vtag<detail::field::genotypes>, std::span<var::genotype_element<>>{});
+                write_field(meta::vtag<detail::field::genotypes>,
+                            std::span<std::pair<std::string_view, var::genotype_variant_shallow>>{});
         }
 
         l_indiv_tmp = streambuf_exposer->pptr() - streambuf_exposer->pbase() - this_record_offset - l_shared_tmp;

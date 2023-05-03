@@ -132,9 +132,9 @@ void field_types()
         recs = example_records_bcf_style<own, int_t>();
 
     // this workaround is pending clarification in https://github.com/samtools/hts-specs/issues/593
-    std::get<vec_t>(bio::io::detail::get_second(recs[1].genotypes.back())).push_back(std::vector{mv});
-    std::get<vec_t>(bio::io::detail::get_second(recs[2].genotypes.back())).push_back(std::vector{mv});
-    std::get<vec_t>(bio::io::detail::get_second(recs[3].genotypes.back())).push_back(std::vector{mv});
+    std::get<vec_t>(std::get<1>(recs[1].genotypes.back())).push_back(std::vector{mv});
+    std::get<vec_t>(std::get<1>(recs[2].genotypes.back())).push_back(std::vector{mv});
+    std::get<vec_t>(std::get<1>(recs[3].genotypes.back())).push_back(std::vector{mv});
 
     for (auto & rec : recs)
         rec._private = priv;

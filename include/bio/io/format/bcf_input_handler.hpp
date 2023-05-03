@@ -648,10 +648,10 @@ private:
 
     //!\brief Set to vector-of-string (genotypes and info have different implementation here).
     template <var::value_type_id id_>
-    static inline void genotype_element_value_type_init_vector_of_string(size_t const       outer_size,
-                                                                         size_t const       inner_size,
-                                                                         std::byte const *& cache_ptr,
-                                                                         auto &             output)
+    static inline void genotype_variant_init_vector_of_string(size_t const       outer_size,
+                                                              size_t const       inner_size,
+                                                              std::byte const *& cache_ptr,
+                                                              auto &             output)
     {
         constexpr size_t id      = static_cast<size_t>(id_);
         auto &           output_ = output.template emplace<id>();
@@ -705,14 +705,14 @@ private:
         cache_ptr += outer_size * inner_size * sizeof(elem_t);
     }
 
-    template <var::detail::is_info_element_value_type dyn_t>
+    template <var::detail::is_info_variant dyn_t>
     void parse_element_value_type(var::value_type_id const               id_from_header,
                                   var::detail::bcf_type_descriptor const desc,
                                   size_t const                           size,
                                   std::byte const *&                     cache_ptr,
                                   dyn_t &                                output); // implementation below class
 
-    template <var::detail::is_genotype_element_value_type dyn_t>
+    template <var::detail::is_genotype_variant dyn_t>
     void parse_element_value_type(var::value_type_id const               id_from_header,
                                   var::detail::bcf_type_descriptor const desc,
                                   size_t const                           outer_size,
@@ -811,7 +811,7 @@ private:
 
     //!\brief Reading of the INFO field.
     template <ranges::back_insertable parsed_field_t>
-        requires var::detail::info_element_reader_concept<std::ranges::range_reference_t<parsed_field_t>>
+        requires var::detail::info_element_reader_concept<std::ranges::range_value_t<parsed_field_t>>
     void parse_field(meta::vtag_t<detail::field::info> const & /**/, parsed_field_t & parsed_field)
     {
         std::span<std::byte const> raw_field = get<detail::field::info>(raw_record);
@@ -819,9 +819,9 @@ private:
 
         for (size_t i = 0; i < record_core->n_info; ++i)
         {
-            parsed_field.push_back({});
+            std::ranges::range_value_t<parsed_field_t> new_element;
 
-            auto & [id, variant] = parsed_field.back();
+            auto & [id, variant] = new_element;
 
             int32_t idx = decode_integral(cache_ptr);
 
@@ -842,6 +842,8 @@ private:
                 detail::string_copy(id_string, id);
             else
                 id = idx;
+
+            parsed_field.push_back(std::move(new_element));
         }
 
         assert(cache_ptr == raw_field.data() + raw_field.size());
@@ -899,9 +901,9 @@ private:
 
         for (size_t i = 0; i < static_cast<size_t>(record_core->n_fmt); ++i)
         {
-            parsed_field.emplace_back();
+            std::ranges::range_value_t<decltype(parsed_field)> new_element;
 
-            auto & [id, parsed_variant] = parsed_field.back();
+            auto & [id, parsed_variant] = new_element;
 
             int32_t fmt_key = decode_integral(cache_ptr);
             auto    fmt_it  = header.formats.find(header.idx_to_string_map().at(fmt_key));
@@ -976,6 +978,8 @@ private:
                                          cache_ptr,
                                          parsed_variant);
             }
+
+            parsed_field.push_back(std::move(new_element));
         }
 
         assert(cache_ptr == raw_field.data() + raw_field.size());
@@ -983,7 +987,7 @@ private:
 
     //!\brief Reading of the GENOTYPES field.
     template <ranges::back_insertable field_t>
-        requires var::detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
+        requires var::detail::genotype_reader_concept<std::ranges::range_value_t<field_t>>
     void parse_field(meta::vtag_t<detail::field::genotypes> const & /**/, field_t & parsed_field)
     {
         parse_genotypes_impl(parsed_field);
@@ -1059,7 +1063,7 @@ public:
  * \param[in,out] cache_ptr  Pointer into the BCF stream; will be updated to point past the end of read data.
  * \param[out] output        The variant to hold the parsed value.
  */
-template <var::detail::is_info_element_value_type dyn_t>
+template <var::detail::is_info_variant dyn_t>
 inline void format_input_handler<bcf>::parse_element_value_type(var::value_type_id const               id_from_header,
                                                                 var::detail::bcf_type_descriptor const desc,
                                                                 size_t const                           size,
@@ -1187,7 +1191,7 @@ inline void format_input_handler<bcf>::parse_element_value_type(var::value_type_
  * \param[in,out] cache_ptr  Pointer into the BCF stream; will be updated to point past the end of read data.
  * \param[out] output        The variant to hold the parsed value.
  */
-template <var::detail::is_genotype_element_value_type dyn_t>
+template <var::detail::is_genotype_variant dyn_t>
 inline void format_input_handler<bcf>::parse_element_value_type(var::value_type_id const               id_from_header,
                                                                 var::detail::bcf_type_descriptor const desc,
                                                                 size_t const                           outer_size,
@@ -1254,10 +1258,10 @@ inline void format_input_handler<bcf>::parse_element_value_type(var::value_type_
                 if (desc != var::detail::bcf_type_descriptor::char8)
                     error("Attempting to creates string but the byte descriptor does not indicate string type.");
 
-                genotype_element_value_type_init_vector_of_string<var::value_type_id::string>(outer_size,
-                                                                                              inner_size,
-                                                                                              cache_ptr,
-                                                                                              output);
+                genotype_variant_init_vector_of_string<var::value_type_id::string>(outer_size,
+                                                                                   inner_size,
+                                                                                   cache_ptr,
+                                                                                   output);
                 return;
             }
         case var::value_type_id::vector_of_int8:
@@ -1347,7 +1351,7 @@ inline void format_input_handler<bcf>::parse_element_value_type(var::value_type_
             }
         case var::value_type_id::flag:
             {
-                error("bio::io::var::genotype_element_value_type cannot be initialised to flag state.");
+                error("bio::io::var::genotype_variant cannot be initialised to flag state.");
                 return;
             }
     }
