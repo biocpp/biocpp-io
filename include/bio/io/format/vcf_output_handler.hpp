@@ -178,11 +178,11 @@ private:
     }
 
     //!\brief Write variant or a type that is given inplace of a variant; possibly verify.
-    void write_variant(auto const & var, var::value_type_id const type_id)
+    void write_variant(auto const & var, var::type_enum const type_id)
     {
         if constexpr (var::detail::is_info_variant<std::remove_cvref_t<decltype(var)>>)
         {
-            if (!var::detail::type_id_is_compatible(type_id, var::value_type_id{var.index()}))
+            if (!var::detail::type_id_is_compatible(type_id, var::type_enum{var.index()}))
                 throw format_error{"The variant was not in the proper state."}; // TODO improve text
         }
         else
@@ -277,9 +277,9 @@ private:
 
         write_field_aux(key_as_str);
 
-        var::value_type_id type_id = header->infos[var::detail::het_string(key_as_str)].type_id;
+        var::type_enum type_id = header->infos[var::detail::het_string(key_as_str)].type_id;
 
-        if (type_id != var::value_type_id::flag) // all fields that aren't flags have second part
+        if (type_id != var::type_enum::flag) // all fields that aren't flags have second part
         {
             it = '=';
             write_variant(val, type_id);

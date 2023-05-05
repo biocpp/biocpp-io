@@ -592,7 +592,7 @@ private:
      * \{
      */
     //!\brief Set to single value.
-    template <var::value_type_id id_, typename elem_t>
+    template <var::type_enum id_, typename elem_t>
     static inline void element_value_type_init_single(std::byte const *& cache_ptr, auto & output)
     {
         constexpr size_t id      = static_cast<size_t>(id_);
@@ -602,7 +602,7 @@ private:
     }
 
     //!\brief Set to string.
-    template <var::value_type_id id_>
+    template <var::type_enum id_>
     static inline void element_value_type_init_string(size_t const size, std::byte const *& cache_ptr, auto & output)
     {
         constexpr size_t id      = static_cast<size_t>(id_);
@@ -615,7 +615,7 @@ private:
     }
 
     //!\brief Set to vector.
-    template <var::value_type_id id_, typename elem_t>
+    template <var::type_enum id_, typename elem_t>
     static inline void element_value_type_init_vector(size_t const size, std::byte const *& cache_ptr, auto & output)
     {
         constexpr size_t id      = static_cast<size_t>(id_);
@@ -628,7 +628,7 @@ private:
     }
 
     //!\brief Set to vector-of-string (genotypes and info have different implementation here).
-    template <var::value_type_id id_>
+    template <var::type_enum id_>
     static inline void info_element_value_type_init_vector_of_string(size_t const       size,
                                                                      std::byte const *& cache_ptr,
                                                                      auto &             output)
@@ -647,7 +647,7 @@ private:
     }
 
     //!\brief Set to vector-of-string (genotypes and info have different implementation here).
-    template <var::value_type_id id_>
+    template <var::type_enum id_>
     static inline void genotype_variant_init_vector_of_string(size_t const       outer_size,
                                                               size_t const       inner_size,
                                                               std::byte const *& cache_ptr,
@@ -677,7 +677,7 @@ private:
     }
 
     //!\brief Set to vector-of-vector.
-    template <var::value_type_id id_, typename elem_t>
+    template <var::type_enum id_, typename elem_t>
     static inline void element_value_type_init_vector_of_vector(size_t const       outer_size,
                                                                 size_t const       inner_size,
                                                                 std::byte const *& cache_ptr,
@@ -706,14 +706,14 @@ private:
     }
 
     template <var::detail::is_info_variant dyn_t>
-    void parse_element_value_type(var::value_type_id const               id_from_header,
+    void parse_element_value_type(var::type_enum const                   id_from_header,
                                   var::detail::bcf_type_descriptor const desc,
                                   size_t const                           size,
                                   std::byte const *&                     cache_ptr,
                                   dyn_t &                                output); // implementation below class
 
     template <var::detail::is_genotype_variant dyn_t>
-    void parse_element_value_type(var::value_type_id const               id_from_header,
+    void parse_element_value_type(var::type_enum const                   id_from_header,
                                   var::detail::bcf_type_descriptor const desc,
                                   size_t const                           outer_size,
                                   size_t const                           inner_size,
@@ -924,7 +924,7 @@ private:
             if (id_string == "GT") // this needs custom decoding, it is not a string
             {
                 /* we explicitly parse into integer format for now: */
-                parse_element_value_type(var::value_type_id::vector_of_int32,
+                parse_element_value_type(var::type_enum::vector_of_int32,
                                          fmt_type,
                                          record_core->n_sample,
                                          fmt_size,
@@ -957,7 +957,7 @@ private:
                   parsed_variant);
 
                 /* now reset the variant to string-state and create copies/views */
-                constexpr size_t string_id = static_cast<size_t>(var::value_type_id::string);
+                constexpr size_t string_id = static_cast<size_t>(var::type_enum::string);
                 auto &           strings   = parsed_variant.template emplace<string_id>();
                 strings.resize(record_core->n_sample);
 
@@ -1037,7 +1037,7 @@ public:
         header = var::header{std::move(text_tmp)};
 
         /* checks on header */
-        if (header.formats.contains("GT") && header.formats["GT"].type_id != var::value_type_id::string)
+        if (header.formats.contains("GT") && header.formats["GT"].type_id != var::type_enum::string)
         {
             error("The \"GT\" field must always be encoded as a string.");
         }
@@ -1057,94 +1057,94 @@ public:
 
 /*!\brief Parse a "dynamically typed" field out of a BCF stream and store the content in a variant.
  * \tparam dyn_t             Type of the variant; specialisation of bio::io::var::info_element_value_type.
- * \param[in] id_from_header A value of bio::io::var::value_type_id that denotes the expected type.
+ * \param[in] id_from_header A value of bio::io::var::type_enum that denotes the expected type.
  * \param[in] desc           A value of bio::io::detail::bcf_type_descriptor that notes the detected type.
  * \param[in] size           The number of values belonging to this field.
  * \param[in,out] cache_ptr  Pointer into the BCF stream; will be updated to point past the end of read data.
  * \param[out] output        The variant to hold the parsed value.
  */
 template <var::detail::is_info_variant dyn_t>
-inline void format_input_handler<bcf>::parse_element_value_type(var::value_type_id const               id_from_header,
+inline void format_input_handler<bcf>::parse_element_value_type(var::type_enum const                   id_from_header,
                                                                 var::detail::bcf_type_descriptor const desc,
                                                                 size_t const                           size,
                                                                 std::byte const *&                     cache_ptr,
                                                                 dyn_t &                                output)
 {
     // TODO DRY out the boilerplate error messages
-    if (static_cast<size_t>(id_from_header) < static_cast<size_t>(var::value_type_id::string) && size != 1)
+    if (static_cast<size_t>(id_from_header) < static_cast<size_t>(var::type_enum::string) && size != 1)
         error("BCF data field expected exactly one element, got:", size);
 
     switch (id_from_header)
     {
-        case var::value_type_id::char8:
+        case var::type_enum::char8:
             {
                 if (desc != var::detail::bcf_type_descriptor::char8)
                     error("Attempting to create char but the byte descriptor does not indicate char type.");
 
-                element_value_type_init_single<var::value_type_id::char8, char>(cache_ptr, output);
+                element_value_type_init_single<var::type_enum::char8, char>(cache_ptr, output);
                 return;
             }
-        case var::value_type_id::int8:
-        case var::value_type_id::int16:
-        case var::value_type_id::int32:
+        case var::type_enum::int8:
+        case var::type_enum::int16:
+        case var::type_enum::int32:
             {
                 switch (desc)
                 {
                     case var::detail::bcf_type_descriptor::int8:
-                        element_value_type_init_single<var::value_type_id::int8, int8_t>(cache_ptr, output);
+                        element_value_type_init_single<var::type_enum::int8, int8_t>(cache_ptr, output);
                         break;
                     case var::detail::bcf_type_descriptor::int16:
-                        element_value_type_init_single<var::value_type_id::int16, int16_t>(cache_ptr, output);
+                        element_value_type_init_single<var::type_enum::int16, int16_t>(cache_ptr, output);
                         break;
                     case var::detail::bcf_type_descriptor::int32:
-                        element_value_type_init_single<var::value_type_id::int32, int32_t>(cache_ptr, output);
+                        element_value_type_init_single<var::type_enum::int32, int32_t>(cache_ptr, output);
                         break;
                     default:
                         error("Attempting to create int but the byte descriptor does not indicate int type.");
                 }
                 return;
             }
-        case var::value_type_id::float32:
+        case var::type_enum::float32:
             {
                 if (desc != var::detail::bcf_type_descriptor::float32)
                     error("Attempting to create float but the byte descriptor does not indicate float type.");
 
-                element_value_type_init_single<var::value_type_id::float32, float>(cache_ptr, output);
+                element_value_type_init_single<var::type_enum::float32, float>(cache_ptr, output);
                 return;
             }
-        case var::value_type_id::string:
+        case var::type_enum::string:
             {
                 if (desc != var::detail::bcf_type_descriptor::char8)
                     error("Attempting to creates string but the byte descriptor does not indicate string type.");
 
-                element_value_type_init_string<var::value_type_id::string>(size, cache_ptr, output);
+                element_value_type_init_string<var::type_enum::string>(size, cache_ptr, output);
                 return;
             }
-        case var::value_type_id::vector_of_int8:
-        case var::value_type_id::vector_of_int16:
-        case var::value_type_id::vector_of_int32:
+        case var::type_enum::vector_of_int8:
+        case var::type_enum::vector_of_int16:
+        case var::type_enum::vector_of_int32:
             {
                 switch (desc)
                 {
                     case var::detail::bcf_type_descriptor::int8:
                         {
-                            element_value_type_init_vector<var::value_type_id::vector_of_int8, int8_t>(size,
-                                                                                                       cache_ptr,
-                                                                                                       output);
+                            element_value_type_init_vector<var::type_enum::vector_of_int8, int8_t>(size,
+                                                                                                   cache_ptr,
+                                                                                                   output);
                             break;
                         }
                     case var::detail::bcf_type_descriptor::int16:
                         {
-                            element_value_type_init_vector<var::value_type_id::vector_of_int16, int16_t>(size,
-                                                                                                         cache_ptr,
-                                                                                                         output);
+                            element_value_type_init_vector<var::type_enum::vector_of_int16, int16_t>(size,
+                                                                                                     cache_ptr,
+                                                                                                     output);
                             break;
                         }
                     case var::detail::bcf_type_descriptor::int32:
                         {
-                            element_value_type_init_vector<var::value_type_id::vector_of_int32, int32_t>(size,
-                                                                                                         cache_ptr,
-                                                                                                         output);
+                            element_value_type_init_vector<var::type_enum::vector_of_int32, int32_t>(size,
+                                                                                                     cache_ptr,
+                                                                                                     output);
                             break;
                         }
                     default:
@@ -1152,28 +1152,28 @@ inline void format_input_handler<bcf>::parse_element_value_type(var::value_type_
                 }
                 return;
             }
-        case var::value_type_id::vector_of_float32:
+        case var::type_enum::vector_of_float32:
             {
                 if (desc != var::detail::bcf_type_descriptor::float32)
                     error("Attempting to create vector of float but the byte descriptor does not indicate float type.");
 
-                element_value_type_init_vector<var::value_type_id::vector_of_float32, float>(size, cache_ptr, output);
+                element_value_type_init_vector<var::type_enum::vector_of_float32, float>(size, cache_ptr, output);
                 return;
             }
-        case var::value_type_id::vector_of_string:
+        case var::type_enum::vector_of_string:
             {
                 if (desc != var::detail::bcf_type_descriptor::char8)
                     error(
                       "Attempting to create vector of string but the byte descriptor does not indicate char alphabet");
 
-                info_element_value_type_init_vector_of_string<var::value_type_id::vector_of_string>(size,
-                                                                                                    cache_ptr,
-                                                                                                    output);
+                info_element_value_type_init_vector_of_string<var::type_enum::vector_of_string>(size,
+                                                                                                cache_ptr,
+                                                                                                output);
                 return;
             }
-        case var::value_type_id::flag:
+        case var::type_enum::flag:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::flag);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::flag);
                 output.template emplace<id>(true);
 
                 cache_ptr += size; // This should be 0, but is allowed to be something else
@@ -1184,7 +1184,7 @@ inline void format_input_handler<bcf>::parse_element_value_type(var::value_type_
 
 /*!\brief Parse a "dynamically typed" field out of a BCF stream and store the content in a vector-variant.
  * \tparam dyn_t             Type of the variant; specialisation of bio::io::var::info_element_value_type.
- * \param[in] id_from_header A value of bio::io::var::value_type_id that denotes the expected type.
+ * \param[in] id_from_header A value of bio::io::var::type_enum that denotes the expected type.
  * \param[in] desc           A value of bio::io::detail::bcf_type_descriptor that notes the detected type.
  * \param[in] outer_size     The number of values belonging to this field.
  * \param[in] inner_size     The number of values per inner vector in case of vector-of-vector.
@@ -1192,7 +1192,7 @@ inline void format_input_handler<bcf>::parse_element_value_type(var::value_type_
  * \param[out] output        The variant to hold the parsed value.
  */
 template <var::detail::is_genotype_variant dyn_t>
-inline void format_input_handler<bcf>::parse_element_value_type(var::value_type_id const               id_from_header,
+inline void format_input_handler<bcf>::parse_element_value_type(var::type_enum const                   id_from_header,
                                                                 var::detail::bcf_type_descriptor const desc,
                                                                 size_t const                           outer_size,
                                                                 size_t const                           inner_size,
@@ -1200,44 +1200,42 @@ inline void format_input_handler<bcf>::parse_element_value_type(var::value_type_
                                                                 dyn_t &                                output)
 {
     // TODO DRY out the boilerplate error messages
-    if (static_cast<size_t>(id_from_header) < static_cast<size_t>(var::value_type_id::string) && inner_size != 1)
+    if (static_cast<size_t>(id_from_header) < static_cast<size_t>(var::type_enum::string) && inner_size != 1)
         error("BCF data field expected exactly one element, got:", inner_size);
 
     switch (id_from_header)
     {
-        case var::value_type_id::char8:
+        case var::type_enum::char8:
             {
                 if (desc != var::detail::bcf_type_descriptor::char8)
                     error("Attempting to create char but the byte descriptor does not indicate char type.");
 
-                element_value_type_init_vector<var::value_type_id::char8, char>(outer_size, cache_ptr, output);
+                element_value_type_init_vector<var::type_enum::char8, char>(outer_size, cache_ptr, output);
                 return;
             }
-        case var::value_type_id::int8:
-        case var::value_type_id::int16:
-        case var::value_type_id::int32:
+        case var::type_enum::int8:
+        case var::type_enum::int16:
+        case var::type_enum::int32:
             {
                 switch (desc)
                 {
                     case var::detail::bcf_type_descriptor::int8:
                         {
-                            element_value_type_init_vector<var::value_type_id::int8, int8_t>(outer_size,
-                                                                                             cache_ptr,
-                                                                                             output);
+                            element_value_type_init_vector<var::type_enum::int8, int8_t>(outer_size, cache_ptr, output);
                             break;
                         }
                     case var::detail::bcf_type_descriptor::int16:
                         {
-                            element_value_type_init_vector<var::value_type_id::int16, int16_t>(outer_size,
-                                                                                               cache_ptr,
-                                                                                               output);
+                            element_value_type_init_vector<var::type_enum::int16, int16_t>(outer_size,
+                                                                                           cache_ptr,
+                                                                                           output);
                             break;
                         }
                     case var::detail::bcf_type_descriptor::int32:
                         {
-                            element_value_type_init_vector<var::value_type_id::int32, int32_t>(outer_size,
-                                                                                               cache_ptr,
-                                                                                               output);
+                            element_value_type_init_vector<var::type_enum::int32, int32_t>(outer_size,
+                                                                                           cache_ptr,
+                                                                                           output);
                             break;
                         }
                     default:
@@ -1245,43 +1243,42 @@ inline void format_input_handler<bcf>::parse_element_value_type(var::value_type_
                 }
                 return;
             }
-        case var::value_type_id::float32:
+        case var::type_enum::float32:
             {
                 if (desc == var::detail::bcf_type_descriptor::float32)
-                    element_value_type_init_vector<var::value_type_id::float32, float>(outer_size, cache_ptr, output);
+                    element_value_type_init_vector<var::type_enum::float32, float>(outer_size, cache_ptr, output);
                 else
                     error("Attempting to create float but the byte descriptor does not indicate float type.");
                 return;
             }
-        case var::value_type_id::string:
+        case var::type_enum::string:
             {
                 if (desc != var::detail::bcf_type_descriptor::char8)
                     error("Attempting to creates string but the byte descriptor does not indicate string type.");
 
-                genotype_variant_init_vector_of_string<var::value_type_id::string>(outer_size,
-                                                                                   inner_size,
-                                                                                   cache_ptr,
-                                                                                   output);
+                genotype_variant_init_vector_of_string<var::type_enum::string>(outer_size,
+                                                                               inner_size,
+                                                                               cache_ptr,
+                                                                               output);
                 return;
             }
-        case var::value_type_id::vector_of_int8:
-        case var::value_type_id::vector_of_int16:
-        case var::value_type_id::vector_of_int32:
+        case var::type_enum::vector_of_int8:
+        case var::type_enum::vector_of_int16:
+        case var::type_enum::vector_of_int32:
             {
                 switch (desc)
                 {
                     case var::detail::bcf_type_descriptor::int8:
                         {
-                            element_value_type_init_vector_of_vector<var::value_type_id::vector_of_int8, int8_t>(
-                              outer_size,
-                              inner_size,
-                              cache_ptr,
-                              output);
+                            element_value_type_init_vector_of_vector<var::type_enum::vector_of_int8, int8_t>(outer_size,
+                                                                                                             inner_size,
+                                                                                                             cache_ptr,
+                                                                                                             output);
                             break;
                         }
                     case var::detail::bcf_type_descriptor::int16:
                         {
-                            element_value_type_init_vector_of_vector<var::value_type_id::vector_of_int16, int16_t>(
+                            element_value_type_init_vector_of_vector<var::type_enum::vector_of_int16, int16_t>(
                               outer_size,
                               inner_size,
                               cache_ptr,
@@ -1290,7 +1287,7 @@ inline void format_input_handler<bcf>::parse_element_value_type(var::value_type_
                         }
                     case var::detail::bcf_type_descriptor::int32:
                         {
-                            element_value_type_init_vector_of_vector<var::value_type_id::vector_of_int32, int32_t>(
+                            element_value_type_init_vector_of_vector<var::type_enum::vector_of_int32, int32_t>(
                               outer_size,
                               inner_size,
                               cache_ptr,
@@ -1302,14 +1299,14 @@ inline void format_input_handler<bcf>::parse_element_value_type(var::value_type_
                 }
                 return;
             }
-        case var::value_type_id::vector_of_float32:
+        case var::type_enum::vector_of_float32:
             {
                 if (desc == var::detail::bcf_type_descriptor::float32)
                 {
-                    element_value_type_init_vector_of_vector<var::value_type_id::vector_of_float32, float>(outer_size,
-                                                                                                           inner_size,
-                                                                                                           cache_ptr,
-                                                                                                           output);
+                    element_value_type_init_vector_of_vector<var::type_enum::vector_of_float32, float>(outer_size,
+                                                                                                       inner_size,
+                                                                                                       cache_ptr,
+                                                                                                       output);
                     break;
                 }
                 else
@@ -1318,14 +1315,14 @@ inline void format_input_handler<bcf>::parse_element_value_type(var::value_type_
                 }
                 return;
             }
-        case var::value_type_id::vector_of_string:
+        case var::type_enum::vector_of_string:
             {
                 if (desc != var::detail::bcf_type_descriptor::char8)
                     error(
                       "Attempting to create vector of string but the byte descriptor does not indicate char alphabet");
 
                 // TODO this definitely needs a test
-                constexpr size_t id      = static_cast<size_t>(var::value_type_id::vector_of_string);
+                constexpr size_t id      = static_cast<size_t>(var::type_enum::vector_of_string);
                 auto &           output_ = output.template emplace<id>();
                 std::string_view tmp{reinterpret_cast<char const *>(cache_ptr), outer_size * inner_size};
                 for (size_t sample = 0; sample < outer_size; ++sample)
@@ -1349,7 +1346,7 @@ inline void format_input_handler<bcf>::parse_element_value_type(var::value_type_
                 cache_ptr += outer_size * inner_size;
                 return;
             }
-        case var::value_type_id::flag:
+        case var::type_enum::flag:
             {
                 error("bio::io::var::genotype_variant cannot be initialised to flag state.");
                 return;

@@ -160,13 +160,13 @@ private:
         //!\cond REQ
         requires(var::detail::is_info_variant<t> || var::detail::is_genotype_variant<t>)
     //!\endcond
-    static void init_element_value_type(var::value_type_id const id, t & output);
+    static void init_element_value_type(var::type_enum const id, t & output);
 
     // implementation after class
     struct parse_element_value_type_fn;
 
     // implementation after class
-    static size_t parse_element_value_type(var::value_type_id const            id,
+    static size_t parse_element_value_type(var::type_enum const                id,
                                            std::string_view const              input_string,
                                            var::detail::is_info_variant auto & output);
 
@@ -307,19 +307,19 @@ private:
             if (info_value.empty()) // no "=" → flag
             {
                 info.type    = "Flag";
-                info.type_id = var::value_type_id::flag;
+                info.type_id = var::type_enum::flag;
                 info.number  = 0;
             }
             else if (info_value.find(',') != std::string_view::npos) // found comma → assume vector-of-strings
             {
                 info.type    = "String";
-                info.type_id = var::value_type_id::vector_of_string;
+                info.type_id = var::type_enum::vector_of_string;
                 info.number  = var::header_number::dot;
             }
             else // assume string as type
             {
                 info.type    = "String";
-                info.type_id = var::value_type_id::string;
+                info.type_id = var::type_enum::string;
                 info.number  = 1;
             }
 
@@ -387,7 +387,7 @@ private:
             {
                 if constexpr (var::detail::is_info_variant<value_t>)
                 {
-                    if (info.type_id != var::value_type_id::flag || info.number != 0)
+                    if (info.type_id != var::type_enum::flag || info.number != 0)
                     {
                         error("INFO field \"", key, "\" is not a flag and should come with a value -- but does not.");
                     }
@@ -436,7 +436,7 @@ private:
 
             format.number      = 1;
             format.type        = "String";
-            format.type_id     = var::value_type_id::string;
+            format.type_id     = var::type_enum::string;
             format.description = "\"Automatically added by BioC++.\"";
 
             // create a new header with new format and replace current one
@@ -526,77 +526,77 @@ template <typename t>
     //!\cond REQ
     requires(var::detail::is_info_variant<t> || var::detail::is_genotype_variant<t>)
 //!\endcond
-inline void format_input_handler<vcf>::init_element_value_type(var::value_type_id const id, t & output)
+inline void format_input_handler<vcf>::init_element_value_type(var::type_enum const id, t & output)
 {
     switch (id)
     {
-        case var::value_type_id::char8:
+        case var::type_enum::char8:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::char8);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::char8);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::int8:
+        case var::type_enum::int8:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::int8);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::int8);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::int16:
+        case var::type_enum::int16:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::int16);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::int16);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::int32:
+        case var::type_enum::int32:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::int32);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::int32);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::float32:
+        case var::type_enum::float32:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::float32);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::float32);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::string:
+        case var::type_enum::string:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::string);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::string);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::vector_of_int8:
+        case var::type_enum::vector_of_int8:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::vector_of_int8);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::vector_of_int8);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::vector_of_int16:
+        case var::type_enum::vector_of_int16:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::vector_of_int16);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::vector_of_int16);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::vector_of_int32:
+        case var::type_enum::vector_of_int32:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::vector_of_int32);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::vector_of_int32);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::vector_of_float32:
+        case var::type_enum::vector_of_float32:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::vector_of_float32);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::vector_of_float32);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::vector_of_string:
+        case var::type_enum::vector_of_string:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::vector_of_string);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::vector_of_string);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::flag:
+        case var::type_enum::flag:
             {
                 if constexpr (var::detail::is_genotype_variant<t>)
                 {
@@ -604,7 +604,7 @@ inline void format_input_handler<vcf>::init_element_value_type(var::value_type_i
                 }
                 else
                 {
-                    constexpr size_t id = static_cast<size_t>(var::value_type_id::flag);
+                    constexpr size_t id = static_cast<size_t>(var::type_enum::flag);
                     output.template emplace<id>();
                 }
                 return;
@@ -691,9 +691,9 @@ struct format_input_handler<vcf>::parse_element_value_type_fn
  * number of elements stored in the output in case ID is one of the "vector_of_"-types; 1 otherwise.
  */
 template <var::detail::is_info_variant output_t>
-inline size_t format_input_handler<vcf>::parse_element_value_type(var::value_type_id const id,
-                                                                  std::string_view const   input_string,
-                                                                  output_t &               output)
+inline size_t format_input_handler<vcf>::parse_element_value_type(var::type_enum const   id,
+                                                                  std::string_view const input_string,
+                                                                  output_t &             output)
 {
     init_element_value_type(id, output);
     return std::visit(parse_element_value_type_fn{input_string}, output);

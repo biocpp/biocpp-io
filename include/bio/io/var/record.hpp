@@ -142,8 +142,8 @@ struct info_variant_shallow : info_variant_shallow_base_t
     template <ranges::small_string key>
     friend decltype(auto) get(meta::decays_to<info_variant_shallow> auto && me)
     {
-        static_assert(std::same_as<decltype(info_key2type_enum<key>), value_type_id const>,
-                      "No value_type_id found in bio::io::var::info_key2type_enum for this key.");
+        static_assert(std::same_as<decltype(info_key2type_enum<key>), type_enum const>,
+                      "No type_enum found in bio::io::var::info_key2type_enum for this key.");
 
         return std::get<static_cast<size_t>(info_key2type_enum<key>)>(std::forward<decltype(me)>(me));
     }
@@ -213,8 +213,8 @@ struct info_variant_deep : info_variant_deep_base_t
     template <ranges::small_string key>
     friend decltype(auto) get(meta::decays_to<info_variant_deep> auto && me)
     {
-        static_assert(std::same_as<decltype(info_key2type_enum<key>), value_type_id const>,
-                      "No value_type_id found in bio::io::var::info_key2type_enum for this key.");
+        static_assert(std::same_as<decltype(info_key2type_enum<key>), type_enum const>,
+                      "No type_enum found in bio::io::var::info_key2type_enum for this key.");
 
         return std::get<static_cast<size_t>(info_key2type_enum<key>)>(std::forward<decltype(me)>(me));
     }
@@ -281,8 +281,8 @@ using genotype_variant_shallow_base_t = std::variant<std::vector<char>,
  *
  * Note that this follows the BCF representation where data is grouped "by-field" and not "by-sample",
  * e.g. the "GT" values of all samples are in one vector.
- * This also means that a bio::io::var::value_type_id::string implies a vector-of-strings and
- * bio::io::var::value_type_id::vector_of_string implies a vector-of-vector-of-strings.
+ * This also means that a bio::io::var::type_enum::string implies a vector-of-strings and
+ * bio::io::var::type_enum::vector_of_string implies a vector-of-vector-of-strings.
  * **All possible types for this variant are a container** that is either the same size as the number of
  * samples or empty.
  *
@@ -323,8 +323,8 @@ struct genotype_variant_shallow : genotype_variant_shallow_base_t
     template <ranges::small_string key>
     friend decltype(auto) get(meta::decays_to<genotype_variant_shallow> auto && me)
     {
-        static_assert(std::same_as<decltype(format_key2type_enum<key>), value_type_id const>,
-                      "No value_type_id found in bio::io::var::format_key2type_enum for this key.");
+        static_assert(std::same_as<decltype(format_key2type_enum<key>), type_enum const>,
+                      "No type_enum found in bio::io::var::format_key2type_enum for this key.");
 
         return std::get<static_cast<size_t>(format_key2type_enum<key>)>(std::forward<decltype(me)>(me));
     }
@@ -359,8 +359,8 @@ using genotype_variant_deep_base_t = std::variant<std::vector<char>,
  *
  * Note that this follows the BCF representation where data is grouped "by-field" and not "by-sample",
  * e.g. the "GT" values of all samples are in one vector.
- * This also means that a bio::io::var::value_type_id::string implies a vector-of-strings and
- * bio::io::var::value_type_id::vector_of_string implies a vector-of-vector-of-strings.
+ * This also means that a bio::io::var::type_enum::string implies a vector-of-strings and
+ * bio::io::var::type_enum::vector_of_string implies a vector-of-vector-of-strings.
  * **All possible types for this variant are a container** that is either the same size as the number of
  * samples or empty.
  *
@@ -401,8 +401,8 @@ struct genotype_variant_deep : genotype_variant_deep_base_t
     template <ranges::small_string key>
     friend decltype(auto) get(meta::decays_to<genotype_variant_deep> auto && me)
     {
-        static_assert(std::same_as<decltype(format_key2type_enum<key>), value_type_id const>,
-                      "No value_type_id found in bio::io::var::format_key2type_enum for this key.");
+        static_assert(std::same_as<decltype(format_key2type_enum<key>), type_enum const>,
+                      "No type_enum found in bio::io::var::format_key2type_enum for this key.");
 
         return std::get<static_cast<size_t>(format_key2type_enum<key>)>(std::forward<decltype(me)>(me));
     }
