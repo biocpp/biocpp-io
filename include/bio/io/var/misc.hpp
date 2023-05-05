@@ -29,23 +29,6 @@
 #include <bio/io/detail/tuple_record.hpp>
 #include <bio/io/misc.hpp>
 
-namespace bio::io::var::detail
-{
-//!\brief Remove this after dropping support for GCC10.
-#ifdef __cpp_lib_generic_unordered_lookup
-constexpr std::string_view het_string(std::string_view const in)
-{
-    return in;
-}
-#else
-constexpr std::string het_string(auto && in)
-{
-    return static_cast<std::string>(std::forward<decltype(in)>(in));
-}
-#endif
-
-} // namespace bio::io::var::detail
-
 //-----------------------------------------------------------------------------
 // missing_value
 //-----------------------------------------------------------------------------

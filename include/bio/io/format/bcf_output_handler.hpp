@@ -487,7 +487,7 @@ private:
     //!\brief Overload for CHROM and text IDs.
     void set_core_chrom(std::string_view const field)
     {
-        if (auto it = header->contigs.find(var::detail::het_string(field)); it == header->contigs.end())
+        if (auto it = header->contigs.find(field); it == header->contigs.end())
             error("The contig '", field, "' is not present in the header.");
         else
             record_core.chrom = std::get<1>(*it).idx;
@@ -601,7 +601,7 @@ private:
         {
             auto text_id_to_idx = [this](std::string_view const text_id)
             {
-                auto it = header->filters.find(var::detail::het_string(text_id));
+                auto it = header->filters.find(text_id);
 
                 if (it == header->filters.end())
                     error("The filter '", text_id, "' is not present in the header.");
@@ -684,7 +684,7 @@ private:
         }
         else
         {
-            inf_it = header->infos.find(var::detail::het_string(id));
+            inf_it = header->infos.find(id);
         }
 
         if (inf_it == header->infos.end())
@@ -787,7 +787,7 @@ private:
         }
         else
         {
-            gen_it = header->formats.find(var::detail::het_string(id));
+            gen_it = header->formats.find(id);
         }
 
         if (gen_it == header->formats.end())

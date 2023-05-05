@@ -277,7 +277,7 @@ private:
 
         write_field_aux(key_as_str);
 
-        var::type_enum type_id = header->infos[var::detail::het_string(key_as_str)].type_id;
+        var::type_enum type_id = header->infos[key_as_str].type_id;
 
         if (type_id != var::type_enum::flag) // all fields that aren't flags have second part
         {

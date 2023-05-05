@@ -179,7 +179,7 @@ private:
         if (raw_field != last_chrom)
         {
             // contig name was not in header, insert!
-            if (auto it = header.contigs.find(var::detail::het_string(raw_field)); it == header.contigs.end())
+            if (auto it = header.contigs.find(raw_field); it == header.contigs.end())
             {
                 header.contigs.emplace_back(static_cast<std::string>(raw_field), var::header::contig_t{});
                 header.idx_update();
@@ -259,7 +259,7 @@ private:
         {
             int32_t idx = -1;
             // filter name was not in header, insert!
-            if (auto it = header.filters.find(var::detail::het_string(subfield)); it == header.filters.end())
+            if (auto it = header.filters.find(subfield); it == header.filters.end())
             {
                 header.filters.emplace_back(static_cast<std::string>(subfield),
                                             var::header::filter_t{.description = "\"Automatically added by SeqAn3.\""});
@@ -365,7 +365,7 @@ private:
             /* PARSE KEY */
             size_t info_pos = -1;
             // info name was not in header, insert!
-            if (auto it = header.infos.find(var::detail::het_string(key)); it == header.infos.end())
+            if (auto it = header.infos.find(key); it == header.infos.end())
             {
                 add_info_to_header(key, val);
                 info_pos = header.infos.size() - 1;
@@ -600,7 +600,7 @@ inline void format_input_handler<vcf>::init_element_value_type(var::type_enum co
             {
                 if constexpr (var::detail::is_genotype_variant<t>)
                 {
-                    throw unreachable_code{__FILE__, ':', __LINE__, '\n', __PRETTY_FUNCTION__};
+                    throw unreachable_code{std::source_location::current()};
                 }
                 else
                 {
@@ -724,7 +724,7 @@ inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::g
     {
         size_t format_pos = -1;
         // format name was not in header, insert!
-        if (auto it = header.formats.find(var::detail::het_string(format_name)); it == header.formats.end())
+        if (auto it = header.formats.find(format_name); it == header.formats.end())
         {
             add_format_to_header(format_name);
             format_pos = header.formats.size() - 1;
@@ -769,7 +769,7 @@ inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::g
                       concat_capacity = n_samples;
                       break;
                   case 0:
-                      throw unreachable_code{__FILE__, ':', __LINE__, '\n', __PRETTY_FUNCTION__};
+                      throw unreachable_code{std::source_location::current()};
                       break;
                   default:
                       concat_capacity = n_samples * format.number;
