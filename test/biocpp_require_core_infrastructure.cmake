@@ -22,7 +22,7 @@ macro (biocpp_require_core_infrastructure)
             FetchContent_Declare(
                 biocpp_core-lib
                 GIT_REPOSITORY https://github.com/biocpp/biocpp-core
-                GIT_TAG 0.7.1
+                GIT_TAG 24c3e0577be53b87be729af0c45038cbd99727cc
             )
 
             FetchContent_Populate(biocpp_core-lib)

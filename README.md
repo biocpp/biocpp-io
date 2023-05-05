@@ -60,7 +60,7 @@ headers.
 
 |                   | requirement                                          | version  | comment                                     |
 |-------------------|------------------------------------------------------|----------|---------------------------------------------|
-|**compiler**       | [GCC](https://gcc.gnu.org)                           | ≥ 10     | no other compiler is currently supported!   |
+|**compiler**       | [GCC](https://gcc.gnu.org)                           | ≥ 11     | no other compiler is currently supported!   |
 |**required libs**  | [BioC++ core](https://github.com/biocpp/biocpp-core) | = 0.7    |                                             |
 |**optional libs**  | [zlib](https://github.com/madler/zlib)               | ≥ 1.2    | required for `*.gz` and `*.bcf` support     |
 |                   | [bzip2](https://www.sourceware.org/bzip2)            | ≥ 1.0    | required for `*.bz2` file support           |

@@ -26,7 +26,6 @@
 #include <bio/ranges/concept.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
 
-#include <bio/io/detail/magic_get.hpp>
 #include <bio/io/format/format_input_handler.hpp>
 #include <bio/io/format/vcf.hpp>
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
@@ -159,17 +158,17 @@ private:
     // implementation after class
     template <typename t>
         //!\cond REQ
-        requires(var::detail::is_info_element_value_type<t> || var::detail::is_genotype_element_value_type<t>)
+        requires(var::detail::is_info_variant<t> || var::detail::is_genotype_variant<t>)
     //!\endcond
-    static void init_element_value_type(var::value_type_id const id, t & output);
+    static void init_element_value_type(var::type_enum const id, t & output);
 
     // implementation after class
     struct parse_element_value_type_fn;
 
     // implementation after class
-    static size_t parse_element_value_type(var::value_type_id const                       id,
-                                           std::string_view const                         input_string,
-                                           var::detail::is_info_element_value_type auto & output);
+    static size_t parse_element_value_type(var::type_enum const                id,
+                                           std::string_view const              input_string,
+                                           var::detail::is_info_variant auto & output);
 
     //!\brief Parse the CHROM field. Reading chrom as number means getting the index (not converting string to number).
     void parse_field(meta::vtag_t<detail::field::chrom> const & /**/, auto & parsed_field)
@@ -180,10 +179,9 @@ private:
         if (raw_field != last_chrom)
         {
             // contig name was not in header, insert!
-            if (auto it = header.contigs.find(var::detail::het_string(raw_field)); it == header.contigs.end())
+            if (auto it = header.contigs.find(raw_field); it == header.contigs.end())
             {
-                header.contigs.emplace_back(static_cast<std::string>(raw_field),
-                                            var::header::contig_t{.id = static_cast<std::string>(raw_field)});
+                header.contigs.emplace_back(static_cast<std::string>(raw_field), var::header::contig_t{});
                 header.idx_update();
 
                 last_chrom_idx = get<1>(header.contigs.back()).idx;
@@ -261,11 +259,10 @@ private:
         {
             int32_t idx = -1;
             // filter name was not in header, insert!
-            if (auto it = header.filters.find(var::detail::het_string(subfield)); it == header.filters.end())
+            if (auto it = header.filters.find(subfield); it == header.filters.end())
             {
                 header.filters.emplace_back(static_cast<std::string>(subfield),
-                                            var::header::filter_t{.id          = static_cast<std::string>(subfield),
-                                                                  .description = "\"Automatically added by SeqAn3.\""});
+                                            var::header::filter_t{.description = "\"Automatically added by SeqAn3.\""});
 
                 header.idx_update(); // update IDX and hash-tables
 
@@ -305,25 +302,24 @@ private:
         else
         {
             var::header::info_t info;
-            info.id          = info_name;
             info.description = "\"Automatically added by BioC++.\"";
 
             if (info_value.empty()) // no "=" → flag
             {
                 info.type    = "Flag";
-                info.type_id = var::value_type_id::flag;
+                info.type_id = var::type_enum::flag;
                 info.number  = 0;
             }
             else if (info_value.find(',') != std::string_view::npos) // found comma → assume vector-of-strings
             {
                 info.type    = "String";
-                info.type_id = var::value_type_id::vector_of_string;
+                info.type_id = var::type_enum::vector_of_string;
                 info.number  = var::header_number::dot;
             }
             else // assume string as type
             {
                 info.type    = "String";
-                info.type_id = var::value_type_id::string;
+                info.type_id = var::type_enum::string;
                 info.number  = 1;
             }
 
@@ -336,11 +332,13 @@ private:
 
     //!\brief Overload for parsing INFO.
     template <ranges::back_insertable parsed_field_t>
-        requires var::detail::info_element_reader_concept<std::ranges::range_reference_t<parsed_field_t>>
+        requires var::detail::info_element_reader_concept<std::ranges::range_value_t<parsed_field_t>>
     void parse_field(meta::vtag_t<detail::field::info> const & /**/, parsed_field_t & parsed_field)
     {
-        using key_t   = detail::first_elem_t<std::ranges::range_reference_t<parsed_field_t>>;
-        using value_t = detail::second_elem_t<std::ranges::range_reference_t<parsed_field_t>>;
+        using key_t = std::remove_cvref_t<
+          std::tuple_element_t<0, std::remove_reference_t<std::ranges::range_value_t<parsed_field_t>>>>;
+        using value_t = std::remove_cvref_t<
+          std::tuple_element_t<1, std::remove_reference_t<std::ranges::range_value_t<parsed_field_t>>>>;
         // TODO this function handles value_t being string or string_view but the concept currently disallows this
 
         std::string_view raw_field = get<detail::field::info>(raw_record);
@@ -367,7 +365,7 @@ private:
             /* PARSE KEY */
             size_t info_pos = -1;
             // info name was not in header, insert!
-            if (auto it = header.infos.find(var::detail::het_string(key)); it == header.infos.end())
+            if (auto it = header.infos.find(key); it == header.infos.end())
             {
                 add_info_to_header(key, val);
                 info_pos = header.infos.size() - 1;
@@ -387,9 +385,9 @@ private:
             /* PARSE VALUE */
             if (val.empty()) // no "=" → flag
             {
-                if constexpr (var::detail::is_info_element_value_type<value_t>)
+                if constexpr (var::detail::is_info_variant<value_t>)
                 {
-                    if (info.type_id != var::value_type_id::flag || info.number != 0)
+                    if (info.type_id != var::type_enum::flag || info.number != 0)
                     {
                         error("INFO field \"", key, "\" is not a flag and should come with a value -- but does not.");
                     }
@@ -400,7 +398,7 @@ private:
             }
             else // any other type than flag
             {
-                if constexpr (var::detail::is_info_element_value_type<value_t>)
+                if constexpr (var::detail::is_info_variant<value_t>)
                 {
                     int32_t num_val = parse_element_value_type(info.type_id, val, parsed_value);
                     if (int32_t exp_val = info.number; print_warnings && num_val != exp_val && exp_val >= 0)
@@ -436,10 +434,9 @@ private:
         {
             var::header::format_t format;
 
-            format.id          = format_name;
             format.number      = 1;
             format.type        = "String";
-            format.type_id     = var::value_type_id::string;
+            format.type_id     = var::type_enum::string;
             format.description = "\"Automatically added by BioC++.\"";
 
             // create a new header with new format and replace current one
@@ -452,7 +449,7 @@ private:
     //!\brief Overload for parsing GENOTYPES.
     template <ranges::back_insertable field_t>
         //!\cond REQ
-        requires var::detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
+        requires var::detail::genotype_reader_concept<std::ranges::range_value_t<field_t>>
     //!\endcond
     void parse_field(meta::vtag_t<detail::field::genotypes> const & /**/, field_t & parsed_field);
 
@@ -527,87 +524,87 @@ public:
  */
 template <typename t>
     //!\cond REQ
-    requires(var::detail::is_info_element_value_type<t> || var::detail::is_genotype_element_value_type<t>)
+    requires(var::detail::is_info_variant<t> || var::detail::is_genotype_variant<t>)
 //!\endcond
-inline void format_input_handler<vcf>::init_element_value_type(var::value_type_id const id, t & output)
+inline void format_input_handler<vcf>::init_element_value_type(var::type_enum const id, t & output)
 {
     switch (id)
     {
-        case var::value_type_id::char8:
+        case var::type_enum::char8:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::char8);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::char8);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::int8:
+        case var::type_enum::int8:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::int8);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::int8);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::int16:
+        case var::type_enum::int16:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::int16);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::int16);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::int32:
+        case var::type_enum::int32:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::int32);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::int32);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::float32:
+        case var::type_enum::float32:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::float32);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::float32);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::string:
+        case var::type_enum::string:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::string);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::string);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::vector_of_int8:
+        case var::type_enum::vector_of_int8:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::vector_of_int8);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::vector_of_int8);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::vector_of_int16:
+        case var::type_enum::vector_of_int16:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::vector_of_int16);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::vector_of_int16);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::vector_of_int32:
+        case var::type_enum::vector_of_int32:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::vector_of_int32);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::vector_of_int32);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::vector_of_float32:
+        case var::type_enum::vector_of_float32:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::vector_of_float32);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::vector_of_float32);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::vector_of_string:
+        case var::type_enum::vector_of_string:
             {
-                constexpr size_t id = static_cast<size_t>(var::value_type_id::vector_of_string);
+                constexpr size_t id = static_cast<size_t>(var::type_enum::vector_of_string);
                 output.template emplace<id>();
                 return;
             }
-        case var::value_type_id::flag:
+        case var::type_enum::flag:
             {
-                if constexpr (var::detail::is_genotype_element_value_type<t>)
+                if constexpr (var::detail::is_genotype_variant<t>)
                 {
-                    throw unreachable_code{__FILE__, ':', __LINE__, '\n', __PRETTY_FUNCTION__};
+                    throw unreachable_code{std::source_location::current()};
                 }
                 else
                 {
-                    constexpr size_t id = static_cast<size_t>(var::value_type_id::flag);
+                    constexpr size_t id = static_cast<size_t>(var::type_enum::flag);
                     output.template emplace<id>();
                 }
                 return;
@@ -689,14 +686,14 @@ struct format_input_handler<vcf>::parse_element_value_type_fn
 };
 
 /*!\brief Parse text input into a bio::io::var::info_element_value_type /
- * bio::io::var::genotype_element_value_type. \param[in]  id           ID of the type that shall be read. \param[in]
+ * bio::io::var::genotype_variant. \param[in]  id           ID of the type that shall be read. \param[in]
  * input_string The string data to read from. \param[out] output       The object to store the result into. \returns The
  * number of elements stored in the output in case ID is one of the "vector_of_"-types; 1 otherwise.
  */
-template <var::detail::is_info_element_value_type output_t>
-inline size_t format_input_handler<vcf>::parse_element_value_type(var::value_type_id const id,
-                                                                  std::string_view const   input_string,
-                                                                  output_t &               output)
+template <var::detail::is_info_variant output_t>
+inline size_t format_input_handler<vcf>::parse_element_value_type(var::type_enum const   id,
+                                                                  std::string_view const input_string,
+                                                                  output_t &             output)
 {
     init_element_value_type(id, output);
     return std::visit(parse_element_value_type_fn{input_string}, output);
@@ -704,11 +701,11 @@ inline size_t format_input_handler<vcf>::parse_element_value_type(var::value_typ
 
 //!\brief Overload for reading the GENOTYPE field.
 template <ranges::back_insertable field_t>
-    requires var::detail::genotype_reader_concept<std::ranges::range_reference_t<field_t>>
+    requires var::detail::genotype_reader_concept<std::ranges::range_value_t<field_t>>
 inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::genotypes> const & /**/,
                                                    field_t & parsed_field)
 {
-    using genotype_field_t = std::ranges::range_reference_t<field_t>;
+    using genotype_field_t = std::remove_cvref_t<std::ranges::range_value_t<field_t>>;
 
     size_t column_number          = file_it->fields.size();
     size_t expected_column_number = header.column_labels.size();
@@ -727,7 +724,7 @@ inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::g
     {
         size_t format_pos = -1;
         // format name was not in header, insert!
-        if (auto it = header.formats.find(var::detail::het_string(format_name)); it == header.formats.end())
+        if (auto it = header.formats.find(format_name); it == header.formats.end())
         {
             add_format_to_header(format_name);
             format_pos = header.formats.size() - 1;
@@ -737,10 +734,10 @@ inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::g
             format_pos = it - header.formats.begin();
         }
 
-        parsed_field.push_back({{}, {}});
-        auto & [current_id, current_value] = parsed_field.back();
+        std::ranges::range_value_t<field_t> new_element;
+        auto & [current_id, current_value] = new_element;
 
-        if constexpr (std::same_as<int32_t, detail::first_elem_t<genotype_field_t>>)
+        if constexpr (std::same_as<int32_t &, std::tuple_element_t<0, genotype_field_t> &>)
             current_id = get<1>(header.formats[format_pos]).idx;
         else
             detail::string_copy(format_name, current_id);
@@ -772,7 +769,7 @@ inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::g
                       concat_capacity = n_samples;
                       break;
                   case 0:
-                      throw unreachable_code{__FILE__, ':', __LINE__, '\n', __PRETTY_FUNCTION__};
+                      throw unreachable_code{std::source_location::current()};
                       break;
                   default:
                       concat_capacity = n_samples * format.number;
@@ -785,6 +782,8 @@ inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::g
         std::visit(reserve, current_value);
 
         ++formats;
+
+        parsed_field.push_back(std::move(new_element));
     }
 
     /* parse values/samples */
@@ -824,7 +823,7 @@ inline void format_input_handler<vcf>::parse_field(meta::vtag_t<detail::field::g
                       parse_element_value_type_fn{field}(seqs.back());
                   });
 
-                auto & [current_id, current_value] = parsed_field[j];
+                auto && [current_id, current_value] = parsed_field[j];
 
                 std::visit(parse_and_append, current_value);
             }

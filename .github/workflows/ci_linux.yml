@@ -32,9 +32,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: "Unit gcc10 Debug"
-            cxx: "g++-10"
-            cc: "gcc-10"
+          - name: "Unit gcc11 Debug"
+            cxx: "g++-11"
+            cc: "gcc-11"
             build: unit
             build_type: Debug
 
@@ -77,9 +77,9 @@ jobs:
             #build: coverage
             #build_type: Debug
 
-          - name: "Snippet gcc10"
-            cxx: "g++-10"
-            cc: "gcc-10"
+          - name: "Snippet gcc11"
+            cxx: "g++-11"
+            cc: "gcc-11"
             build: snippet
             build_type: Release
 

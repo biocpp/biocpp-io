@@ -18,7 +18,6 @@
 
 #include <bio/meta/tag/vtag.hpp>
 
-#include <bio/io/detail/magic_get.hpp>
 #include <bio/io/detail/misc.hpp>
 #include <bio/io/format/bcf.hpp>
 #include <bio/io/format/format_output_handler.hpp>
@@ -26,6 +25,7 @@
 #include <bio/io/stream/detail/fast_streambuf_iterator.hpp>
 #include <bio/io/var/header.hpp>
 #include <bio/io/var/misc.hpp>
+#include <bio/io/var/record.hpp>
 #include <bio/io/var/writer_options.hpp>
 
 namespace bio::io
@@ -487,7 +487,7 @@ private:
     //!\brief Overload for CHROM and text IDs.
     void set_core_chrom(std::string_view const field)
     {
-        if (auto it = header->contigs.find(var::detail::het_string(field)); it == header->contigs.end())
+        if (auto it = header->contigs.find(field); it == header->contigs.end())
             error("The contig '", field, "' is not present in the header.");
         else
             record_core.chrom = std::get<1>(*it).idx;
@@ -601,7 +601,7 @@ private:
         {
             auto text_id_to_idx = [this](std::string_view const text_id)
             {
-                auto it = header->filters.find(var::detail::het_string(text_id));
+                auto it = header->filters.find(text_id);
 
                 if (it == header->filters.end())
                     error("The filter '", text_id, "' is not present in the header.");
@@ -621,7 +621,9 @@ private:
     }
 
     //!\brief Deduce descriptor from parameter type and optionally compress (integers) and verify with header.
-    var::detail::bcf_type_descriptor get_desc(auto & param, var::header::info_t const & hdr_entry)
+    var::detail::bcf_type_descriptor get_desc(auto &                      param,
+                                              std::string_view const      hdr_entry_id,
+                                              var::header::info_t const & hdr_entry)
     {
         using param_t                                     = std::remove_cvref_t<decltype(param)>;
         constexpr var::detail::bcf_type_descriptor c_desc = var::detail::type_2_bcf_type_descriptor<param_t>;
@@ -634,7 +636,7 @@ private:
             // explicit integer width given in header
             if (hdr_entry.other_fields.find("IntegerBits") != hdr_entry.other_fields.end())
             {
-                desc = var::detail::value_type_id_2_type_descriptor(hdr_entry.type_id);
+                desc = var::detail::type_enum_2_type_descriptor(hdr_entry.type_id);
                 if (!var::detail::type_descriptor_is_int(desc)) // ignore header value if it isn't intX
                     desc = c_desc;
             }
@@ -648,13 +650,12 @@ private:
 
         if (verify_header_types)
         {
-            var::detail::bcf_type_descriptor header_desc =
-              var::detail::value_type_id_2_type_descriptor(hdr_entry.type_id);
+            var::detail::bcf_type_descriptor header_desc = var::detail::type_enum_2_type_descriptor(hdr_entry.type_id);
             if (desc != header_desc || !var::detail::type_descriptor_is_int(desc) ||
                 !var::detail::type_descriptor_is_int(header_desc))
             {
                 error("The type of field ",
-                      hdr_entry.id,
+                      hdr_entry_id,
                       " set in the header is different from the current record's "
                       "data.");
             }
@@ -668,8 +669,8 @@ private:
     {
         auto & [id, value] = info_element;
 
-        using id_t    = decltype(id);
-        using value_t = decltype(value);
+        using id_t    = std::remove_cvref_t<decltype(id)>;
+        using value_t = std::remove_cvref_t<decltype(value)>;
 
         /* ID */
         typename decltype(header->infos)::const_iterator inf_it;
@@ -683,25 +684,26 @@ private:
         }
         else
         {
-            inf_it = header->infos.find(var::detail::het_string(id));
+            inf_it = header->infos.find(id);
         }
 
         if (inf_it == header->infos.end())
             error("The info '", id, "' is not present in the header.");
 
-        var::header::info_t const & info = std::get<1>(*inf_it);
+        std::string_view const      id_str = std::get<0>(*inf_it);
+        var::header::info_t const & info   = std::get<1>(*inf_it);
 
         write_typed_data(info.idx, idx_desc);
 
         /* VALUE */
-        if constexpr (var::detail::is_info_element_value_type<value_t>)
+        if constexpr (var::detail::is_info_variant<value_t>)
         {
-            auto func = [&](auto & param) { write_typed_data(param, get_desc(param, info)); };
+            auto func = [&](auto & param) { write_typed_data(param, get_desc(param, id_str, info)); };
             std::visit(func, value);
         }
         else
         {
-            write_typed_data(value, get_desc(value, info));
+            write_typed_data(value, get_desc(value, id_str, info));
         }
     }
 
@@ -710,7 +712,7 @@ private:
         requires(var::detail::info_element_writer_concept<std::ranges::range_reference_t<rng_t>>)
     void write_field(meta::vtag_t<detail::field::info> /**/, rng_t && range)
     {
-        for (auto & info_element : range)
+        for (auto && info_element : range)
             write_info_element(info_element);
     }
 
@@ -770,8 +772,8 @@ private:
     {
         auto & [id, value] = genotype;
 
-        using id_t    = decltype(id);
-        using value_t = decltype(value);
+        using id_t    = std::remove_cvref_t<decltype(id)>;
+        using value_t = std::remove_cvref_t<decltype(value)>;
 
         /* ID */
         typename decltype(header->formats)::const_iterator gen_it;
@@ -785,12 +787,13 @@ private:
         }
         else
         {
-            gen_it = header->formats.find(var::detail::het_string(id));
+            gen_it = header->formats.find(id);
         }
 
         if (gen_it == header->formats.end())
             error("The genotype '", id, "' is not present in the header.");
 
+        std::string_view const        id_str = std::get<0>(*gen_it);
         var::header::format_t const & format = std::get<1>(*gen_it);
         write_typed_data(format.idx, idx_desc);
 
@@ -807,11 +810,11 @@ private:
                       std::ranges::size(values),
                       " values in the genotype vector "
                       "for field ",
-                      format.id,
+                      id_str,
                       " which is more than the number of samples.");
             }
 
-            var::detail::bcf_type_descriptor desc = get_desc(values, format);
+            var::detail::bcf_type_descriptor desc = get_desc(values, id_str, format);
 
             // if there are no values, we can write the missing field and need no padding values at all
             if (std::ranges::size(values) == 0)
@@ -832,7 +835,7 @@ private:
             else if constexpr (!std::ranges::range<std::ranges::range_reference_t<value_t>>)
             {
                 // this looks like "one-string" but is actually a case with custom encoding
-                if (format.id == "GT")
+                if (id_str == "GT")
                 {
                     if constexpr (detail::char_range_or_cstring<value_t>)
                     {
@@ -940,7 +943,7 @@ private:
             }
         };
 
-        if constexpr (var::detail::is_genotype_element_value_type<value_t>)
+        if constexpr (var::detail::is_genotype_variant<value_t>)
             std::visit(func, value);
         else
             func(value);
@@ -1087,7 +1090,8 @@ private:
         if constexpr (meta::different_from<typename record_t::info_t, meta::ignore_t>)
             write_field(meta::vtag<detail::field::info>, record.info);
         else
-            write_field(meta::vtag<detail::field::info>, std::span<var::info_element<>>{});
+            write_field(meta::vtag<detail::field::info>,
+                        std::span<std::pair<std::string_view, var::info_variant_shallow>>{});
 
         assert(streambuf_exposer->pptr() - streambuf_exposer->pbase() - this_record_offset > 0);
         //              (position in the buffer                              ) - (where this record starts)
@@ -1098,7 +1102,8 @@ private:
             if constexpr (meta::different_from<typename record_t::genotypes_t, meta::ignore_t>)
                 write_field(meta::vtag<detail::field::genotypes>, record.genotypes);
             else
-                write_field(meta::vtag<detail::field::genotypes>, std::span<var::genotype_element<>>{});
+                write_field(meta::vtag<detail::field::genotypes>,
+                            std::span<std::pair<std::string_view, var::genotype_variant_shallow>>{});
         }
 
         l_indiv_tmp = streambuf_exposer->pptr() - streambuf_exposer->pbase() - this_record_offset - l_shared_tmp;

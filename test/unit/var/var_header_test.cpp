@@ -51,7 +51,7 @@ TEST(var_header, spec_from_text)
     // info 0
     EXPECT_EQ(hdr.infos.find("NS") - hdr.infos.begin(), 0);
     EXPECT_EQ(hdr.infos["NS"].number, 1);
-    EXPECT_EQ(hdr.infos["NS"].type_id, bio::io::var::value_type_id::int32);
+    EXPECT_EQ(hdr.infos["NS"].type_id, bio::io::var::type_enum::int32);
     EXPECT_EQ(hdr.infos["NS"].description, "\"Number of Samples With Data\"");
     EXPECT_EQ(hdr.infos["NS"].other_fields.size(), 0ull);
     EXPECT_EQ(hdr.infos["NS"].idx, 1);
@@ -59,7 +59,7 @@ TEST(var_header, spec_from_text)
     // info 1
     EXPECT_EQ(hdr.infos.find("DP") - hdr.infos.begin(), 1);
     EXPECT_EQ(hdr.infos["DP"].number, 1);
-    EXPECT_EQ(hdr.infos["DP"].type_id, bio::io::var::value_type_id::int32);
+    EXPECT_EQ(hdr.infos["DP"].type_id, bio::io::var::type_enum::int32);
     EXPECT_EQ(hdr.infos["DP"].description, "\"Total Depth\"");
     EXPECT_EQ(hdr.infos["DP"].other_fields.size(), 0ull);
     EXPECT_EQ(hdr.infos["DP"].idx, 2);
@@ -67,7 +67,7 @@ TEST(var_header, spec_from_text)
     // info 2
     EXPECT_EQ(hdr.infos.find("AF") - hdr.infos.begin(), 2);
     EXPECT_EQ(hdr.infos["AF"].number, bio::io::var::header_number::A);
-    EXPECT_EQ(hdr.infos["AF"].type_id, bio::io::var::value_type_id::vector_of_float32);
+    EXPECT_EQ(hdr.infos["AF"].type_id, bio::io::var::type_enum::vector_of_float32);
     EXPECT_EQ(hdr.infos["AF"].description, "\"Allele Frequency\"");
     EXPECT_EQ(hdr.infos["AF"].other_fields.size(), 0ull);
     EXPECT_EQ(hdr.infos["AF"].idx, 3);
@@ -75,7 +75,7 @@ TEST(var_header, spec_from_text)
     // info 3
     EXPECT_EQ(hdr.infos.find("AA") - hdr.infos.begin(), 3);
     EXPECT_EQ(hdr.infos["AA"].number, 1);
-    EXPECT_EQ(hdr.infos["AA"].type_id, bio::io::var::value_type_id::string);
+    EXPECT_EQ(hdr.infos["AA"].type_id, bio::io::var::type_enum::string);
     EXPECT_EQ(hdr.infos["AA"].description, "\"Ancestral Allele\"");
     EXPECT_EQ(hdr.infos["AA"].other_fields.size(), 0ull);
     EXPECT_EQ(hdr.infos["AA"].idx, 4);
@@ -83,7 +83,7 @@ TEST(var_header, spec_from_text)
     // info 4
     EXPECT_EQ(hdr.infos.find("DB") - hdr.infos.begin(), 4);
     EXPECT_EQ(hdr.infos["DB"].number, 0);
-    EXPECT_EQ(hdr.infos["DB"].type_id, bio::io::var::value_type_id::flag);
+    EXPECT_EQ(hdr.infos["DB"].type_id, bio::io::var::type_enum::flag);
     EXPECT_EQ(hdr.infos["DB"].description, "\"dbSNP membership, build 129\"");
     EXPECT_EQ(hdr.infos["DB"].other_fields.size(), 0ull);
     EXPECT_EQ(hdr.infos["DB"].idx, 5);
@@ -91,7 +91,7 @@ TEST(var_header, spec_from_text)
     // info 5
     EXPECT_EQ(hdr.infos.find("H2") - hdr.infos.begin(), 5);
     EXPECT_EQ(hdr.infos["H2"].number, 0);
-    EXPECT_EQ(hdr.infos["H2"].type_id, bio::io::var::value_type_id::flag);
+    EXPECT_EQ(hdr.infos["H2"].type_id, bio::io::var::type_enum::flag);
     EXPECT_EQ(hdr.infos["H2"].description, "\"HapMap2 membership\"");
     EXPECT_EQ(hdr.infos["H2"].other_fields.size(), 0ull);
     EXPECT_EQ(hdr.infos["H2"].idx, 6);
@@ -102,7 +102,7 @@ TEST(var_header, spec_from_text)
     // format 0
     EXPECT_EQ(hdr.formats.find("GT") - hdr.formats.begin(), 0);
     EXPECT_EQ(hdr.formats["GT"].number, 1);
-    EXPECT_EQ(hdr.formats["GT"].type_id, bio::io::var::value_type_id::string);
+    EXPECT_EQ(hdr.formats["GT"].type_id, bio::io::var::type_enum::string);
     EXPECT_EQ(hdr.formats["GT"].description, "\"Genotype\"");
     EXPECT_EQ(hdr.formats["GT"].other_fields.size(), 0ull);
     EXPECT_EQ(hdr.formats["GT"].idx, 9);
@@ -110,7 +110,7 @@ TEST(var_header, spec_from_text)
     // format 1
     EXPECT_EQ(hdr.formats.find("GQ") - hdr.formats.begin(), 1);
     EXPECT_EQ(hdr.formats["GQ"].number, 1);
-    EXPECT_EQ(hdr.formats["GQ"].type_id, bio::io::var::value_type_id::int32);
+    EXPECT_EQ(hdr.formats["GQ"].type_id, bio::io::var::type_enum::int32);
     EXPECT_EQ(hdr.formats["GQ"].description, "\"Genotype Quality\"");
     EXPECT_EQ(hdr.formats["GQ"].other_fields.size(), 0ull);
     EXPECT_EQ(hdr.formats["GQ"].idx, 10);
@@ -118,7 +118,7 @@ TEST(var_header, spec_from_text)
     // format 2
     EXPECT_EQ(hdr.formats.find("DP") - hdr.formats.begin(), 2);
     EXPECT_EQ(hdr.formats["DP"].number, 1);
-    EXPECT_EQ(hdr.formats["DP"].type_id, bio::io::var::value_type_id::int32);
+    EXPECT_EQ(hdr.formats["DP"].type_id, bio::io::var::type_enum::int32);
     EXPECT_EQ(hdr.formats["DP"].description, "\"Read Depth\"");
     EXPECT_EQ(hdr.formats["DP"].other_fields.size(), 0ull);
     EXPECT_EQ(hdr.formats["DP"].idx, 2);
@@ -126,7 +126,7 @@ TEST(var_header, spec_from_text)
     // format 3
     EXPECT_EQ(hdr.formats.find("HQ") - hdr.formats.begin(), 3);
     EXPECT_EQ(hdr.formats["HQ"].number, 2);
-    EXPECT_EQ(hdr.formats["HQ"].type_id, bio::io::var::value_type_id::vector_of_int32);
+    EXPECT_EQ(hdr.formats["HQ"].type_id, bio::io::var::type_enum::vector_of_int32);
     EXPECT_EQ(hdr.formats["HQ"].description, "\"Haplotype Quality\"");
     EXPECT_EQ(hdr.formats["HQ"].other_fields.size(), 0ull);
     EXPECT_EQ(hdr.formats["HQ"].idx, 11);

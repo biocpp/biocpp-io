@@ -22,6 +22,7 @@
 #include <vector>
 
 #include <bio/ranges/container/dictionary.hpp>
+#include <bio/ranges/container/small_string.hpp>
 
 #include <bio/io/detail/charconv.hpp>
 #include <bio/io/detail/views_eager_split.hpp>
@@ -31,6 +32,7 @@
 
 namespace bio::io::var
 {
+
 /*!\brief Scoped (but weakly typed) enum for "Number" special values in bio::io::var::header INFO fields.
  * \ingroup var
  * \details
@@ -92,7 +94,6 @@ public:
     //!\brief Type of the contig field header line.
     struct contig_t
     {
-        std::string    id;             //!< The ID.
         int64_t        length = -1;    //!< Length of the contig (-1 if absent).
         other_fields_t other_fields{}; //!< Other entries.
         int32_t        idx = -1;       //!< The numeric ID.
@@ -104,10 +105,9 @@ public:
     //!\brief Type of a INFO field header line.
     struct info_t
     {
-        std::string    id;             //!< The ID.
         int32_t        number{};       //!< Number of values, see also bio::io::var::header_number.
         std::string    type{};         //!< Type of the field.
-        value_type_id  type_id{};      //!< Type of the field as vio::var::value_type_id.
+        type_enum      type_id{};      //!< Type of the field as bio::var::type_enum.
         std::string    description{};  //!< Description.
         other_fields_t other_fields{}; //!< Other entries.
         int32_t        idx = -1;       //!< The numeric ID.
@@ -119,7 +119,6 @@ public:
     //!\brief Type of a FILTER field header line.
     struct filter_t
     {
-        std::string    id;             //!< The ID.
         std::string    description{};  //!< Description.
         other_fields_t other_fields{}; //!< Other entries.
         int32_t        idx = -1;       //!< The numeric ID.
@@ -372,7 +371,7 @@ private:
     //!\brief Add implicit PASS filter.
     void add_pass_entry()
     {
-        filters.emplace_back("PASS", filter_t{"PASS", "\"All filters passed\"", {}, 0});
+        filters.emplace_back("PASS", filter_t{"\"All filters passed\"", {}, 0});
         idx_to_string_map_[0] = "PASS";
     }
 
@@ -470,9 +469,9 @@ private:
         ((raw_data += "##fileformat=") += file_format) += "\n";
 
         // filters
-        for (auto const & filter : filters | std::views::elements<1>)
+        for (auto && [id, filter] : filters)
         {
-            (raw_data += "##FILTER=<ID=") += filter.id;
+            (raw_data += "##FILTER=<ID=") += id;
             (raw_data += ",Description=") += quote_wrap(static_cast<std::string>(filter.description));
 
             for (auto [key, value] : filter.other_fields)
@@ -486,9 +485,9 @@ private:
 
         // TODO: think about if/which other_fields-value to quote_wrap
         //  infos
-        for (auto const & info : infos | std::views::elements<1>)
+        for (auto && [id, info] : infos)
         {
-            (raw_data += "##INFO=<ID=") += info.id;
+            (raw_data += "##INFO=<ID=") += id;
             (raw_data += ",Number=") += header_number::to_string(info.number);
             (raw_data += ",Type=") += unparse_type(info.type, info.type_id);
             (raw_data += ",Description=") += quote_wrap(static_cast<std::string>(info.description));
@@ -503,9 +502,9 @@ private:
         }
 
         // formats
-        for (auto const & format : formats | std::views::elements<1>)
+        for (auto && [id, format] : formats)
         {
-            (raw_data += "##FORMAT=<ID=") += format.id;
+            (raw_data += "##FORMAT=<ID=") += id;
             (raw_data += ",Number=") += header_number::to_string(format.number);
             (raw_data += ",Type=") += unparse_type(format.type, format.type_id);
             (raw_data += ",Description=") += quote_wrap(static_cast<std::string>(format.description));
@@ -520,9 +519,9 @@ private:
         }
 
         // contigs
-        for (auto const & contig : contigs | std::views::elements<1>)
+        for (auto && [id, contig] : contigs)
         {
-            (raw_data += "##contig=<ID=") += contig.id;
+            (raw_data += "##contig=<ID=") += id;
             if (contig.length != -1)
                 (raw_data += ",length=") += std::to_string(contig.length); // TODO replace with std::to_chars
 
@@ -549,39 +548,39 @@ private:
         return raw_data;
     }
 
-    //!\brief Turn bio::io::value_type_id into string.
-    static std::string_view unparse_type(std::string_view const type, value_type_id const type_id)
+    //!\brief Turn bio::io::type_enum into string.
+    static std::string_view unparse_type(std::string_view const type, type_enum const type_id)
     {
         std::string_view ret;
 
         switch (type_id)
         {
-            case value_type_id::int8:
-            case value_type_id::vector_of_int8:
-            case value_type_id::int16:
-            case value_type_id::vector_of_int16:
-            case value_type_id::int32:
-            case value_type_id::vector_of_int32:
+            case type_enum::int8:
+            case type_enum::vector_of_int8:
+            case type_enum::int16:
+            case type_enum::vector_of_int16:
+            case type_enum::int32:
+            case type_enum::vector_of_int32:
                 ret = "Integer";
                 break;
-            case value_type_id::float32:
-            case value_type_id::vector_of_float32:
+            case type_enum::float32:
+            case type_enum::vector_of_float32:
                 ret = "Float";
                 break;
-            case value_type_id::char8:
+            case type_enum::char8:
                 ret = "Character";
                 break;
-            case value_type_id::string:
+            case type_enum::string:
                 if (type == "Character") // multiple characters
                 {
                     ret = "Character";
                     break;
                 }
                 [[fallthrough]];
-            case value_type_id::vector_of_string:
+            case type_enum::vector_of_string:
                 ret = "String";
                 break;
-            case value_type_id::flag:
+            case type_enum::flag:
                 ret = "Flag";
                 break;
             default:
@@ -657,8 +656,8 @@ private:
         auto id = new_entry.other_fields.extract("ID");
         if (id.empty())
             throw format_error{"INFO or FORMAT line does not contain ID field."};
-        else
-            new_entry.id = id.mapped();
+
+        std::string id_str = std::move(id.mapped());
 
         /* Number */
         auto number = new_entry.other_fields.extract("Number");
@@ -686,15 +685,15 @@ private:
             {
                 switch (new_entry.type_id)
                 {
-                    case value_type_id::int8:
-                    case value_type_id::int16:
-                    case value_type_id::int32:
-                        new_entry.type_id = value_type_id::int8;
+                    case type_enum::int8:
+                    case type_enum::int16:
+                    case type_enum::int32:
+                        new_entry.type_id = type_enum::int8;
                         break;
-                    case value_type_id::vector_of_int8:
-                    case value_type_id::vector_of_int16:
-                    case value_type_id::vector_of_int32:
-                        new_entry.type_id = value_type_id::vector_of_int8;
+                    case type_enum::vector_of_int8:
+                    case type_enum::vector_of_int16:
+                    case type_enum::vector_of_int32:
+                        new_entry.type_id = type_enum::vector_of_int8;
                         break;
                     default:
                         break;
@@ -704,15 +703,15 @@ private:
             {
                 switch (new_entry.type_id)
                 {
-                    case value_type_id::int8:
-                    case value_type_id::int16:
-                    case value_type_id::int32:
-                        new_entry.type_id = value_type_id::int16;
+                    case type_enum::int8:
+                    case type_enum::int16:
+                    case type_enum::int32:
+                        new_entry.type_id = type_enum::int16;
                         break;
-                    case value_type_id::vector_of_int8:
-                    case value_type_id::vector_of_int16:
-                    case value_type_id::vector_of_int32:
-                        new_entry.type_id = value_type_id::vector_of_int16;
+                    case type_enum::vector_of_int8:
+                    case type_enum::vector_of_int16:
+                    case type_enum::vector_of_int32:
+                        new_entry.type_id = type_enum::vector_of_int16;
                         break;
                     default:
                         break;
@@ -735,23 +734,21 @@ private:
         if (!idx.empty())
             io::detail::string_to_number(idx.mapped(), new_entry.idx);
         max_other_idx_ = std::max(max_other_idx_, new_entry.idx);
-        fix_idx(new_entry.idx, new_entry.id);
+        fix_idx(new_entry.idx, id_str);
 
         if (is_info)
         {
-            if (infos.contains(new_entry.id))
-                throw format_error{"Duplicate INFO ID \"", new_entry.id, "\" in HEADER."};
+            if (infos.contains(id_str))
+                throw format_error{"Duplicate INFO ID \"", id_str, "\" in HEADER."};
 
-            std::string tmp = new_entry.id;
-            infos.emplace_back(std::move(tmp), std::move(new_entry));
+            infos.emplace_back(std::move(id_str), std::move(new_entry));
         }
         else
         {
-            if (formats.contains(new_entry.id))
-                throw format_error{"Duplicate FORMAT ID \"", new_entry.id, "\" in HEADER."};
+            if (formats.contains(id_str))
+                throw format_error{"Duplicate FORMAT ID \"", id_str, "\" in HEADER."};
 
-            std::string tmp = new_entry.id;
-            formats.emplace_back(std::move(tmp), std::move(new_entry));
+            formats.emplace_back(std::move(id_str), std::move(new_entry));
         }
     }
 
@@ -765,8 +762,8 @@ private:
         auto id = new_entry.other_fields.extract("ID");
         if (id.empty())
             throw format_error{"FILTER line does not contain ID field."};
-        else
-            new_entry.id = id.mapped();
+
+        std::string id_str = std::move(id.mapped());
 
         /* Description */
         auto description = new_entry.other_fields.extract("Description");
@@ -780,20 +777,19 @@ private:
         if (!idx.empty())
             io::detail::string_to_number(idx.mapped(), new_entry.idx);
         max_other_idx_ = std::max(max_other_idx_, new_entry.idx);
-        fix_idx(new_entry.idx, new_entry.id);
+        fix_idx(new_entry.idx, id_str);
 
         // PASS line was added by us before and is now swapped with user-provided
-        if (filters.size() > 0 && get<0>(filters.front()) == "PASS" && new_entry.id == "PASS")
+        if (filters.size() > 0 && get<0>(filters.front()) == "PASS" && id_str == "PASS")
         {
             get<1>(filters[0]) = new_entry;
         }
         else
         {
-            if (filters.contains(new_entry.id))
-                throw format_error{"Duplicate FILTER ID \"", new_entry.id, "\" in HEADER."};
+            if (filters.contains(id_str))
+                throw format_error{"Duplicate FILTER ID \"", id_str, "\" in HEADER."};
 
-            std::string tmp = new_entry.id;
-            filters.emplace_back(std::move(tmp), std::move(new_entry));
+            filters.emplace_back(std::move(id_str), std::move(new_entry));
         }
     }
 
@@ -807,8 +803,8 @@ private:
         auto id = new_entry.other_fields.extract("ID");
         if (id.empty())
             throw format_error{"FILTER line does not contain ID field."};
-        else
-            new_entry.id = id.mapped();
+
+        std::string id_str = std::move(id.mapped());
 
         /* Length */
         auto length = new_entry.other_fields.extract("length");
@@ -822,13 +818,12 @@ private:
         else
             io::detail::string_to_number(idx.mapped(), new_entry.idx);
         max_contig_idx_ = std::max(max_contig_idx_, new_entry.idx);
-        fix_contig_idx(new_entry.idx, new_entry.id);
+        fix_contig_idx(new_entry.idx, id_str);
 
-        if (contigs.contains(new_entry.id))
-            throw format_error{"Duplicate CONTIG ID \"", new_entry.id, "\" in HEADER."};
+        if (contigs.contains(id_str))
+            throw format_error{"Duplicate CONTIG ID \"", id_str, "\" in HEADER."};
 
-        std::string tmp = new_entry.id;
-        contigs.emplace_back(std::move(tmp), std::move(new_entry));
+        contigs.emplace_back(std::move(id_str), std::move(new_entry));
     }
 
     //!\brief Parse the line with column labels / sample names.
@@ -875,18 +870,18 @@ private:
         return header_number::dot;
     }
 
-    /*!\brief Turn a string into bio::io::var::value_type_id.
+    /*!\brief Turn a string into bio::io::var::type_enum.
      * \param[in] in        The input string.
      * \param[in] number    The accompanying number value from the header.
      * \return The dynamic type id.
      */
-    static value_type_id parse_type(std::string_view const in, int32_t const number)
+    static type_enum parse_type(std::string_view const in, int32_t const number)
     {
-        value_type_id ret{};
+        type_enum ret{};
 
         if (in == "Flag")
         {
-            ret = value_type_id::flag;
+            ret = type_enum::flag;
             if (number != 0)
                 throw format_error{"Flags must always have number 0 in header."};
             return ret;
@@ -898,30 +893,30 @@ private:
         if (in == "Integer")
         {
             if (number == 1)
-                ret = value_type_id::int32;
+                ret = type_enum::int32;
             else
-                ret = value_type_id::vector_of_int32;
+                ret = type_enum::vector_of_int32;
         }
         else if (in == "Float")
         {
             if (number == 1)
-                ret = value_type_id::float32;
+                ret = type_enum::float32;
             else
-                ret = value_type_id::vector_of_float32;
+                ret = type_enum::vector_of_float32;
         }
         else if (in == "Character")
         {
             if (number == 1)
-                ret = value_type_id::char8;
+                ret = type_enum::char8;
             else
-                ret = value_type_id::string;
+                ret = type_enum::string;
         }
         else if (in == "String")
         {
             if (number == 1)
-                ret = value_type_id::string;
+                ret = type_enum::string;
             else
-                ret = value_type_id::vector_of_string;
+                ret = type_enum::vector_of_string;
         }
         else
         {
@@ -957,58 +952,141 @@ private:
 };
 
 // clang-format off
-//TODO change these to dictionary once the tuple-constructor is fixed in -core
-//!\brief A table of reserved INFO entries.
-inline std::unordered_map<std::string_view, header::info_t> const reserved_infos
-{
-    {"AA",       {"AA",                   1, "String",  value_type_id::string,            "\"Ancestral allele\""}},
-    {"AC",       {"AC",    header_number::A, "Integer", value_type_id::vector_of_int32,   "\"Allele count in genotypes, for each ALT allele, in the same order as listed\""}},
-    {"AD",       {"AD",    header_number::R, "Integer", value_type_id::vector_of_int32,   "\"Total read depth for each allele\""}},
-    {"ADF",      {"ADF",   header_number::R, "Integer", value_type_id::vector_of_int32,   "\"Read depth for each allele on the forward strand\""}},
-    {"ADR",      {"ADR",   header_number::R, "Integer", value_type_id::vector_of_int32,   "\"Read depth for each allele on the reverse strand\""}},
-    {"AF",       {"AF",    header_number::A, "Float",   value_type_id::vector_of_float32, "\"Allele frequency for each ALT allele in the same order as listed\""}},
-    {"AN",       {"AN",                   1, "Integer", value_type_id::int32,             "\"Total number of alleles in called genotypes\""}},
-    {"BQ",       {"BQ",                   1, "Float",   value_type_id::float32,           "\"RMS base quality\""}},
-    {"CIGAR",    {"CIGAR", header_number::A, "String",  value_type_id::vector_of_string,  "\"Cigar string describing how to align an alternate allele to the reference allele\""}},
-    {"DB",       {"DB",                   0, "Flag",    value_type_id::flag,              "\"dbSNP membership\""}},
-    {"DP",       {"DP",                   1, "Integer", value_type_id::int32,             "\"Combined depth across samples\""}},
-    {"END",      {"END",                  1, "Integer", value_type_id::int32,             "\"End position on CHROM (used with symbolic alleles; see below)\""}},
-    {"H2",       {"H2",                   0, "Flag",    value_type_id::flag,              "\"HapMap2 membership\""}},
-    {"H3",       {"H3",                   0, "Flag",    value_type_id::flag,              "\"HapMap3 membership\""}},
-    {"MQ",       {"MQ",                   1, "Float",   value_type_id::float32,           "\"RMS mapping quality\""}},
-    {"MQ0",      {"MQ0",                  1, "Integer", value_type_id::int32,             "\"Number of MAPQ == 0 reads\""}},
-    {"NS",       {"NS",                   1, "Integer", value_type_id::int32,             "\"Number of samples with data\""}},
-    {"SB",       {"SB",                   4, "Integer", value_type_id::vector_of_int32,   "\"Strand bias\""}},
-    {"SOMATIC",  {"SOMATIC",              0, "Flag",    value_type_id::flag,              "\"Somatic mutation (for cancer genomics)\""}},
-    {"VALIDATED",{"VALIDATED",            0, "Flag",    value_type_id::flag,              "\"Validated by follow-up experiment\""}},
-    {"1000G",    {"1000G",                0, "Flag",    value_type_id::flag,              "\"1000 Genomes membership\""}}
-};
-// clang-format on
+/*!\brief A compile-time mapping of INFO strings to bio::io::var::type_enum.
+ *!\ingroup var
+ *
+ * This mapping allows accessing bio::io::var::info_variant_shallow and bio::io::var::info_variant_deep by e.g.
+ * `get<"AA">(variant)` instead of `get<static_cast<size_t>(type_enum::string)>(variant)`.
+ *
+ * The predefined mappings are as defined in "Table 1" of the
+ * [VCF specifiction](https://samtools.github.io/hts-specs/VCFv4.3.pdf), and also shown in bio::io::var::reserved_infos.
+ *
+ * ### Customisation point
+ *
+ * This variable template is a customisation point, which means that you can specialise it for your own strings.
+ *
+ * TODO add example snippet
+ */
+template <ranges::small_string str>
+inline constexpr meta::ignore_t info_key2type_enum{};
 
-// clang-format off
-//!\brief A table of reserved FORMAT entries.
-inline std::unordered_map<std::string_view, header::format_t> const reserved_formats
+//!\cond
+template <> inline constexpr type_enum info_key2type_enum<"AA"       > = type_enum::string;
+template <> inline constexpr type_enum info_key2type_enum<"AC"       > = type_enum::vector_of_int32;
+template <> inline constexpr type_enum info_key2type_enum<"AD"       > = type_enum::vector_of_int32;
+template <> inline constexpr type_enum info_key2type_enum<"ADF"      > = type_enum::vector_of_int32;
+template <> inline constexpr type_enum info_key2type_enum<"ADR"      > = type_enum::vector_of_int32;
+template <> inline constexpr type_enum info_key2type_enum<"AF"       > = type_enum::vector_of_float32;
+template <> inline constexpr type_enum info_key2type_enum<"AN"       > = type_enum::int32;
+template <> inline constexpr type_enum info_key2type_enum<"BQ"       > = type_enum::float32;
+template <> inline constexpr type_enum info_key2type_enum<"CIGAR"    > = type_enum::vector_of_string;
+template <> inline constexpr type_enum info_key2type_enum<"DB"       > = type_enum::flag;
+template <> inline constexpr type_enum info_key2type_enum<"DP"       > = type_enum::int32;
+template <> inline constexpr type_enum info_key2type_enum<"END"      > = type_enum::int32;
+template <> inline constexpr type_enum info_key2type_enum<"H2"       > = type_enum::flag;
+template <> inline constexpr type_enum info_key2type_enum<"H3"       > = type_enum::flag;
+template <> inline constexpr type_enum info_key2type_enum<"MQ"       > = type_enum::float32;
+template <> inline constexpr type_enum info_key2type_enum<"MQ0"      > = type_enum::int32;
+template <> inline constexpr type_enum info_key2type_enum<"NS"       > = type_enum::int32;
+template <> inline constexpr type_enum info_key2type_enum<"SB"       > = type_enum::vector_of_int32;
+template <> inline constexpr type_enum info_key2type_enum<"SOMATIC"  > = type_enum::flag;
+template <> inline constexpr type_enum info_key2type_enum<"VALIDATED"> = type_enum::flag;
+template <> inline constexpr type_enum info_key2type_enum<"1000G"    > = type_enum::flag;
+//!\endcond
+
+//!\brief A table of reserved INFO entries.
+//!\ingroup var
+inline ranges::dictionary<std::string_view, header::info_t> const reserved_infos
 {
-    {"AD",  {"AD",    header_number::R, "Integer", value_type_id::vector_of_int32,   "\"Read depth for each allele\""}},
-    {"ADF", {"ADF",   header_number::R, "Integer", value_type_id::vector_of_int32,   "\"Read depth for each allele on the forward strand\""}},
-    {"ADR", {"ADR",   header_number::R, "Integer", value_type_id::vector_of_int32,   "\"Read depth for each allele on the reverse strand\""}},
-    {"DP",  {"DP",                   1, "Integer", value_type_id::int32,             "\"Read depth\""}},
-    {"EC",  {"EC",    header_number::A, "Integer", value_type_id::vector_of_int32,   "\"Expected alternate allele counts\""}},
-    {"FT",  {"FT",                   1, "String",  value_type_id::string,            "\"Filter indicating if this genotype was “called”\""}},
-    {"GL",  {"GL",    header_number::G, "Float",   value_type_id::vector_of_float32, "\"Genotype likelihoods\""}},
-    {"GP",  {"GP",    header_number::G, "Float",   value_type_id::vector_of_float32, "\"Genotype posterior probabilities\""}},
-    {"GQ",  {"GQ",                   1, "Integer", value_type_id::int32,             "\"Conditional genotype quality\""}},
-    {"GT",  {"GT",                   1, "String",  value_type_id::string,            "\"Genotype\""}},
-    {"HQ",  {"HQ",                   2, "Integer", value_type_id::vector_of_int32,   "\"Haplotype quality\""}},
-    {"LAA", {"LAA", header_number::dot, "Integer", value_type_id::vector_of_int32,   "\"Strictly increasing, 1-based indices into ALT, indicating which alternate alleles are relevant (local) for the current sample\""}},
-    {"LAD", {"LAD", header_number::dot, "Integer", value_type_id::vector_of_int32,   "\"Read depth for the reference and each of the local alternate alleles listed in LAA\""}},
-    {"LGT", {"LGT", header_number::dot, "String",  value_type_id::vector_of_string,  "\"Genotype against the local alleles\""}},
-    {"LPL", {"LPL", header_number::dot, "Integer", value_type_id::vector_of_int32,   "\"Phred-scaled genotype likelihoods rounded to the closest integer for genotypes that involve the reference and the local alternative alleles listed in LAA\""}},
-    {"MQ",  {"MQ",                   1, "Integer", value_type_id::int32,             "\"RMS mapping quality\""}},
-    {"PL",  {"PL",    header_number::G, "Integer", value_type_id::vector_of_int32,   "\"Phred-scaled genotype likelihoods rounded to the closest integer\""}},
-    {"PP",  {"PP",    header_number::G, "Integer", value_type_id::vector_of_int32,   "\"Phred-scaled genotype posterior probabilities rounded to the closest integer\""}},
-    {"PQ",  {"PQ",                   1, "Integer", value_type_id::int32,             "\"Phasing quality\""}},
-    {"PS",  {"PS",                   1, "Integer", value_type_id::int32,             "\"Phase set\""}}
+    {"AA",       {               1, "String",  type_enum::string,            "\"Ancestral allele\""}},
+    {"AC",       {header_number::A, "Integer", type_enum::vector_of_int32,   "\"Allele count in genotypes, for each ALT allele, in the same order as listed\""}},
+    {"AD",       {header_number::R, "Integer", type_enum::vector_of_int32,   "\"Total read depth for each allele\""}},
+    {"ADF",      {header_number::R, "Integer", type_enum::vector_of_int32,   "\"Read depth for each allele on the forward strand\""}},
+    {"ADR",      {header_number::R, "Integer", type_enum::vector_of_int32,   "\"Read depth for each allele on the reverse strand\""}},
+    {"AF",       {header_number::A, "Float",   type_enum::vector_of_float32, "\"Allele frequency for each ALT allele in the same order as listed\""}},
+    {"AN",       {               1, "Integer", type_enum::int32,             "\"Total number of alleles in called genotypes\""}},
+    {"BQ",       {               1, "Float",   type_enum::float32,           "\"RMS base quality\""}},
+    {"CIGAR",    {header_number::A, "String",  type_enum::vector_of_string,  "\"Cigar string describing how to align an alternate allele to the reference allele\""}},
+    {"DB",       {               0, "Flag",    type_enum::flag,              "\"dbSNP membership\""}},
+    {"DP",       {               1, "Integer", type_enum::int32,             "\"Combined depth across samples\""}},
+    {"END",      {               1, "Integer", type_enum::int32,             "\"End position on CHROM (used with symbolic alleles; see below)\""}},
+    {"H2",       {               0, "Flag",    type_enum::flag,              "\"HapMap2 membership\""}},
+    {"H3",       {               0, "Flag",    type_enum::flag,              "\"HapMap3 membership\""}},
+    {"MQ",       {               1, "Float",   type_enum::float32,           "\"RMS mapping quality\""}},
+    {"MQ0",      {               1, "Integer", type_enum::int32,             "\"Number of MAPQ == 0 reads\""}},
+    {"NS",       {               1, "Integer", type_enum::int32,             "\"Number of samples with data\""}},
+    {"SB",       {               4, "Integer", type_enum::vector_of_int32,   "\"Strand bias\""}},
+    {"SOMATIC",  {               0, "Flag",    type_enum::flag,              "\"Somatic mutation (for cancer genomics)\""}},
+    {"VALIDATED",{               0, "Flag",    type_enum::flag,              "\"Validated by follow-up experiment\""}},
+    {"1000G",    {               0, "Flag",    type_enum::flag,              "\"1000 Genomes membership\""}}
+};
+
+/*!\brief A compile-time mapping of FORMAT strings to bio::io::var::type_enum.
+ *!\ingroup var
+ *
+ * This mapping allows accessing bio::io::var::genotype_variant_shallow and bio::io::var::genotype_variant_deep by e.g.
+ * `get<"GT">(variant)` instead of `get<static_cast<size_t>(type_enum::string)>(variant)`.
+ *
+ * The predefined mappings are as defined in "Table 2" of the
+ * [VCF specifiction](https://samtools.github.io/hts-specs/VCFv4.3.pdf), and also shown in
+ * bio::io::var::reserved_formats.
+ *
+ * ### Customisation point
+ *
+ * This variable template is a customisation point, which means that you can specialise it for your own strings.
+ *
+ * TODO add example snippet
+ */
+template <ranges::small_string str>
+inline constexpr meta::ignore_t format_key2type_enum{};
+
+//!\cond
+template <> inline constexpr type_enum format_key2type_enum<"AD">  = type_enum::vector_of_int32;
+template <> inline constexpr type_enum format_key2type_enum<"ADF"> = type_enum::vector_of_int32;
+template <> inline constexpr type_enum format_key2type_enum<"ADR"> = type_enum::vector_of_int32;
+template <> inline constexpr type_enum format_key2type_enum<"DP">  = type_enum::int32;
+template <> inline constexpr type_enum format_key2type_enum<"EC">  = type_enum::vector_of_int32;
+template <> inline constexpr type_enum format_key2type_enum<"FT">  = type_enum::string;
+template <> inline constexpr type_enum format_key2type_enum<"GL">  = type_enum::vector_of_float32;
+template <> inline constexpr type_enum format_key2type_enum<"GP">  = type_enum::vector_of_float32;
+template <> inline constexpr type_enum format_key2type_enum<"GQ">  = type_enum::int32;
+template <> inline constexpr type_enum format_key2type_enum<"GT">  = type_enum::string;
+template <> inline constexpr type_enum format_key2type_enum<"HQ">  = type_enum::vector_of_int32;
+template <> inline constexpr type_enum format_key2type_enum<"LAA"> = type_enum::vector_of_int32;
+template <> inline constexpr type_enum format_key2type_enum<"LAD"> = type_enum::vector_of_int32;
+template <> inline constexpr type_enum format_key2type_enum<"LGT"> = type_enum::vector_of_string;
+template <> inline constexpr type_enum format_key2type_enum<"LPL"> = type_enum::vector_of_int32;
+template <> inline constexpr type_enum format_key2type_enum<"MQ">  = type_enum::int32;
+template <> inline constexpr type_enum format_key2type_enum<"PL">  = type_enum::vector_of_int32;
+template <> inline constexpr type_enum format_key2type_enum<"PP">  = type_enum::vector_of_int32;
+template <> inline constexpr type_enum format_key2type_enum<"PQ">  = type_enum::int32;
+template <> inline constexpr type_enum format_key2type_enum<"PS">  = type_enum::int32;
+//!\endcond
+
+//!\brief A table of reserved FORMAT entries.
+//!\ingroup var
+inline ranges::dictionary<std::string_view, header::format_t> const reserved_formats
+{
+    {"AD",  {  header_number::R, "Integer", type_enum::vector_of_int32,   "\"Read depth for each allele\""}},
+    {"ADF", {  header_number::R, "Integer", type_enum::vector_of_int32,   "\"Read depth for each allele on the forward strand\""}},
+    {"ADR", {  header_number::R, "Integer", type_enum::vector_of_int32,   "\"Read depth for each allele on the reverse strand\""}},
+    {"DP",  {                 1, "Integer", type_enum::int32,             "\"Read depth\""}},
+    {"EC",  {  header_number::A, "Integer", type_enum::vector_of_int32,   "\"Expected alternate allele counts\""}},
+    {"FT",  {                 1, "String",  type_enum::string,            "\"Filter indicating if this genotype was “called”\""}},
+    {"GL",  {  header_number::G, "Float",   type_enum::vector_of_float32, "\"Genotype likelihoods\""}},
+    {"GP",  {  header_number::G, "Float",   type_enum::vector_of_float32, "\"Genotype posterior probabilities\""}},
+    {"GQ",  {                 1, "Integer", type_enum::int32,             "\"Conditional genotype quality\""}},
+    {"GT",  {                 1, "String",  type_enum::string,            "\"Genotype\""}},
+    {"HQ",  {                 2, "Integer", type_enum::vector_of_int32,   "\"Haplotype quality\""}},
+    {"LAA", {header_number::dot, "Integer", type_enum::vector_of_int32,   "\"Strictly increasing, 1-based indices into ALT, indicating which alternate alleles are relevant (local) for the current sample\""}},
+    {"LAD", {header_number::dot, "Integer", type_enum::vector_of_int32,   "\"Read depth for the reference and each of the local alternate alleles listed in LAA\""}},
+    {"LGT", {header_number::dot, "String",  type_enum::vector_of_string,  "\"Genotype against the local alleles\""}},
+    {"LPL", {header_number::dot, "Integer", type_enum::vector_of_int32,   "\"Phred-scaled genotype likelihoods rounded to the closest integer for genotypes that involve the reference and the local alternative alleles listed in LAA\""}},
+    {"MQ",  {                 1, "Integer", type_enum::int32,             "\"RMS mapping quality\""}},
+    {"PL",  {  header_number::G, "Integer", type_enum::vector_of_int32,   "\"Phred-scaled genotype likelihoods rounded to the closest integer\""}},
+    {"PP",  {  header_number::G, "Integer", type_enum::vector_of_int32,   "\"Phred-scaled genotype posterior probabilities rounded to the closest integer\""}},
+    {"PQ",  {                 1, "Integer", type_enum::int32,             "\"Phasing quality\""}},
+    {"PS",  {                 1, "Integer", type_enum::int32,             "\"Phase set\""}}
 };
 // clang-format on
 

@@ -14,6 +14,7 @@
 #pragma once
 
 #include <ios>
+#include <source_location>
 #include <stdexcept>
 
 #include <bio/io/detail/to_string.hpp>
@@ -40,11 +41,16 @@ struct bio_error : std::runtime_error
 struct unreachable_code : bio_error
 {
     //!\brief Constructor that forwards the exception string.
-    explicit unreachable_code(auto &&... s) :
+    explicit unreachable_code(std::source_location const location) :
       bio_error{"Unreachable code reached.\nPlease report a bug with this message.\nDetails:\n",
-                (detail::to_string(s) + ...)}
+                "  File:      ",
+                location.file_name(),
+                "\n  Line:      ",
+                location.line(),
+                "\n  Function:  ",
+                location.function_name(),
+                "\n"}
     {}
-    // TODO(GCC11): When GCC10 is dropped, make the constructor take std::source_location instead.
 };
 
 // ----------------------------------------------------------------------------

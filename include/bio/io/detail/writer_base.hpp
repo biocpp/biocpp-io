@@ -298,9 +298,7 @@ public:
       requires(requires { f.push_back(*std::ranges::begin(range)); })
     //!\endcond
     {
-        // TODO(GCC11): replace with assignment once GCC10 is dropped
-        for (auto && record : range)
-            f.push_back(std::forward<decltype(record)>(record));
+        f = range;
         return std::move(f);
     }
     //!\}

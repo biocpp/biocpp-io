@@ -459,12 +459,12 @@ public:
     {
         if (stream_buf->epptr() - stream_buf->pptr() > 150) // enough space for any number, should be likely
         {
-            auto res = to_chars(stream_buf->pptr(), stream_buf->epptr(), num);
+            auto res = std::to_chars(stream_buf->pptr(), stream_buf->epptr(), num);
             stream_buf->pbump(res.ptr - stream_buf->pptr()); // advance pptr
         }
         else
         {
-            auto res = to_chars(&buffer[0], &buffer[0] + sizeof(buffer), num);
+            auto res = std::to_chars(&buffer[0], &buffer[0] + sizeof(buffer), num);
             write_range(std::span<char>{&buffer[0], res.ptr});
         }
     }

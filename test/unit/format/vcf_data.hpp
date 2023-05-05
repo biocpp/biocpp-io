@@ -12,7 +12,6 @@
 #include <bio/ranges/to.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
 
-#include <bio/io/detail/magic_get.hpp>
 #include <bio/io/var/record.hpp>
 
 //=============================================================================

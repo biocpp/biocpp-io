@@ -25,27 +25,9 @@
 #include <bio/ranges/container/concatenated_sequences.hpp>
 #include <bio/ranges/views/char_strictly_to.hpp>
 
-#include <bio/io/detail/magic_get.hpp>
 #include <bio/io/detail/range.hpp>
 #include <bio/io/detail/tuple_record.hpp>
 #include <bio/io/misc.hpp>
-
-namespace bio::io::var::detail
-{
-//!\brief Remove this after dropping support for GCC10.
-#ifdef __cpp_lib_generic_unordered_lookup
-constexpr std::string_view het_string(std::string_view const in)
-{
-    return in;
-}
-#else
-constexpr std::string het_string(auto && in)
-{
-    return static_cast<std::string>(std::forward<decltype(in)>(in));
-}
-#endif
-
-} // namespace bio::io::var::detail
 
 //-----------------------------------------------------------------------------
 // missing_value
@@ -138,12 +120,12 @@ namespace bio::io::var
 {
 
 //-----------------------------------------------------------------------------
-// value_type_id
+// type_enum
 //-----------------------------------------------------------------------------
 
 //!\brief Enumerator to ease "dynamic typing" in variant IO.
 //!\ingroup var
-enum class value_type_id : size_t
+enum class type_enum : size_t
 {
     char8,             //!< Used for "Character" fields of size 1.
     int8,              //!< Used for "Integer" fields of size 1 where the value fits in one byte.
@@ -166,31 +148,31 @@ namespace bio::io::var::detail
 
 //!\brief int* and vector_of_int* are each "compatible" with each other; the rest only with self.
 //!\ingroup var
-constexpr bool type_id_is_compatible(var::value_type_id const lhs, var::value_type_id const rhs)
+constexpr bool type_id_is_compatible(var::type_enum const lhs, var::type_enum const rhs)
 {
     switch (lhs)
     {
-        case var::value_type_id::int8:
-        case var::value_type_id::int16:
-        case var::value_type_id::int32:
+        case var::type_enum::int8:
+        case var::type_enum::int16:
+        case var::type_enum::int32:
             switch (rhs)
             {
-                case var::value_type_id::int8:
-                case var::value_type_id::int16:
-                case var::value_type_id::int32:
+                case var::type_enum::int8:
+                case var::type_enum::int16:
+                case var::type_enum::int32:
                     return true;
                 default:
                     return false;
             };
             break;
-        case var::value_type_id::vector_of_int8:
-        case var::value_type_id::vector_of_int16:
-        case var::value_type_id::vector_of_int32:
+        case var::type_enum::vector_of_int8:
+        case var::type_enum::vector_of_int16:
+        case var::type_enum::vector_of_int32:
             switch (rhs)
             {
-                case var::value_type_id::vector_of_int8:
-                case var::value_type_id::vector_of_int16:
-                case var::value_type_id::vector_of_int32:
+                case var::type_enum::vector_of_int8:
+                case var::type_enum::vector_of_int16:
+                case var::type_enum::vector_of_int32:
                     return true;
                 default:
                     return false;
@@ -301,27 +283,27 @@ inline bool type_descriptor_is_int(bcf_type_descriptor const type_desc)
     }
 }
 
-//!\brief Convert from bio::io::var::value_type_id to bio::io::detail::bcf_type_descriptor.
-inline bcf_type_descriptor value_type_id_2_type_descriptor(var::value_type_id const type_id)
+//!\brief Convert from bio::io::var::type_enum to bio::io::detail::bcf_type_descriptor.
+inline bcf_type_descriptor type_enum_2_type_descriptor(var::type_enum const type_id)
 {
     switch (type_id)
     {
-        case var::value_type_id::char8:
-        case var::value_type_id::string:
-        case var::value_type_id::vector_of_string:
+        case var::type_enum::char8:
+        case var::type_enum::string:
+        case var::type_enum::vector_of_string:
             return bcf_type_descriptor::char8;
-        case var::value_type_id::int8:
-        case var::value_type_id::vector_of_int8:
-        case var::value_type_id::flag:
+        case var::type_enum::int8:
+        case var::type_enum::vector_of_int8:
+        case var::type_enum::flag:
             return bcf_type_descriptor::int8;
-        case var::value_type_id::int16:
-        case var::value_type_id::vector_of_int16:
+        case var::type_enum::int16:
+        case var::type_enum::vector_of_int16:
             return bcf_type_descriptor::int16;
-        case var::value_type_id::int32:
-        case var::value_type_id::vector_of_int32:
+        case var::type_enum::int32:
+        case var::type_enum::vector_of_int32:
             return bcf_type_descriptor::int32;
-        case var::value_type_id::float32:
-        case var::value_type_id::vector_of_float32:
+        case var::type_enum::float32:
+        case var::type_enum::vector_of_float32:
             return bcf_type_descriptor::float32;
     }
     return bcf_type_descriptor::missing;

@@ -43,13 +43,13 @@ rec.alt.push_back("A");                                           // vector of s
 rec.qual      = 9.4;
 rec.filter.push_back("q10");                                      // vector of strings by default
 
-/* info is vector over bio::io::var::info_element */
-rec.info.push_back({.id = "DP", .value = 30});                    // DP is single integer (see header)
-rec.info.push_back({.id = "AF", .value = std::vector{0.5f}});     // AF is vector of float (see header)
+/* info is vector over std::pair<std::string_view, bio::io::var::info_variant> */
+rec.info.emplace_back("DP", 30);                    // DP is single integer (see header)
+rec.info.emplace_back("AF", std::vector{0.5f});     // AF is vector of float (see header)
 
 /* genotypes is vector over bio::io::var::genotype_element */
-rec.genotypes.push_back({ .id = "GT", .value = std::vector{"0|0"s, "1|0"s, "1/1"s}});
-// value in genotype is always a vector of size == number of samples; see bio::io::var::genotype_element_value_type
+rec.genotypes.emplace_back("GT", std::vector{"0|0"s, "1|0"s, "1/1"s});
+// value in genotype is always a vector of size == number of samples; see bio::io::var::genotype_variant
 
 writer.push_back(rec);
 
@@ -70,9 +70,9 @@ writer.emplace_back(
     "A",
     9.4,
     "q10",
-    std::vector{bio::io::var::info_element{.id = "DP", .value = 30},
-                bio::io::var::info_element{.id = "AF", .value = std::vector{0.5f}}},
-    std::vector{bio::io::var::genotype_element<bio::io::ownership::deep>{ .id = "GT", .value = std::vector{"0|0"s, "1|0"s, "1/1"s}}});
+    std::vector{std::pair<std::string_view, bio::io::var::info_variant_deep>{"DP", 30},
+                std::pair<std::string_view, bio::io::var::info_variant_deep>{"AF", std::vector{0.5f}}},
+    std::vector{std::pair<std::string_view, bio::io::var::genotype_variant_deep>{"GT", std::vector{"0|0"s, "1|0"s, "1/1"s}}});
 //![emplace_back]
 }
 
