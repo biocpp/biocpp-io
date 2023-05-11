@@ -14,6 +14,7 @@
 #pragma once
 
 #include <concepts>
+#include <ranges>
 
 #include <bio/alphabet/concept.hpp>
 #include <bio/meta/overloaded.hpp>
@@ -50,7 +51,6 @@ constexpr bool lazy_concept_checker(auto fun)
     using ret_t = decltype(meta::overloaded{fallback, fun}(1));
     return ret_t::value;
 }
-
 //!\}
 
 } // namespace bio::io::detail

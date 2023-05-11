@@ -43,8 +43,7 @@ void field_types()
                 return example_records_bcf_style<own>();
         }();
 
-        for (auto & rec : recs)
-            handler.write_record(rec);
+        std::apply([&](auto &... recs) { (handler.write_record(recs), ...); }, recs);
     }
 
     EXPECT_EQ(ostr.str(), example_from_spec_bcf_unbgzf_our);

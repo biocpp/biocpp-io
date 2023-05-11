@@ -13,7 +13,9 @@
 
 #pragma once
 
+#include <ranges>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include <bio/alphabet/aminoacid/aa27.hpp>
@@ -29,6 +31,7 @@
 #include <bio/io/detail/misc.hpp>
 #include <bio/io/detail/range.hpp>
 #include <bio/io/detail/tuple_record.hpp>
+#include <bio/io/detail/utility.hpp>
 #include <bio/io/format/fasta.hpp>
 #include <bio/io/format/fastq.hpp>
 #include <bio/io/misc.hpp>
@@ -163,7 +166,58 @@ struct record
      * The default and all pre-defined aliases satisfy the requirements for reading and writing.
      */
     qual_t qual{};
+
+    //!\brief Defaulted comparison operators.
+    friend auto operator<=>(record const & lhs, record const & rhs) = default;
+
+    //!\privatesection
+    //!\brief Type of the copy_blocker.
+    using _copy_blocker_t =
+      io::detail::copy_blocker<io::detail::is_shallow_v<id_t> || io::detail::is_shallow_v<seq_t> ||
+                               io::detail::is_shallow_v<qual_t>>;
+    //!\brief Empty member that prevents this class from being copyable if it contains views or references.
+    [[no_unique_address]] _copy_blocker_t _shallow_record_not_copyable_use_deep_record_instead{};
+
+    //!\brief Enable structured bindings for this class that ignore the copy_blocker.
+    template <size_t i>
+        requires(i < 3)
+    friend decltype(auto) get(meta::decays_to<record> auto && r)
+    {
+        auto fwd_like_r = []<typename t>(t & mem) -> decltype(auto)
+        { return static_cast<std::conditional_t<std::is_lvalue_reference_v<decltype(r)>, t &, t &&>>(mem); };
+
+        if constexpr (i == 0)
+            return fwd_like_r(r.id);
+        else if constexpr (i == 1)
+            return fwd_like_r(r.seq);
+        else
+            return fwd_like_r(r.qual);
+    }
 };
+
+} // namespace bio::io::seq
+
+//!\cond
+namespace std
+{
+
+template <typename... args>
+struct tuple_size<bio::io::seq::record<args...>> : public std::integral_constant<size_t, 3>
+{};
+
+template <size_t i, typename... args>
+struct tuple_element<i, bio::io::seq::record<args...>> : tuple_element<i, std::tuple<args...>>
+{};
+
+template <size_t i, typename... args>
+struct tuple_element<i, bio::io::seq::record<args...> const> : tuple_element<i, std::tuple<args...> const>
+{};
+
+} // namespace std
+//!\endcond
+
+namespace bio::io::seq
+{
 
 //-----------------------------------------------------------------------------
 // tie_record()

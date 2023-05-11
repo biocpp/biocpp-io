@@ -72,7 +72,7 @@ TEST(seq_reader, constructor1_with_opts)
 
     using control_t =
       bio::io::seq::reader<bio::io::seq::record_protein_shallow, bio::meta::type_list<bio::io::fasta, bio::io::fastq>>;
-    EXPECT_TRUE((std::same_as<decltype(bio::io::seq::reader{"", opt}), control_t>));
+    EXPECT_TRUE((std::same_as<decltype(bio::io::seq::reader{"", std::move(opt)}), control_t>));
 }
 
 TEST(seq_reader, constructor2_just_filename_direct_format)
@@ -88,7 +88,7 @@ TEST(seq_reader, constructor2_with_opts_direct_format)
 
     using control_t =
       bio::io::seq::reader<bio::io::seq::record_dna_shallow, bio::meta::type_list<bio::io::fasta, bio::io::fastq>>;
-    EXPECT_TRUE((std::same_as<decltype(bio::io::seq::reader{"", bio::io::fasta{}, opt}), control_t>));
+    EXPECT_TRUE((std::same_as<decltype(bio::io::seq::reader{"", bio::io::fasta{}, std::move(opt)}), control_t>));
 }
 
 TEST(seq_reader, constructor2_just_filename_format_variant)
@@ -122,11 +122,11 @@ TEST(seq_reader, constructor3_with_opts)
 {
     std::istringstream           str;
     bio::io::seq::reader_options opt{.record = bio::io::seq::record_dna_shallow{}};
-    EXPECT_NO_THROW((bio::io::seq::reader{str, bio::io::fasta{}, opt}));
+    EXPECT_NO_THROW((bio::io::seq::reader{str, bio::io::fasta{}, std::move(opt)}));
 
     using control_t =
       bio::io::seq::reader<bio::io::seq::record_dna_shallow, bio::meta::type_list<bio::io::fasta, bio::io::fastq>>;
-    EXPECT_TRUE((std::same_as<decltype(bio::io::seq::reader{str, bio::io::fasta{}, opt}), control_t>));
+    EXPECT_TRUE((std::same_as<decltype(bio::io::seq::reader{str, bio::io::fasta{}, std::move(opt)}), control_t>));
 }
 
 TEST(seq_reader, constructor4)
@@ -142,11 +142,12 @@ TEST(seq_reader, constructor4_with_opts)
 {
     std::istringstream           str;
     bio::io::seq::reader_options opt{.record = bio::io::seq::record_dna_shallow{}};
-    EXPECT_NO_THROW((bio::io::seq::reader{std::move(str), bio::io::fasta{}, opt}));
+    EXPECT_NO_THROW((bio::io::seq::reader{std::move(str), bio::io::fasta{}, std::move(opt)}));
 
     using control_t =
       bio::io::seq::reader<bio::io::seq::record_dna_shallow, bio::meta::type_list<bio::io::fasta, bio::io::fastq>>;
-    EXPECT_TRUE((std::same_as<decltype(bio::io::seq::reader{std::move(str), bio::io::fasta{}, opt}), control_t>));
+    EXPECT_TRUE(
+      (std::same_as<decltype(bio::io::seq::reader{std::move(str), bio::io::fasta{}, std::move(opt)}), control_t>));
 }
 
 TEST(seq_reader, iteration)
@@ -200,7 +201,7 @@ TEST(seq_reader, custom_field_types)
     bio::io::seq::reader_options opt{.record = bio::io::seq::record_dna_deep{}};
 
     std::istringstream   str{static_cast<std::string>(input)};
-    bio::io::seq::reader reader{str, bio::io::fasta{}, opt};
+    bio::io::seq::reader reader{str, bio::io::fasta{}, std::move(opt)};
 
     EXPECT_TRUE((std::same_as<decltype(reader.front().seq), std::vector<bio::alphabet::dna5>>));
     EXPECT_TRUE((std::same_as<decltype(reader.front().id), std::string>));

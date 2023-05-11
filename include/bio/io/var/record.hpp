@@ -868,6 +868,15 @@ struct record
 
     //!\brief Defaulted comparison operators.
     friend auto operator<=>(record const & lhs, record const & rhs) = default;
+
+    //!\privatesection
+    //!\brief Type of the copy_blocker.
+    using _copy_blocker_t = io::detail::copy_blocker<(
+      io::detail::is_shallow_v<chrom_t> || io::detail::is_shallow_v<pos_t> || io::detail::is_shallow_v<id_t> ||
+      io::detail::is_shallow_v<ref_t> || io::detail::is_shallow_v<alt_t> || io::detail::is_shallow_v<qual_t> ||
+      io::detail::is_shallow_v<filter_t> || io::detail::is_shallow_v<info_t> || io::detail::is_shallow_v<genotypes_t>)>;
+    //!\brief Empty member that prevents this class from being copyable if it contains views or references.
+    [[no_unique_address]] _copy_blocker_t _shallow_record_not_copyable_use_deep_record_instead{};
 };
 
 //-----------------------------------------------------------------------------

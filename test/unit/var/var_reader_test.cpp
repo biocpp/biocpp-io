@@ -282,7 +282,7 @@ TEST(var_reader, region_filter)
     }
 
     {
-        bio::io::var::reader reader{dir.path() / "example.vcf.gz", options};
+        bio::io::var::reader reader{dir.path() / "example.vcf.gz", std::move(options)};
 
         size_t count = 0;
         for (auto & rec : reader)
@@ -303,19 +303,26 @@ TEST(var_reader, region_filter)
 
 TEST(var_reader, region_filter_linear)
 {
-    bio::io::genomic_region      region{.chrom = "20", .beg = 17000, .end = 1230300};
-    bio::io::var::reader_options options{.region = region, .region_index_optional = true};
+    bio::io::genomic_region region{.chrom = "20", .beg = 17000, .end = 1230300};
 
     {
         std::istringstream   str{static_cast<std::string>(example_from_spec)};
-        bio::io::var::reader reader{str, bio::io::vcf{}, options};
+        bio::io::var::reader reader{
+          str,
+          bio::io::vcf{                            },
+          { .region = region,.region_index_optional = true}
+        };
 
         EXPECT_EQ(std::ranges::distance(reader), 3);
     }
 
     {
         std::istringstream   str{static_cast<std::string>(example_from_spec)};
-        bio::io::var::reader reader{str, bio::io::vcf{}, options};
+        bio::io::var::reader reader{
+          str,
+          bio::io::vcf{                            },
+          { .region = region,.region_index_optional = true}
+        };
 
         size_t count = 0;
         for (auto & rec : reader)

@@ -139,16 +139,16 @@ public:
      * the file is detected as being compressed.
      * See the section on compression and decompression (TODO) for more information.
      */
-    reader(std::filesystem::path const &            filename,
-           format_type const &                      fmt,
-           reader_options<option_args_t...> const & opt = reader_options<option_args_t...>{}) :
-      base_t{filename, fmt, opt}
+    reader(std::filesystem::path const &    filename,
+           format_type const &              fmt,
+           reader_options<option_args_t...> opt = reader_options<option_args_t...>{}) :
+      base_t{filename, fmt, std::move(opt)}
     {}
 
     //!\overload
-    explicit reader(std::filesystem::path const &            filename,
-                    reader_options<option_args_t...> const & opt = reader_options<option_args_t...>{}) :
-      base_t{filename, opt}
+    explicit reader(std::filesystem::path const &    filename,
+                    reader_options<option_args_t...> opt = reader_options<option_args_t...>{}) :
+      base_t{filename, std::move(opt)}
     {}
 
     /*!\brief Construct from an existing stream and with specified format.
@@ -166,10 +166,10 @@ public:
      * it is detected as being compressed.
      * See the section on compression and decompression (TODO) for more information.
      */
-    reader(std::istream &                           str,
-           format_type const &                      fmt,
-           reader_options<option_args_t...> const & opt = reader_options<option_args_t...>{}) :
-      base_t{str, fmt, opt}
+    reader(std::istream &                   str,
+           format_type const &              fmt,
+           reader_options<option_args_t...> opt = reader_options<option_args_t...>{}) :
+      base_t{str, fmt, std::move(opt)}
     {}
 
     //!\overload
@@ -177,10 +177,10 @@ public:
         //!\cond REQ
         requires(!std::is_lvalue_reference_v<temporary_stream_t>)
     //!\endcond
-    reader(temporary_stream_t &&                    str,
-           format_type const &                      fmt,
-           reader_options<option_args_t...> const & opt = reader_options<option_args_t...>{}) :
-      base_t{std::move(str), fmt, opt}
+    reader(temporary_stream_t &&            str,
+           format_type const &              fmt,
+           reader_options<option_args_t...> opt = reader_options<option_args_t...>{}) :
+      base_t{std::move(str), fmt, std::move(opt)}
     {}
 };
 

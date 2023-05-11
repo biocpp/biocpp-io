@@ -124,7 +124,7 @@ void field_types()
     using vec_t       = bio::ranges::concatenated_sequences<std::vector<int_t>>;
     constexpr auto mv = bio::io::var::missing_value<int_t>;
 
-    std::vector<record_t> recs;
+    std::tuple<record_t, record_t, record_t, record_t, record_t> recs;
 
     if constexpr (s == style::def)
         recs = example_records_default_style<own, int_t>();
@@ -132,39 +132,38 @@ void field_types()
         recs = example_records_bcf_style<own, int_t>();
 
     // this workaround is pending clarification in https://github.com/samtools/hts-specs/issues/593
-    std::get<vec_t>(std::get<1>(recs[1].genotypes.back())).push_back(std::vector{mv});
-    std::get<vec_t>(std::get<1>(recs[2].genotypes.back())).push_back(std::vector{mv});
-    std::get<vec_t>(std::get<1>(recs[3].genotypes.back())).push_back(std::vector{mv});
+    std::get<vec_t>(std::get<1>(std::get<1>(recs).genotypes.back())).push_back(std::vector{mv});
+    std::get<vec_t>(std::get<1>(std::get<2>(recs).genotypes.back())).push_back(std::vector{mv});
+    std::get<vec_t>(std::get<1>(std::get<3>(recs).genotypes.back())).push_back(std::vector{mv});
 
-    for (auto & rec : recs)
-        rec._private = priv;
+    std::apply([&](auto &... rec) { ((rec._private = priv), ...); }, recs);
 
     record_t rec;
 
     handler.parse_next_record_into(rec);
     rec._private.raw_record  = nullptr;
     rec._private.record_core = nullptr;
-    EXPECT_EQ(rec, recs[0]);
+    EXPECT_EQ(rec, std::get<0>(recs));
 
     handler.parse_next_record_into(rec);
     rec._private.raw_record  = nullptr;
     rec._private.record_core = nullptr;
-    EXPECT_EQ(rec, recs[1]);
+    EXPECT_EQ(rec, std::get<1>(recs));
 
     handler.parse_next_record_into(rec);
     rec._private.raw_record  = nullptr;
     rec._private.record_core = nullptr;
-    EXPECT_EQ(rec, recs[2]);
+    EXPECT_EQ(rec, std::get<2>(recs));
 
     handler.parse_next_record_into(rec);
     rec._private.raw_record  = nullptr;
     rec._private.record_core = nullptr;
-    EXPECT_EQ(rec, recs[3]);
+    EXPECT_EQ(rec, std::get<3>(recs));
 
     handler.parse_next_record_into(rec);
     rec._private.raw_record  = nullptr;
     rec._private.record_core = nullptr;
-    EXPECT_EQ(rec, recs[4]);
+    EXPECT_EQ(rec, std::get<4>(recs));
 }
 
 TEST(bcf, field_types_default_style_shallow)

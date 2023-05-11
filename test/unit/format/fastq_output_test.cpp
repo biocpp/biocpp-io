@@ -75,6 +75,6 @@ TEST(fastq_write_manual, size_mismatch)
     std::ostringstream                             ostr{};
     bio::io::format_output_handler<bio::io::fastq> handler{ostr};
     auto recs = example_records<1, bio::alphabet::dna5, bio::alphabet::phred42>();
-    recs[0].qual.resize(2);
-    EXPECT_THROW(handler.write_record(recs[0]), bio::io::format_error);
+    std::get<0>(recs).qual.resize(2);
+    EXPECT_THROW(handler.write_record(std::get<0>(recs)), bio::io::format_error);
 }

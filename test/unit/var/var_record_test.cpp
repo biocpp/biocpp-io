@@ -38,13 +38,19 @@ TYPED_TEST(var_record, writer_requirements)
     EXPECT_TRUE(bio::io::var::detail::record_write_concept_checker(std::type_identity<TypeParam>{}));
 }
 
+TEST(var_record, concepts)
+{
+    EXPECT_TRUE(std::copy_constructible<bio::io::var::record_deep>);
+    EXPECT_TRUE(!std::copy_constructible<bio::io::var::record_shallow>);
+}
+
 TEST(var_record_dictionary, heterogeneous_access)
 {
     using namespace bio::meta::literals;
 
     auto records = example_records_default_style<bio::io::ownership::deep>();
 
-    auto & record1 = records[0];
+    auto & record1 = std::get<0>(records);
 
     auto & af = record1.info["AF"];
     EXPECT_SAME_TYPE(decltype(af), bio::io::var::info_variant_deep &);

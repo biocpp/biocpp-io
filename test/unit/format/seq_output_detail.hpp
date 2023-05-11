@@ -59,34 +59,35 @@ auto example_records()
     if constexpr (deep)
     {
         using rec_t = bio::io::seq::record<std::string, std::vector<salph_t>, std::vector<qalph_t>>;
-        std::vector<rec_t> recs;
-        recs.resize(3);
 
-        for (size_t i = 0; i < 3; ++i)
-        {
-            recs[i] = rec_t{static_cast<std::string>(ids[i]),
-                            seqs[i] | bio::views::char_strictly_to<salph_t> | bio::ranges::to<std::vector>(),
-                            quals[i] | bio::views::char_strictly_to<qalph_t> | bio::ranges::to<std::vector>()};
-        }
-
-        return recs;
+        return std::tuple<rec_t, rec_t, rec_t>{
+          rec_t{static_cast<std::string>(ids[0]),
+                seqs[0] | bio::views::char_strictly_to<salph_t> | bio::ranges::to<std::vector>(),
+                quals[0] | bio::views::char_strictly_to<qalph_t> | bio::ranges::to<std::vector>()},
+          rec_t{static_cast<std::string>(ids[1]),
+                seqs[1] | bio::views::char_strictly_to<salph_t> | bio::ranges::to<std::vector>(),
+                quals[1] | bio::views::char_strictly_to<qalph_t> | bio::ranges::to<std::vector>()},
+          rec_t{static_cast<std::string>(ids[2]),
+                seqs[2] | bio::views::char_strictly_to<salph_t> | bio::ranges::to<std::vector>(),
+                quals[2] | bio::views::char_strictly_to<qalph_t> | bio::ranges::to<std::vector>()}
+        };
     }
     else
     {
         using rec_t = bio::io::seq::record<std::string_view,
                                            bio::views::char_conversion_view_t<salph_t>,
                                            bio::views::char_conversion_view_t<qalph_t>>;
-        std::vector<rec_t> recs;
-        recs.resize(3);
-
-        for (size_t i = 0; i < 3; ++i)
-        {
-            recs[i] = rec_t{ids[i],
-                            seqs[i] | bio::views::char_strictly_to<salph_t>,
-                            quals[i] | bio::views::char_strictly_to<qalph_t>};
-        }
-
-        return recs;
+        return std::tuple<rec_t, rec_t, rec_t>{
+          rec_t{ids[0],
+                seqs[0] | bio::views::char_strictly_to<salph_t>,
+                quals[0] | bio::views::char_strictly_to<qalph_t>},
+          rec_t{ids[1],
+                seqs[1] | bio::views::char_strictly_to<salph_t>,
+                quals[1] | bio::views::char_strictly_to<qalph_t>},
+          rec_t{ids[2],
+                seqs[2] | bio::views::char_strictly_to<salph_t>,
+                quals[2] | bio::views::char_strictly_to<qalph_t>}
+        };
     }
 }
 
@@ -99,9 +100,7 @@ std::string do_test(writer_options opt)
         bio::io::format_output_handler<format_t> handler{ostr, opt};
 
         auto recs = example_records<deep, salph_t, qalph_t>();
-
-        for (auto & rec : recs)
-            handler.write_record(rec);
+        std::apply([&](auto &... rec) { (handler.write_record(rec), ...); }, recs);
     }
 
     return ostr.str();

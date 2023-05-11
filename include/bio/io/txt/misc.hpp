@@ -36,6 +36,16 @@ namespace bio::io::txt
  */
 struct record
 {
+    /*!\name Constructors, destructor and assignment
+     * \{
+     */
+    record()                           = default; //!< Defaulted.
+    record(record &&)                  = default; //!< Defaulted.
+    record(record const &)             = delete;  //!< Deleted to prevent dangling copies.
+    record & operator=(record &&)      = default; //!< Defaulted.
+    record & operator=(record const &) = delete;  //!< Deleted to prevent dangling copies.
+    //!\}
+
     //!\brief The entire line (exluding EOL characters but including delimiters).
     std::string_view              line;
     //!\brief A range of the individual fields (without delimiters or EOL characters).

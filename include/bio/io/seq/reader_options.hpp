@@ -50,6 +50,9 @@ namespace bio::io::seq
  * Furthermore, different container and view types can be chosen. See bio::io::seq::record
  * for more details.
  *
+ * If you define the options before creating the reader, it is recommended to `std::move()`
+ * them into the constructor of the reader, since some members might not be copyable.
+ *
  * ### Example
  *
  * Options can be easily set via [designated
