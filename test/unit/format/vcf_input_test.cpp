@@ -38,42 +38,40 @@ void field_types()
                          bio::io::var::record_idx_deep,
                          bio::io::var::record_idx_shallow>>;
 
-    std::vector<record_t> recs;
+    std::tuple<record_t, record_t, record_t, record_t, record_t> recs;
 
     if constexpr (s == style::def)
         recs = example_records_default_style<own>();
     else
         recs = example_records_bcf_style<own>();
-
-    for (auto & rec : recs)
-        rec._private = priv;
+    std::apply([&](auto &... rec) { ((rec._private = priv), ...); }, recs);
 
     record_t rec;
 
     handler.parse_next_record_into(rec);
     rec._private.raw_record  = nullptr;
     rec._private.record_core = nullptr;
-    EXPECT_EQ(rec, recs[0]);
+    EXPECT_EQ(rec, std::get<0>(recs));
 
     handler.parse_next_record_into(rec);
     rec._private.raw_record  = nullptr;
     rec._private.record_core = nullptr;
-    EXPECT_EQ(rec, recs[1]);
+    EXPECT_EQ(rec, std::get<1>(recs));
 
     handler.parse_next_record_into(rec);
     rec._private.raw_record  = nullptr;
     rec._private.record_core = nullptr;
-    EXPECT_EQ(rec, recs[2]);
+    EXPECT_EQ(rec, std::get<2>(recs));
 
     handler.parse_next_record_into(rec);
     rec._private.raw_record  = nullptr;
     rec._private.record_core = nullptr;
-    EXPECT_EQ(rec, recs[3]);
+    EXPECT_EQ(rec, std::get<3>(recs));
 
     handler.parse_next_record_into(rec);
     rec._private.raw_record  = nullptr;
     rec._private.record_core = nullptr;
-    EXPECT_EQ(rec, recs[4]);
+    EXPECT_EQ(rec, std::get<4>(recs));
 }
 
 TEST(vcf, field_types_default_style_shallow)
@@ -114,8 +112,7 @@ TEST(vcf, incomplete_header)
 
     auto recs = example_records_default_style<bio::io::ownership::shallow>();
 
-    for (auto & rec : recs)
-        rec._private = priv;
+    std::apply([&](auto &... rec) { ((rec._private = priv), ...); }, recs);
 
     EXPECT_EQ(hdr.to_plaintext(), incomplete_header_before);
 
@@ -130,7 +127,7 @@ TEST(vcf, incomplete_header)
     ASSERT_EQ(hdr.formats.size(), 1ull);
 
     handler.parse_next_record_into(rec); // add contigs, infos and formats to header
-    EXPECT_EQ(rec, recs[0]);
+    EXPECT_EQ(rec, std::get<0>(recs));
 
     ASSERT_EQ(hdr.contigs.size(), 1ull);
     ASSERT_EQ(hdr.infos.size(), 5ull);
@@ -171,7 +168,7 @@ TEST(vcf, incomplete_header)
     ASSERT_EQ(hdr.filters.size(), 1ull);
 
     handler.parse_next_record_into(rec); // add filter to header
-    EXPECT_EQ(rec, recs[1]);
+    EXPECT_EQ(rec, std::get<1>(recs));
 
     ASSERT_EQ(hdr.filters.size(), 2ull);
     EXPECT_EQ(std::get<0>(hdr.filters[1]), "q10");
@@ -182,7 +179,7 @@ TEST(vcf, incomplete_header)
     ASSERT_EQ(hdr.infos.size(), 5ull);
 
     handler.parse_next_record_into(rec); // one new info added here
-    EXPECT_EQ(rec, recs[2]);
+    EXPECT_EQ(rec, std::get<2>(recs));
 
     ASSERT_EQ(hdr.infos.size(), 6ull);
 

@@ -183,30 +183,21 @@ void write_record_test_impl()
 
     if constexpr (i == 0)
     {
-        writer.push_back(records[0]);
-        writer.push_back(records[1]);
-        writer.push_back(records[2]);
+        std::apply([&](auto &... rec) { (writer.push_back(rec), ...); }, records);
     }
     else if constexpr (i == 1)
     {
         auto it = writer.begin();
-        it      = records[0];
-        it      = records[1];
-        it      = records[2];
+        std::apply([&](auto &... rec) { ((it = rec), ...); }, records);
     }
     else if constexpr (i == 2)
     {
         auto it = writer.begin();
-        *it     = records[0];
-        *it     = records[1];
-        *it     = records[2];
+        std::apply([&](auto &... rec) { ((*it = rec), ...); }, records);
     }
     else if constexpr (i == 3)
     {
-        auto fn = [&writer](auto & r) { writer.emplace_back(r.id, r.seq, r.qual); };
-        fn(records[0]);
-        fn(records[1]);
-        fn(records[2]);
+        std::apply([&](auto &... rec) { (writer.emplace_back(rec.id, rec.seq, rec.qual), ...); }, records);
     }
 
     EXPECT_EQ(stream.str(), fasta_default_output);
@@ -244,9 +235,7 @@ TEST(seq_writer, compression)
 
         auto records = example_records<false, char, char>();
 
-        writer.push_back(records[0]);
-        writer.push_back(records[1]);
-        writer.push_back(records[2]);
+        std::apply([&](auto &... rec) { (writer.push_back(rec), ...); }, records);
     }
 
     std::string str = stream.str();

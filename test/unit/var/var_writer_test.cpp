@@ -175,8 +175,7 @@ void write_record_test_impl()
     if constexpr (i == 3)
     {
         priv.header_ptr = &hdr;
-        for (auto & rec : records)
-            rec._private = priv;
+        std::apply([&](auto &... rec) { ((rec._private = priv), ...); }, records);
     }
     else
     {
@@ -185,39 +184,24 @@ void write_record_test_impl()
 
     if constexpr (i == 0 || i == 3)
     {
-        writer.push_back(records[0]);
-        writer.push_back(records[1]);
-        writer.push_back(records[2]);
-        writer.push_back(records[3]);
-        writer.push_back(records[4]);
+        std::apply([&](auto &... rec) { (writer.push_back(rec), ...); }, records);
     }
     else if constexpr (i == 1)
     {
         auto it = writer.begin();
-        it      = records[0];
-        it      = records[1];
-        it      = records[2];
-        it      = records[3];
-        it      = records[4];
+        std::apply([&](auto &... rec) { ((it = rec), ...); }, records);
     }
     else if constexpr (i == 2)
     {
         auto it = writer.begin();
-        *it     = records[0];
-        *it     = records[1];
-        *it     = records[2];
-        *it     = records[3];
-        *it     = records[4];
+        std::apply([&](auto &... rec) { ((*it = rec), ...); }, records);
     }
     else if constexpr (i == 4)
     {
-        auto fn = [&writer](auto & r)
-        { writer.emplace_back(r.chrom, r.pos, r.id, r.ref, r.alt, r.qual, r.filter, r.info, r.genotypes); };
-        fn(records[0]);
-        fn(records[1]);
-        fn(records[2]);
-        fn(records[3]);
-        fn(records[4]);
+        std::apply(
+          [&](auto &... r)
+          { (writer.emplace_back(r.chrom, r.pos, r.id, r.ref, r.alt, r.qual, r.filter, r.info, r.genotypes), ...); },
+          records);
     }
 
     EXPECT_EQ(stream.str(), example_from_spec_header_regenerated_no_IDX + example_from_spec_records);
@@ -297,7 +281,7 @@ TEST(var_writer, no_header1) // record contains header_ptr but this is == nullpt
 
     auto records = example_records_bcf_style<bio::io::ownership::shallow>();
 
-    EXPECT_THROW(writer->push_back(records[0]), bio::io::missing_header_error);
+    EXPECT_THROW(writer->push_back(std::get<0>(records)), bio::io::missing_header_error);
 
     // destructor
     EXPECT_THROW(delete writer, bio::io::missing_header_error);
@@ -309,7 +293,7 @@ TEST(var_writer, no_header2) // record does not contain header_ptr
     std::ostringstream stream{};
     auto *             writer  = new bio::io::var::writer{stream, bio::io::vcf{}};
     auto               records = example_records_bcf_style<bio::io::ownership::shallow>();
-    auto &             r       = records[0];
+    auto &             r       = std::get<0>(records);
 
     EXPECT_THROW((writer->emplace_back(r.chrom, r.pos, r.id, r.ref, r.alt, r.qual, r.filter, r.info, r.genotypes)),
                  bio::io::missing_header_error);
@@ -333,11 +317,7 @@ TEST(var_writer, compression)
 
         auto records = example_records_bcf_style<bio::io::ownership::shallow>();
 
-        writer.push_back(records[0]);
-        writer.push_back(records[1]);
-        writer.push_back(records[2]);
-        writer.push_back(records[3]);
-        writer.push_back(records[4]);
+        std::apply([&](auto &... rec) { (writer.push_back(rec), ...); }, records);
     }
 
     std::string str = stream.str();

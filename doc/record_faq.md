@@ -60,7 +60,8 @@ performance** but also in some important limitations:
 * Shallow records cannot be modified (as easily¹).
 * Shallow records cannot be "stored"; they depend on internal caches and buffers of the reader and become invalid
 as soon as the next record is read from the file.
-
+* To prevent the user from accidentally copying the record into a scope where it would be invalid, shallow records
+are not copyable!
 
 If you need to change a record in-place and/or "store" the record for longer than one iteration of the reader, you need to use *deep records* instead.
 You can tell the reader that you want deep records by providing the respective options:

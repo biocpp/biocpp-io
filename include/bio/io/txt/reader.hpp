@@ -38,7 +38,7 @@ private:
     io::detail::stream_buffer_exposer<char> * stream_buf = nullptr;
 
     //!\brief Place to store lines that overlap buffer boundaries.
-    std::string         overflow_buffer;
+    std::vector<char>   overflow_buffer; // this may not be string, because views into SSO area!
     //!\brief Temporary storage for field delimiter positions.
     std::vector<size_t> field_end_positions;
 
@@ -85,9 +85,9 @@ public:
      * \{
      */
     input_iterator() noexcept                                   = default; //!< Defaulted.
-    input_iterator(input_iterator const &) noexcept             = default; //!< Defaulted.
+    input_iterator(input_iterator const &) noexcept             = delete;  //!< Deleted.
     input_iterator(input_iterator &&) noexcept                  = default; //!< Defaulted.
-    input_iterator & operator=(input_iterator const &) noexcept = default; //!< Defaulted.
+    input_iterator & operator=(input_iterator const &) noexcept = delete;  //!< Deleted.
     input_iterator & operator=(input_iterator &&) noexcept      = default; //!< Defaulted.
     ~input_iterator() noexcept                                  = default; //!< Defaulted.
 
@@ -336,7 +336,7 @@ namespace bio::io::txt
  *
  * ### Attention
  *
- * This file performs line-wise buffering internally. If the file that you are attempting to read contains unreasonably
+ * This reader performs line-wise buffering internally. If the file that you are attempting to read contains unreasonably
  * long lines (or is in-fact binary), performance will degrade severely! Line-lengths up 10.000 or even 100.000 might
  * work, but files with e.g. full chromosomes or genomes in a single line are not supported.
  *
@@ -518,10 +518,14 @@ public:
      * \brief Provides functions for record based reading of the file.
      * \{
      */
-    /*!\brief Returns an iterator to current line in the file.
-     * \returns An iterator pointing to the current line in the file.
+    /*!\brief Returns an iterator to the beginning of the file.
+     * \returns An iterator pointing to the beginning of the file.
      *
      * Equals end() if the file is at end.
+     *
+     * ### Attention
+     *
+     * You may only call this function once after creating the reader.
      *
      * ### Complexity
      *
@@ -529,9 +533,15 @@ public:
      *
      * ### Exceptions
      *
-     * No-throw guarantee.
+     * Throws std::runtime_error if called more than once.
      */
-    iterator begin() noexcept { return it; }
+    iterator begin()
+    {
+        if (it_invalid)
+            throw std::runtime_error{"You can only call begin() once on txt::reader."};
+        it_invalid = true;
+        return std::move(it);
+    }
 
     /*!\brief Returns a sentinel for comparison with iterator.
      * \returns std::default_sentinel.
@@ -547,21 +557,6 @@ public:
      * No-throw guarantee.
      */
     sentinel end() noexcept { return {}; }
-
-    /*!\brief Return the record we are currently at in the file.
-     * \returns A std::string_view of the current line or a reference to bio::io::txt::record.
-     *
-     * This function is identical to calling *begin().
-     *
-     * ### Complexity
-     *
-     * Constant.
-     *
-     * ### Exceptions
-     *
-     * No-throw guarantee.
-     */
-    decltype(auto) front() { return *begin(); }
     //!\}
 
     //!\brief The header of the file.
@@ -616,6 +611,8 @@ protected:
     transparent_istream stream;
     //!\brief The stream iterator.
     iterator            it;
+    //!\brief Track validity of iterator.
+    bool                it_invalid = false;
     //!\brief The stored header.
     std::string         headr;
 };

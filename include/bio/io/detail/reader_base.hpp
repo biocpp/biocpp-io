@@ -137,13 +137,13 @@ public:
      * the file is detected as being compressed.
      * See the section on compression and decompression (TODO) for more information.
      */
-    reader_base(std::filesystem::path const & filename, format_type const & fmt, options_t const & opt = options_t{}) :
-      options{opt}, stream{filename, opt.stream_options}, format{fmt}
+    reader_base(std::filesystem::path const & filename, format_type const & fmt, options_t opt = options_t{}) :
+      stream{filename, opt.stream_options}, options{std::move(opt)}, format{fmt}
     {}
 
     //!\overload
-    explicit reader_base(std::filesystem::path const & filename, options_t const & opt = options_t{}) :
-      options{opt}, stream{filename, opt.stream_options}
+    explicit reader_base(std::filesystem::path const & filename, options_t opt = options_t{}) :
+      stream{filename, opt.stream_options}, options{std::move(opt)}
     {
         // initialise format handler or throw if format is not found
         detail::set_format(format, stream.truncated_filename());
@@ -164,8 +164,8 @@ public:
      * it is detected as being compressed.
      * See the section on compression and decompression (TODO) for more information.
      */
-    reader_base(std::istream & str, format_type const & fmt, options_t const & opt = options_t{}) :
-      options{opt}, stream{str, opt.stream_options}, format{fmt}
+    reader_base(std::istream & str, format_type const & fmt, options_t opt = options_t{}) :
+      stream{str, opt.stream_options}, options{std::move(opt)}, format{fmt}
     {}
 
     //!\overload
@@ -173,8 +173,8 @@ public:
         //!\cond REQ
         requires(!std::is_lvalue_reference_v<temporary_stream_t>)
     //!\endcond
-    reader_base(temporary_stream_t && str, format_type const & fmt, options_t const & opt = options_t{}) :
-      options{opt}, stream{std::move(str), opt.stream_options}, format{fmt}
+    reader_base(temporary_stream_t && str, format_type const & fmt, options_t opt = options_t{}) :
+      stream{std::move(str), opt.stream_options}, options{std::move(opt)}, format{fmt}
     {}
     //!\}
 
@@ -252,10 +252,10 @@ protected:
     /*!\name State
      * \{
      */
-    //!\brief The object holding the options.
-    options_t           options;
     //!\brief The input stream.
     transparent_istream stream;
+    //!\brief The object holding the options.
+    options_t           options;
     //!\brief Buffer for a single record.
     record_type         record_buffer;
     //!\brief Tracks whether the very first record is buffered when calling begin().

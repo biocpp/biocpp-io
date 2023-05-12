@@ -242,16 +242,14 @@ auto example_records_default_style()
       std::conditional_t<own == bio::io::ownership::shallow, std::vector<std::string_view>, std::vector<std::string>>;
 
     // clang-format off
-    std::vector<record_t> recs{
-    {"20", 14370,   "rs6054257", make_ref<own>("G"),   {"A"},        29, {"PASS"}, {{"NS",(int_t)3}, {"DP", (int_t)14}, {"AF", fvec{0.5f}}, {"DB", true}, {"H2", true}        }, { {"GT", svec{"0|0", "1|0", "1/1"}}, {"GQ", ivec{48, 48, 43}}, {"DP", ivec{1, 8, 5}}, {"HQ", ivecvec{ivec{51,51}, ivec{51,51}, ivec{mv,mv} }}}, priv},
-    {"20", 17330,   ".",         make_ref<own>("T"),   {"A"},        3,  {"q10"},  {{"NS",(int_t)3}, {"DP", (int_t)11}, {"AF", fvec{0.017f}}                                  }, { {"GT", svec{"0|0", "0|1", "0/0"}}, {"GQ", ivec{49,  3, 41}}, {"DP", ivec{3, 5, 3}}, {"HQ", ivecvec{ivec{58,50}, ivec{65, 3}              }}}, priv},
-    {"20", 1110696, "rs6040355", make_ref<own>("A"),   {"G","T"},    67, {"PASS"}, {{"NS",(int_t)2}, {"DP", (int_t)10}, {"AF", fvec{0.333f,0.667f}}, {"AA", "T"}, {"DB", true}}, { {"GT", svec{"1|2", "2|1", "2/2"}}, {"GQ", ivec{21,  2, 35}}, {"DP", ivec{6, 0, 4}}, {"HQ", ivecvec{ivec{23,27}, ivec{18, 2}              }}}, priv},
-    {"20", 1230237, ".",         make_ref<own>("T"),   {},           47, {"PASS"}, {{"NS",(int_t)3}, {"DP", (int_t)13}, {"AA", "T"}                                           }, { {"GT", svec{"0|0", "0|0", "0/0"}}, {"GQ", ivec{54, 48, 61}}, {"DP", ivec{7, 4, 2}}, {"HQ", ivecvec{ivec{56,60}, ivec{51,51}              }}}, priv},
-    {"20", 1234567, "microsat1", make_ref<own>("GTC"), {"G","GTCT"}, 50, {"PASS"}, {{"NS",(int_t)3}, {"DP", (int_t)9 }, {"AA", "G"}                                           }, { {"GT", svec{"0/1", "0/2", "1/1"}}, {"GQ", ivec{35, 17, 40}}, {"DP", ivec{4, 2, 3}}                                                         }, priv},
+    return std::tuple<record_t, record_t, record_t, record_t, record_t>{
+    record_t{"20", 14370,   "rs6054257", make_ref<own>("G"),   {"A"},        29, {"PASS"}, {{"NS",(int_t)3}, {"DP", (int_t)14}, {"AF", fvec{0.5f}}, {"DB", true}, {"H2", true}        }, { {"GT", svec{"0|0", "1|0", "1/1"}}, {"GQ", ivec{48, 48, 43}}, {"DP", ivec{1, 8, 5}}, {"HQ", ivecvec{ivec{51,51}, ivec{51,51}, ivec{mv,mv} }}}, priv},
+    record_t{"20", 17330,   ".",         make_ref<own>("T"),   {"A"},        3,  {"q10"},  {{"NS",(int_t)3}, {"DP", (int_t)11}, {"AF", fvec{0.017f}}                                  }, { {"GT", svec{"0|0", "0|1", "0/0"}}, {"GQ", ivec{49,  3, 41}}, {"DP", ivec{3, 5, 3}}, {"HQ", ivecvec{ivec{58,50}, ivec{65, 3}              }}}, priv},
+    record_t{"20", 1110696, "rs6040355", make_ref<own>("A"),   {"G","T"},    67, {"PASS"}, {{"NS",(int_t)2}, {"DP", (int_t)10}, {"AF", fvec{0.333f,0.667f}}, {"AA", "T"}, {"DB", true}}, { {"GT", svec{"1|2", "2|1", "2/2"}}, {"GQ", ivec{21,  2, 35}}, {"DP", ivec{6, 0, 4}}, {"HQ", ivecvec{ivec{23,27}, ivec{18, 2}              }}}, priv},
+    record_t{"20", 1230237, ".",         make_ref<own>("T"),   {},           47, {"PASS"}, {{"NS",(int_t)3}, {"DP", (int_t)13}, {"AA", "T"}                                           }, { {"GT", svec{"0|0", "0|0", "0/0"}}, {"GQ", ivec{54, 48, 61}}, {"DP", ivec{7, 4, 2}}, {"HQ", ivecvec{ivec{56,60}, ivec{51,51}              }}}, priv},
+    record_t{"20", 1234567, "microsat1", make_ref<own>("GTC"), {"G","GTCT"}, 50, {"PASS"}, {{"NS",(int_t)3}, {"DP", (int_t)9 }, {"AA", "G"}                                           }, { {"GT", svec{"0/1", "0/2", "1/1"}}, {"GQ", ivec{35, 17, 40}}, {"DP", ivec{4, 2, 3}}                                                         }, priv},
     };
     // clang-format on
-
-    return recs;
 }
 
 template <bio::io::ownership own, typename int_t = int32_t>
@@ -270,16 +268,14 @@ auto example_records_bcf_style()
       std::conditional_t<own == bio::io::ownership::shallow, std::vector<std::string_view>, std::vector<std::string>>;
 
     // clang-format off
-    std::vector<record_t> recs{
-    {0, 14370,   "rs6054257", make_ref<own>("G"),   {"A"},        29, {0}, {{1,(int_t)3}, {2, (int_t)14}, {3, fvec{0.5f}}, {5, true}, {6, true}        }, { {9, svec{"0|0", "1|0", "1/1"}}, {10, ivec{48, 48, 43}}, {2, ivec{1, 8, 5}}, {11, ivecvec{ivec{51,51}, ivec{51,51}, ivec{mv,mv} }}}, priv},
-    {0, 17330,   ".",         make_ref<own>("T"),   {"A"},        3,  {7}, {{1,(int_t)3}, {2, (int_t)11}, {3, fvec{0.017f}}                            }, { {9, svec{"0|0", "0|1", "0/0"}}, {10, ivec{49,  3, 41}}, {2, ivec{3, 5, 3}}, {11, ivecvec{ivec{58,50}, ivec{65, 3}              }}}, priv},
-    {0, 1110696, "rs6040355", make_ref<own>("A"),   {"G","T"},    67, {0}, {{1,(int_t)2}, {2, (int_t)10}, {3, fvec{0.333f,0.667f}}, {4, "T"}, {5, true}}, { {9, svec{"1|2", "2|1", "2/2"}}, {10, ivec{21,  2, 35}}, {2, ivec{6, 0, 4}}, {11, ivecvec{ivec{23,27}, ivec{18, 2}              }}}, priv},
-    {0, 1230237, ".",         make_ref<own>("T"),   {},           47, {0}, {{1,(int_t)3}, {2, (int_t)13}, {4, "T"}                                     }, { {9, svec{"0|0", "0|0", "0/0"}}, {10, ivec{54, 48, 61}}, {2, ivec{7, 4, 2}}, {11, ivecvec{ivec{56,60}, ivec{51,51}              }}}, priv},
-    {0, 1234567, "microsat1", make_ref<own>("GTC"), {"G","GTCT"}, 50, {0}, {{1,(int_t)3}, {2, (int_t)9 }, {4, "G"}                                     }, { {9, svec{"0/1", "0/2", "1/1"}}, {10, ivec{35, 17, 40}}, {2, ivec{4, 2, 3}}                                                       }, priv},
+    return std::tuple<record_t, record_t, record_t, record_t, record_t>{
+    record_t{0, 14370,   "rs6054257", make_ref<own>("G"),   {"A"},        29, {0}, {{1,(int_t)3}, {2, (int_t)14}, {3, fvec{0.5f}}, {5, true}, {6, true}        }, { {9, svec{"0|0", "1|0", "1/1"}}, {10, ivec{48, 48, 43}}, {2, ivec{1, 8, 5}}, {11, ivecvec{ivec{51,51}, ivec{51,51}, ivec{mv,mv} }}}, priv},
+    record_t{0, 17330,   ".",         make_ref<own>("T"),   {"A"},        3,  {7}, {{1,(int_t)3}, {2, (int_t)11}, {3, fvec{0.017f}}                            }, { {9, svec{"0|0", "0|1", "0/0"}}, {10, ivec{49,  3, 41}}, {2, ivec{3, 5, 3}}, {11, ivecvec{ivec{58,50}, ivec{65, 3}              }}}, priv},
+    record_t{0, 1110696, "rs6040355", make_ref<own>("A"),   {"G","T"},    67, {0}, {{1,(int_t)2}, {2, (int_t)10}, {3, fvec{0.333f,0.667f}}, {4, "T"}, {5, true}}, { {9, svec{"1|2", "2|1", "2/2"}}, {10, ivec{21,  2, 35}}, {2, ivec{6, 0, 4}}, {11, ivecvec{ivec{23,27}, ivec{18, 2}              }}}, priv},
+    record_t{0, 1230237, ".",         make_ref<own>("T"),   {},           47, {0}, {{1,(int_t)3}, {2, (int_t)13}, {4, "T"}                                     }, { {9, svec{"0|0", "0|0", "0/0"}}, {10, ivec{54, 48, 61}}, {2, ivec{7, 4, 2}}, {11, ivecvec{ivec{56,60}, ivec{51,51}              }}}, priv},
+    record_t{0, 1234567, "microsat1", make_ref<own>("GTC"), {"G","GTCT"}, 50, {0}, {{1,(int_t)3}, {2, (int_t)9 }, {4, "G"}                                     }, { {9, svec{"0/1", "0/2", "1/1"}}, {10, ivec{35, 17, 40}}, {2, ivec{4, 2, 3}}                                                       }, priv},
     };
     // clang-format on
-
-    return recs;
 }
 
 auto example_records_novariant()
@@ -377,5 +373,5 @@ auto example_records_novariant()
                                             std::pair{"DP", ivec{4, 2, 3}}},
                                  priv};
     // clang-format on
-    return std::tuple{rec0, rec1, rec2, rec3, rec4};
+    return std::tuple{std::move(rec0), std::move(rec1), std::move(rec2), std::move(rec3), std::move(rec4)};
 }
